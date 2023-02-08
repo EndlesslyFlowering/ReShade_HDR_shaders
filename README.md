@@ -1,0 +1,1 @@
+# ReShade HDR shaders
