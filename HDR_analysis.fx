@@ -104,18 +104,18 @@ uniform float ABOVE_NITS_AS_BLACK
 #ifdef _TESTY
 uniform bool ENABLE_TEST_THINGY
 <
-  ui_category = "TESTY"
+  ui_category = "TESTY";
   ui_label    = "enable test thingy";
 > = false;
 
 uniform float TEST_THINGY
 <
-  ui_category = "TESTY"
+  ui_category = "TESTY";
   ui_label    = "test thingy";
   ui_type     = "drag";
   ui_min      = 0.f;
-  ui_max      = 1.f;
-  ui_step     = 0.0001f;
+  ui_max      = 125.f;
+  ui_step     = 0.1f;
 > = 0.f;
 #endif
 
@@ -188,7 +188,17 @@ void testy(
   if(ENABLE_TEST_THINGY == true)
   {
     const float xTest = TEST_THINGY;
-    output = float4(xTest, xTest, xTest, 1.f);
+    const float xxx = BUFFER_WIDTH  / 2.f - 100;
+    const float xxe = (BUFFER_WIDTH  - xxx);
+    const float yyy = BUFFER_HEIGHT / 2.f - 100;
+    const float yye = (BUFFER_HEIGHT - yyy);
+    if (texcoord.x > xxx / BUFFER_WIDTH
+     && texcoord.x < xxe / BUFFER_WIDTH
+     && texcoord.y > yyy / BUFFER_HEIGHT
+     && texcoord.y < yye / BUFFER_HEIGHT)
+      output = float4(0.f, xTest, 0.f, 1.f);
+    else
+      output = float4(0.f, 0.f, 0.f, 0.f);
   }
   else
     output = float4(tex2D(ReShade::BackBuffer, texcoord).rgb, 1.f);
