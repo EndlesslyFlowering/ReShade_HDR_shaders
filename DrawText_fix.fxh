@@ -171,7 +171,7 @@ float4 main_fragment( float4 position : POSITION,
 #define __empty1     97 // (null)
 //Character indexing ends
 
-texture Texttex < source = "FontAtlas_203nits_HDR10.png"; > {
+texture Texttex < source = "FontAtlas.png"; > {
   Width  = 512;
   Height = 512;
 };
@@ -188,7 +188,8 @@ sampler samplerText {
   tex,     \
   array,   \
   arrSize, \
-  output)  \
+  output,  \
+  bright)  \
 { \
   float  text = 0.0; \
   float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size; \
@@ -196,10 +197,10 @@ sampler samplerText {
   uv.x     *= ratio * 2.0; \
   float  id = array[int(trunc(uv.x))]; \
   if(uv.x  <= arrSize && uv.x >= 0.0) \
-      text  = tex2D(samplerText, (frac(uv) + float2( id % 14.0, trunc(id / 14.0))) \
-      / float2( _DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y) ).x; \
+      text  = tex2D(samplerText, (frac(uv) + float2(id % 14.0, trunc(id / 14.0))) / \
+              float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y) ).x; \
   if(text > 0.f) \
-      output = text*4.37f; \
+      output = text * bright; \
   else \
       output += text; \
 }
@@ -220,7 +221,8 @@ void DrawText_Digit(
         float2 tex,
         int    digit,
         float  data,
-  inout float4 res)
+  inout float4 res,
+        float  bright)
 {
   int digits[13] = {
       __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __Minus, __Space, __Dot
@@ -241,9 +243,9 @@ void DrawText_Digit(
   index = (uv.x > 0 && uv.x < 1)? 12:index; //adding dot
   index = digits[(uint)index];
   float numbers = tex2D(samplerText, (frac(uv) + float2(index % 14.0, trunc(index / 14.0))) /
-              float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
+                  float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
   if (numbers > 0.f)
-    res = numbers*4.37f;
+    res = numbers * bright;
   else
     res += numbers;
 }

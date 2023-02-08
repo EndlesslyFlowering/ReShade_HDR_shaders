@@ -294,13 +294,18 @@ void BT2446A_tm(
 
   if (SHOW_ADAPTIVE_MAXCLL)
   {
+    const float bright = CSP_PQ
+                       ? 0.58068888f
+                       : CSP_SCRGB
+                       ? 203.f / 80.f
+                       : 1.f;
     float actualMaxCLL    = tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r;
-    float adaptiveMaxCLL0 = tex2Dfetch(samplerAdaptiveCLLvalue0, int2(0, 0)).r;
-    float adaptiveMaxCLL1 = tex2Dfetch(samplerAdaptiveCLLvalue1, int2(0, 0)).r;
-    DrawText_Digit(float2(100.f, 500.f), 30, 1, texcoord, 2,    actualMaxCLL+0.01f, output);
-    DrawText_Digit(float2(100.f, 530.f), 30, 1, texcoord, 2, adaptiveMaxCLL0+0.01f, output);
-    DrawText_Digit(float2(100.f, 560.f), 30, 1, texcoord, 2, adaptiveMaxCLL1+0.01f, output);
-    //DrawText_Digit(float2(100.f, 590.f), 30, 1, texcoord, 0, CLL_MODE, output);
+    float adaptiveMaxCLL0 = tex2Dfetch(samplerAdaptiveCLLvalue0,  int2(0, 0)).r;
+    float adaptiveMaxCLL1 = tex2Dfetch(samplerAdaptiveCLLvalue1,  int2(0, 0)).r;
+    DrawText_Digit(float2(100.f, 500.f), 30, 1, texcoord, 2, actualMaxCLL    + 0.01f, output, bright);
+    DrawText_Digit(float2(100.f, 530.f), 30, 1, texcoord, 2, adaptiveMaxCLL0 + 0.01f, output, bright);
+    DrawText_Digit(float2(100.f, 560.f), 30, 1, texcoord, 2, adaptiveMaxCLL1 + 0.01f, output, bright);
+    //DrawText_Digit(float2(100.f, 590.f), 30, 1, texcoord, 0, CLL_MODE, output, bright);
   }
 }
 

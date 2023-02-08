@@ -251,11 +251,17 @@ void HDR_analysis(
         output = (0.f, 0.f, 0.f, 0.f);
     }
 
+    const float bright = CSP_PQ || OVERRIDE_CSP == 1
+                       ? 0.58068888f
+                       : CSP_SCRGB || OVERRIDE_CSP == 2
+                       ? 203.f / 80.f
+                       : 1.f;
+
     if (SHOW_CLL_VALUES)
     {
-      DrawText_Digit(float2(100.f, 0.f),               CLL_FONT_SIZE, 1, texcoord, 2, maxCLL_show, output);
-      DrawText_Digit(float2(100.f, CLL_FONT_SIZE),     CLL_FONT_SIZE, 1, texcoord, 2, avgCLL_show, output);
-      DrawText_Digit(float2(100.f, CLL_FONT_SIZE * 2), CLL_FONT_SIZE, 1, texcoord, 2, minCLL_show, output);
+      DrawText_Digit(float2(100.f, 0.f),               CLL_FONT_SIZE, 1, texcoord, 2, maxCLL_show, output, bright);
+      DrawText_Digit(float2(100.f, CLL_FONT_SIZE),     CLL_FONT_SIZE, 1, texcoord, 2, avgCLL_show, output, bright);
+      DrawText_Digit(float2(100.f, CLL_FONT_SIZE * 2), CLL_FONT_SIZE, 1, texcoord, 2, minCLL_show, output, bright);
     }
 
     if (SHOW_CLL_FROM_CURSOR)
@@ -268,21 +274,21 @@ void HDR_analysis(
       const int textY[2] = { __y, __Colon };
       const float yOffset0 =  CLL_FONT_SIZE / 2.f;
       const float yOffset1 =  CLL_FONT_SIZE - 30;
-      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2,              output);
-      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  2,    cursorCLL,      output);
+      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2,              output, bright);
+      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output, bright);
+      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output, bright);
+      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output, bright);
+      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  2,    cursorCLL,      output, bright);
       const int textR[2] = { __R, __Colon };
       const int textG[2] = { __G, __Colon };
       const int textB[2] = { __B, __Colon };
       const float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
-      DrawText_String(float2( 0.f, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2, output);
-      DrawText_String(float2( 0.f, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2, output);
-      DrawText_String(float2( 0.f, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2, output);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.r, output);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.g, output);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.b, output);
+      DrawText_String(float2( 0.f, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2, output, bright);
+      DrawText_String(float2( 0.f, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2, output, bright);
+      DrawText_String(float2( 0.f, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2, output, bright);
+      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.r, output, bright);
+      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.g, output, bright);
+      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.b, output, bright);
     }
   }
   else
@@ -291,7 +297,7 @@ void HDR_analysis(
     const int textError[24] = { __C, __O, __L, __O, __R, __S, __P, __A, __C, __E, __Space,
                                 __N, __O, __T, __Space,
                                 __S, __U, __P, __P, __O, __R, __T, __E, __D};
-    DrawText_String(float2(0.f, 0.f), 100.f, 1, texcoord, textError, 24, output);
+    DrawText_String(float2(0.f, 0.f), 100.f, 1, texcoord, textError, 24, output, 1.f);
   }
 }
 

@@ -120,7 +120,7 @@ void BT2446_itm(
   float3 hdr;
 
   //hdr = sRGB_inverse_EOTF(input);
-  hdr = gamut(hdr, EXPAND_GAMUT);
+  hdr = gamut(input, EXPAND_GAMUT);
 
   switch (INVERSE_TONEMAPPING_METHOD)
   {
