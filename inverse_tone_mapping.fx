@@ -109,6 +109,12 @@ uniform float ALPHA
 //      ui_step = 0.001f;
 //> = 58.535046646;
 
+uniform bool DONT_REMOVE_GAMMA
+<
+  ui_label   = "don't remove sRGB gamma";
+  ui_tooltip = "workaround";
+> = false;
+
 
 void BT2446_itm(
       float4     vpos : SV_Position,
@@ -119,8 +125,10 @@ void BT2446_itm(
 
   float3 hdr;
 
-  //hdr = sRGB_inverse_EOTF(input);
-  hdr = gamut(input, EXPAND_GAMUT);
+  hdr = !DONT_REMOVE_GAMMA
+      ? sRGB_inverse_EOTF(input)
+      : input;
+  hdr = gamut(hdr, EXPAND_GAMUT);
 
   switch (INVERSE_TONEMAPPING_METHOD)
   {
