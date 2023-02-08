@@ -158,7 +158,7 @@ float3 BT2446A_toneMapping_mod1(
   float3 hdrOut;
 
   hdrOut.r = Y_tmo + 1.4746f * C_r_tmo;
-  hdrOut.g = Y_tmo - 0.16455f * C_b_tmo - 0.57135f * C_r_tmo;
+  hdrOut.g = Y_tmo - 0.16455312684365781711 * C_b_tmo - 0.57135312684365781711 * C_r_tmo;
   hdrOut.b = Y_tmo + 1.8814f * C_b_tmo;
 
   hdrOut = saturate(hdrOut);
