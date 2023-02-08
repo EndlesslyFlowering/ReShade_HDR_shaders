@@ -257,7 +257,7 @@ void HDR_analysis(
     if (DRAW_ABOVE_NITS_AS_BLACK)
     {
       const float pixelCLL = tex2D(samplerCLLvalues, texcoord).r;
-      if (pixelCLL < ABOVE_NITS_AS_BLACK)
+      if (pixelCLL > ABOVE_NITS_AS_BLACK)
         output = (0.f, 0.f, 0.f, 0.f);
     }
 
