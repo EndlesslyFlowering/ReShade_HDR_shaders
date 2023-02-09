@@ -213,9 +213,9 @@ void calcCLLown(
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
   if (CSP_PQ || OVERRIDE_CSP == 1)
-    curCLL = clamp(10000.f * PQ_EOTF_single(dot(pixel, K_BT2020)), 0.f, 10000.f);
+    curCLL = clamp(10000.f * PQ_EOTF_single(dot(bt2020_to_XYZ[1].rgb, pixel)), 0.f, 10000.f);
   else if (CSP_SCRGB || OVERRIDE_CSP == 2)
-    curCLL = dot(pixel, K_BT709) * 80.f;
+    curCLL = dot(bt709_to_XYZ[1].rgb, pixel) * 80.f;
   else
     curCLL = 0.f;
 }
