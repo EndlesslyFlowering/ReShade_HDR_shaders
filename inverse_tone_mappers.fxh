@@ -129,8 +129,10 @@ float3 BT2446A_inverseToneMapping(
                    (pHDR - 1);
 
   // Colour scaling function
-  const float colScale = Y_sdr /
-                         (1.1f * Y_);
+  float colScale = 0.f;
+  if (Y_ > 0.f) // avoid division by zero
+    colScale = Y_sdr /
+               (1.1f * Y_);
 
   // Colour difference signals (inverse) and Luma (inverse)
   // get R'G'B'
