@@ -296,9 +296,9 @@ void HDR_analysis(
       DrawText_String(float2( 0.f, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2, output, bright);
       DrawText_String(float2( 0.f, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2, output, bright);
       DrawText_String(float2( 0.f, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2, output, bright);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.r, output, bright);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.g, output, bright);
-      DrawText_Digit (float2(60.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.b, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.r, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.g, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 6, cursorRGB.b, output, bright);
     }
   }
   else

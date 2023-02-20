@@ -65,9 +65,9 @@ float3 BT1886_gamma(
 
 
 void SDR_gamma_fix(
-      float4     vpos : SV_Position,
+      float4 vpos     : SV_Position,
       float2 texcoord : TEXCOORD,
-  out float4   output : SV_Target0)
+  out float4 output   : SV_Target0)
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
