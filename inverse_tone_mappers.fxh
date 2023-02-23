@@ -85,7 +85,7 @@ float3 BT2446A_inverseToneMapping(
                       0.5000f;
 
   const float _1_first = -2.7811f;
-  const float _1_sqrt  = sqrt(4.83307641 - 4.604 * Y_c);
+  const float _1_sqrt  = sqrt(pow(2.7811, 2) - 4 * (-1.151f) * (-0.6302f - Y_c));
   const float _1_div   = -2.302f;
   const float Y_p_1_1  = (_1_first + _1_sqrt) /
                          _1_div;
