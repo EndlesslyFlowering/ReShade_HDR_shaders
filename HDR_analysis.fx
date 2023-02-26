@@ -101,6 +101,20 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_step  = 1.f;
 > = 10000.f;
 
+uniform bool DRAW_BELOW_NITS_AS_BLACK
+<
+  ui_label = "draw below nits as black";
+> = false;
+
+uniform float BELOW_NITS_AS_BLACK
+<
+  ui_label = "draw below nits as black";
+  ui_type  = "drag";
+  ui_min   = 0.f;
+  ui_max   = 10000.f;
+  ui_step  = 1.f;
+> = 0.f;
+
 #ifdef _TESTY
 uniform bool ENABLE_TEST_THINGY
 <
@@ -212,9 +226,9 @@ void calcCLLown(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  if (CSP_PQ || OVERRIDE_CSP == 1)
-    curCLL = clamp(10000.f * PQ_EOTF_single(dot(bt2020_to_XYZ[1].rgb, pixel)), 0.f, 10000.f);
-  else if (CSP_SCRGB || OVERRIDE_CSP == 2)
+  if ((CSP_PQ || OVERRIDE_CSP == 1) && OVERRIDE_CSP != 2)
+    curCLL = 10000.f * PQ_EOTF_single(dot(bt2020_to_XYZ[1].rgb, pixel));
+  else if ((CSP_SCRGB || OVERRIDE_CSP == 2) && OVERRIDE_CSP != 1)
     curCLL = dot(bt709_to_XYZ[1].rgb, pixel) * 80.f;
   else
     curCLL = 0.f;
@@ -258,6 +272,12 @@ void HDR_analysis(
     {
       const float pixelCLL = tex2D(samplerCLLvalues, texcoord).r;
       if (pixelCLL > ABOVE_NITS_AS_BLACK)
+        output = (0.f, 0.f, 0.f, 0.f);
+    }
+    else if (DRAW_BELOW_NITS_AS_BLACK)
+    {
+      const float pixelCLL = tex2D(samplerCLLvalues, texcoord).r;
+      if (pixelCLL < BELOW_NITS_AS_BLACK)
         output = (0.f, 0.f, 0.f, 0.f);
     }
 
