@@ -94,7 +94,6 @@ float3 XsRGB_inverse_EOTF(const float3 colour)
     XsRGB_inverse_EOTF_single(colour.b));
 }
 
-// Rep. ITU-R BT.2407 �2.2 calculated in double
 static const float3x3 bt709_to_bt2020_matrix = float3x3(
   0.627401924722236,  0.329291971755002,  0.0433061035227622,
   0.0690954897392608, 0.919544281267395,  0.0113602289933443,
@@ -127,8 +126,6 @@ static const float3x3 expanded_bt709_to_bt2020_matrix = float3x3(
   -0.00121055, 0.0176041, 0.983607);
 // END Converted from (Copyright (c) Microsoft Corporation - Licensed under the MIT License.)  https://github.com/microsoft/Xbox-GDK-Samples/blob/main/Kits/ATGTK/HDR/HDRCommon.hlsli
 
-// Rec. ITU-R BT.2087 Annex 1 M2 calculated in double
-// clamp to (0, 1) afterwards
 static const float3x3 bt2020_to_bt709_matrix = float3x3(
    1.66049621914783,   -0.587656444131135, -0.0728397750166941,
   -0.124547095586012,   1.13289510924730,  -0.00834801366128445,
