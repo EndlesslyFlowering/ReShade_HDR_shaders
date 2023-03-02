@@ -4,9 +4,6 @@
 
 //#define _DEBUG
 
-//missing:
-// - HDR10/scRGB detection -> documentation: current render format
-
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that

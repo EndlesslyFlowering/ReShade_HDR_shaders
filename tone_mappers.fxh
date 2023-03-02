@@ -60,18 +60,16 @@ float3 BT2446A_toneMapping(
                    (1.1f * Y_);
 
   //C'b,tmo
-  const float C_b_tmo = colorScaling *
-                        ((hdrIn.b - Y_) /
-                         1.8814f);
+  const float C_b_tmo = colorScaling * (hdrIn.b - Y_) /
+                                       1.8814f;
 
   //C'r,tmo
-  const float C_r_tmo = colorScaling *
-                        ((hdrIn.r - Y_) /
-                         1.4746f);
+  const float C_r_tmo = colorScaling * (hdrIn.r - Y_) /
+                                       1.4746f;
 
   //Y'tmo
-  const float Y_tmo = Y_sdr -
-                      max(0.1f * C_r_tmo, 0.f);
+  const float Y_tmo = Y_sdr
+                    - max(0.1f * C_r_tmo, 0.f);
 
   float3 hdrOut;
 
@@ -149,18 +147,16 @@ float3 BT2446A_toneMapping_mod1(
                    (1.1f * Y_);
 
   //C'b,tmo
-  const float C_b_tmo = colorScaling * (
-                        (hdrIn.b - Y_) /
-                        1.8814f);
+  const float C_b_tmo = colorScaling * (hdrIn.b - Y_) /
+                                       1.8814f;
 
   //C'r,tmo
-  const float C_r_tmo = colorScaling * (
-                        (hdrIn.r - Y_) /
-                        1.4746f);
+  const float C_r_tmo = colorScaling * (hdrIn.r - Y_) /
+                                       1.4746f;
 
   //Y'tmo
-  const float Y_tmo = Y_sdr -
-                      max(0.1f * C_r_tmo, 0.f);
+  const float Y_tmo = Y_sdr
+                    - max(0.1f * C_r_tmo, 0.f);
 
   float3 hdrOut;
 

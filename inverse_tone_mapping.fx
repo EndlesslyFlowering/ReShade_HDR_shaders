@@ -87,7 +87,7 @@ uniform float ALPHA
        ui_min = 0.f;
        ui_max = 1.5f;
       ui_step = 0.001f;
-> = 0.f;
+> = 0.33f;
 
 //uniform float K1
 //<
@@ -108,6 +108,22 @@ uniform float ALPHA
 //       ui_max = 100.f;
 //      ui_step = 0.001f;
 //> = 58.535046646;
+
+uniform bool USE_ACHROMATIC_CORRECTION
+<
+  ui_category = "BT.2446 Method C";
+  ui_label    = "use achromatic correction for really bright elements";
+> = false;
+
+uniform float SIGMA
+<
+  ui_category = "BT.2446 Method C";
+     ui_label = "correction factor";
+      ui_type = "drag";
+       ui_min = 0.f;
+       ui_max = 1.f;
+      ui_step = 0.001f;
+> = 0.5f;
 
 uniform bool DONT_REMOVE_GAMMA
 <
@@ -155,7 +171,9 @@ void BT2446_itm(
       hdr = BT2446C_inverseToneMapping(
         hdr,
         REF_WHITE_NITS,
-        0.33f - ALPHA);
+        0.33f - ALPHA,
+        USE_ACHROMATIC_CORRECTION,
+        SIGMA);
     }
     break;
   }

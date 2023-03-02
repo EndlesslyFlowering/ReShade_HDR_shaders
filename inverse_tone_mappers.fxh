@@ -19,7 +19,7 @@ float3 gamut(
       sdr = mul(expanded_bt709_to_bt2020_matrix, sdr);
       break;
     case 3:
-      sdr = ExpandColorGamutBT2020(sdr, 1.0f, 5.0f);
+      sdr = ExpandColorGamutBT2020(sdr, 1.f, 5.f);
       break;
   }
 
@@ -67,10 +67,10 @@ float3 BT2446A_inverseToneMapping(
 
   // Tone mapping step 3 (inverse)
   // get Y'c
-  const float pSDR = 1 + 32 * pow(
-                                  Lsdr /
-                                  10000.f
-                              , gamma);
+  const float pSDR = 1.f + 32.f * pow(
+                                      Lsdr /
+                                      10000.f
+                                  , gamma);
 
   //Y'c
   const float Y_c = log((Y_sdr * (pSDR - 1)) + 1) /
@@ -85,7 +85,7 @@ float3 BT2446A_inverseToneMapping(
                       0.5000f;
 
   const float _1_first = -2.7811f;
-  const float _1_sqrt  = sqrt(pow(2.7811, 2) - 4 * (-1.151f) * (-0.6302f - Y_c));
+  const float _1_sqrt  = sqrt(pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - Y_c));
   const float _1_div   = -2.302f;
   const float Y_p_1_1  = (_1_first + _1_sqrt) /
                          _1_div;
@@ -120,13 +120,13 @@ float3 BT2446A_inverseToneMapping(
 
   // Tone mapping step 1 (inverse)
   // get Y'
-  const float pHDR = 1 + 32 * pow(
-                                  Lhdr /
-                                  10000.f
-                              , gamma);
+  const float pHDR = 1.f + 32.f * pow(
+                                      Lhdr /
+                                      10000.f
+                                  , gamma);
   //Y'
-  const float Y_ = (pow(pHDR, Y_p) - 1) /
-                   (pHDR - 1);
+  const float Y_ = (pow(pHDR, Y_p) - 1.f) /
+                   (pHDR - 1.f);
 
   // Colour scaling function
   float colScale = 0.f;
@@ -178,8 +178,8 @@ float3 mapSDRintoHDR(
 // HDR reference white in XYZ
 static const float3 XnYnZn           = {192.93f, 203.f, 221.05f};
 static const float  delta            = 6.f / 29.f;
-static const float  pow_delta_3      = pow(delta, 3);
-static const float  _3_x_pow_delta_2 = 3 * pow(delta, 2);
+static const float  pow_delta_3      = pow(delta, 3.f);
+static const float  _3_x_pow_delta_2 = 3.f * pow(delta, 2.f);
 
 float3 BT2446C_inverseToneMapping(
   const float3 input,
@@ -240,9 +240,9 @@ float3 BT2446C_inverseToneMapping(
     if (t_Y > pow_delta_3)
       f_Y = (pow(t_Y, 1.f / 3.f));
     else
-      f_Y = (t_Y / (3 * pow(delta, 2)) + (16.f / 116.f));
+      f_Y = (t_Y / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
 
-    const float L_star = 116 * f_Y - 16;
+    const float L_star = 116.f * f_Y - 16.f;
 
     // get a*
     const float t_X = sdr.x / XnYnZn.x;
@@ -251,10 +251,10 @@ float3 BT2446C_inverseToneMapping(
     if (t_X > pow_delta_3)
       f_X = (pow(t_Y, 1.f / 3.f));
     else
-      f_X = (t_X / (3 * pow(delta, 2)) + (16.f / 116.f));
+      f_X = (t_X / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
     f_X -= f_Y;
 
-    const float a_star = 116 * f_X - 16;
+    const float a_star = 116.f * f_X - 16.f;
 
     // get b*
     const float t_Z = sdr.z / XnYnZn.z;
@@ -263,16 +263,16 @@ float3 BT2446C_inverseToneMapping(
     if (t_Z > pow_delta_3)
       f_Z = (pow(t_Y, 1.f / 3.f));
     else
-      f_Z = (t_Z / (3 * pow(delta, 2)) + (16.f / 116.f));
+      f_Z = (t_Z / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
     f_Z = f_Y - f_Z;
 
-    const float b_star = 116 * f_Z - 16;
+    const float b_star = 116.f * f_Z - 16.f;
 
     // (2) chroma correction above Reference White
     const float L_star_ref = 100.f;
-    const float L_star_max = 116 * pow(10000.f / 203.f, 1.f / 3.f) - 16; // hardcode to PQ max for now
+    const float L_star_max = 116.f * pow(10000.f / 203.f, 1.f / 3.f) - 16.f; // hardcode to PQ max for now
 
-    const float C_star_ab = sqrt(pow(a_star, 2) + pow(b_star, 2));
+    const float C_star_ab = sqrt(pow(a_star, 2.f) + pow(b_star, 2.f));
     const float h_ab      = atan(b_star / a_star);
 
     float f_cor = 1.f;
@@ -291,7 +291,7 @@ float3 BT2446C_inverseToneMapping(
     // (1) inverse
     // conversion from L*a*b* to XZY from (3) and then Yxy
     float3 XYZ_cor;
-    const float f_Y_cor = (L_star + 16) /
+    const float f_Y_cor = (L_star + 16.f) /
                           116.f;
     const float f_X_cor = f_Y_cor + a_star_cor /
                                     500.f;
@@ -308,13 +308,13 @@ float3 BT2446C_inverseToneMapping(
     // probably yes
     //Y
     if (f_Y_cor > delta)
-      XYZ_cor.y = XnYnZn.y * pow(f_Y_cor, 3);
+      XYZ_cor.y = XnYnZn.y * pow(f_Y_cor, 3.f);
     else
       XYZ_cor.y = L_star * _3_x_pow_delta_2 * XnYnZn.y;
 
     //Z
     if (f_Z_cor > delta)
-      XYZ_cor.z = XnYnZn.z * pow(f_Z_cor, 3);
+      XYZ_cor.z = XnYnZn.z * pow(f_Z_cor, 3.f);
     else
       XYZ_cor.z= L_star * _3_x_pow_delta_2 * XnYnZn.z;
 
@@ -355,7 +355,7 @@ float3 BT2446C_inverseToneMapping(
   //const float k4 = infPoint - k2 * log(1.f - k3);
   //const float k3 = -exp((Ysdr_wp - k4) / k2) + (203.f / Yhdr_ip);
 
-  float Yhdr = 0.f;
+        float Yhdr   = 0.f;
   const float Yhdr_0 = Ysdr / k1;
   const float Yhdr_1 = (exp((Ysdr - k4) / k2) + k3) * Yhdr_ip;
 
@@ -366,9 +366,9 @@ float3 BT2446C_inverseToneMapping(
 
   //6.1.3 (inverse)
   //convert to XYZ and then to RGB
-  const float Xhdr = (x_sdr / y_sdr) * Yhdr;
-  const float Zhdr = ((1.f - x_sdr - y_sdr) / y_sdr) * Yhdr;
-  float3 hdr = float3(Xhdr, Yhdr, Zhdr);
+  const float  Xhdr = (x_sdr / y_sdr) * Yhdr;
+  const float  Zhdr = ((1.f - x_sdr - y_sdr) / y_sdr) * Yhdr;
+        float3 hdr  = float3(Xhdr, Yhdr, Zhdr);
   hdr = mul(XYZ_to_bt2020, hdr);
 
   //6.1.2 (inverse)
@@ -381,7 +381,7 @@ float3 BT2446C_inverseToneMapping(
   hdr = mul(mul(1.f / 1.f - 3.f * alpha, inverseCrosstalkMatrix), hdr);
 
   //map into 10000 nits
-  hdr = hdr / 10000.f;
+  hdr /= 10000.f;
 
   //safety
   //hdr = saturate(hdr);

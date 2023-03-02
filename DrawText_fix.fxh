@@ -1,8 +1,8 @@
 #ifndef _DRAWTEXT_H_
 #define _DRAWTEXT_H_
 
-#define _DRAWTEXT_GRID_X 14.0
-#define _DRAWTEXT_GRID_Y 7.0
+#define _DRAWTEXT_GRID_X 14.f
+#define _DRAWTEXT_GRID_Y 7.f
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,14 +191,14 @@ sampler samplerText {
   output,  \
   bright)  \
 { \
-  float  text = 0.0; \
+  float  text = 0.f; \
   float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size; \
   uv.y      = saturate(uv.y); \
-  uv.x     *= ratio * 2.0; \
+  uv.x     *= ratio * 2.f; \
   float  id = array[int(trunc(uv.x))]; \
-  if(uv.x  <= arrSize && uv.x >= 0.0) \
-      text  = tex2D(samplerText, (frac(uv) + float2(id % 14.0, trunc(id / 14.0))) / \
-              float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y) ).x; \
+  if(uv.x <= arrSize && uv.x >= 0.f) \
+    text    = tex2D(samplerText, (frac(uv) + float2(id % 14.f, trunc(id / 14.f))) / \
+              float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x; \
   if(text > 0.f) \
       output = text * bright; \
   else \
@@ -211,7 +211,7 @@ float2 DrawText_Shift(
   float  size,
   float  ratio)
 {
-  return pos + size * shift * float2(0.5, 1.0) / ratio;
+  return pos + size * shift * float2(0.f, 1.f) / ratio;
 }
 
 void DrawText_Digit(
@@ -229,20 +229,26 @@ void DrawText_Digit(
   };
   float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size;
   uv.y      = saturate(uv.y);
-  uv.x     *= ratio * 2.0;
+  uv.x     *= ratio * 2.f;
   float  t  = abs(data);
-  int radix = floor(t)? ceil(log2(t)/3.32192809):0;
+  int radix = floor(t)
+            ? ceil(log2(t) / 3.32192809)
+            : 0;
   //early exit:
   if(uv.x > digit+1 || -uv.x > radix+1) return;
   float index = t;
   if(floor(uv.x) > 0)
-      for(int i = ceil(-uv.x); i<0; i++) index *= 10.;
+      for(int i = ceil(-uv.x); i<0; i++) index *= 10.f;
   else
-      for(int i = ceil(uv.x); i<0; i++) index /= 10.;
-  index = (uv.x >= -radix-!radix)? index%10 : (10+step(0, data)); //adding sign
-  index = (uv.x > 0 && uv.x < 1)? 12:index; //adding dot
+      for(int i = ceil(uv.x); i<0; i++) index /= 10.f;
+  index = (uv.x >= -radix -!radix)
+        ? index%10
+        : (10 + step(0, data)); //adding sign
+  index = (uv.x > 0 && uv.x < 1)
+        ? 12
+        : index; //adding dot
   index = digits[(uint)index];
-  float numbers = tex2D(samplerText, (frac(uv) + float2(index % 14.0, trunc(index / 14.0))) /
+  float numbers = tex2D(samplerText, (frac(uv) + float2(index % 14.f, trunc(index / 14.f))) /
                   float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
   if (numbers > 0.f)
     res = numbers * bright;
