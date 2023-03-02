@@ -174,12 +174,21 @@ float3 mapSDRintoHDR(
   return hdr;
 }
 
+
+// HDR reference white in XYZ
+static const float3 XnYnZn           = {192.93f, 203.f, 221.05f};
+static const float  delta            = 6.f / 29.f;
+static const float  pow_delta_3      = pow(delta, 3);
+static const float  _3_x_pow_delta_2 = 3 * pow(delta, 2);
+
 float3 BT2446C_inverseToneMapping(
   const float3 input,
   const float  sdrBrightness,
-  const float  alpha)
+  const float  alpha,
 //        float  k1,
-//        float  infPoint)
+//        float  infPoint,
+  const bool   useAchromaticCorrection,
+  const float  sigma)
 {
 
   //103.2 =  400 nits
@@ -206,14 +215,127 @@ float3 BT2446C_inverseToneMapping(
   sdr = mul(crosstalkMatrix, sdr);
 
   //6.1.5 (inverse)
-  //conversion to XYZ and then Yxy
+  //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
   sdr = mul(bt2020_to_XYZ, sdr);
   const float Ysdr  = sdr.y;
-  const float xyz   = sdr.x + sdr.y + sdr.z;
-  const float x_sdr = sdr.x /
-                      (xyz);
-  const float y_sdr = sdr.y /
-                      (xyz);
+        float x_sdr = 0.f;
+        float y_sdr = 0.f;
+
+  // optional chroma correction above HDR Reference White
+  if (useAchromaticCorrection)
+  {
+    // (3) inverse
+    // XYZ->L*a*b* from (1) which is actually wrong
+    // using correct conversion here
+    //==========================================================================
+    // it seems the ITU was trying to make a faster version for t <= pow_delta_3
+    // corrected version is here:
+    // L* = (116 * (t / pow_delta_3) - 16) / 10.f
+    // it's missing the division by 10 in the ITU doc
+
+    // get L*
+    const float t_Y = sdr.y / XnYnZn.y;
+          float f_Y = 0.f;
+
+    if (t_Y > pow_delta_3)
+      f_Y = (pow(t_Y, 1.f / 3.f));
+    else
+      f_Y = (t_Y / (3 * pow(delta, 2)) + (16.f / 116.f));
+
+    const float L_star = 116 * f_Y - 16;
+
+    // get a*
+    const float t_X = sdr.x / XnYnZn.x;
+          float f_X = 0.f;
+
+    if (t_X > pow_delta_3)
+      f_X = (pow(t_Y, 1.f / 3.f));
+    else
+      f_X = (t_X / (3 * pow(delta, 2)) + (16.f / 116.f));
+    f_X -= f_Y;
+
+    const float a_star = 116 * f_X - 16;
+
+    // get b*
+    const float t_Z = sdr.z / XnYnZn.z;
+          float f_Z = 0.f;
+
+    if (t_Z > pow_delta_3)
+      f_Z = (pow(t_Y, 1.f / 3.f));
+    else
+      f_Z = (t_Z / (3 * pow(delta, 2)) + (16.f / 116.f));
+    f_Z = f_Y - f_Z;
+
+    const float b_star = 116 * f_Z - 16;
+
+    // (2) chroma correction above Reference White
+    const float L_star_ref = 100.f;
+    const float L_star_max = 116 * pow(10000.f / 203.f, 1.f / 3.f) - 16; // hardcode to PQ max for now
+
+    const float C_star_ab = sqrt(pow(a_star, 2) + pow(b_star, 2));
+    const float h_ab      = atan(b_star / a_star);
+
+    float f_cor = 1.f;
+    if (L_star > L_star_ref)
+    {
+      f_cor = 1 - sigma * (L_star     - L_star_ref) /
+                          (L_star_max - L_star_ref);
+      if (f_cor < 0.f)
+        f_cor = 0.f;
+    }
+
+    const float C_star_ab_cor = f_cor * C_star_ab;
+    const float a_star_cor    = C_star_ab_cor * cos(h_ab);
+    const float b_star_cor    = C_star_ab_cor * sin(h_ab);
+
+    // (1) inverse
+    // conversion from L*a*b* to XZY from (3) and then Yxy
+    float3 XYZ_cor;
+    const float f_Y_cor = (L_star + 16) /
+                          116.f;
+    const float f_X_cor = f_Y_cor + a_star_cor /
+                                    500.f;
+    const float f_Z_cor = f_Y_cor - b_star_cor /
+                                    200.f;
+
+    //X
+    if (f_X_cor > delta)
+      XYZ_cor.x = XnYnZn.x * pow(f_X_cor, 3);
+    else
+      XYZ_cor.x = L_star * _3_x_pow_delta_2 * XnYnZn.x;
+
+    // can you just take the XYZ Y from the input here since it's unchanged?
+    // probably yes
+    //Y
+    if (f_Y_cor > delta)
+      XYZ_cor.y = XnYnZn.y * pow(f_Y_cor, 3);
+    else
+      XYZ_cor.y = L_star * _3_x_pow_delta_2 * XnYnZn.y;
+
+    //Z
+    if (f_Z_cor > delta)
+      XYZ_cor.z = XnYnZn.z * pow(f_Z_cor, 3);
+    else
+      XYZ_cor.z= L_star * _3_x_pow_delta_2 * XnYnZn.z;
+
+    //convert to Yxy without the Y as it is unneeded
+    const float xyz = XYZ_cor.x + XYZ_cor.y + XYZ_cor.z;
+
+    x_sdr = XYZ_cor.x /
+            xyz;
+    y_sdr = XYZ_cor.y /
+            xyz;
+  }
+  else
+  {
+    //x and y from 6.1.5
+    const float xyz = sdr.x + sdr.y + sdr.z;
+
+    x_sdr = sdr.x /
+            xyz;
+    y_sdr = sdr.y /
+            xyz;
+  }
 
   //6.1.4 (inverse)
   //inverse tone mapping
