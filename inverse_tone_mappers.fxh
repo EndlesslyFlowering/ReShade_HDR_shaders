@@ -378,7 +378,7 @@ float3 BT2446C_inverseToneMapping(
      mlpha, -alpha, -alpha,
     -alpha,  mlpha, -alpha,
     -alpha, -alpha,  mlpha);
-  hdr = mul(mul(1.f / 1.f - 3.f * alpha, inverseCrosstalkMatrix), hdr);
+  hdr = mul(mul(1.f / (1.f - 3.f * alpha), inverseCrosstalkMatrix), hdr);
 
   //map into 10000 nits
   hdr /= 10000.f;
