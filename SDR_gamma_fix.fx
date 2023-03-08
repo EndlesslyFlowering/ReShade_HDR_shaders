@@ -3,6 +3,29 @@
 
 //#define _DEBUG
 
+uniform uint INPUT_GAMMA
+<
+  ui_label = "input Gamma";
+  ui_type  = "combo";
+  ui_items = "sRGB\0power Gamma\0";
+> = 0;
+
+uniform uint TARGET_GAMMA
+<
+  ui_label = "target Gamma";
+  ui_type  = "combo";
+  ui_items = "power Gamma\0sRGB\0";
+> = 0;
+
+uniform float INPUT_POWER_GAMMA
+<
+  ui_label = "input power Gamma";
+  ui_type  = "drag";
+  ui_min   = 1.f;
+  ui_max   = 3.f;
+  ui_step  = 0.01f;
+> = 2.2f;
+
 uniform float TARGET_INVERSE_GAMMA
 <
   ui_label = "target power Gamma";
@@ -71,16 +94,24 @@ void SDR_gamma_fix(
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  float3 fixedGamma = sRGB_inverse_EOTF(input);
+  float3 fixedGamma;
 
-  const float targetGamma = 1.f / TARGET_INVERSE_GAMMA;
+  if (INPUT_GAMMA == 0)
+    fixedGamma = sRGB_EOTF(input);
+  else
+    fixedGamma = pow(input, INPUT_POWER_GAMMA);
 
-  fixedGamma = pow(fixedGamma, targetGamma);
-
-  if (USE_BT1886)
+  if (TARGET_GAMMA == 0)
   {
-    fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_INVERSE_GAMMA, targetGamma);
+    const float targetGamma = 1.f / TARGET_INVERSE_GAMMA;
+
+    if (!USE_BT1886)
+      fixedGamma = pow(fixedGamma, targetGamma);
+    else
+      fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_INVERSE_GAMMA, targetGamma);
   }
+  else
+    sRGB_inverse_EOTF(fixedGamma);
 
   output = float4(fixedGamma, 1.f);
 }
