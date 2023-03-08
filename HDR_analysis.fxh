@@ -267,9 +267,9 @@ float3 heatmapRGBvalues(
   {
     if (CSP_PQ || overrideCSP == 1)
     {
-      output  = mul(bt709_to_bt2020_matrix, output);
-      output *= whitepoint / 10000.f;
-      output  = PQ_inverse_EOTF(output);
+      output  = mul(BT709_to_BT2020_matrix, output);
+      output *= whitepoint;
+      output  = PQ_OETF(output);
     }
     else if (CSP_SCRGB || overrideCSP == 2)
       output *= whitepoint / 80.f;
@@ -280,25 +280,6 @@ float3 heatmapRGBvalues(
   return output;
 }
 
-//void calcCLL(uint3 id : SV_DispatchThreadID)
-//{
-//  if (id.x == 0 && id.y == 0)
-//  {
-//    tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(0, 0), 0.f);
-//    tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(1, 0), 0.f);
-//    tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(2, 0), 0.f);
-//  }
-//
-//  if (id.x < BUFFER_WIDTH && id.y < BUFFER_HEIGHT)
-//  {
-//    const float3 pixel = tex2Dfetch(ReShade::BackBuffer, id.xy).rgb;
-//
-//    const float curCLL = clamp(10000.f * PQ_EOTF_single(dot(pixel, K_BT2020)), 0.f, 10000.f);
-//
-//    tex2Dstore(storageTargetCLLvalues, id.xy, curCLL);
-//  }
-//}
-
 void calcCLL(
       float4 vpos     : SV_Position,
       float2 texcoord : TEXCOORD,
@@ -307,9 +288,9 @@ void calcCLL(
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
   if (CSP_PQ)
-    curCLL = clamp(10000.f * PQ_EOTF_single(dot(pixel, K_BT2020)), 0.f, 10000.f);
+    curCLL = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
   else if (CSP_SCRGB)
-    curCLL = clamp(dot(pixel, K_BT709) * 80.f, 0, 65504.f);
+    curCLL = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else
     curCLL = 0.f;
 }
