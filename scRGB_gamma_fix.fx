@@ -20,18 +20,18 @@ void scRGB_gamma_fix(
 
   float3 fixedGamma;
 
-  fixedGamma = clamp(input, -65504.f, 65504.f);
+  fixedGamma = clamp(input, -2.f, 2.f);
 
-  fixedGamma = XsRGB_inverse_EOTF(fixedGamma);
+  fixedGamma = XsRGB_EOTF(fixedGamma);
 
-  if (dot(bt709_to_XYZ[1].rgb, fixedGamma) < 0.f)
+  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
     fixedGamma = float3(0.f, 0.f, 0.f);
 
   fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
 
   fixedGamma = fixNAN(fixedGamma);
 
-  fixedGamma = clamp(fixedGamma, -65504.f, 125.f);
+  //fixedGamma = clamp(fixedGamma, -65504.f, 125.f);
 
   output = float4(fixedGamma, 1.f);
 }
