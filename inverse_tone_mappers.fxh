@@ -10,13 +10,13 @@ float3 gamut(
   switch (gamutExpansionType)
   {
     case 0:
-      sdr = mul(bt709_to_bt2020_matrix, sdr);
+      sdr = mul(BT709_to_BT2020_matrix, sdr);
       break;
     case 1:
-      sdr = mul(myExp_bt709_to_bt2020, sdr);
+      sdr = mul(myExp_BT709_to_BT2020, sdr);
       break;
     case 2:
-      sdr = mul(expanded_bt709_to_bt2020_matrix, sdr);
+      sdr = mul(expanded_BT709_to_BT2020_matrix, sdr);
       break;
     case 3:
       sdr = ExpandColorGamutBT2020(sdr, 1.f, 5.f);
@@ -26,6 +26,7 @@ float3 gamut(
   return sdr;
 }
 
+// outputs nits
 float3 BT2446A_inverseToneMapping(
   const float3 input,
   const float  peakNits,
@@ -150,13 +151,13 @@ float3 BT2446A_inverseToneMapping(
   // get RGB
   hdr = pow(hdr, inverseGamma + gammaIn + gammaOut);
 
-  //expand target luminance to 10000nits
-  hdr = hdr * Lhdr /
-        10000.f;
+  //expand to target luminance
+  hdr = hdr * Lhdr;
 
   return hdr;
 }
 
+// outputs nits
 float3 mapSDRintoHDR(
   const float3 input,
   const float  paperWhiteNits,
@@ -167,20 +168,21 @@ float3 mapSDRintoHDR(
   float3 hdr;
   //map SDR into HDR
   if (usePaperWhite == false)
-    hdr = sdr * 100.f / 10000.f;
+    hdr = sdr * 100.f;
   else
-    hdr = sdr * paperWhiteNits / 10000.f;
+    hdr = sdr * paperWhiteNits;
 
   return hdr;
 }
 
 
 // HDR reference white in XYZ
-static const float3 XnYnZn           = {192.93f, 203.f, 221.05f};
-static const float  delta            = 6.f / 29.f;
-static const float  pow_delta_3      = pow(delta, 3.f);
-static const float  _3_x_pow_delta_2 = 3.f * pow(delta, 2.f);
+#define XnYnZn           float3(192.93f, 203.f, 221.05f)
+#define delta            6.f / 29.f
+#define pow_delta_3      pow(delta, 3.f)
+#define _3_x_pow_delta_2 3.f * pow(delta, 2.f)
 
+// outputs nits
 float3 BT2446C_inverseToneMapping(
   const float3 input,
   const float  sdrBrightness,
@@ -216,7 +218,7 @@ float3 BT2446C_inverseToneMapping(
 
   //6.1.5 (inverse)
   //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-  sdr = mul(bt2020_to_XYZ, sdr);
+  sdr = mul(BT2020_to_XYZ, sdr);
   const float Ysdr  = sdr.y;
         float x_sdr = 0.f;
         float y_sdr = 0.f;
@@ -369,7 +371,7 @@ float3 BT2446C_inverseToneMapping(
   const float  Xhdr = (x_sdr / y_sdr) * Yhdr;
   const float  Zhdr = ((1.f - x_sdr - y_sdr) / y_sdr) * Yhdr;
         float3 hdr  = float3(Xhdr, Yhdr, Zhdr);
-  hdr = mul(XYZ_to_bt2020, hdr);
+  hdr = mul(XYZ_to_BT2020, hdr);
 
   //6.1.2 (inverse)
   //inverse crosstalk matrix from 6.1.6
@@ -379,12 +381,6 @@ float3 BT2446C_inverseToneMapping(
     -alpha,  mlpha, -alpha,
     -alpha, -alpha,  mlpha);
   hdr = mul(mul(1.f / (1.f - 3.f * alpha), inverseCrosstalkMatrix), hdr);
-
-  //map into 10000 nits
-  hdr /= 10000.f;
-
-  //safety
-  //hdr = saturate(hdr);
 
   return hdr;
 }
