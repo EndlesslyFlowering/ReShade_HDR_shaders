@@ -17,7 +17,7 @@ float3 BT2446A_toneMapping(
                      : targetCLL;
 
   // adjust the max of 1 according to maxCLL
-  hdrIn = hdrIn * (10000.f / maxCLL);
+  hdrIn = hdrIn / maxCLL;
 
   // non-linear transfer function RGB->R'G'B'
   hdrIn = pow(hdrIn, gamma);
@@ -80,7 +80,7 @@ float3 BT2446A_toneMapping(
   hdrOut = saturate(hdrOut);
 
   // gamma decompression and adjust to targetCLL
-  hdrOut = pow(hdrOut, inverseGamma) * (targetCLL / 10000.f);
+  hdrOut = pow(hdrOut, inverseGamma) * targetCLL;
 
   return hdrOut;
 }
@@ -103,7 +103,7 @@ float3 BT2446A_toneMapping_mod1(
                      : targetCLL;
 
   // adjust the max of 1 according to maxCLL
-  hdrIn = hdrIn * (10000.f / maxCLL);
+  hdrIn = hdrIn / maxCLL;
 
   // non-linear transfer function RGB->R'G'B'
   hdrIn = pow(hdrIn, gamma);
@@ -167,8 +167,7 @@ float3 BT2446A_toneMapping_mod1(
   hdrOut = saturate(hdrOut);
 
   // gamma decompression and adjust to targetCLL
-  hdrOut = pow(hdrOut, inverseGamma) * (targetCLL / 10000.f);
+  hdrOut = pow(hdrOut, inverseGamma) * targetCLL;
 
   return hdrOut;
 }
-

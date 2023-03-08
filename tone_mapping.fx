@@ -260,8 +260,8 @@ void BT2446A_tm(
       hdr = PQ_EOTF(hdr);
     else if (CSP_SCRGB)
     {
-      hdr = hdr * 80.f / 10000.f;
-      hdr = mul(bt709_to_bt2020_matrix, hdr);
+      hdr = hdr * 80.f;
+      hdr = mul(BT709_to_BT2020_matrix, hdr);
     }
     else
       hdr = float3(0.f, 0.f, 0.f);
@@ -279,11 +279,11 @@ void BT2446A_tm(
     }
 
     if (CSP_PQ)
-      hdr = PQ_inverse_EOTF(hdr);
+      hdr = PQ_OETF(hdr);
     else if (CSP_SCRGB)
     {
-      hdr = mul(bt2020_to_bt709_matrix, hdr);
-      hdr = hdr * 10000.f / 80.f;
+      hdr = mul(BT2020_to_BT709_matrix, hdr);
+      hdr = hdr * 80.f;
     }
 //  }
 
