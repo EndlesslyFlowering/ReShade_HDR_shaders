@@ -265,13 +265,13 @@ float3 heatmapRGBvalues(
 
   if (sdrOutput == false)
   {
-    if (CSP_PQ || overrideCSP == 1)
+    if (BUFFER_COLOR_SPACE == CSP_PQ || overrideCSP == 1)
     {
       output  = mul(BT709_to_BT2020_matrix, output);
       output *= whitepoint;
       output  = PQ_OETF(output);
     }
-    else if (CSP_SCRGB || overrideCSP == 2)
+    else if (BUFFER_COLOR_SPACE == CSP_SCRGB || overrideCSP == 2)
       output *= whitepoint / 80.f;
   }
   else
@@ -287,9 +287,9 @@ void calcCLL(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  if (CSP_PQ)
+  if (BUFFER_COLOR_SPACE == CSP_PQ)
     curCLL = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
-  else if (CSP_SCRGB)
+  else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     curCLL = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else
     curCLL = 0.f;

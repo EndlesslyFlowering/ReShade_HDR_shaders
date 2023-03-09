@@ -256,9 +256,9 @@ void BT2446A_tm(
 
 //  if (maxCLL > TARGET_CLL)
 //  {
-    if (CSP_PQ)
+    if (BUFFER_COLOR_SPACE == CSP_PQ)
       hdr = PQ_EOTF(hdr);
-    else if (CSP_SCRGB)
+    else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     {
       hdr = hdr * 80.f;
       hdr = mul(BT709_to_BT2020_matrix, hdr);
@@ -278,9 +278,9 @@ void BT2446A_tm(
         break;
     }
 
-    if (CSP_PQ)
+    if (BUFFER_COLOR_SPACE == CSP_PQ)
       hdr = PQ_OETF(hdr);
-    else if (CSP_SCRGB)
+    else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     {
       hdr = mul(BT2020_to_BT709_matrix, hdr);
       hdr = hdr * 80.f;
@@ -291,9 +291,9 @@ void BT2446A_tm(
 
   if (SHOW_ADAPTIVE_MAXCLL)
   {
-    const float bright = CSP_PQ
+    const float bright = BUFFER_COLOR_SPACE == CSP_PQ
                        ? 0.58068888f
-                       : CSP_SCRGB
+                       : BUFFER_COLOR_SPACE == CSP_SCRGB
                        ? 203.f / 80.f
                        : 1.f;
     float actualMaxCLL    = tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r;

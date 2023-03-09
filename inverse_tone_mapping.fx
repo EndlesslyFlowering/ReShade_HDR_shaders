@@ -178,9 +178,9 @@ void BT2446_itm(
     break;
   }
 
-  if(CSP_PQ)
+  if(BUFFER_COLOR_SPACE == CSP_PQ)
     hdr = PQ_OETF(hdr);
-  else if(CSP_SCRGB)
+  else if(BUFFER_COLOR_SPACE == CSP_SCRGB)
   {
     hdr = mul(BT2020_to_BT709_matrix, hdr);
     hdr = hdr / 80.f;

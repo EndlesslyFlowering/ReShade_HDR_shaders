@@ -226,9 +226,9 @@ void calcCLLown(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  if ((CSP_PQ || OVERRIDE_CSP == 1) && OVERRIDE_CSP != 2)
+  if ((BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1) && OVERRIDE_CSP != 2)
     curCLL = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
-  else if ((CSP_SCRGB || OVERRIDE_CSP == 2) && OVERRIDE_CSP != 1)
+  else if ((BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2) && OVERRIDE_CSP != 1)
     curCLL = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else
     curCLL = 0.f;
@@ -241,7 +241,7 @@ void HDR_analysis(
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  if (CSP_PQ || CSP_SCRGB || OVERRIDE_CSP > 0)
+  if (BUFFER_COLOR_SPACE == CSP_PQ || BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP > 0)
   {
     //float maxCLL = float(uint(tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
     //float avgCLL = float(uint(tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
@@ -281,9 +281,9 @@ void HDR_analysis(
         output = (0.f, 0.f, 0.f, 0.f);
     }
 
-    const float bright = CSP_PQ || OVERRIDE_CSP == 1
+    const float bright = BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1
                        ? 0.58068888f
-                       : CSP_SCRGB || OVERRIDE_CSP == 2
+                       : BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2
                        ? 203.f / 80.f
                        : 1.f;
 
