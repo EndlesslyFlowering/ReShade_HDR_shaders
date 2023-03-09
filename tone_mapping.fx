@@ -342,13 +342,6 @@ technique adaptive_maxCLL
   enabled = false;
 >
 {
-  //pass calcCLLvalues
-  //{
-  //  ComputeShader = calcCLL < THREAD_SIZE0, THREAD_SIZE0>;
-  //  DispatchSizeX = DISPATCH_X0;
-  //  DispatchSizeY = DISPATCH_Y0;
-  //}
-
   pass calcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -356,16 +349,16 @@ technique adaptive_maxCLL
     RenderTarget = CLLvalues;
   }
 
-  pass calcMaxCLLvalue0
+  pass getMaxCLLvalue0
   {
-    ComputeShader = calcMaxCLL0<THREAD_SIZE1, 1>;
+    ComputeShader = getMaxCLL0<THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 1;
   }
 
-  pass calcMaxCLLvalue1
+  pass getMaxCLLvalue1
   {
-    ComputeShader = calcMaxCLL1<1, 1>;
+    ComputeShader = getMaxCLL1<1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -390,13 +383,6 @@ technique adaptive_maxCLL_NEW
   enabled = false;
 >
 {
-  //pass calcCLLvalues
-  //{
-  //  ComputeShader = calcCLL < THREAD_SIZE0, THREAD_SIZE0>;
-  //  DispatchSizeX = DISPATCH_X0;
-  //  DispatchSizeY = DISPATCH_Y0;
-  //}
-
   pass calcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -404,23 +390,23 @@ technique adaptive_maxCLL_NEW
     RenderTarget = CLLvalues;
   }
 
-  pass calcMaxCLLvalue0_NEW
+  pass getMaxCLLvalue0_NEW
   {
-    ComputeShader = calcMaxCLL0_NEW<THREAD_SIZE1, 1>;
+    ComputeShader = getMaxCLL0_NEW<THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 2;
   }
 
-  pass calcMaxCLLvalue1_NEW
+  pass getMaxCLLvalue1_NEW
   {
-    ComputeShader = calcMaxCLL1_NEW<4, 4>;
+    ComputeShader = getMaxCLL1_NEW<4, 4>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass calcFinalMaxCLLvalue1_NEW
+  pass getFinalMaxCLLvalue1_NEW
   {
-    ComputeShader = calcFinalMaxCLL_NEW<1, 1>;
+    ComputeShader = getFinalMaxCLL_NEW<1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
