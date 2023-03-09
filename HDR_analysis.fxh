@@ -110,7 +110,7 @@ storage2D storageTargetMaxAvgMinCLLSHOWvalues
 texture2D intermediateCLLvalues
 {
    Width = BUFFER_WIDTH;
-  Height = 2;
+  Height = 3;
 
   MipLevels = 0;
 
@@ -287,16 +287,81 @@ void calcCLL(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
+  float curPixel = 0.f;
+
   if (BUFFER_COLOR_SPACE == CSP_PQ)
-    curCLL = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
   else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
-    curCLL = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
+    curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else
-    curCLL = 0.f;
+    curPixel = 0.f;
+
+  curCLL = curPixel < 0.f
+         ? 0.f
+         : curPixel;
 }
 
-// calculate per column first
-void calcMaxCLL0(uint3 id : SV_DispatchThreadID)
+// per column first
+void getMaxAvgMinCLL0(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x < BUFFER_WIDTH)
+  {
+    float maxCLL = 0.f;
+    float avgCLL = 0.f;
+    float minCLL = 65504.f;
+
+    for (int y = 0; y < BUFFER_HEIGHT; y++)
+    {
+      const float curCLL = tex2Dfetch(samplerCLLvalues, int2(id.x, y)).r;
+
+      if (curCLL > maxCLL)
+        maxCLL = curCLL;
+
+      avgCLL += curCLL;
+
+      if (curCLL < minCLL)
+        minCLL = curCLL;
+    }
+
+    avgCLL /= BUFFER_HEIGHT;
+
+    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 0), maxCLL);
+    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 1), avgCLL);
+    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 2), minCLL);
+  }
+}
+
+void getMaxAvgMinCLL1(uint3 id : SV_DispatchThreadID)
+{
+  float maxCLL = 0.f;
+  float avgCLL = 0.f;
+  float minCLL = 65504.f;
+
+  for (int x = 0; x < BUFFER_WIDTH; x++)
+  {
+    const float curMaxCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 0)).r;
+    const float curAvgCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 1)).r;
+    const float curMinCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 2)).r;
+
+    if (curMaxCLL > maxCLL)
+      maxCLL = curMaxCLL;
+
+    avgCLL += curAvgCLL;
+
+    if (curMinCLL < minCLL)
+      minCLL = curMinCLL;
+  }
+
+  avgCLL /= BUFFER_WIDTH;
+
+  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(0, 0), maxCLL);
+  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(1, 0), avgCLL);
+  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(2, 0), minCLL);
+}
+
+
+// per column first
+void getMaxCLL0(uint3 id : SV_DispatchThreadID)
 {
   if (id.x < BUFFER_WIDTH)
   {
@@ -314,7 +379,23 @@ void calcMaxCLL0(uint3 id : SV_DispatchThreadID)
   }
 }
 
-void calcMaxCLL0_NEW(uint3 id : SV_DispatchThreadID)
+void getMaxCLL1(uint3 id : SV_DispatchThreadID)
+{
+  float maxCLL = 0.f;
+
+  for (int x = 0; x < BUFFER_WIDTH; x++)
+  {
+    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 0)).r;
+
+    if (curCLL > maxCLL)
+      maxCLL = curCLL;
+  }
+
+  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(0, 0), maxCLL);
+}
+
+
+void getMaxCLL0_NEW(uint3 id : SV_DispatchThreadID)
 {
   if (id.x < BUFFER_WIDTH)
   {
@@ -354,23 +435,7 @@ void calcMaxCLL0_NEW(uint3 id : SV_DispatchThreadID)
   }
 }
 
-
-void calcMaxCLL1(uint3 id : SV_DispatchThreadID)
-{
-  float maxCLL = 0.f;
-
-  for (int x = 0; x < BUFFER_WIDTH; x++)
-  {
-    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 0)).r;
-
-    if (curCLL > maxCLL)
-      maxCLL = curCLL;
-  }
-
-  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(0, 0), maxCLL);
-}
-
-void calcMaxCLL1_NEW(uint3 id : SV_DispatchThreadID)
+void getMaxCLL1_NEW(uint3 id : SV_DispatchThreadID)
 {
   switch (id.x)
   {
@@ -451,7 +516,7 @@ void calcMaxCLL1_NEW(uint3 id : SV_DispatchThreadID)
   }
 }
 
-void calcFinalMaxCLL_NEW(uint3 id : SV_DispatchThreadID)
+void getFinalMaxCLL_NEW(uint3 id : SV_DispatchThreadID)
 {
   const float maxCLL0 = tex2Dfetch(storageFinal4, int2(0, 0)).r;
   const float maxCLL1 = tex2Dfetch(storageFinal4, int2(1, 0)).r;
@@ -463,77 +528,78 @@ void calcFinalMaxCLL_NEW(uint3 id : SV_DispatchThreadID)
   tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(0, 0), maxCLL);
 }
 
-// calculate per column first
-void calcAvgCLL0(uint3 id : SV_DispatchThreadID)
-{
-  if (id.x < BUFFER_WIDTH)
-  {
-    float avgCLL = 0.f;
 
-    for (int y = 0; y < BUFFER_HEIGHT; y++)
-    {
-      const float curCLL = tex2Dfetch(samplerCLLvalues, int2(id.x, y)).r;
+// per column first
+//void getAvgCLL0(uint3 id : SV_DispatchThreadID)
+//{
+//  if (id.x < BUFFER_WIDTH)
+//  {
+//    float avgCLL = 0.f;
+//
+//    for (int y = 0; y < BUFFER_HEIGHT; y++)
+//    {
+//      const float curCLL = tex2Dfetch(samplerCLLvalues, int2(id.x, y)).r;
+//
+//      avgCLL += curCLL;
+//    }
+//
+//    avgCLL /= BUFFER_HEIGHT;
+//
+//    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 1), avgCLL);
+//  }
+//}
+//
+//void getAvgCLL1(uint3 id : SV_DispatchThreadID)
+//{
+//  float avgCLL = 0.f;
+//
+//  for (int x = 0; x < BUFFER_WIDTH; x++)
+//  {
+//    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 1)).r;
+//
+//    avgCLL += curCLL;
+//  }
+//
+//  avgCLL /= BUFFER_WIDTH;
+//
+//  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(1, 0), avgCLL);
+//}
+//
+//
+//// per column first
+//void getMinCLL0(uint3 id : SV_DispatchThreadID)
+//{
+//  if (id.x < BUFFER_WIDTH)
+//  {
+//    float minCLL = 65504.f;
+//
+//    for (int y = 0; y < BUFFER_HEIGHT; y++)
+//    {
+//      const float curCLL = tex2Dfetch(samplerCLLvalues, int2(id.x, y)).r;
+//
+//      if (curCLL < minCLL)
+//        minCLL = curCLL;
+//    }
+//
+//    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 2), minCLL);
+//  }
+//}
+//
+//void getMinCLL1(uint3 id : SV_DispatchThreadID)
+//{
+//  float minCLL = 65504.f;
+//
+//  for (int x = 0; x < BUFFER_WIDTH; x++)
+//  {
+//    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 2)).r;
+//
+//    if (curCLL < minCLL)
+//      minCLL = curCLL;
+//  }
+//
+//  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(2, 0), minCLL);
+//}
 
-      avgCLL = avgCLL + curCLL;
-    }
-
-    avgCLL /= BUFFER_HEIGHT;
-
-    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 0), avgCLL);
-  }
-}
-
-
-void calcAvgCLL1(uint3 id : SV_DispatchThreadID)
-{
-  float avgCLL = 0.f;
-
-  for (int x = 0; x < BUFFER_WIDTH; x++)
-  {
-    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 0)).r;
-
-    avgCLL += curCLL;
-  }
-
-  avgCLL /= BUFFER_WIDTH;
-
-  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(1, 0), avgCLL);
-}
-
-// calculate per column first
-void calcMinCLL0(uint3 id : SV_DispatchThreadID)
-{
-  if (id.x < BUFFER_WIDTH)
-  {
-    float minCLL = 10001.f;
-
-    for (int y = 0; y < BUFFER_HEIGHT; y++)
-    {
-      const float curCLL = tex2Dfetch(samplerCLLvalues, int2(id.x, y)).r;
-
-      if (curCLL < minCLL)
-        minCLL = curCLL;
-    }
-
-    tex2Dstore(storageTargetIntermediateCLLvalues, int2(id.x, 0), minCLL);
-  }
-}
-
-
-void calcMinCLL1(uint3 id : SV_DispatchThreadID)
-{
-  float minCLL = 10001.f;
-
-  for (int x = 0; x < BUFFER_WIDTH; x++)
-  {
-    const float curCLL = tex2Dfetch(samplerIntermediateCLLvalues, int2(x, 0)).r;
-
-    if (curCLL < minCLL)
-      minCLL = curCLL;
-  }
-
-  tex2Dstore(storageTargetMaxAvgMinCLLvalues, int2(2, 0), minCLL);
-}
 
 void showCLLvaluesCopy(uint3 id : SV_DispatchThreadID)
 {

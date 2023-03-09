@@ -226,12 +226,18 @@ void calcCLLown(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
+  float curPixel = 0.f;
+
   if ((BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1) && OVERRIDE_CSP != 2)
-    curCLL = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
   else if ((BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2) && OVERRIDE_CSP != 1)
-    curCLL = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
+    curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else
-    curCLL = 0.f;
+    curPixel = 0.f;
+
+  curCLL = curPixel < 0.f
+         ? 0.f
+         : curPixel;
 }
 
 void HDR_analysis(
@@ -289,9 +295,9 @@ void HDR_analysis(
 
     if (SHOW_CLL_VALUES)
     {
-      DrawText_Digit(float2(100.f, 0.f),                 CLL_FONT_SIZE, 1, texcoord, 10, maxCLL_show, output, bright);
-      DrawText_Digit(float2(100.f, CLL_FONT_SIZE),       CLL_FONT_SIZE, 1, texcoord, 10, avgCLL_show, output, bright);
-      DrawText_Digit(float2(100.f, CLL_FONT_SIZE * 2.f), CLL_FONT_SIZE, 1, texcoord, 10, minCLL_show, output, bright);
+      DrawText_Digit(float2(100.f, 0.f),                 CLL_FONT_SIZE, 1, texcoord, 6, maxCLL_show, output, bright);
+      DrawText_Digit(float2(100.f, CLL_FONT_SIZE),       CLL_FONT_SIZE, 1, texcoord, 6, avgCLL_show, output, bright);
+      DrawText_Digit(float2(100.f, CLL_FONT_SIZE * 2.f), CLL_FONT_SIZE, 1, texcoord, 6, minCLL_show, output, bright);
     }
 
     if (SHOW_CLL_FROM_CURSOR)
@@ -308,7 +314,7 @@ void HDR_analysis(
       DrawText_String(float2(0.f,              CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output, bright);
       DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output, bright);
       DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output, bright);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  10,   cursorCLL,      output, bright);
+      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  6,    cursorCLL,      output, bright);
       const int textR[2] = { __R, __Colon };
       const int textG[2] = { __G, __Colon };
       const int textB[2] = { __B, __Colon };
@@ -316,9 +322,9 @@ void HDR_analysis(
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2,           output, bright);
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2,           output, bright);
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2,           output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 10,    cursorRGB.r, output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 10,    cursorRGB.g, output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 10,    cursorRGB.b, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.r, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.g, output, bright);
+      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.b, output, bright);
     }
   }
   else
@@ -341,13 +347,6 @@ technique HDR_analysis
   }
 #endif
 
-  //pass calcCLLvalues
-  //{
-  //  ComputeShader = calcCLL < THREAD_SIZE0, THREAD_SIZE0>;
-  //  DispatchSizeX = DISPATCH_X0;
-  //  DispatchSizeY = DISPATCH_Y0;
-  //}
-
   pass calcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -355,51 +354,65 @@ technique HDR_analysis
     RenderTarget = CLLvalues;
   }
 
-  pass calcMaxCLLvalue0
+  pass getMaxAvgMinCLLvalue0
   {
-    ComputeShader = calcMaxCLL0 < THREAD_SIZE1, 1>;
+    ComputeShader = getMaxAvgMinCLL0 <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 1;
   }
 
-  pass calcMaxCLLvalue1
+  pass getMaxAvgMinCLLvalue1
   {
-    ComputeShader = calcMaxCLL1 < 1, 1>;
+    ComputeShader = getMaxAvgMinCLL1 <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass calcAvgCLLvalue0
-  {
-    ComputeShader = calcAvgCLL0 < THREAD_SIZE1, 1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = 1;
-  }
-
-  pass calcAvgCLLvalue1
-  {
-    ComputeShader = calcAvgCLL1 < 1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
-  pass calcMinCLLvalue0
-  {
-    ComputeShader = calcMinCLL0 < THREAD_SIZE1, 1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = 1;
-  }
-
-  pass calcMinCLLvalue1
-  {
-    ComputeShader = calcMinCLL1 < 1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
+//  pass getMaxCLLvalue0
+//  {
+//    ComputeShader = getMaxCLL0 <THREAD_SIZE1, 1>;
+//    DispatchSizeX = DISPATCH_X1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass getMaxCLLvalue1
+//  {
+//    ComputeShader = getMaxCLL1 <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass getAvgCLLvalue0
+//  {
+//    ComputeShader = getAvgCLL0 <THREAD_SIZE1, 1>;
+//    DispatchSizeX = DISPATCH_X1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass getAvgCLLvalue1
+//  {
+//    ComputeShader = getAvgCLL1 <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass getMinCLLvalue0
+//  {
+//    ComputeShader = getMinCLL0 <THREAD_SIZE1, 1>;
+//    DispatchSizeX = DISPATCH_X1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass getMinCLLvalue1
+//  {
+//    ComputeShader = getMinCLL1 <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
 
   pass copySHOWvalues
   {
-    ComputeShader = showCLLvaluesCopy < 1, 1>;
+    ComputeShader = showCLLvaluesCopy <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
