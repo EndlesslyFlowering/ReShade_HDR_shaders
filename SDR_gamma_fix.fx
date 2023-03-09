@@ -26,7 +26,7 @@ uniform float INPUT_POWER_GAMMA
   ui_step  = 0.01f;
 > = 2.2f;
 
-uniform float TARGET_INVERSE_GAMMA
+uniform float TARGET_POWER_GAMMA
 <
   ui_label = "target power Gamma";
   ui_type  = "drag";
@@ -103,12 +103,11 @@ void SDR_gamma_fix(
 
   if (TARGET_GAMMA == 0)
   {
-    const float targetGamma = 1.f / TARGET_INVERSE_GAMMA;
+    const float targetGamma = 1.f / TARGET_POWER_GAMMA;
 
-    if (!USE_BT1886)
-      fixedGamma = pow(fixedGamma, targetGamma);
-    else
-      fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_INVERSE_GAMMA, targetGamma);
+    fixedGamma = pow(fixedGamma, targetGamma);
+     if (USE_BT1886)
+      fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_POWER_GAMMA, targetGamma);
   }
   else
     sRGB_inverse_EOTF(fixedGamma);
