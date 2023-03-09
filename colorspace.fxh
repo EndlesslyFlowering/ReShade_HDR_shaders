@@ -1,48 +1,8 @@
-#undef CSP_UNKNOWN
-#undef CSP_SRGB
-#undef CSP_SCRGB
-#undef CSP_PQ
-#undef CSP_HLG
-
-#ifdef BUFFER_COLOR_SPACE
-  #if BUFFER_COLOR_SPACE == 0
-    #define CSP_UNKNOWN true
-    #define CSP_SRGB    false
-    #define CSP_SCRGB   false
-    #define CSP_PQ      false
-    #define CSP_HLG     false
-  #elif BUFFER_COLOR_SPACE == 1
-    #define CSP_UNKNOWN false
-    #define CSP_SRGB    true
-    #define CSP_SCRGB   false
-    #define CSP_PQ      false
-    #define CSP_HLG     false
-  #elif BUFFER_COLOR_SPACE == 2
-    #define CSP_UNKNOWN false
-    #define CSP_SRGB    false
-    #define CSP_SCRGB   true
-    #define CSP_PQ      false
-    #define CSP_HLG     false
-  #elif BUFFER_COLOR_SPACE == 3
-    #define CSP_UNKNOWN false
-    #define CSP_SRGB    false
-    #define CSP_SCRGB   false
-    #define CSP_PQ      true
-    #define CSP_HLG     false
-  #elif BUFFER_COLOR_SPACE == 4
-    #define CSP_UNKNOWN false
-    #define CSP_SRGB    false
-    #define CSP_SCRGB   false
-    #define CSP_PQ      false
-    #define CSP_HLG     true
-  #endif
-#else
-  #define CSP_UNKNOWN true
-  #define CSP_SRGB    false
-  #define CSP_SCRGB   false
-  #define CSP_PQ      false
-  #define CSP_HLG     false
-#endif
+#define CSP_UNKNOWN 0
+#define CSP_SRGB    1
+#define CSP_SCRGB   2
+#define CSP_PQ      3
+#define CSP_HLG     4
 
 #define K_BT709  float3(0.2126f, 0.7152f, 0.0722f)
 #define K_BT2020 float3(0.2627f, 0.6780f, 0.0593f)
@@ -58,7 +18,7 @@
 //gamma compressed->display (also linear) = EOTF
 
 // IEC 61966-2-1
-float sRGB_EOTF_single(const float C)
+float sRGB_EOTF(const float C)
 {
   if (C <= 0.04045f)
     return C / 12.92f;
@@ -69,9 +29,9 @@ float sRGB_EOTF_single(const float C)
 float3 sRGB_EOTF(const float3 colour)
 {
   return float3(
-    sRGB_EOTF_single(colour.r),
-    sRGB_EOTF_single(colour.g),
-    sRGB_EOTF_single(colour.b));
+    sRGB_EOTF(colour.r),
+    sRGB_EOTF(colour.g),
+    sRGB_EOTF(colour.b));
 }
 float sRGB_inverse_EOTF(const float C)
 {
