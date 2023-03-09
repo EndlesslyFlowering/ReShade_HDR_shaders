@@ -10,6 +10,32 @@ uniform float SDR_WHITEPOINT_NITS
    ui_step = 1.f;
 > = 80.f;
 
+uniform bool CLAMP
+<
+  ui_category = "clamping";
+  ui_label    = "clamp values";
+> = false;
+
+uniform float CLAMP_NEGATIVE_TO
+<
+  ui_category = "clamping";
+  ui_label    = "clamp negative values to";
+  ui_type     = "drag";
+  ui_min      = -125.f;
+  ui_max      = -1.f;
+  ui_step     = 0.1f;
+> = -125.f;
+
+uniform float CLAMP_POSITIVE_TO
+<
+  ui_category = "clamping";
+  ui_label    = "clamp positive values to";
+  ui_type     = "drag";
+  ui_min      = 1.f;
+  ui_max      = 125.f;
+  ui_step     = 0.1f;
+> = 125.f;
+
 
 void scRGB_gamma_fix(
       float4 vpos     : SV_Position,
@@ -18,9 +44,10 @@ void scRGB_gamma_fix(
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  float3 fixedGamma;
+  float3 fixedGamma = input;
 
-  fixedGamma = clamp(input, -2.f, 2.f);
+  if (CLAMP)
+    fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
 
   fixedGamma = XsRGB_EOTF(fixedGamma);
 
