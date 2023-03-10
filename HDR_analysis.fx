@@ -35,9 +35,8 @@ uniform uint CLL_FONT_SIZE
 uniform bool ROUNDING_WORKAROUND
 <
   ui_category = "CLL stuff";
-  ui_label    = "work around rounding errors for displaying CLL values";
-  ui_tooltip  = "a value of 0.01 is added to every CLL value\n"
-                "0.00 may be shown as 0.01 instead";
+  ui_label    = "work around rounding errors for displaying maxCLL";
+  ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
 > = false;
 
 uniform bool SHOW_HEATMAP
@@ -98,7 +97,7 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_type  = "drag";
   ui_min   = 0.f;
   ui_max   = 10000.f;
-  ui_step  = 1.f;
+  ui_step  = 0.001f;
 > = 10000.f;
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
@@ -258,9 +257,9 @@ void HDR_analysis(
 
     if (ROUNDING_WORKAROUND)
     {
-      maxCLL_show += 0.01f;
-      avgCLL_show += 0.01f;
-      minCLL_show += 0.01f;
+      maxCLL_show += 0.005f;
+      //avgCLL_show += 0.005f;
+      //minCLL_show += 0.005f;
     }
 
     if (SHOW_HEATMAP)
