@@ -1,5 +1,6 @@
 #include "ReShade.fxh"
 #include "inverse_tone_mappers.fxh"
+#include "DrawText_fix.fxh"
 
 
 uniform uint INVERSE_TONEMAPPING_METHOD
@@ -33,7 +34,7 @@ uniform float TARGET_PEAK_NITS_BT2446A
   ui_category = "BT.2446 Method A";
   ui_label    = "target peak luminance (nits)";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = 1.f;
   ui_max      = 10000.f;
   ui_step     = 10.f;
 > = 1000.f;
@@ -44,7 +45,7 @@ uniform float REF_WHITE_NITS_BT2446A
   ui_label    = "reference white luminance (nits)";
   ui_tooltip  = "can't be higher than \"target peak luminance\"";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = 1.f;
   ui_max      = 1200.f;
   ui_step     = 0.1f;
 > = 100.f;
@@ -56,7 +57,7 @@ uniform float MAX_INPUT_NITS_BT2446A
   ui_tooltip  = "can't be lower than \"reference white luminance\"\n"
                 "can't be higher than \"target peak luminance\"";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = 1.f;
   ui_max      = 1200.f;
   ui_step     = 0.1f;
 > = 100.f;
@@ -92,7 +93,7 @@ uniform float REF_WHITE_NITS_BT2446C
   ui_category = "BT.2446 Method C";
   ui_label    = "reference white luminance (nits)";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = 1.f;
   ui_max      = 1200.f;
   ui_step     = 0.1f;
 > = 100.f;
@@ -148,7 +149,7 @@ uniform float TARGET_PEAK_NITS_MAP_SDR_INTO_HDR
   ui_category = "map SDR into HDR";
   ui_label    = "target peak luminance (nits)";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = 1.f;
   ui_max      = 1000.f;
   ui_step     = 0.1f;
 > = 100.f;
@@ -184,7 +185,7 @@ void BT2446_itm(
         REF_WHITE_NITS_BT2446A < TARGET_PEAK_NITS_BT2446A
       ? REF_WHITE_NITS_BT2446A
       : TARGET_PEAK_NITS_BT2446A,
-        REF_WHITE_NITS_BT2446A <= MAX_INPUT_NITS_BT2446A
+        MAX_INPUT_NITS_BT2446A >= REF_WHITE_NITS_BT2446A
       ? MAX_INPUT_NITS_BT2446A / REF_WHITE_NITS_BT2446A
       : 1.f,
         GAMMA_IN,
