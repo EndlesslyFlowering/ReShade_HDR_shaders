@@ -8,15 +8,18 @@ uniform uint INVERSE_TONEMAPPING_METHOD
   ui_label = "inverse tone mapping method";
   ui_type  = "combo";
   ui_items = "BT.2446 Method A\0"
-             "map SDR into HDR\0"
-             "BT.2446 Methoc C\0";
+             "BT.2446 Methoc C\0"
+             "map SDR into HDR\0";
 > = 0;
 
 uniform uint EXPAND_GAMUT
 <
   ui_label   = "Vivid HDR";
   ui_type    = "combo";
-  ui_items   = "no\0my expanded colourspace\0expand colourspace\0brighter highlights\0";
+  ui_items   = "no\0"
+               "my expanded colourspace\0"
+               "expand colourspace\0"
+               "brighter highlights\0";
   ui_tooltip = "interesting gamut expansion things from Microsoft\n"
                "and me ;)\n"
                "makes things look more colourful";
@@ -194,19 +197,19 @@ void BT2446_itm(
     break;
     case 1:
     {
-      hdr = mapSDRintoHDR(
-        hdr,
-        TARGET_PEAK_NITS_MAP_SDR_INTO_HDR);
-    }
-    break;
-    case 2:
-    {
       hdr = BT2446C_inverseToneMapping(
         hdr,
         REF_WHITE_NITS_BT2446C,
         0.33f - ALPHA,
         USE_ACHROMATIC_CORRECTION,
         SIGMA);
+    }
+    break;
+    case 2:
+    {
+      hdr = mapSDRintoHDR(
+        hdr,
+        TARGET_PEAK_NITS_MAP_SDR_INTO_HDR);
     }
     break;
   }
