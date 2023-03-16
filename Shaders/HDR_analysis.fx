@@ -10,6 +10,11 @@ uniform float2 MOUSE_POSITION
   source = "mousepoint";
 >;
 
+uniform bool SHOW_CIE
+<
+  ui_label = "show CIE chart";
+> = false;
+
 uniform bool SHOW_CLL_VALUES
 <
   ui_category = "CLL stuff";
@@ -286,8 +291,28 @@ void HDR_analysis(
         output = (0.f, 0.f, 0.f, 0.f);
     }
 
+    if (SHOW_CIE)
+    {
+      const uint current_x_coord = texcoord.x * BUFFER_WIDTH;  // expand to actual pixel values
+      const uint current_y_coord = texcoord.y * BUFFER_HEIGHT; // ^
+      // draw the chart in the bottom left corner
+      if (current_x_coord < CIE_BG_X && current_y_coord > (BUFFER_HEIGHT - CIE_BG_Y))
+      {
+        // get coords for the sampler
+        const uint2 current_sampler_coords =
+              uint2(current_x_coord,
+                    current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y + 1));
+
+        const float3 current_pixel_to_display = tex2Dfetch(sampler_CIE_1931_cur, current_sampler_coords).rgb;
+        if (BUFFER_COLOR_SPACE == CSP_PQ)
+          output = float4(mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * 100.f)), 1.f);
+        else
+          output = float4(current_pixel_to_display * 1.25f, 1.f);
+      }
+    }
+
     const float bright = BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1
-                       ? 0.58068888f
+                       ? 0.58068888f // 203 nits in PQ
                        : BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2
                        ? 203.f / 80.f
                        : 1.f;
@@ -345,6 +370,20 @@ technique HDR_analysis
      PixelShader = testy;
   }
 #endif
+
+  pass copy_CIE_bg
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = copy_CIE_bg;
+    RenderTarget = CIE_1931_cur;
+  }
+
+  pass generate_CIE_chart
+  {
+    ComputeShader = generate_CIE_chart <THREAD_SIZE0, THREAD_SIZE1>;
+    DispatchSizeX = DISPATCH_X1;
+    DispatchSizeY = DISPATCH_Y1;
+  }
 
   pass calcCLLvalues
   {

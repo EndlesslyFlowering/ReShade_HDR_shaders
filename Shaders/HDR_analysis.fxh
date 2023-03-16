@@ -155,6 +155,59 @@ storage2D storageFinal4
   MipLevel = 0;
 };
 
+#define CIE_X          734
+#define CIE_Y          835
+#define CIE_BG_X       934
+#define CIE_BG_Y      1035
+#define CIE_BG_BORDER  100
+texture2D CIE_1931 <source = "CIE_1931_linear.png";>
+{
+  Width     = CIE_X;
+  Height    = CIE_Y;
+  MipLevels = 0;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1931
+{
+  Texture = CIE_1931;
+};
+
+texture2D CIE_1931_black_bg <source = "CIE_1931_black_bg_linear.png";>
+{
+  Width     = CIE_BG_X;
+  Height    = CIE_BG_Y;
+  MipLevels = 0;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1931_black_bg
+{
+  Texture = CIE_1931_black_bg;
+};
+
+texture2D CIE_1931_cur
+{
+  Width     = CIE_BG_X;
+  Height    = CIE_BG_Y;
+  MipLevels = 0;
+  Format    = RGBA8;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1931_cur
+{
+  Texture = CIE_1931_cur;
+};
+
+storage2D storage_CIE_1931_cur
+{
+  Texture  = CIE_1931_cur;
+  MipLevel = 0;
+};
 
 float3 heatmapRGBvalues(
   const float Y,
@@ -615,5 +668,38 @@ void showCLLvaluesCopy(uint3 id : SV_DispatchThreadID)
     tex2Dstore(storageTargetMaxAvgMinCLLSHOWvalues, int2(0, 0), maxCLL);
     tex2Dstore(storageTargetMaxAvgMinCLLSHOWvalues, int2(1, 0), avgCLL);
     tex2Dstore(storageTargetMaxAvgMinCLLSHOWvalues, int2(2, 0), minCLL);
+  }
+}
+
+
+// copy over clean bg first every time
+void copy_CIE_bg(
+      float4 vpos     : SV_Position,
+      float2 texcoord : TEXCOORD,
+  out float4 CIE_bg   : SV_TARGET)
+{
+  CIE_bg = float4(tex2D(sampler_CIE_1931_black_bg, texcoord).rgb, 1.f);
+}
+
+void generate_CIE_chart(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x < BUFFER_WIDTH && id.y < BUFFER_HEIGHT)
+  {
+    const float3 pixel = tex2Dfetch(ReShade::BackBuffer, id.xy).rgb;
+
+    // get XYZ
+    const float3 XYZ = BUFFER_COLOR_SPACE == CSP_PQ
+                     ? mul(BT2020_to_XYZ, PQ_EOTF(pixel))
+                     : BUFFER_COLOR_SPACE == CSP_SCRGB
+                     ? mul(BT709_to_XYZ, pixel) * 80.f
+                     : float3(0.f, 0.f, 0.f);
+    // get xy
+    const float  xyz = XYZ.x + XYZ.y + XYZ.z;
+    const uint2  xy  = uint2(XYZ.x / xyz * 1000.f, // 1000 is the original texture size
+                    1000.f - XYZ.y / xyz * 1000.f - (1000 - CIE_Y));
+
+  tex2Dstore(storage_CIE_1931_cur,
+             uint2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER), // adjust for the added borders of 100 pixels
+             float4(tex2Dfetch(sampler_CIE_1931, xy).rgba));
   }
 }
