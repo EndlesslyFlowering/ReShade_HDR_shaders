@@ -33,6 +33,7 @@ float3 sRGB_EOTF(const float3 colour)
     sRGB_EOTF(colour.g),
     sRGB_EOTF(colour.b));
 }
+
 float sRGB_inverse_EOTF(const float C)
 {
   if (C <= 0.0031308f)
@@ -49,12 +50,13 @@ float3 sRGB_inverse_EOTF(const float3 colour)
     sRGB_inverse_EOTF(colour.b));
 }
 
+// extended sRGB gamma including above 1 and below -1
 float XsRGB_EOTF(const float C)
 {
   if (C < -1)
     return
       -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
-  if (C < -0.04045f)
+  else if (C < -0.04045f)
     return
       -pow((-C + 0.055f) / 1.055f, 2.4f);
   else if (C <= 0.04045f)
@@ -74,6 +76,61 @@ float3 XsRGB_EOTF(const float3 colour)
     XsRGB_EOTF(colour.r),
     XsRGB_EOTF(colour.g),
     XsRGB_EOTF(colour.b));
+}
+
+#define GAMMA_22 2.2f
+#define INVERSE_GAMMA_22 1.f / GAMMA_22
+
+// extended gamma 2.2 including above 1 and below 0
+float X_22_EOTF(const float C)
+{
+  if (C < -1)
+    return
+      -pow(-C, INVERSE_GAMMA_22);
+  else if (C < 0)
+    return
+      -pow(-C, GAMMA_22);
+  else if (C <= 1)
+    return
+      pow(C, GAMMA_22);
+  else
+    return
+      pow(C, INVERSE_GAMMA_22);
+}
+
+float3 X_22_EOTF(const float3 colour)
+{
+  return float3(
+    X_22_EOTF(colour.r),
+    X_22_EOTF(colour.g),
+    X_22_EOTF(colour.b));
+}
+
+// gamma adjust including values above 1 and below 0
+float X_gamma_adjust(const float C, const float adjust)
+{
+  const float inverse_adjust = 1.f / adjust;
+
+  if (C < -1)
+    return
+      -pow(-C, inverse_adjust);
+  else if (C < 0)
+    return
+      -pow(-C, adjust);
+  else if (C <= 1)
+    return
+      pow(C, adjust);
+  else
+    return
+      pow(C, inverse_adjust);
+}
+
+float3 X_gamma_adjust(const float3 colour, const float adjust)
+{
+  return float3(
+    X_gamma_adjust(colour.r, adjust),
+    X_gamma_adjust(colour.g, adjust),
+    X_gamma_adjust(colour.b, adjust));
 }
 
 static const float3x3 BT709_to_BT2020_matrix = float3x3(
