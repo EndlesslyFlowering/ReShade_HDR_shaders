@@ -70,6 +70,8 @@ float3 BT2446A_inverseToneMapping(
                                   , gamma);
 
   //Y'c
+  //if pSDR == 1 there is a division by zero
+  //this happens when Lsdr == 0
   const float Y_c = log((Y_sdr * (pSDR - 1)) + 1) /
                     log(pSDR); //log = ln
 
@@ -122,12 +124,15 @@ float3 BT2446A_inverseToneMapping(
                                       10000.f
                                   , gamma);
   //Y'
+  //if pHDR == 1 there is a division by zero
+  //this happens when Lhdr == 0
   const float Y_ = (pow(pHDR, Y_p) - 1.f) /
                    (pHDR - 1.f);
 
   // Colour scaling function
-  float colScale = 0.f;
-  if (Y_ > 0.f) // avoid division by zero
+  // TODO: analyse behaviour of colScale being 1 or 0.00000001
+  float colScale = 1.f;
+  if (Y_ > 0.f && Y_sdr > 0.f) // avoid division by zero
     colScale = Y_sdr /
                (1.1f * Y_);
 
@@ -141,14 +146,22 @@ float3 BT2446A_inverseToneMapping(
   hdr.g = (Y_ - (K_BT2020.r * hdr.r + K_BT2020.b * hdr.b)) /
           K_BT2020.g;
 
-  //hdr = saturate(hdr);
+//  produces the same results
+//  const float C_b_hdr = C_b_tmo / colScale;
+//  const float C_r_hdr = C_r_tmo / colScale;
+//
+//  hdr.r = Y_ + 1.4746f * C_r_hdr;
+//  hdr.g = Y_ - 0.164553126843658 * C_b_hdr - 0.571353126843658 * C_r_hdr;
+//  hdr.b = Y_ + 1.8814f * C_b_hdr;
+
+  hdr = saturate(hdr); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
   // Non-linear transfer function (inverse)
   // get RGB
   hdr = pow(hdr, inverseGamma + gammaIn + gammaOut);
 
   //expand to target luminance
-  hdr = hdr * Lhdr;
+  hdr *= Lhdr;
 
   return hdr;
 }
@@ -377,6 +390,8 @@ float3 BT2446C_inverseToneMapping(
                                             -alpha,  mlpha, -alpha,
                                             -alpha, -alpha,  mlpha));
   hdr = mul(inverse_crosstalk_matrix, hdr);
+
+  hdr = clamp(hdr, 0.f, 10000.f);
 
   return hdr;
 }
