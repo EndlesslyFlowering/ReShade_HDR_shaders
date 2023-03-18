@@ -1,12 +1,13 @@
 #include "ReShade.fxh"
 #include "colorspace.fxh"
 
-uniform int INPUT_GAMMA
+uniform uint INPUT_GAMMA
 <
   ui_label  = "input Gamma";
   ui_type   = "combo";
-  tui_items = "sRGB\0"
-              "gamma 2.2\0";
+  ui_items  = "sRGB\0"
+              "gamma 2.2\0"
+              "gamma 2.4\0";
 > = 0;
 
 uniform float SDR_WHITEPOINT_NITS
@@ -44,8 +45,8 @@ uniform float CLAMP_NEGATIVE_TO
   ui_label    = "clamp negative values to";
   ui_type     = "drag";
   ui_min      = -125.f;
-  ui_max      = -1.f;
-  ui_step     = 0.1f;
+  ui_max      =  0.f;
+  ui_step     =  0.1f;
 > = -125.f;
 
 uniform float CLAMP_POSITIVE_TO
@@ -72,15 +73,17 @@ void scRGB_gamma_fix(
     fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
 
   if (INPUT_GAMMA == 0)
-    fixedGamma = XsRGB_EOTF(fixedGamma);
+    fixedGamma = X_sRGB_EOTF(fixedGamma);
+  else if (INPUT_GAMMA == 1)
+    fixedGamma = X_power_EOTF(fixedGamma, 2.2f);
   else
-    fixedGamma = X_22_EOTF(fixedGamma);
+    fixedGamma = X_power_EOTF(fixedGamma, 2.4f);
 
   if (DO_GAMMA_ADJUST)
     fixedGamma = X_gamma_adjust(fixedGamma, 1.f + GAMMA_ADJUST);
 
-  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
-    fixedGamma = float3(0.f, 0.f, 0.f);
+//  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
+//    fixedGamma = float3(0.f, 0.f, 0.f);
 
   fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
 
