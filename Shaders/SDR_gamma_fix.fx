@@ -7,14 +7,16 @@ uniform uint INPUT_GAMMA
 <
   ui_label = "input Gamma";
   ui_type  = "combo";
-  ui_items = "sRGB\0power Gamma\0";
+  ui_items = "sRGB\0"
+             "power Gamma\0";
 > = 0;
 
 uniform uint TARGET_GAMMA
 <
   ui_label = "target Gamma";
   ui_type  = "combo";
-  ui_items = "power Gamma\0sRGB\0";
+  ui_items = "power Gamma\0"
+             "sRGB\0";
 > = 0;
 
 uniform float INPUT_POWER_GAMMA

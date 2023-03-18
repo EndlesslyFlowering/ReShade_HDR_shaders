@@ -195,7 +195,7 @@ sampler samplerText {
   float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size; \
   uv.y      = saturate(uv.y); \
   uv.x     *= ratio * 2.f; \
-  float  id = array[int(trunc(uv.x))]; \
+  float  id = array[uint(trunc(uv.x))]; \
   if(uv.x <= arrSize && uv.x >= 0.f) \
     text    = tex2D(samplerText, (frac(uv) + float2(id % 14.f, trunc(id / 14.f))) / \
               float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x; \
@@ -219,12 +219,12 @@ void DrawText_Digit(
         float  size,
         float  ratio,
         float2 tex,
-        int    digit,
+        uint   digit,
         float  data,
   inout float4 res,
         float  bright)
 {
-  int digits[13] = {
+  uint digits[13] = {
       __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __Minus, __Space, __Dot
   };
   float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size;
