@@ -62,7 +62,8 @@ uniform uint HEATMAP_CUTOFF_POINT
                 "red    to pink      1000- 4000       600- 800 \n"
                 "pink   to blue      4000-10000       800-1000";
   ui_type     = "combo";
-  ui_items    = " 10000nits\0 1000nits\0";
+  ui_items    = " 10000nits\0"
+                "  1000nits\0";
 > = 0;
 
 uniform uint OVERRIDE_CSP
@@ -70,7 +71,9 @@ uniform uint OVERRIDE_CSP
   ui_category = "heatmap stuff";
   ui_label    = "override current colourspace";
   ui_type     = "combo";
-  ui_items    = "no\0PQ\0scRGB\0";
+  ui_items    = "no\0"
+                "PQ\0"
+                "scRGB\0";
 > = 0;
 
 uniform float HEATMAP_WHITEPOINT
@@ -296,18 +299,18 @@ void HDR_analysis(
       const uint current_x_coord = texcoord.x * BUFFER_WIDTH;  // expand to actual pixel values
       const uint current_y_coord = texcoord.y * BUFFER_HEIGHT; // ^
       // draw the chart in the bottom left corner
-      if (current_x_coord < CIE_BG_X && current_y_coord > (BUFFER_HEIGHT - CIE_BG_Y))
+      if (current_x_coord < CIE_BG_X && current_y_coord >= (BUFFER_HEIGHT - CIE_BG_Y))
       {
         // get coords for the sampler
         const uint2 current_sampler_coords =
               uint2(current_x_coord,
-                    current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y + 1));
+                    current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
         const float3 current_pixel_to_display = tex2Dfetch(sampler_CIE_1931_cur, current_sampler_coords).rgb;
         if (BUFFER_COLOR_SPACE == CSP_PQ)
-          output = float4(mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * 100.f)), 1.f);
+          output = float4(mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * 100.f)), 1.f); // output as 100 nits max
         else
-          output = float4(current_pixel_to_display * 1.25f, 1.f);
+          output = float4(current_pixel_to_display * 1.25f, 1.f); // output as 100 nits max
       }
     }
 
@@ -328,27 +331,30 @@ void HDR_analysis(
     {
       const float mousePositionX = clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1);
       const float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
-      const int2 mouseXY = int2(mousePositionX, mousePositionY);
-      const float cursorCLL = tex2Dfetch(samplerCLLvalues, mouseXY).r;
-      const int textX[2] = { __x, __Colon };
-      const int textY[2] = { __y, __Colon };
-      const float yOffset0 =  CLL_FONT_SIZE / 2.f;
-      const float yOffset1 =  CLL_FONT_SIZE - 30;
-      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2,              output, bright);
-      DrawText_String(float2(0.f,              CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output, bright);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output, bright);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output, bright);
-      DrawText_Digit (float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  6,    cursorCLL,      output, bright);
-      const int textR[2] = { __R, __Colon };
-      const int textG[2] = { __G, __Colon };
-      const int textB[2] = { __B, __Colon };
+      const uint2 mouseXY        = uint2(mousePositionX, mousePositionY);
+      const float cursorCLL      = tex2Dfetch(samplerCLLvalues, mouseXY).r;
+      const uint  textX[2]       = { __x, __Colon };
+      const uint  textY[2]       = { __y, __Colon };
+      const float yOffset0       =  CLL_FONT_SIZE / 2.f;
+      const float yOffset1       =  CLL_FONT_SIZE - 30;
+
+      DrawText_String(float2(  0.f,            CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2,              output, bright);
+      DrawText_String(float2(  0.f,            CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output, bright);
+      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output, bright);
+      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output, bright);
+      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  6,    cursorCLL,      output, bright);
+
+      const uint   textR[2]  = { __R, __Colon };
+      const uint   textG[2]  = { __G, __Colon };
+      const uint   textB[2]  = { __B, __Colon };
       const float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
+
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2,           output, bright);
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2,           output, bright);
       DrawText_String(float2( 0.f,            CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2,           output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.r, output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.g, output, bright);
-      DrawText_Digit (float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.b, output, bright);
+      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.r, output, bright);
+      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.g, output, bright);
+      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.b, output, bright);
     }
   }
   else

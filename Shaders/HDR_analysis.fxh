@@ -155,9 +155,9 @@ storage2D storageFinal4
   MipLevel = 0;
 };
 
-#define CIE_X          734
+#define CIE_X          735
 #define CIE_Y          835
-#define CIE_BG_X       934
+#define CIE_BG_X       935
 #define CIE_BG_Y      1035
 #define CIE_BG_BORDER  100
 texture2D CIE_1931 <source = "CIE_1931_linear.png";>
@@ -678,7 +678,7 @@ void copy_CIE_bg(
       float2 texcoord : TEXCOORD,
   out float4 CIE_bg   : SV_TARGET)
 {
-  CIE_bg = float4(tex2D(sampler_CIE_1931_black_bg, texcoord).rgb, 1.f);
+  CIE_bg = tex2D(sampler_CIE_1931_black_bg, texcoord).rgba;
 }
 
 void generate_CIE_chart(uint3 id : SV_DispatchThreadID)
@@ -695,11 +695,11 @@ void generate_CIE_chart(uint3 id : SV_DispatchThreadID)
                      : float3(0.f, 0.f, 0.f);
     // get xy
     const float  xyz = XYZ.x + XYZ.y + XYZ.z;
-    const uint2  xy  = uint2(XYZ.x / xyz * 1000.f, // 1000 is the original texture size
-                    1000.f - XYZ.y / xyz * 1000.f - (1000 - CIE_Y));
+    const uint2  xy  = uint2(clamp(uint(round(XYZ.x / xyz * 1000.f)), 0, CIE_X -1),  // 1000 is the original texture size
+                 CIE_Y - 1 - clamp(uint(round(XYZ.y / xyz * 1000.f)), 0, CIE_Y -1)); // clamp to texture size
 
   tex2Dstore(storage_CIE_1931_cur,
              uint2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER), // adjust for the added borders of 100 pixels
-             float4(tex2Dfetch(sampler_CIE_1931, xy).rgba));
+             tex2Dfetch(sampler_CIE_1931, xy).rgba);
   }
 }
