@@ -27,9 +27,11 @@ uniform uint EXPAND_GAMUT
 
 //uniform uint CONTENT_GAMMA
 //<
-//	ui_label = "content gamma";
-//	ui_type  = "combo";
-//	ui_items = " 2.2\0 2.4\0 sRGB\0";
+//  ui_label = "content gamma";
+//  ui_type  = "combo";
+//  ui_items = "sRGB\0"
+//             "2.2\0"
+//             "2.4\0";
 //> = 1;
 
 uniform float TARGET_PEAK_NITS_BT2446A
@@ -71,6 +73,19 @@ uniform float MAX_INPUT_NITS_BT2446A
 //  ui_label    = "automatically calculate \"reference white luminance\"";
 //> = false;
 
+uniform float GAMUT_EXPANSION_BT2446A
+<
+  ui_category = "BT.2446 Method A";
+  ui_label    = "gamut expansion";
+  ui_tooltip  = "1.10 is the default of the spec\n"
+                "1.05 about matches the input color space\n"
+                "1.00 slightly reduces the color space";
+  ui_type     = "drag";
+  ui_min      = 1.f;
+  ui_max      = 1.2f;
+  ui_step     = 0.01f;
+> = 1.1f;
+
 uniform float GAMMA_IN
 <
   ui_category = "BT.2446 Method A";
@@ -98,7 +113,7 @@ uniform float REF_WHITE_NITS_BT2446C
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1200.f;
-  ui_step     = 0.1f;
+  ui_step     = 0.01f;
 > = 100.f;
 
 uniform float ALPHA
@@ -107,7 +122,7 @@ uniform float ALPHA
      ui_label = "alpha";
       ui_type = "drag";
        ui_min = 0.f;
-       ui_max = 1.5f;
+       ui_max = 0.33f;
       ui_step = 0.001f;
 > = 0.33f;
 
@@ -191,6 +206,7 @@ void BT2446_itm(
         MAX_INPUT_NITS_BT2446A >= REF_WHITE_NITS_BT2446A
       ? MAX_INPUT_NITS_BT2446A / REF_WHITE_NITS_BT2446A
       : 1.f,
+        GAMUT_EXPANSION_BT2446A,
         GAMMA_IN,
         GAMMA_OUT);
     }

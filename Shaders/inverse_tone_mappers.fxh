@@ -32,6 +32,7 @@ float3 BT2446A_inverseToneMapping(
   const float  peakNits,
   const float  paperWhiteNits,
   const float  inputNitsFactor,
+  const float  gamut_expansion,
   const float  gammaIn,
   const float  gammaOut)
 {
@@ -131,10 +132,11 @@ float3 BT2446A_inverseToneMapping(
 
   // Colour scaling function
   // TODO: analyse behaviour of colScale being 1 or 0.00000001
-  float colScale = 1.f;
-  if (Y_ > 0.f && Y_sdr > 0.f) // avoid division by zero
-    colScale = Y_sdr /
-               (1.1f * Y_);
+  //float colScale = 0.0000001f;
+  //if (Y_ > 0.f && Y_sdr > 0.f) // avoid division by zero
+  // this is actually fine to be infinite because it will create 0 as a result in the next step
+  const float colScale = Y_sdr /
+                         (gamut_expansion * Y_);
 
   // Colour difference signals (inverse) and Luma (inverse)
   // get R'G'B'
