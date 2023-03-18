@@ -5,15 +5,37 @@
 //#define _DEBUG
 //#define _TESTY
 
+
 uniform float2 MOUSE_POSITION
 <
   source = "mousepoint";
 >;
 
+
+uniform uint OVERRIDE_CSP
+<
+  ui_label = "override current colourspace";
+  ui_type  = "combo";
+  ui_items = "no\0"
+             "PQ\0"
+             "scRGB\0";
+> = 0;
+
 uniform bool SHOW_CIE
 <
-  ui_label = "show CIE chart";
+  ui_category = "CIE diagram";
+  ui_label    = "show CIE 1931 diagram";
 > = false;
+
+uniform float CIE_DIAGRAM_BRIGHTNESS
+<
+  ui_category = "CIE diagram";
+  ui_label    = "CIE diagram brightness";
+  ui_type     = "slider";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 1.f;
+> = 80.f;
 
 uniform bool SHOW_CLL_VALUES
 <
@@ -62,18 +84,8 @@ uniform uint HEATMAP_CUTOFF_POINT
                 "red    to pink      1000- 4000       600- 800 \n"
                 "pink   to blue      4000-10000       800-1000";
   ui_type     = "combo";
-  ui_items    = " 10000nits\0"
-                "  1000nits\0";
-> = 0;
-
-uniform uint OVERRIDE_CSP
-<
-  ui_category = "heatmap stuff";
-  ui_label    = "override current colourspace";
-  ui_type     = "combo";
-  ui_items    = "no\0"
-                "PQ\0"
-                "scRGB\0";
+  ui_items    = "10000nits\0"
+                " 1000nits\0";
 > = 0;
 
 uniform float HEATMAP_WHITEPOINT
@@ -90,36 +102,40 @@ uniform float HEATMAP_WHITEPOINT
 uniform bool HEATMAP_SDR
 <
   ui_category = "heatmap stuff";
-  ui_label    = "[DEBUG] output heatmap in SDR gamma2.2";
+  ui_label    = "[DEBUG] output heatmap in SDR gamma 2.2";
 > = false;
 #endif
 
 uniform bool DRAW_ABOVE_NITS_AS_BLACK
 <
-  ui_label = "draw above nits as black";
+  ui_category = "draw nits as black stuff";
+  ui_label    = "draw above nits as black";
 > = false;
 
 uniform float ABOVE_NITS_AS_BLACK
 <
-  ui_label = "draw above nits as black";
-  ui_type  = "drag";
-  ui_min   = 0.f;
-  ui_max   = 10000.f;
-  ui_step  = 0.001f;
+  ui_category = "draw nits as black stuff";
+  ui_label    = "draw above nits as black";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 0.001f;
 > = 10000.f;
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
 <
-  ui_label = "draw below nits as black";
+  ui_category = "draw nits as black stuff";
+  ui_label    = "draw below nits as black";
 > = false;
 
 uniform float BELOW_NITS_AS_BLACK
 <
-  ui_label = "draw below nits as black";
-  ui_type  = "drag";
-  ui_min   = 0.f;
-  ui_max   = 10000.f;
-  ui_step  = 1.f;
+  ui_category = "draw nits as black stuff";
+  ui_label    = "draw below nits as black";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 1.f;
 > = 0.f;
 
 #ifdef _TESTY
@@ -307,10 +323,12 @@ void HDR_analysis(
                     current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
         const float3 current_pixel_to_display = tex2Dfetch(sampler_CIE_1931_cur, current_sampler_coords).rgb;
-        if (BUFFER_COLOR_SPACE == CSP_PQ)
-          output = float4(mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * 100.f)), 1.f); // output as 100 nits max
-        else
-          output = float4(current_pixel_to_display * 1.25f, 1.f); // output as 100 nits max
+        if (BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1)
+          output = float4(
+            mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * CIE_DIAGRAM_BRIGHTNESS)), 1.f);
+        else if (BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2)
+          output = float4(
+            current_pixel_to_display * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
       }
     }
 
