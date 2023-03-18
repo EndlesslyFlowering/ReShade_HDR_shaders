@@ -13,9 +13,9 @@
 //  pow(abs(x), abs)
 //}
 
-//linear->gamma compressed = inverse EOTF
+//linear->gamma compressed = inverse EOTF -> ^(1 / 2.2)
 //
-//gamma compressed->display (also linear) = EOTF
+//gamma compressed->display (also linear) = EOTF -> ^(2.2)
 
 // IEC 61966-2-1
 float sRGB_EOTF(const float C)
@@ -51,7 +51,7 @@ float3 sRGB_inverse_EOTF(const float3 colour)
 }
 
 // extended sRGB gamma including above 1 and below -1
-float XsRGB_EOTF(const float C)
+float X_sRGB_EOTF(const float C)
 {
   if (C < -1)
     return
@@ -70,40 +70,39 @@ float XsRGB_EOTF(const float C)
       1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
 }
 
-float3 XsRGB_EOTF(const float3 colour)
+float3 X_sRGB_EOTF(const float3 colour)
 {
   return float3(
-    XsRGB_EOTF(colour.r),
-    XsRGB_EOTF(colour.g),
-    XsRGB_EOTF(colour.b));
+    X_sRGB_EOTF(colour.r),
+    X_sRGB_EOTF(colour.g),
+    X_sRGB_EOTF(colour.b));
 }
-
-#define GAMMA_22 2.2f
-#define INVERSE_GAMMA_22 1.f / GAMMA_22
 
 // extended gamma 2.2 including above 1 and below 0
-float X_22_EOTF(const float C)
+float X_power_EOTF(const float C, const float pow_gamma)
 {
+  const float pow_inverse_gamma = 1.f / pow_gamma;
+
   if (C < -1)
     return
-      -pow(-C, INVERSE_GAMMA_22);
+      -pow(-C, pow_inverse_gamma);
   else if (C < 0)
     return
-      -pow(-C, GAMMA_22);
+      -pow(-C, pow_gamma);
   else if (C <= 1)
     return
-      pow(C, GAMMA_22);
+      pow(C, pow_gamma);
   else
     return
-      pow(C, INVERSE_GAMMA_22);
+      pow(C, pow_inverse_gamma);
 }
 
-float3 X_22_EOTF(const float3 colour)
+float3 X_power_EOTF(const float3 colour, const float pow_gamma)
 {
   return float3(
-    X_22_EOTF(colour.r),
-    X_22_EOTF(colour.g),
-    X_22_EOTF(colour.b));
+    X_power_EOTF(colour.r, pow_gamma),
+    X_power_EOTF(colour.g, pow_gamma),
+    X_power_EOTF(colour.b, pow_gamma));
 }
 
 // gamma adjust including values above 1 and below 0
