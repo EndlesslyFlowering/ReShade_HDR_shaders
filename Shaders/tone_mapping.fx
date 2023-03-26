@@ -257,11 +257,11 @@ void BT2446A_tm(
 //  if (maxCLL > TARGET_CLL)
 //  {
     if (BUFFER_COLOR_SPACE == CSP_PQ)
-      hdr = PQ_EOTF(hdr);
+      hdr = PQ_EOTF(hdr, false);
     else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     {
-      hdr = hdr * 80.f;
       hdr = mul(BT709_to_BT2020_matrix, hdr);
+      hdr = hdr * 0.0080f;
     }
     else
       hdr = float3(0.f, 0.f, 0.f);
@@ -279,11 +279,11 @@ void BT2446A_tm(
     }
 
     if (BUFFER_COLOR_SPACE == CSP_PQ)
-      hdr = PQ_OETF(hdr);
+      hdr = PQ_inverse_EOTF(hdr);
     else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     {
       hdr = mul(BT2020_to_BT709_matrix, hdr);
-      hdr = hdr * 80.f;
+      hdr = hdr * 125.f;
     }
 //  }
 
