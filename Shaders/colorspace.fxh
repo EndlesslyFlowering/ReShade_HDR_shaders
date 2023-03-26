@@ -3,9 +3,20 @@
 #define CSP_SCRGB   2
 #define CSP_PQ      3
 #define CSP_HLG     4
+#define CSP_PS5     5
 
 #define K_BT709  float3(0.2126f, 0.7152f, 0.0722f)
 #define K_BT2020 float3(0.2627f, 0.6780f, 0.0593f)
+
+#define BT709_KB_helper 1.8556f
+#define BT709_KR_helper 1.5748f
+#define BT709_KG_helper float2(0.187324272930648, 0.468124272930648)
+//(0.0722/0.7152)*(2-2*0.0722), (0.2126/0.7152)*(2-2*0.2126)
+
+#define BT2020_KB_helper 1.8814f
+#define BT2020_KR_helper 1.4746f
+#define BT2020_KG_helper float2(0.164553126843658, 0.571353126843658)
+//(0.0593f/0.6780f)*(2-2*0.0593f), (0.2627/0.6780f)*(2-2*0.2627)
 
 
 //float posPow(float x, float y)
@@ -50,25 +61,45 @@ float3 sRGB_inverse_EOTF(const float3 colour)
     sRGB_inverse_EOTF(colour.b));
 }
 
+#define X_sRGB_1 1.19417654368084505707
+#define X_sRGB_x 0.039815307380813555
+#define X_sRGB_y_adjust 1.21290538811
 // extended sRGB gamma including above 1 and below -1
 float X_sRGB_EOTF(const float C)
 {
-  if (C < -1)
+  if (C < -X_sRGB_1)
     return
-      -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      -1.055f * (pow(-C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) + 0.055f;
   else if (C < -0.04045f)
     return
       -pow((-C + 0.055f) / 1.055f, 2.4f);
   else if (C <= 0.04045f)
     return
       C / 12.92f;
-  else if (C <= 1)
+  else if (C <= X_sRGB_1)
     return
       pow((C + 0.055f) / 1.055f, 2.4f);
   else
     return
-      1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      1.055f * (pow(C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) - 0.055f;
 }
+//{
+//  if (C < -1)
+//    return
+//      -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+//  else if (C < -0.04045f)
+//    return
+//      -pow((-C + 0.055f) / 1.055f, 2.4f);
+//  else if (C <= 0.04045f)
+//    return
+//      C / 12.92f;
+//  else if (C <= 1)
+//    return
+//      pow((C + 0.055f) / 1.055f, 2.4f);
+//  else
+//    return
+//      1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+//}
 
 float3 X_sRGB_EOTF(const float3 colour)
 {
@@ -78,34 +109,94 @@ float3 X_sRGB_EOTF(const float3 colour)
     X_sRGB_EOTF(colour.b));
 }
 
+#define INVERSE_GAMMA_22 2.2f
+#define GAMMA_22 1.f / INVERSE_GAMMA_22
+#define X_22_1 1.20237927370128566986
+#define X_22_x 0.0370133892172524
+#define X_22_y_adjust 1.5f - pow(X_22_x, GAMMA_22)
 // extended gamma 2.2 including above 1 and below 0
-float X_power_EOTF(const float C, const float pow_gamma)
+float X_22_EOTF(const float C)
 {
-  const float pow_inverse_gamma = 1.f / pow_gamma;
-
-  if (C < -1)
+  if (C < -X_22_1)
     return
-      -pow(-C, pow_inverse_gamma);
+      -(pow(-C - X_22_1 + X_22_x, GAMMA_22) + X_22_y_adjust);
   else if (C < 0)
     return
-      -pow(-C, pow_gamma);
-  else if (C <= 1)
+      -pow(-C, INVERSE_GAMMA_22);
+  else if (C <= X_22_1)
     return
-      pow(C, pow_gamma);
+      pow(C, INVERSE_GAMMA_22);
   else
     return
-      pow(C, pow_inverse_gamma);
+      (pow(C - X_22_1 + X_22_x, GAMMA_22) + X_22_y_adjust);
 }
 
-float3 X_power_EOTF(const float3 colour, const float pow_gamma)
+float3 X_22_EOTF(const float3 colour)
 {
   return float3(
-    X_power_EOTF(colour.r, pow_gamma),
-    X_power_EOTF(colour.g, pow_gamma),
-    X_power_EOTF(colour.b, pow_gamma));
+    X_22_EOTF(colour.r),
+    X_22_EOTF(colour.g),
+    X_22_EOTF(colour.b));
 }
 
+#define INVERSE_GAMMA_24 2.2f
+#define GAMMA_24 1.f / INVERSE_GAMMA_24
+#define X_24_1 1.1840535873752085849
+#define X_24_x 0.033138075
+#define X_24_y_adjust 1.5f - pow(X_24_x, GAMMA_24)
+// extended gamma 2.4 including above 1 and below 0
+float X_24_EOTF(const float C)
+{
+  if (C < -X_24_1)
+    return
+      -(pow(-C - X_24_1 + X_24_x, GAMMA_24) + X_24_y_adjust);
+  else if (C < 0)
+    return
+      -pow(-C, INVERSE_GAMMA_24);
+  else if (C <= X_24_1)
+    return
+      pow(C, INVERSE_GAMMA_24);
+  else
+    return
+      (pow(C - X_24_1 + X_24_x, GAMMA_24) + X_24_y_adjust);
+}
+
+float3 X_24_EOTF(const float3 colour)
+{
+  return float3(
+    X_24_EOTF(colour.r),
+    X_24_EOTF(colour.g),
+    X_24_EOTF(colour.b));
+}
+
+//float X_power_EOTF(const float C, const float pow_gamma)
+//{
+//  const float pow_inverse_gamma = 1.f / pow_gamma;
+//
+//  if (C < -1)
+//    return
+//      -pow(-C, pow_inverse_gamma);
+//  else if (C < 0)
+//    return
+//      -pow(-C, pow_gamma);
+//  else if (C <= 1)
+//    return
+//      pow(C, pow_gamma);
+//  else
+//    return
+//      pow(C, pow_inverse_gamma);
+//}
+//
+//float3 X_power_EOTF(const float3 colour, const float pow_gamma)
+//{
+//  return float3(
+//    X_power_EOTF(colour.r, pow_gamma),
+//    X_power_EOTF(colour.g, pow_gamma),
+//    X_power_EOTF(colour.b, pow_gamma));
+//}
+
 // gamma adjust including values above 1 and below 0
+//TODO make this work like my custom gamma curve
 float X_gamma_adjust(const float C, const float adjust)
 {
   const float inverse_adjust = 1.f / adjust;
@@ -137,6 +228,11 @@ static const float3x3 BT709_to_BT2020_matrix = float3x3(
   0.0690954897392608, 0.919544281267395,  0.0113602289933443,
   0.0163937090881632, 0.0880281623979006, 0.895578128513936);
 
+static const float3x3 BT2020_to_BT709_matrix = float3x3(
+   1.66049621914783,   -0.587656444131135, -0.0728397750166941,
+  -0.124547095586012,   1.13289510924730,  -0.00834801366128445,
+  -0.0181536813870718, -0.100597371685743,  1.11875105307281);
+
 static const float3x3 BT709_to_XYZ = float3x3(
   0.412386563252992,  0.357591490920625, 0.180450491203564,
   0.212636821677324,  0.715182981841251, 0.0721801964814255,
@@ -147,10 +243,30 @@ static const float3x3 BT2020_to_XYZ = float3x3(
   0.262698338956556,    0.678008765772817,  0.0592928952706273,
   4.99407096644439e-17, 0.0280731358475570, 1.06082723495057);
 
+static const float3x3 XYZ_to_BT709 = float3x3(
+  3.24100323297636,   -1.53739896948879,  -0.498615881996363,
+ -0.969224252202516,   1.87592998369518,   0.0415542263400847,
+  0.0556394198519755, -0.204011206123910,  1.05714897718753);
+
+static const float3x3 XYZ_to_P3Display = float3x3(
+  2.49350912393461,   -0.931388179404778,  -0.402712756741651,
+ -0.829473213929555,   1.76263057960030,    0.0236242371055886,
+  0.0358512644339181, -0.0761839369220759,  0.957029586694311);
+
 static const float3x3 XYZ_to_BT2020 = float3x3(
    1.71666342779588,   -0.355673319730140, -0.253368087890248,
   -0.666673836198887,   1.61645573982470,   0.0157682970961337,
    0.0176424817849772, -0.0427769763827532, 0.942243281018431);
+
+static const float3x3 XYZ_to_AP1 = float3x3(
+  1.64102337969433,   -0.324803294184790,   -0.236424695237612,
+ -0.663662858722983,   1.61533159165734,     0.0167563476855301,
+  0.0117218943283754, -0.00828444199623741,  0.988394858539022);
+
+static const float3x3 XYZ_to_AP0 = float3x3(
+  1.04981101749797,  0.000000000000000, -0.0000974845405792529,
+ -0.495903023077320, 1.37331304581571,   0.0982400360573100,
+  0.000000000000000, 0.000000000000000,  0.991252018200499);
 
 static const float3x3 myExp_BT709_to_BT2020 = float3x3(
   0.629890780672547,   0.335521112585212,  0.0345881067422407,
@@ -163,11 +279,6 @@ static const float3x3 expanded_BT709_to_BT2020_matrix = float3x3(
    0.0457456,  0.941777,  0.0124772,
   -0.00121055, 0.0176041, 0.983607);
 // END Converted from (Copyright (c) Microsoft Corporation - Licensed under the MIT License.)  https://github.com/microsoft/Xbox-GDK-Samples/blob/main/Kits/ATGTK/HDR/HDRCommon.hlsli
-
-static const float3x3 BT2020_to_BT709_matrix = float3x3(
-   1.66049621914783,   -0.587656444131135, -0.0728397750166941,
-  -0.124547095586012,   1.13289510924730,  -0.00834801366128445,
-  -0.0181536813870718, -0.100597371685743,  1.11875105307281);
 
 static const float3x3 from709toP3_D65 = float3x3(
   0.822457548511778,  0.177542451488222,  0.000000000000000,
@@ -219,49 +330,50 @@ static const float one_div_m1 = 6.2773946360153256705;
 static const float one_div_m2 = 0.01268331351565596512;
 
 // Rec. ITU-R BT.2100-2 Table 4
-// outputs nits
-float3 PQ_EOTF(const float3 E_)
+// takes normalised values as input
+float3 PQ_EOTF(const float3 E_, const bool output_nits)
 {
   const float3 E_pow_one_div_m2 = pow(E_, one_div_m2);
 
-  const float3 Fd =
-    pow(
-        (max(E_pow_one_div_m2 - c1.xxx, 0.f.xxx)) /
-        (c2.xxx - c3 * E_pow_one_div_m2)
-    , one_div_m1) * 10000.f;
+  const float3 Y = pow(
+                       (max(E_pow_one_div_m2 - c1.xxx, 0.f.xxx)) /
+                       (c2.xxx - c3 * E_pow_one_div_m2)
+                   , one_div_m1);
 
-  return Fd;
+  if (!output_nits)
+    return Y;
+  else //Fd
+    return Y * 10000.f;
 }
 
-// outputs nits
-float PQ_EOTF(const float E_)
+// takes normalised values as input
+float PQ_EOTF(const float E_, const bool output_nits)
 {
   const float E_pow_one_div_m2 = pow(E_, one_div_m2);
 
-  const float Fd =
-    pow(
-        (max(E_pow_one_div_m2 - c1, 0.f)) /
-        (c2 - c3 * E_pow_one_div_m2)
-    , one_div_m1) * 10000.f;
+  const float Y = pow(
+                      (max(E_pow_one_div_m2 - c1, 0.f)) /
+                      (c2 - c3 * E_pow_one_div_m2)
+                  , one_div_m1);
 
-  return Fd;
+  if (!output_nits)
+    return Y;
+  else //Fd
+    return Y * 10000.f;
 }
 
 // Rec. ITU-R BT.2100-2 Table 4 (end)
 // takes normalised values as input
-//float3 PQ_inverse_EOTF(const float3 Y)
-//{
-//  const float3 Y_pow_m1 = pow(Y, m1);
-//
-//  //E'
-//  const float3 E_ =
-//    pow(
-//        (c1.xxx + c2 * Y_pow_m1) /
-//        (1.f.xxx + c3 * Y_pow_m1)
-//    , m2);
-//
-//  return E_;
-//}
+float3 PQ_inverse_EOTF(const float3 Y)
+{
+  const float3 Y_pow_m1 = pow(Y, m1);
+
+  //E'
+  return pow(
+           (c1.xxx + c2 * Y_pow_m1) /
+           (1.f.xxx + c3 * Y_pow_m1)
+         , m2);
+}
 
 // takes nits as input
 float3 PQ_OETF(const float3 Fd)
@@ -270,13 +382,10 @@ float3 PQ_OETF(const float3 Fd)
   const float3 Y_pow_m1 = pow(Y, m1);
 
   //E'
-  const float3 E_ =
-    pow(
-        (c1.xxx + c2 * Y_pow_m1) /
-        (1.f.xxx + c3 * Y_pow_m1)
-    , m2);
-
-  return E_;
+  return pow(
+             (c1.xxx + c2 * Y_pow_m1) /
+             (1.f.xxx + c3 * Y_pow_m1)
+         , m2);
 }
 
 bool IsNAN(const float input)
