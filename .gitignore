@@ -1,2 +1,3 @@
 Shaders/ReShade.fxh
 Shaders/ReShadeUI.fxh
+Textures/convert_to_linear.vpy
