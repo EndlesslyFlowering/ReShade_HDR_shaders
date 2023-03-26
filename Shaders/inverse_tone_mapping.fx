@@ -9,6 +9,7 @@ uniform uint INVERSE_TONEMAPPING_METHOD
   ui_type  = "combo";
   ui_items = "BT.2446 Method A\0"
              "BT.2446 Methoc C\0"
+             "BT.2446 Methoc C NEW\0"
              "map SDR into HDR\0";
 > = 0;
 
@@ -170,7 +171,7 @@ uniform float TARGET_PEAK_NITS_MAP_SDR_INTO_HDR
   ui_min      = 1.f;
   ui_max      = 1000.f;
   ui_step     = 0.1f;
-> = 100.f;
+> = 203.f;
 
 uniform bool DONT_REMOVE_GAMMA
 <
@@ -215,13 +216,27 @@ void BT2446_itm(
     {
       hdr = BT2446C_inverseToneMapping(
         hdr,
-        REF_WHITE_NITS_BT2446C,
+        REF_WHITE_NITS_BT2446C > 153.7f
+      ? 153.7f
+      : REF_WHITE_NITS_BT2446C,
         0.33f - ALPHA,
         USE_ACHROMATIC_CORRECTION,
         SIGMA);
     }
     break;
     case 2:
+    {
+      hdr = BT2446C_inverseToneMappingNEW(
+        hdr,
+        REF_WHITE_NITS_BT2446C > 153.7f
+      ? 1.537f
+      : REF_WHITE_NITS_BT2446C / 100.f,
+        0.33f - ALPHA,
+        USE_ACHROMATIC_CORRECTION,
+        SIGMA);
+    }
+    break;
+    case 3:
     {
       hdr = mapSDRintoHDR(
         hdr,
@@ -231,11 +246,11 @@ void BT2446_itm(
   }
 
   if(BUFFER_COLOR_SPACE == CSP_PQ)
-    hdr = PQ_OETF(hdr);
+    hdr = PQ_inverse_EOTF(hdr);
   else if(BUFFER_COLOR_SPACE == CSP_SCRGB)
   {
     hdr = mul(BT2020_to_BT709_matrix, hdr);
-    hdr = hdr / 80.f;
+    hdr = hdr * 125.f; // 125 = 10000 / 80
   }
   else
     hdr = float3(0.f, 0.f, 0.f);
