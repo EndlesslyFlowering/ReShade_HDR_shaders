@@ -38,7 +38,7 @@ void filmgrain(
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  float3 m = float3(texcoord, float(random) / 100000.f) + 1.f.xxx;
+  float3 m = float3(texcoord, random / 100000.f) + 1.f.xxx;
   float state = permute(permute(m.x) + m.y) + m.z;
 
   const float a0 = 0.151015505647689;
