@@ -268,7 +268,7 @@ void calcCLLown(
    && OVERRIDE_CSP != CSP_SCRGB
    && OVERRIDE_CSP != CSP_HLG
    && OVERRIDE_CSP != CSP_PS5)
-    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel), true);
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel)) * 10000.f;
   else if ((BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == CSP_SCRGB)
    && OVERRIDE_CSP != CSP_SRGB
    && OVERRIDE_CSP != CSP_PQ

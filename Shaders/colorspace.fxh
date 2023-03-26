@@ -331,35 +331,27 @@ static const float one_div_m2 = 0.01268331351565596512;
 
 // Rec. ITU-R BT.2100-2 Table 4
 // takes normalised values as input
-float3 PQ_EOTF(const float3 E_, const bool output_nits)
+float3 PQ_EOTF(const float3 E_)
 {
   const float3 E_pow_one_div_m2 = pow(E_, one_div_m2);
 
-  const float3 Y = pow(
-                       (max(E_pow_one_div_m2 - c1.xxx, 0.f.xxx)) /
-                       (c2.xxx - c3 * E_pow_one_div_m2)
-                   , one_div_m1);
-
-  if (!output_nits)
-    return Y;
-  else //Fd
-    return Y * 10000.f;
+  //Y
+  return pow(
+             (max(E_pow_one_div_m2 - c1.xxx, 0.f.xxx)) /
+             (c2.xxx - c3 * E_pow_one_div_m2)
+         , one_div_m1);
 }
 
 // takes normalised values as input
-float PQ_EOTF(const float E_, const bool output_nits)
+float PQ_EOTF(const float E_)
 {
   const float E_pow_one_div_m2 = pow(E_, one_div_m2);
 
-  const float Y = pow(
-                      (max(E_pow_one_div_m2 - c1, 0.f)) /
-                      (c2 - c3 * E_pow_one_div_m2)
-                  , one_div_m1);
-
-  if (!output_nits)
-    return Y;
-  else //Fd
-    return Y * 10000.f;
+  //Y
+  return pow(
+             (max(E_pow_one_div_m2 - c1, 0.f)) /
+             (c2 - c3 * E_pow_one_div_m2)
+         , one_div_m1);
 }
 
 // Rec. ITU-R BT.2100-2 Table 4 (end)

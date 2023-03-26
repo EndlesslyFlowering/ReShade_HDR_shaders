@@ -257,7 +257,7 @@ void BT2446A_tm(
 //  if (maxCLL > TARGET_CLL)
 //  {
     if (BUFFER_COLOR_SPACE == CSP_PQ)
-      hdr = PQ_EOTF(hdr, false);
+      hdr = PQ_EOTF(hdr);
     else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     {
       hdr = mul(BT709_to_BT2020_matrix, hdr);

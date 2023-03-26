@@ -397,7 +397,7 @@ void calcCLL(
   float curPixel;
 
   if (BUFFER_COLOR_SPACE == CSP_PQ)
-    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel), true);
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel)) * 10000.f;
   else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
   else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
@@ -745,7 +745,7 @@ void generate_CIE_diagram(uint3 id : SV_DispatchThreadID)
 
     // get XYZ
     const float3 XYZ = BUFFER_COLOR_SPACE == CSP_PQ
-                     ? mul(BT2020_to_XYZ, PQ_EOTF(pixel, false))
+                     ? mul(BT2020_to_XYZ, PQ_EOTF(pixel))
                      : BUFFER_COLOR_SPACE == CSP_SCRGB
                      ? mul(BT709_to_XYZ, pixel / 125.f)
                      : BUFFER_COLOR_SPACE == CSP_UNKNOWN
@@ -802,7 +802,7 @@ void calcCSPs(
 
   if (BUFFER_COLOR_SPACE == CSP_PQ)
   {
-    curCSP = getCSP(mul(BT2020_to_XYZ, PQ_EOTF(pixel, false)));
+    curCSP = getCSP(mul(BT2020_to_XYZ, PQ_EOTF(pixel)));
   }
   else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
   {
