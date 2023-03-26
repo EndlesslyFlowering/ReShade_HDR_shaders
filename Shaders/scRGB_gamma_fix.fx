@@ -10,6 +10,20 @@ uniform uint INPUT_GAMMA
               "gamma 2.4\0";
 > = 0;
 
+//matches CSP_* defines in colorspace.fxh
+uniform uint OVERRIDE_CSP
+<
+  ui_label   = "override current colourspace";
+  ui_tooltip = "only PS5 works";
+  ui_type    = "combo";
+  ui_items   = "no\0"
+               "sRGB\0"
+               "scRGB\0"
+               "PQ\0"
+               "HLG\0"
+               "PS5\0";
+> = 0;
+
 uniform float SDR_WHITEPOINT_NITS
 <
   ui_label = "SDR whitepoint (in nits)";
@@ -75,9 +89,12 @@ void scRGB_gamma_fix(
   if (INPUT_GAMMA == 0)
     fixedGamma = X_sRGB_EOTF(fixedGamma);
   else if (INPUT_GAMMA == 1)
-    fixedGamma = X_power_EOTF(fixedGamma, 2.2f);
+    fixedGamma = X_22_EOTF(fixedGamma);
   else
-    fixedGamma = X_power_EOTF(fixedGamma, 2.4f);
+    fixedGamma = X_24_EOTF(fixedGamma);
+
+  if (OVERRIDE_CSP == CSP_PS5)
+    fixedGamma = mul(BT709_to_BT2020_matrix, fixedGamma);
 
   if (DO_GAMMA_ADJUST)
     fixedGamma = X_gamma_adjust(fixedGamma, 1.f + GAMMA_ADJUST);
@@ -85,7 +102,10 @@ void scRGB_gamma_fix(
 //  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
 //    fixedGamma = float3(0.f, 0.f, 0.f);
 
-  fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
+  if (OVERRIDE_CSP == CSP_PS5)
+    fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
+  else
+    fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
 
   fixedGamma = fixNAN(fixedGamma);
 
