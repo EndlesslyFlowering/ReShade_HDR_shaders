@@ -209,6 +209,60 @@ storage2D storage_CIE_1931_cur
   MipLevel = 0;
 };
 
+texture2D CSPs
+{
+  Width     = BUFFER_WIDTH;
+  Height    = BUFFER_HEIGHT;
+  MipLevels = 0;
+  Format    = R8;
+};
+
+sampler2D sampler_CSPs
+{
+  Texture    = CSPs;
+  MipLODBias = 0;
+};
+
+texture2D CSP_counter
+{
+  Width     = BUFFER_WIDTH;
+  Height    = 6;
+  MipLevels = 0;
+  Format    = R16;
+};
+
+sampler2D sampler_CSP_counter
+{
+  Texture    = CSP_counter;
+  MipLODBias = 0;
+};
+
+storage2D storage_CSP_counter
+{
+  Texture  = CSP_counter;
+  MipLevel = 0;
+};
+
+texture2D CSP_counter_final
+{
+  Width     = 1;
+  Height    = 6;
+  MipLevels = 0;
+  Format    = R32F;
+};
+
+sampler2D sampler_CSP_counter_final
+{
+  Texture    = CSP_counter_final;
+  MipLODBias = 0;
+};
+
+storage2D storage_CSP_counter_final
+{
+  Texture  = CSP_counter_final;
+  MipLevel = 0;
+};
+
 float3 heatmapRGBvalues(
   const float Y,
   const uint  mode,
@@ -340,12 +394,14 @@ void calcCLL(
 {
   const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  float curPixel = 0.f;
+  float curPixel;
 
   if (BUFFER_COLOR_SPACE == CSP_PQ)
-    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel), true);
   else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
     curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
+  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
+    curPixel = dot(BT2020_to_XYZ[1].rgb, pixel) * 100.f;
   else
     curPixel = 0.f;
 
@@ -681,7 +737,7 @@ void copy_CIE_bg(
   CIE_bg = tex2D(sampler_CIE_1931_black_bg, texcoord).rgba;
 }
 
-void generate_CIE_chart(uint3 id : SV_DispatchThreadID)
+void generate_CIE_diagram(uint3 id : SV_DispatchThreadID)
 {
   if (id.x < BUFFER_WIDTH && id.y < BUFFER_HEIGHT)
   {
@@ -689,17 +745,138 @@ void generate_CIE_chart(uint3 id : SV_DispatchThreadID)
 
     // get XYZ
     const float3 XYZ = BUFFER_COLOR_SPACE == CSP_PQ
-                     ? mul(BT2020_to_XYZ, PQ_EOTF(pixel))
+                     ? mul(BT2020_to_XYZ, PQ_EOTF(pixel, false))
                      : BUFFER_COLOR_SPACE == CSP_SCRGB
-                     ? mul(BT709_to_XYZ, pixel) * 80.f
+                     ? mul(BT709_to_XYZ, pixel / 125.f)
+                     : BUFFER_COLOR_SPACE == CSP_UNKNOWN
+                     ? mul(BT2020_to_XYZ, pixel / 100.f)
                      : float3(0.f, 0.f, 0.f);
     // get xy
     const float  xyz = XYZ.x + XYZ.y + XYZ.z;
     const uint2  xy  = uint2(clamp(uint(round(XYZ.x / xyz * 1000.f)), 0, CIE_X -1),  // 1000 is the original texture size
                  CIE_Y - 1 - clamp(uint(round(XYZ.y / xyz * 1000.f)), 0, CIE_Y -1)); // clamp to texture size
+                                                                                     // ^you should be able to do this
+                                                                                     // via the sampler. set to clamping?
 
   tex2Dstore(storage_CIE_1931_cur,
              uint2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER), // adjust for the added borders of 100 pixels
              tex2Dfetch(sampler_CIE_1931, xy).rgba);
   }
+}
+
+bool isCSP(const float3 RGB)
+{
+  if (RGB.r >= 0.f
+   && RGB.g >= 0.f
+   && RGB.b >= 0.f)
+    return true;
+  else
+    return false;
+}
+
+float getCSP(const float3 XYZ)
+{
+  if (isCSP(mul(XYZ_to_BT709, XYZ)))
+    return 0.f;
+  else if (isCSP(mul(XYZ_to_P3Display, XYZ)))
+    return 1.f / 255.f;
+  else if (isCSP(mul(XYZ_to_BT2020, XYZ)))
+    return 2.f / 255.f;
+  else if (isCSP(mul(XYZ_to_AP1, XYZ)))
+    return 3.f / 255.f;
+  else if (isCSP(mul(XYZ_to_AP0, XYZ)))
+    return 4.f / 255.f;
+  else
+    return 5.f / 255.f;
+}
+
+void calcCSPs(
+      float4 vpos     : SV_Position,
+      float2 texcoord : TEXCOORD,
+  out float  curCSP   : SV_TARGET)
+{
+  const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
+
+  float3   curPixel;
+  float3x3 curMatrix;
+
+  if (BUFFER_COLOR_SPACE == CSP_PQ)
+  {
+    curCSP = getCSP(mul(BT2020_to_XYZ, PQ_EOTF(pixel, false)));
+  }
+  else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
+  {
+    curCSP = getCSP(mul(BT709_to_XYZ, pixel));
+  }
+  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
+  {
+    curCSP = getCSP(mul(BT2020_to_XYZ, pixel));
+  }
+  else
+    curCSP = 5.f / 255.f;
+}
+
+void count_CSPs_0(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x < BUFFER_WIDTH)
+  {
+    uint counter_BT709     = 0;
+    uint counter_P3Display = 0;
+    uint counter_BT2020    = 0;
+    uint counter_AP1       = 0;
+    uint counter_AP0       = 0;
+    uint counter_else      = 0;
+
+    for (uint y = 0; y < BUFFER_HEIGHT; y++)
+    {
+      const uint curCSP = uint(tex2Dfetch(sampler_CSPs, int2(id.x, y)).r * 255.f);
+      if (curCSP == 0)
+        counter_BT709++;
+      else if (curCSP == 1)
+        counter_P3Display++;
+      else if (curCSP == 2)
+        counter_BT2020++;
+      else if (curCSP == 3)
+        counter_AP1++;
+      else if (curCSP == 4)
+        counter_AP0++;
+      else if (curCSP == 5)
+        counter_else++;
+    }
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 0), counter_BT709     / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 1), counter_P3Display / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 2), counter_BT2020    / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 3), counter_AP1       / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 4), counter_AP0       / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 5), counter_else      / 65536.f);
+  }
+}
+
+void count_CSPs_1(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x < BUFFER_HEIGHT)
+  {
+    uint counter_BT709     = 0;
+    uint counter_P3Display = 0;
+    uint counter_BT2020    = 0;
+    uint counter_AP1       = 0;
+    uint counter_AP0       = 0;
+    uint counter_else      = 0;
+
+    for (uint x = 0; x < BUFFER_WIDTH; x++)
+    {
+      counter_BT709     += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 0)).r * 65536.f);
+      counter_P3Display += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 1)).r * 65536.f);
+      counter_BT2020    += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 2)).r * 65536.f);
+      counter_AP1       += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 3)).r * 65536.f);
+      counter_AP0       += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 4)).r * 65536.f);
+      counter_else      += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 5)).r * 65536.f);
+    }
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 0), counter_BT709     / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 1), counter_P3Display / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 2), counter_BT2020    / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 3), counter_AP1       / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 4), counter_AP0       / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 5), counter_else      / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+  }  
 }

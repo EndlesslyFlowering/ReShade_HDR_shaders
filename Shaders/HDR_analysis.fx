@@ -12,13 +12,18 @@ uniform float2 MOUSE_POSITION
 >;
 
 
+//matches CSP_* defines in colorspace.fxh
 uniform uint OVERRIDE_CSP
 <
-  ui_label = "override current colourspace";
-  ui_type  = "combo";
-  ui_items = "no\0"
-             "PQ\0"
-             "scRGB\0";
+  ui_label   = "override current colourspace";
+  ui_tooltip = "only scRGB, PQ and PS5 work";
+  ui_type    = "combo";
+  ui_items   = "no\0"
+               "sRGB\0"
+               "scRGB\0"
+               "PQ\0"
+               "HLG\0"
+               "PS5\0";
 > = 0;
 
 uniform bool SHOW_CIE
@@ -36,6 +41,13 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_max      = 250.f;
   ui_step     = 1.f;
 > = 80.f;
+
+uniform bool SHOW_CSPS
+<
+  ui_category = "colour space %";
+  ui_label    = "show colour spaces used";
+  ui_tooltip  = "in %";
+> = false;
 
 uniform bool SHOW_CLL_VALUES
 <
@@ -251,10 +263,20 @@ void calcCLLown(
 
   float curPixel = 0.f;
 
-  if ((BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1) && OVERRIDE_CSP != 2)
-    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel));
-  else if ((BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2) && OVERRIDE_CSP != 1)
+  if ((BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == CSP_PQ)
+   && OVERRIDE_CSP != CSP_SRGB
+   && OVERRIDE_CSP != CSP_SCRGB
+   && OVERRIDE_CSP != CSP_HLG
+   && OVERRIDE_CSP != CSP_PS5)
+    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel), true);
+  else if ((BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == CSP_SCRGB)
+   && OVERRIDE_CSP != CSP_SRGB
+   && OVERRIDE_CSP != CSP_PQ
+   && OVERRIDE_CSP != CSP_HLG
+   && OVERRIDE_CSP != CSP_PS5)
     curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
+  else if ((BUFFER_COLOR_SPACE == CSP_UNKNOWN && OVERRIDE_CSP == CSP_PS5))
+    curPixel = dot(BT2020_to_XYZ[1].rgb, pixel) * 100.f;
   else
     curPixel = 0.f;
 
@@ -323,20 +345,68 @@ void HDR_analysis(
                     current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
         const float3 current_pixel_to_display = tex2Dfetch(sampler_CIE_1931_cur, current_sampler_coords).rgb;
-        if (BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1)
+        if (BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == CSP_PQ)
           output = float4(
-            mul(BT709_to_BT2020_matrix, PQ_OETF(current_pixel_to_display * CIE_DIAGRAM_BRIGHTNESS)), 1.f);
-        else if (BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2)
+            PQ_inverse_EOTF(mul(BT709_to_BT2020_matrix, current_pixel_to_display) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+        else if (BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == CSP_SCRGB)
           output = float4(
             current_pixel_to_display * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
+        else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN && OVERRIDE_CSP == CSP_PS5)
+          output = float4(
+            mul(BT709_to_BT2020_matrix, current_pixel_to_display) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
       }
     }
 
-    const float bright = BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == 1
+    const float bright = BUFFER_COLOR_SPACE == CSP_PQ || OVERRIDE_CSP == CSP_PQ
                        ? 0.58068888f // 203 nits in PQ
-                       : BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == 2
+                       : BUFFER_COLOR_SPACE == CSP_SCRGB || OVERRIDE_CSP == CSP_SCRGB
                        ? 203.f / 80.f
+                       : BUFFER_COLOR_SPACE == CSP_UNKNOWN && OVERRIDE_CSP == CSP_PS5
+                       ? 2.03f
                        : 1.f;
+
+    if (SHOW_CSPS)
+    {
+      const float precentage_BT709     = tex2Dfetch(sampler_CSP_counter_final, int2(0, 0)).r;
+      const float precentage_P3Display = tex2Dfetch(sampler_CSP_counter_final, int2(0, 1)).r;
+      const float precentage_BT2020    = tex2Dfetch(sampler_CSP_counter_final, int2(0, 2)).r;
+      const float precentage_AP1       = tex2Dfetch(sampler_CSP_counter_final, int2(0, 3)).r;
+      const float precentage_AP0       = tex2Dfetch(sampler_CSP_counter_final, int2(0, 4)).r;
+      const float precentage_else      = tex2Dfetch(sampler_CSP_counter_final, int2(0, 5)).r;
+
+      const float yOffset1 = CLL_FONT_SIZE - 30;
+
+      const uint text_BT709[7]      = { __B, __T, __Dot, __7, __0, __9, __Colon };
+      const uint text_P3Display[10] = { __D, __i, __s,   __p, __l, __a, __y, __P, __3, __Colon };
+      const uint text_BT2020[8]     = { __B, __T, __Dot, __2, __0, __2, __0, __Colon };
+      const uint text_AP1[4]        = { __A, __P, __1, __Colon };
+      const uint text_AP0[4]        = { __A, __P, __0, __Colon };
+      const uint text_else[5]       = { __e, __l, __s, __e, __Colon };
+
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 12), CLL_FONT_SIZE, 1, texcoord, text_BT709     ,  7, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 13), CLL_FONT_SIZE, 1, texcoord, text_P3Display , 10, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 14), CLL_FONT_SIZE, 1, texcoord, text_BT2020    ,  8, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 15), CLL_FONT_SIZE, 1, texcoord, text_AP1       ,  4, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 16), CLL_FONT_SIZE, 1, texcoord, text_AP0       ,  4, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 17), CLL_FONT_SIZE, 1, texcoord, text_else      ,  5, output, bright);
+
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 12), CLL_FONT_SIZE, 1, texcoord, 4, precentage_BT709     * 100.0001f, output, bright);
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 13), CLL_FONT_SIZE, 1, texcoord, 4, precentage_P3Display * 100.0001f, output, bright);
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 14), CLL_FONT_SIZE, 1, texcoord, 4, precentage_BT2020    * 100.0001f, output, bright);
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 15), CLL_FONT_SIZE, 1, texcoord, 4, precentage_AP0       * 100.0001f, output, bright);
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 16), CLL_FONT_SIZE, 1, texcoord, 4, precentage_AP1       * 100.0001f, output, bright);
+      DrawText_Digit(float2(255.f + yOffset1, CLL_FONT_SIZE * 17), CLL_FONT_SIZE, 1, texcoord, 4, precentage_else      * 100.0001f, output, bright);
+
+      const uint text_precent[1] = { __Percent };
+
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 12), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 13), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 14), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 15), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 16), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+      DrawText_String(float2(366.f, CLL_FONT_SIZE * 17), CLL_FONT_SIZE, 1, texcoord, text_precent, 1, output, bright);
+
+    }
 
     if (SHOW_CLL_VALUES)
     {
@@ -356,23 +426,25 @@ void HDR_analysis(
       const float yOffset0       =  CLL_FONT_SIZE / 2.f;
       const float yOffset1       =  CLL_FONT_SIZE - 30;
 
-      DrawText_String(float2(  0.f,            CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2,              output, bright);
-      DrawText_String(float2(  0.f,            CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2,              output, bright);
-      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionX, output, bright);
-      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1,    mousePositionY, output, bright);
-      DrawText_Digit( float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  6,    cursorCLL,      output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, textX, 2, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, textY, 2, output, bright);
+
+      DrawText_Digit(float2(100.f + yOffset0, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1, mousePositionX, output, bright);
+      DrawText_Digit(float2(100.f + yOffset0, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1, mousePositionY, output, bright);
+      DrawText_Digit(float2(100.f + yOffset0, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord,  6, cursorCLL,      output, bright);
 
       const uint   textR[2]  = { __R, __Colon };
       const uint   textG[2]  = { __G, __Colon };
       const uint   textB[2]  = { __B, __Colon };
       const float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
 
-      DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2,           output, bright);
-      DrawText_String(float2( 0.f,            CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2,           output, bright);
-      DrawText_String(float2( 0.f,            CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2,           output, bright);
-      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.r, output, bright);
-      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.g, output, bright);
-      DrawText_Digit( float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8,     cursorRGB.b, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, textR, 2, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, textG, 2, output, bright);
+      DrawText_String(float2(0.f, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, textB, 2, output, bright);
+
+      DrawText_Digit(float2(96.f + yOffset1, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.r, output, bright);
+      DrawText_Digit(float2(96.f + yOffset1, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.g, output, bright);
+      DrawText_Digit(float2(96.f + yOffset1, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.b, output, bright);
     }
   }
   else
@@ -385,30 +457,11 @@ void HDR_analysis(
   }
 }
 
-technique HDR_analysis
+technique CLL
+<
+  enabled = false;
+>
 {
-#ifdef _TESTY
-  pass test_thing
-  {
-    VertexShader = PostProcessVS;
-     PixelShader = testy;
-  }
-#endif
-
-  pass copy_CIE_bg
-  {
-    VertexShader = PostProcessVS;
-     PixelShader = copy_CIE_bg;
-    RenderTarget = CIE_1931_cur;
-  }
-
-  pass generate_CIE_chart
-  {
-    ComputeShader = generate_CIE_chart <THREAD_SIZE0, THREAD_SIZE1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = DISPATCH_Y1;
-  }
-
   pass calcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -478,6 +531,64 @@ technique HDR_analysis
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+}
+
+technique CIE
+<
+  enabled = false;
+>
+{
+  pass copy_CIE_bg
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = copy_CIE_bg;
+    RenderTarget = CIE_1931_cur;
+  }
+
+  pass generate_CIE_diagram
+  {
+    ComputeShader = generate_CIE_diagram <THREAD_SIZE0, THREAD_SIZE1>;
+    DispatchSizeX = DISPATCH_X1;
+    DispatchSizeY = DISPATCH_Y1;
+  }
+}
+
+technique CSP
+<
+  enabled = false;
+>
+{
+  pass calcCSPs
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = calcCSPs;
+    RenderTarget = CSPs;
+  }
+
+  pass count_CSPs_0
+  {
+    ComputeShader = count_CSPs_0 <THREAD_SIZE0, 1>;
+    DispatchSizeX = DISPATCH_X0;
+    DispatchSizeY = 1;
+  }
+
+  pass count_CSPs_1
+  {
+    ComputeShader = count_CSPs_1 <1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+}
+
+technique HDR_analysis
+{
+#ifdef _TESTY
+  pass test_thing
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = testy;
+  }
+#endif
 
   pass
   {
