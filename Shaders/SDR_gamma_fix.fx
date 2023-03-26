@@ -68,24 +68,24 @@ float3 BT1886_gamma(
   const float3 V,
   const float  targetWhitepoint,
   const float  targetBlackpoint,
-  const float  targetInverseGamma,
-  const float  targetGamma)
+  const float  targetGamma,
+  const float  targetInverseGamma)
 {
   const float Lw = targetWhitepoint;
   const float Lb = targetBlackpoint;
 
-  const float powLw = pow(Lw, targetGamma);
-  const float powLb = pow(Lb, targetGamma);
+  const float powLw = pow(Lw, targetInverseGamma);
+  const float powLb = pow(Lb, targetInverseGamma);
 
   const float powLw_minus_powLb = powLw - powLb;
 
-  const float a = pow(powLw_minus_powLb, targetInverseGamma);
+  const float a = pow(powLw_minus_powLb, targetGamma);
   const float b = powLb /
                   (powLw_minus_powLb);
 
-  const float3 L = a * pow(max(V + b.xxx, 0.f.xxx), targetInverseGamma);
+  const float3 L = a * pow(max(V + b.xxx, 0.f.xxx), targetGamma);
 
-  return pow(L / targetWhitepoint, targetGamma);
+  return pow(L / targetWhitepoint, targetInverseGamma);
 }
 
 
@@ -105,11 +105,11 @@ void SDR_gamma_fix(
 
   if (TARGET_GAMMA == 0)
   {
-    const float targetGamma = 1.f / TARGET_POWER_GAMMA;
+    const float targetInverseGamma = 1.f / TARGET_POWER_GAMMA;
 
-    fixedGamma = pow(fixedGamma, targetGamma);
-     if (USE_BT1886)
-      fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_POWER_GAMMA, targetGamma);
+    fixedGamma = pow(fixedGamma, targetInverseGamma);
+    if (USE_BT1886)
+      fixedGamma = BT1886_gamma(fixedGamma, TARGET_WHITEPOINT, TARGET_BLACKPOINT, TARGET_POWER_GAMMA, targetInverseGamma);
   }
   else
     sRGB_inverse_EOTF(fixedGamma);

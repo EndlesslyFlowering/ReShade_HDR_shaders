@@ -22,6 +22,9 @@
 #define HEIGHT0 uint(BUFFER_HEIGHT) / 2
 #define HEIGHT1 uint(BUFFER_HEIGHT) - HEIGHT0
 
+#ifndef CSP_OVERRIDE
+  #define CSP_OVERRIDE 0
+#endif
 
 uniform float2 PINGPONG
 <
@@ -396,11 +399,11 @@ void calcCLL(
 
   float curPixel;
 
-  if (BUFFER_COLOR_SPACE == CSP_PQ)
+  if (BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ)
     curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel)) * 10000.f;
-  else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
+  else if (BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB)
     curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
-  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
+  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5)
     curPixel = dot(BT2020_to_XYZ[1].rgb, pixel) * 100.f;
   else
     curPixel = 0.f;
@@ -744,11 +747,11 @@ void generate_CIE_diagram(uint3 id : SV_DispatchThreadID)
     const float3 pixel = tex2Dfetch(ReShade::BackBuffer, id.xy).rgb;
 
     // get XYZ
-    const float3 XYZ = BUFFER_COLOR_SPACE == CSP_PQ
+    const float3 XYZ = (BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ)
                      ? mul(BT2020_to_XYZ, PQ_EOTF(pixel))
-                     : BUFFER_COLOR_SPACE == CSP_SCRGB
+                     : (BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB)
                      ? mul(BT709_to_XYZ, pixel / 125.f)
-                     : BUFFER_COLOR_SPACE == CSP_UNKNOWN
+                     : (BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5)
                      ? mul(BT2020_to_XYZ, pixel / 100.f)
                      : float3(0.f, 0.f, 0.f);
     // get xy
@@ -800,15 +803,15 @@ void calcCSPs(
   float3   curPixel;
   float3x3 curMatrix;
 
-  if (BUFFER_COLOR_SPACE == CSP_PQ)
+  if (BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ)
   {
     curCSP = getCSP(mul(BT2020_to_XYZ, PQ_EOTF(pixel)));
   }
-  else if (BUFFER_COLOR_SPACE == CSP_SCRGB)
+  else if (BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB)
   {
     curCSP = getCSP(mul(BT709_to_XYZ, pixel));
   }
-  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
+  else if (BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5)
   {
     curCSP = getCSP(mul(BT2020_to_XYZ, pixel));
   }

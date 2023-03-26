@@ -109,8 +109,8 @@ float3 X_sRGB_EOTF(const float3 colour)
     X_sRGB_EOTF(colour.b));
 }
 
-#define INVERSE_GAMMA_22 2.2f
-#define GAMMA_22 1.f / INVERSE_GAMMA_22
+#define GAMMA_22 2.2f
+#define INVERSE_GAMMA_22 1.f / GAMMA_22
 #define X_22_1 1.20237927370128566986
 #define X_22_x 0.0370133892172524
 #define X_22_y_adjust 1.5f - pow(X_22_x, GAMMA_22)
@@ -119,16 +119,16 @@ float X_22_EOTF(const float C)
 {
   if (C < -X_22_1)
     return
-      -(pow(-C - X_22_1 + X_22_x, GAMMA_22) + X_22_y_adjust);
+      -(pow(-C - X_22_1 + X_22_x, INVERSE_GAMMA_22) + X_22_y_adjust);
   else if (C < 0)
     return
-      -pow(-C, INVERSE_GAMMA_22);
+      -pow(-C, GAMMA_22);
   else if (C <= X_22_1)
     return
-      pow(C, INVERSE_GAMMA_22);
+      pow(C, GAMMA_22);
   else
     return
-      (pow(C - X_22_1 + X_22_x, GAMMA_22) + X_22_y_adjust);
+      (pow(C - X_22_1 + X_22_x, INVERSE_GAMMA_22) + X_22_y_adjust);
 }
 
 float3 X_22_EOTF(const float3 colour)
@@ -139,8 +139,8 @@ float3 X_22_EOTF(const float3 colour)
     X_22_EOTF(colour.b));
 }
 
-#define INVERSE_GAMMA_24 2.2f
-#define GAMMA_24 1.f / INVERSE_GAMMA_24
+#define GAMMA_24 2.4f
+#define INVERSE_GAMMA_24 1.f / GAMMA_24
 #define X_24_1 1.1840535873752085849
 #define X_24_x 0.033138075
 #define X_24_y_adjust 1.5f - pow(X_24_x, GAMMA_24)
@@ -149,16 +149,16 @@ float X_24_EOTF(const float C)
 {
   if (C < -X_24_1)
     return
-      -(pow(-C - X_24_1 + X_24_x, GAMMA_24) + X_24_y_adjust);
+      -(pow(-C - X_24_1 + X_24_x, INVERSE_GAMMA_24) + X_24_y_adjust);
   else if (C < 0)
     return
-      -pow(-C, INVERSE_GAMMA_24);
+      -pow(-C, GAMMA_24);
   else if (C <= X_24_1)
     return
-      pow(C, INVERSE_GAMMA_24);
+      pow(C, GAMMA_24);
   else
     return
-      (pow(C - X_24_1 + X_24_x, GAMMA_24) + X_24_y_adjust);
+      (pow(C - X_24_1 + X_24_x, INVERSE_GAMMA_24) + X_24_y_adjust);
 }
 
 float3 X_24_EOTF(const float3 colour)
