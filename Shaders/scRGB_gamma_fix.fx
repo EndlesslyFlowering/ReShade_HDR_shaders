@@ -87,17 +87,17 @@ void scRGB_gamma_fix(
     fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
 
   if (INPUT_GAMMA == 0)
-    fixedGamma = X_sRGB_EOTF(fixedGamma);
+    fixedGamma = extended_sRGB_EOTF(fixedGamma);
   else if (INPUT_GAMMA == 1)
-    fixedGamma = X_22_EOTF(fixedGamma);
+    fixedGamma = extended_22_EOTF(fixedGamma);
   else
-    fixedGamma = X_24_EOTF(fixedGamma);
+    fixedGamma = extended_24_EOTF(fixedGamma);
 
   if (OVERRIDE_CSP == CSP_PS5)
-    fixedGamma = mul(BT709_to_BT2020_matrix, fixedGamma);
+    fixedGamma = mul(BT709_to_BT2020, fixedGamma);
 
   if (DO_GAMMA_ADJUST)
-    fixedGamma = X_gamma_adjust(fixedGamma, 1.f + GAMMA_ADJUST);
+    fixedGamma = extended_gamma_adjust(fixedGamma, 1.f + GAMMA_ADJUST);
 
 //  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
 //    fixedGamma = float3(0.f, 0.f, 0.f);
