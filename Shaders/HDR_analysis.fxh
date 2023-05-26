@@ -22,8 +22,28 @@
 #define HEIGHT0 uint(BUFFER_HEIGHT) / 2
 #define HEIGHT1 uint(BUFFER_HEIGHT) - HEIGHT0
 
-#ifndef CSP_OVERRIDE
-  #define CSP_OVERRIDE 0
+//matches CSP_* defines in colorspace.fxh
+uniform uint CSP_OVERRIDE
+<
+  ui_label   = "override current colourspace";
+  ui_tooltip = "only scRGB, PQ and PS5 work";
+  ui_type    = "combo";
+  ui_items   = "no\0"
+               "sRGB\0"
+               "scRGB\0"
+               "PQ\0"
+               "HLG\0"
+               "PS5\0";
+> = 0;
+
+#if BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ
+  #define FONT_BRIGHTNESS 0.58068888104160783796
+#elif BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB
+  #define FONT_BRIGHTNESS 203.f / 80.f
+#elif BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5
+  #define FONT_BRIGHTNESS 2.03f
+#else
+  #define FONT_BRIGHTNESS 1.f
 #endif
 
 uniform float2 PINGPONG
@@ -158,15 +178,15 @@ storage2D storageFinal4
   MipLevel = 0;
 };
 
-#define CIE_X          735
-#define CIE_Y          835
-#define CIE_BG_X       935
-#define CIE_BG_Y      1035
+#define CIE_1931_X     735
+#define CIE_1931_Y     835
+#define CIE_1931_BG_X  935
+#define CIE_1931_BG_Y 1035
 #define CIE_BG_BORDER  100
 texture2D CIE_1931 <source = "CIE_1931_linear.png";>
 {
-  Width     = CIE_X;
-  Height    = CIE_Y;
+  Width     = CIE_1931_X;
+  Height    = CIE_1931_Y;
   MipLevels = 0;
 
   SRGBTexture = false;
@@ -179,8 +199,8 @@ sampler2D sampler_CIE_1931
 
 texture2D CIE_1931_black_bg <source = "CIE_1931_black_bg_linear.png";>
 {
-  Width     = CIE_BG_X;
-  Height    = CIE_BG_Y;
+  Width     = CIE_1931_BG_X;
+  Height    = CIE_1931_BG_Y;
   MipLevels = 0;
 
   SRGBTexture = false;
@@ -193,8 +213,8 @@ sampler2D sampler_CIE_1931_black_bg
 
 texture2D CIE_1931_cur
 {
-  Width     = CIE_BG_X;
-  Height    = CIE_BG_Y;
+  Width     = CIE_1931_BG_X;
+  Height    = CIE_1931_BG_Y;
   MipLevels = 0;
   Format    = RGBA8;
 
@@ -209,6 +229,59 @@ sampler2D sampler_CIE_1931_cur
 storage2D storage_CIE_1931_cur
 {
   Texture  = CIE_1931_cur;
+  MipLevel = 0;
+};
+
+#define CIE_1976_X    623
+#define CIE_1976_Y    587
+#define CIE_1976_BG_X 823
+#define CIE_1976_BG_Y 787
+texture2D CIE_1976 <source = "CIE_1976_UCS_linear.png";>
+{
+  Width     = CIE_1976_X;
+  Height    = CIE_1976_Y;
+  MipLevels = 0;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1976
+{
+  Texture = CIE_1976;
+};
+
+texture2D CIE_1976_black_bg <source = "CIE_1976_UCS_black_bg_linear.png";>
+{
+  Width     = CIE_1976_BG_X;
+  Height    = CIE_1976_BG_Y;
+  MipLevels = 0;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1976_black_bg
+{
+  Texture = CIE_1976_black_bg;
+};
+
+texture2D CIE_1976_cur
+{
+  Width     = CIE_1976_BG_X;
+  Height    = CIE_1976_BG_Y;
+  MipLevels = 0;
+  Format    = RGBA8;
+
+  SRGBTexture = false;
+};
+
+sampler2D sampler_CIE_1976_cur
+{
+  Texture = CIE_1976_cur;
+};
+
+storage2D storage_CIE_1976_cur
+{
+  Texture  = CIE_1976_cur;
   MipLevel = 0;
 };
 
@@ -377,7 +450,7 @@ float3 heatmapRGBvalues(
   {
     if (BUFFER_COLOR_SPACE == CSP_PQ || overrideCSP == 1)
     {
-      output  = mul(BT709_to_BT2020_matrix, output);
+      output  = mul(BT709_to_BT2020, output);
       output *= whitepoint;
       output  = PQ_OETF(output);
     }
@@ -732,12 +805,20 @@ void showCLLvaluesCopy(uint3 id : SV_DispatchThreadID)
 
 
 // copy over clean bg first every time
-void copy_CIE_bg(
+void copy_CIE_1931_bg(
       float4 vpos     : SV_Position,
       float2 texcoord : TEXCOORD,
   out float4 CIE_bg   : SV_TARGET)
 {
   CIE_bg = tex2D(sampler_CIE_1931_black_bg, texcoord).rgba;
+}
+
+void copy_CIE_1976_bg(
+      float4 vpos     : SV_Position,
+      float2 texcoord : TEXCOORD,
+  out float4 CIE_bg   : SV_TARGET)
+{
+  CIE_bg = tex2D(sampler_CIE_1976_black_bg, texcoord).rgba;
 }
 
 void generate_CIE_diagram(uint3 id : SV_DispatchThreadID)
@@ -755,15 +836,26 @@ void generate_CIE_diagram(uint3 id : SV_DispatchThreadID)
                      ? mul(BT2020_to_XYZ, pixel / 100.f)
                      : float3(0.f, 0.f, 0.f);
     // get xy
-    const float  xyz = XYZ.x + XYZ.y + XYZ.z;
-    const uint2  xy  = uint2(clamp(uint(round(XYZ.x / xyz * 1000.f)), 0, CIE_X -1),  // 1000 is the original texture size
-                 CIE_Y - 1 - clamp(uint(round(XYZ.y / xyz * 1000.f)), 0, CIE_Y -1)); // clamp to texture size
-                                                                                     // ^you should be able to do this
-                                                                                     // via the sampler. set to clamping?
+    const float xyz = XYZ.x + XYZ.y + XYZ.z;
+    const uint2 xy  = uint2(clamp(uint(round(XYZ.x / xyz * 1000.f)), 0, CIE_1931_X - 1),  // 1000 is the original texture size
+           CIE_1931_Y - 1 - clamp(uint(round(XYZ.y / xyz * 1000.f)), 0, CIE_1931_Y - 1)); // clamp to texture size
+                                                                                          // ^you should be able to do this
+                                                                                          // via the sampler. set to clamping?
+
+    // get u'v'
+    const float X15Y3Z = XYZ.x
+                       + 15.f * XYZ.y
+                       +  3.f * XYZ.z;
+    const uint2 uv     = uint2(clamp(uint(round(4.f * XYZ.x / X15Y3Z * 1000.f)), 0, CIE_1976_X - 1),
+              CIE_1976_Y - 1 - clamp(uint(round(9.f * XYZ.y / X15Y3Z * 1000.f)), 0, CIE_1976_Y - 1));
 
   tex2Dstore(storage_CIE_1931_cur,
              uint2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER), // adjust for the added borders of 100 pixels
              tex2Dfetch(sampler_CIE_1931, xy).rgba);
+
+  tex2Dstore(storage_CIE_1976_cur,
+             uint2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER), // adjust for the added borders of 100 pixels
+             tex2Dfetch(sampler_CIE_1976, uv).rgba);
   }
 }
 
@@ -781,7 +873,7 @@ float getCSP(const float3 XYZ)
 {
   if (isCSP(mul(XYZ_to_BT709, XYZ)))
     return 0.f;
-  else if (isCSP(mul(XYZ_to_P3Display, XYZ)))
+  else if (isCSP(mul(XYZ_to_DCI_P3, XYZ)))
     return 1.f / 255.f;
   else if (isCSP(mul(XYZ_to_BT2020, XYZ)))
     return 2.f / 255.f;
@@ -803,7 +895,12 @@ void calcCSPs(
   float3   curPixel;
   float3x3 curMatrix;
 
-  if (BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ)
+  // if colour space is sRGB all colours are in BT.709
+  if (BUFFER_COLOR_SPACE == CSP_SRGB || CSP_OVERRIDE == CSP_SRGB)
+  {
+    curCSP = 0.f;
+  }
+  else if (BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ)
   {
     curCSP = getCSP(mul(BT2020_to_XYZ, PQ_EOTF(pixel)));
   }
@@ -823,12 +920,12 @@ void count_CSPs_0(uint3 id : SV_DispatchThreadID)
 {
   if (id.x < BUFFER_WIDTH)
   {
-    uint counter_BT709     = 0;
-    uint counter_P3Display = 0;
-    uint counter_BT2020    = 0;
-    uint counter_AP1       = 0;
-    uint counter_AP0       = 0;
-    uint counter_else      = 0;
+    uint counter_BT709  = 0;
+    uint counter_DCI_P3 = 0;
+    uint counter_BT2020 = 0;
+    uint counter_AP1    = 0;
+    uint counter_AP0    = 0;
+    uint counter_else   = 0;
 
     for (uint y = 0; y < BUFFER_HEIGHT; y++)
     {
@@ -836,7 +933,7 @@ void count_CSPs_0(uint3 id : SV_DispatchThreadID)
       if (curCSP == 0)
         counter_BT709++;
       else if (curCSP == 1)
-        counter_P3Display++;
+        counter_DCI_P3++;
       else if (curCSP == 2)
         counter_BT2020++;
       else if (curCSP == 3)
@@ -846,12 +943,12 @@ void count_CSPs_0(uint3 id : SV_DispatchThreadID)
       else if (curCSP == 5)
         counter_else++;
     }
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 0), counter_BT709     / 65536.f);
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 1), counter_P3Display / 65536.f);
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 2), counter_BT2020    / 65536.f);
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 3), counter_AP1       / 65536.f);
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 4), counter_AP0       / 65536.f);
-    tex2Dstore(storage_CSP_counter, uint2(id.x, 5), counter_else      / 65536.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 0), counter_BT709  / 65535.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 1), counter_DCI_P3 / 65535.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 2), counter_BT2020 / 65535.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 3), counter_AP1    / 65535.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 4), counter_AP0    / 65535.f);
+    tex2Dstore(storage_CSP_counter, uint2(id.x, 5), counter_else   / 65535.f);
   }
 }
 
@@ -859,27 +956,29 @@ void count_CSPs_1(uint3 id : SV_DispatchThreadID)
 {
   if (id.x < BUFFER_HEIGHT)
   {
-    uint counter_BT709     = 0;
-    uint counter_P3Display = 0;
-    uint counter_BT2020    = 0;
-    uint counter_AP1       = 0;
-    uint counter_AP0       = 0;
-    uint counter_else      = 0;
+    uint counter_BT709  = 0;
+    uint counter_DCI_P3 = 0;
+    uint counter_BT2020 = 0;
+    uint counter_AP1    = 0;
+    uint counter_AP0    = 0;
+    uint counter_else   = 0;
 
     for (uint x = 0; x < BUFFER_WIDTH; x++)
     {
-      counter_BT709     += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 0)).r * 65536.f);
-      counter_P3Display += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 1)).r * 65536.f);
-      counter_BT2020    += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 2)).r * 65536.f);
-      counter_AP1       += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 3)).r * 65536.f);
-      counter_AP0       += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 4)).r * 65536.f);
-      counter_else      += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 5)).r * 65536.f);
+      counter_BT709  += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 0)).r * 65535.f);
+      counter_DCI_P3 += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 1)).r * 65535.f);
+      counter_BT2020 += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 2)).r * 65535.f);
+      counter_AP1    += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 3)).r * 65535.f);
+      counter_AP0    += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 4)).r * 65535.f);
+      counter_else   += uint(tex2Dfetch(sampler_CSP_counter, int2(x, 5)).r * 65535.f);
     }
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 0), counter_BT709     / float(BUFFER_WIDTH * BUFFER_HEIGHT));
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 1), counter_P3Display / float(BUFFER_WIDTH * BUFFER_HEIGHT));
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 2), counter_BT2020    / float(BUFFER_WIDTH * BUFFER_HEIGHT));
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 3), counter_AP1       / float(BUFFER_WIDTH * BUFFER_HEIGHT));
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 4), counter_AP0       / float(BUFFER_WIDTH * BUFFER_HEIGHT));
-    tex2Dstore(storage_CSP_counter_final, uint2(0, 5), counter_else      / float(BUFFER_WIDTH * BUFFER_HEIGHT));
+
+    const float pixels = BUFFER_WIDTH * BUFFER_HEIGHT;
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 0), counter_BT709  / pixels);
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 1), counter_DCI_P3 / pixels);
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 2), counter_BT2020 / pixels);
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 3), counter_AP1    / pixels);
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 4), counter_AP0    / pixels);
+    tex2Dstore(storage_CSP_counter_final, uint2(0, 5), counter_else   / pixels);
   }  
 }
