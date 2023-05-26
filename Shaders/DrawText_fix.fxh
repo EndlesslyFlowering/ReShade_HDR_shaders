@@ -235,17 +235,23 @@ void DrawText_Digit(
             ? ceil(log2(t) / 3.32192809)
             : 0;
   //early exit:
-  if(uv.x > digit+1 || -uv.x > radix+1) return;
+  if(uv.x > (digit + 1) || -uv.x > (radix + 1))
+    return;
+
   float index = t;
+
   if(floor(uv.x) > 0)
-      for(int i = ceil(-uv.x); i<0; i++) index *= 10.f;
+    for(int i = ceil(-uv.x); i < 0; i++)
+      index *= 10.f;
   else
-      for(int i = ceil(uv.x); i<0; i++) index /= 10.f;
+    for(int j = ceil(uv.x);  j < 0; j++)
+      index /= 10.f;
+
   index = (uv.x >= -radix -!radix)
-        ? index%10
+        ? index % 10.f
         : (10 + step(0, data)); //adding sign
   index = (uv.x > 0 && uv.x < 1)
-        ? 12
+        ? 12.f
         : index; //adding dot
   index = digits[(uint)index];
   float numbers = tex2D(samplerText, (frac(uv) + float2(index % 14.f, trunc(index / 14.f))) /
