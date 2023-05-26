@@ -3,37 +3,46 @@
 #include "DrawText_fix.fxh"
 
 
-uniform uint INVERSE_TONEMAPPING_METHOD
+uniform uint INVERSE_TONE_MAPPING_METHOD
 <
   ui_label = "inverse tone mapping method";
   ui_type  = "combo";
   ui_items = "BT.2446 Method A\0"
              "BT.2446 Methoc C\0"
-             "BT.2446 Methoc C NEW\0"
              "map SDR into HDR\0";
 > = 0;
 
-uniform uint EXPAND_GAMUT
-<
-  ui_label   = "Vivid HDR";
-  ui_type    = "combo";
-  ui_items   = "no\0"
-               "my expanded colourspace\0"
-               "expand colourspace\0"
-               "brighter highlights\0";
-  ui_tooltip = "interesting gamut expansion things from Microsoft\n"
-               "and me ;)\n"
-               "makes things look more colourful";
-> = 0;
+#define ITM_METHOD_BT2446A          0
+#define ITM_METHOD_BT2446C          1
+#define ITM_METHOD_MAP_SDR_INTO_HDR 2
 
-//uniform uint CONTENT_GAMMA
+//uniform uint EXPAND_GAMUT
 //<
-//  ui_label = "content gamma";
-//  ui_type  = "combo";
-//  ui_items = "sRGB\0"
-//             "2.2\0"
-//             "2.4\0";
-//> = 1;
+//  ui_label   = "Vivid HDR";
+//  ui_type    = "combo";
+//  ui_items   = "no\0"
+//               "my expanded colourspace\0"
+//               "expand colourspace\0"
+//               "brighter highlights\0";
+//  ui_tooltip = "interesting gamut expansion things from Microsoft\n"
+//               "and me ;)\n"
+//               "makes things look more colourful";
+//> = 0;
+
+uniform uint CONTENT_GAMMA
+<
+  ui_label = "content gamma";
+  ui_type  = "combo";
+  ui_items = "sRGB\0"
+             "2.2\0"
+             "2.4\0"
+             "linear\0";
+> = 1;
+
+#define CONTENT_GAMMA_SRGB   0
+#define CONTENT_GAMMA_22     1
+#define CONTENT_GAMMA_24     2
+#define CONTENT_GAMMA_LINEAR 3
 
 uniform float TARGET_PEAK_NITS_BT2446A
 <
@@ -84,7 +93,7 @@ uniform float GAMUT_EXPANSION_BT2446A
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1.2f;
-  ui_step     = 0.01f;
+  ui_step     = 0.005f;
 > = 1.1f;
 
 uniform float GAMMA_IN
@@ -147,21 +156,21 @@ uniform float ALPHA
 //      ui_step = 0.001f;
 //> = 58.535046646;
 
-uniform bool USE_ACHROMATIC_CORRECTION
-<
-  ui_category = "BT.2446 Method C";
-  ui_label    = "use achromatic correction for really bright elements";
-> = false;
-
-uniform float SIGMA
-<
-  ui_category = "BT.2446 Method C";
-     ui_label = "correction factor";
-      ui_type = "drag";
-       ui_min = 0.f;
-       ui_max = 10.f;
-      ui_step = 0.001f;
-> = 0.5f;
+//uniform bool USE_ACHROMATIC_CORRECTION
+//<
+//  ui_category = "BT.2446 Method C";
+//  ui_label    = "use achromatic correction for really bright elements";
+//> = false;
+//
+//uniform float SIGMA
+//<
+//  ui_category = "BT.2446 Method C";
+//     ui_label = "correction factor";
+//      ui_type = "drag";
+//       ui_min = 0.f;
+//       ui_max = 10.f;
+//      ui_step = 0.001f;
+//> = 0.5f;
 
 uniform float TARGET_PEAK_NITS_MAP_SDR_INTO_HDR
 <
@@ -173,12 +182,6 @@ uniform float TARGET_PEAK_NITS_MAP_SDR_INTO_HDR
   ui_step     = 0.1f;
 > = 203.f;
 
-uniform bool DONT_REMOVE_GAMMA
-<
-  ui_label   = "don't remove sRGB gamma";
-  ui_tooltip = "workaround";
-> = false;
-
 
 void BT2446_itm(
       float4     vpos : SV_Position,
@@ -189,54 +192,68 @@ void BT2446_itm(
 
   float3 hdr;
 
-  hdr = !DONT_REMOVE_GAMMA
-      ? sRGB_EOTF(input)
-      : input;
-  hdr = gamut(hdr, EXPAND_GAMUT);
-
-  switch (INVERSE_TONEMAPPING_METHOD)
+  switch (CONTENT_GAMMA)
   {
-    case 0:
+    default:
     {
-      hdr = BT2446A_inverseToneMapping(
+      hdr = input;
+    }
+    break;
+    case CONTENT_GAMMA_SRGB:
+    {
+      hdr = extended_sRGB_EOTF(input);
+    }
+    break;
+    case CONTENT_GAMMA_22:
+    {
+      hdr = extended_22_EOTF(input);
+    }
+    break;
+    case CONTENT_GAMMA_24:
+    {
+      hdr = extended_24_EOTF(input);
+    }
+    break;
+  }
+
+  //hdr = gamut(hdr, EXPAND_GAMUT);
+
+  hdr = mul(BT709_to_BT2020, hdr);
+
+  switch (INVERSE_TONE_MAPPING_METHOD)
+  {
+    case ITM_METHOD_BT2446A:
+    {
+      const float input_nits_factor = MAX_INPUT_NITS_BT2446A > REF_WHITE_NITS_BT2446A
+                                    ? MAX_INPUT_NITS_BT2446A / REF_WHITE_NITS_BT2446A
+                                    : 1.f;
+      float reference_white_nits = REF_WHITE_NITS_BT2446A * input_nits_factor;
+            reference_white_nits = reference_white_nits < TARGET_PEAK_NITS_BT2446A
+                                 ? reference_white_nits
+                                 : TARGET_PEAK_NITS_BT2446A;
+      hdr = BT2446A_inverse_tone_mapping(
         hdr,
         TARGET_PEAK_NITS_BT2446A,
-        REF_WHITE_NITS_BT2446A < TARGET_PEAK_NITS_BT2446A
-      ? REF_WHITE_NITS_BT2446A
-      : TARGET_PEAK_NITS_BT2446A,
-        MAX_INPUT_NITS_BT2446A >= REF_WHITE_NITS_BT2446A
-      ? MAX_INPUT_NITS_BT2446A / REF_WHITE_NITS_BT2446A
-      : 1.f,
+        reference_white_nits,
+        input_nits_factor,
         GAMUT_EXPANSION_BT2446A,
         GAMMA_IN,
         GAMMA_OUT);
     }
     break;
-    case 1:
+    case ITM_METHOD_BT2446C:
     {
-      hdr = BT2446C_inverseToneMapping(
+      hdr = BT2446C_inverse_tone_mapping(
         hdr,
-        REF_WHITE_NITS_BT2446C > 153.7f
-      ? 153.7f
-      : REF_WHITE_NITS_BT2446C,
-        0.33f - ALPHA,
-        USE_ACHROMATIC_CORRECTION,
-        SIGMA);
-    }
-    break;
-    case 2:
-    {
-      hdr = BT2446C_inverseToneMappingNEW(
-        hdr,
-        REF_WHITE_NITS_BT2446C > 153.7f
-      ? 1.537f
+        REF_WHITE_NITS_BT2446C > 153.9f
+      ? 1.539f
       : REF_WHITE_NITS_BT2446C / 100.f,
-        0.33f - ALPHA,
-        USE_ACHROMATIC_CORRECTION,
-        SIGMA);
+        0.33f - ALPHA);
+        //USE_ACHROMATIC_CORRECTION,
+        //SIGMA);
     }
     break;
-    case 3:
+    case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
       hdr = mapSDRintoHDR(
         hdr,
@@ -249,7 +266,7 @@ void BT2446_itm(
     hdr = PQ_inverse_EOTF(hdr);
   else if(BUFFER_COLOR_SPACE == CSP_SCRGB)
   {
-    hdr = mul(BT2020_to_BT709_matrix, hdr);
+    hdr = mul(BT2020_to_BT709, hdr);
     hdr = hdr * 125.f; // 125 = 10000 / 80
   }
   else
