@@ -604,3 +604,55 @@ float3 BT2446C_inverse_tone_mapping(
 
   return hdr;
 }
+
+
+
+float luminance_expand(float colour, float max_nits, float shoulder_start)
+{
+  float u = log(-((-max_nits + colour) / (max_nits - shoulder_start)));
+
+  return -max_nits * u + shoulder_start * u + shoulder_start;
+}
+
+float3 dice_inverse_tone_mapper(
+  const float3 input,
+        float  max_nits,
+        float  shoulder_start)
+{
+
+  float3x3 RGB_to_LMS = RGB_AP0_D65_to_LMS;
+  float3x3 LMS_to_RGB = LMS_to_RGB_AP0_D65;
+  float3   K_factors  = K_AP0_D65;
+  float    KR_helper  = KR_AP0_D65_helper;
+  float    KB_helper  = KB_AP0_D65_helper;
+  float2   KG_helper  = KG_AP0_D65_helper;
+
+
+  float3 LMS = mul(RGB_to_LMS, input);
+
+  LMS = PQ_inverse_EOTF(LMS);
+
+  const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
+
+  if (I1 < shoulder_start)
+  {
+    return input;
+  }
+  else
+  {
+    const float Ct1 = dot(LMS, LMS_to_ICtCp[1]);
+    const float Cp1 = dot(LMS, LMS_to_ICtCp[2]);
+
+    const float I2 = luminance_expand(I1, max_nits, shoulder_start);
+
+    const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
+
+    //to L'M'S'
+    LMS = mul(ICtCp_to_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+    //to LMS
+    LMS = PQ_EOTF(LMS);
+    //to RGB
+    return clamp(mul(LMS_to_RGB, LMS), 0.f, 65504.f);
+  }
+
+}

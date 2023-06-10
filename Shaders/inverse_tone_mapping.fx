@@ -5,16 +5,19 @@
 
 uniform uint INVERSE_TONE_MAPPING_METHOD
 <
-  ui_label = "inverse tone mapping method";
-  ui_type  = "combo";
-  ui_items = "BT.2446 Method A\0"
-             "BT.2446 Methoc C\0"
-             "map SDR into HDR\0";
+  ui_category = "global";
+  ui_label    = "inverse tone mapping method";
+  ui_type     = "combo";
+  ui_items    = "BT.2446 Method A\0"
+                "BT.2446 Methoc C\0"
+                "Dice inverse\0"
+                "map SDR into HDR\0";
 > = 0;
 
 #define ITM_METHOD_BT2446A          0
 #define ITM_METHOD_BT2446C          1
-#define ITM_METHOD_MAP_SDR_INTO_HDR 2
+#define ITM_METHOD_DICE_INVERSE     2
+#define ITM_METHOD_MAP_SDR_INTO_HDR 3
 
 //uniform uint EXPAND_GAMUT
 //<
@@ -31,12 +34,13 @@ uniform uint INVERSE_TONE_MAPPING_METHOD
 
 uniform uint CONTENT_GAMMA
 <
-  ui_label = "content gamma";
-  ui_type  = "combo";
-  ui_items = "sRGB\0"
-             "2.2\0"
-             "2.4\0"
-             "linear\0";
+  ui_category = "global";
+  ui_label    = "content gamma";
+  ui_type     = "combo";
+  ui_items    = "sRGB\0"
+                "2.2\0"
+                "2.4\0"
+                "linear (scRGB)\0";
 > = 1;
 
 #define CONTENT_GAMMA_SRGB   0
@@ -44,9 +48,9 @@ uniform uint CONTENT_GAMMA
 #define CONTENT_GAMMA_24     2
 #define CONTENT_GAMMA_LINEAR 3
 
-uniform float TARGET_PEAK_NITS_BT2446A
+uniform float TARGET_PEAK_NITS
 <
-  ui_category = "BT.2446 Method A";
+  ui_category = "global";
   ui_label    = "target peak luminance (nits)";
   ui_type     = "drag";
   ui_min      = 1.f;
@@ -182,6 +186,28 @@ uniform float TARGET_PEAK_NITS_MAP_SDR_INTO_HDR
   ui_step     = 0.1f;
 > = 203.f;
 
+uniform float DICE_REFERENCE_WHITE
+<
+  ui_category = "Dice";
+  ui_label    = "reference white luminance (nits)";
+  ui_tooltip  = "can't be higher than \"target peak luminance\"";
+  ui_type     = "drag";
+  ui_min      = 1.f;
+  ui_max      = 400.f;
+  ui_step     = 0.1f;
+> = 100.f;
+
+uniform float DICE_SHOULDER_START
+<
+  ui_category = "Dice";
+  ui_label    = "shoulder start (in %)";
+  ui_tooltip  = "set this to where the luminance expansion starts";
+  ui_type     = "drag";
+  ui_min      = 0.1f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 50.f;
+
 
 void BT2446_itm(
       float4     vpos : SV_Position,
@@ -218,7 +244,16 @@ void BT2446_itm(
 
   //hdr = gamut(hdr, EXPAND_GAMUT);
 
-  hdr = mul(BT709_to_BT2020, hdr);
+  const float dice_reference_white = (DICE_REFERENCE_WHITE / 80.f);
+
+  if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
+  {
+    hdr = mul(BT709_to_BT2020, hdr);
+  }
+  else
+  {
+    hdr = clamp(mul(BT709_to_AP0_D65, hdr * dice_reference_white / 125.f), 0.f, 65504.f);
+  }
 
   switch (INVERSE_TONE_MAPPING_METHOD)
   {
@@ -227,46 +262,66 @@ void BT2446_itm(
       const float input_nits_factor = MAX_INPUT_NITS_BT2446A > REF_WHITE_NITS_BT2446A
                                     ? MAX_INPUT_NITS_BT2446A / REF_WHITE_NITS_BT2446A
                                     : 1.f;
+
       float reference_white_nits = REF_WHITE_NITS_BT2446A * input_nits_factor;
-            reference_white_nits = reference_white_nits < TARGET_PEAK_NITS_BT2446A
+            reference_white_nits = reference_white_nits < TARGET_PEAK_NITS
                                  ? reference_white_nits
-                                 : TARGET_PEAK_NITS_BT2446A;
-      hdr = BT2446A_inverse_tone_mapping(
-        hdr,
-        TARGET_PEAK_NITS_BT2446A,
-        reference_white_nits,
-        input_nits_factor,
-        GAMUT_EXPANSION_BT2446A,
-        GAMMA_IN,
-        GAMMA_OUT);
+                                 : TARGET_PEAK_NITS;
+
+      hdr = BT2446A_inverse_tone_mapping(hdr,
+                                         TARGET_PEAK_NITS,
+                                         reference_white_nits,
+                                         input_nits_factor,
+                                         GAMUT_EXPANSION_BT2446A,
+                                         GAMMA_IN,
+                                         GAMMA_OUT);
     }
     break;
     case ITM_METHOD_BT2446C:
     {
-      hdr = BT2446C_inverse_tone_mapping(
-        hdr,
-        REF_WHITE_NITS_BT2446C > 153.9f
-      ? 1.539f
-      : REF_WHITE_NITS_BT2446C / 100.f,
-        0.33f - ALPHA);
-        //USE_ACHROMATIC_CORRECTION,
-        //SIGMA);
+      hdr = BT2446C_inverse_tone_mapping(hdr,
+                                         REF_WHITE_NITS_BT2446C > 153.9f
+                                       ? 1.539f
+                                       : REF_WHITE_NITS_BT2446C / 100.f,
+                                         0.33f - ALPHA);
+                                         //USE_ACHROMATIC_CORRECTION,
+                                         //SIGMA);
+    }
+    break;
+    case ITM_METHOD_DICE_INVERSE:
+    {
+      const float target_CLL_normalised = TARGET_PEAK_NITS / 10000.f;
+      hdr = dice_inverse_tone_mapper(hdr,
+                                     nits_to_I(DICE_REFERENCE_WHITE),
+                                     nits_to_I(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
     }
     break;
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
-      hdr = mapSDRintoHDR(
-        hdr,
-        TARGET_PEAK_NITS_MAP_SDR_INTO_HDR);
+      hdr = mapSDRintoHDR(hdr,
+                          TARGET_PEAK_NITS_MAP_SDR_INTO_HDR);
     }
     break;
   }
 
   if(BUFFER_COLOR_SPACE == CSP_PQ)
+  {
+    if (INVERSE_TONE_MAPPING_METHOD == ITM_METHOD_DICE_INVERSE)
+    {
+      hdr = mul(AP0_D65_to_BT2020, hdr);
+    }
     hdr = PQ_inverse_EOTF(hdr);
+  }
   else if(BUFFER_COLOR_SPACE == CSP_SCRGB)
   {
-    hdr = mul(BT2020_to_BT709, hdr);
+    if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
+    {
+      hdr = mul(BT2020_to_BT709, hdr);
+    }
+    else
+    {
+      hdr = mul(AP0_D65_to_BT709, hdr);
+    }
     hdr = hdr * 125.f; // 125 = 10000 / 80
   }
   else
