@@ -8,6 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                   //
 //  DrawText.fxh by kingreic1992   ( update: Sep.28.2019 )                                           //
+//  fix/mod by Lilium/EndlesslyFlowering                                                             //
 //                                                                                                   //
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                                                                                   //
@@ -44,7 +45,7 @@
 
 /*
 
-#include "DrawText.fxh"
+#include "lilium__DrawText_fix.fxh"
 
 float4 main_fragment( float4 position : POSITION,
                       float2 txcoord  : TEXCOORD) : COLOR {
@@ -171,7 +172,7 @@ float4 main_fragment( float4 position : POSITION,
 #define __empty1     97 // (null)
 //Character indexing ends
 
-texture Texttex < source = "FontAtlas.png"; > {
+texture Texttex < source = "lilium__FontAtlas.png"; > {
   Width  = 512;
   Height = 512;
 };

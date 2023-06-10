@@ -1,5 +1,5 @@
 #include "ReShade.fxh"
-#include "colorspace.fxh"
+#include "lilium__colorspace.fxh"
 
 //#define _DEBUG
 
@@ -118,7 +118,7 @@ void SDR_gamma_fix(
 }
 
 
-technique SDR_gamma_fix
+technique lilium__SDR_gamma_fix
 {
   pass SDR_gamma_fix
   {

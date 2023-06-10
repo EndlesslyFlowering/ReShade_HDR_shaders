@@ -1,5 +1,5 @@
 #include "ReShade.fxh"
-#include "colorspace.fxh"
+#include "lilium__colorspace.fxh"
 
 uniform uint INPUT_GAMMA
 <
@@ -115,7 +115,7 @@ void scRGB_gamma_fix(
 }
 
 
-technique scRGB_gamma_fix
+technique lilium__scRGB_gamma_fix
 {
   pass scRGB_gamma_fix
   {

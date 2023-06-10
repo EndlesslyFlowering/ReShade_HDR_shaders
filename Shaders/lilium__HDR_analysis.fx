@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
-#include "HDR_analysis.fxh"
-#include "DrawText_fix.fxh"
+#include "lilium__HDR_analysis.fxh"
+#include "lilium__DrawText_fix.fxh"
 
 //#define _DEBUG
 //#define _TESTY
@@ -510,7 +510,7 @@ void HDR_analysis(
   }
 }
 
-technique CLL_OLD
+technique lilium__HDR_analysis_CLL_OLD
 <
   enabled = false;
 >
@@ -579,7 +579,7 @@ technique CLL_OLD
 //  }
 }
 
-technique CLL
+technique lilium__HDR_analysis_CLL
 <
   enabled = false;
 >
@@ -613,7 +613,7 @@ technique CLL
   }
 }
 
-technique CIE
+technique lilium__HDR_analysis_CIE
 <
   enabled = false;
 >
@@ -640,7 +640,7 @@ technique CIE
   }
 }
 
-technique CSP
+technique lilium__HDR_analysis_CSP
 <
   enabled = false;
 >
@@ -669,7 +669,7 @@ technique CSP
 #endif
 }
 
-technique HDR_analysis
+technique lilium__HDR_analysis
 {
 
 #ifdef _TESTY
@@ -687,7 +687,7 @@ technique HDR_analysis
     DispatchSizeY = 1;
   }
 
-  pass
+  pass HDR_analysis
   {
     VertexShader = PostProcessVS;
      PixelShader = HDR_analysis;

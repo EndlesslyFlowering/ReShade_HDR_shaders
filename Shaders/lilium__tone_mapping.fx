@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
-#include "tone_mappers.fxh"
-#include "DrawText_fix.fxh" //for testing! remove afterwards
+#include "lilium__tone_mappers.fxh"
+#include "lilium__DrawText_fix.fxh" //for testing! remove afterwards
 
 //#define _DEBUG
 
@@ -545,7 +545,7 @@ void copyAdaptiveCLL(uint3 id : SV_DispatchThreadID)
 }
 
 
-technique adaptive_maxCLL_OLD
+technique lilium__tone_mapping_adaptive_maxCLL_OLD
 <
   enabled = false;
 >
@@ -586,7 +586,7 @@ technique adaptive_maxCLL_OLD
   }
 }
 
-technique adaptive_maxCLL
+technique lilium__tone_mapping_adaptive_maxCLL
 <
   enabled = false;
 >
@@ -634,7 +634,7 @@ technique adaptive_maxCLL
   }
 }
 
-technique tone_mapping
+technique lilium__tone_mapping
 {
   pass tone_mapping
   {

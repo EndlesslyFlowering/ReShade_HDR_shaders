@@ -1,4 +1,4 @@
-#include "HDR_analysis.fxh"
+#include "lilium__HDR_analysis.fxh"
 
 // Rep. ITU-R BT.2446-1 Table 2 & 3
 float3 BT2446A_tone_mapping(

@@ -1,7 +1,7 @@
 //todo: add source
 
 #include "ReShade.fxh"
-#include "colorspace.fxh"
+#include "lilium__colorspace.fxh"
 
 uniform float INTENSITY
 <
@@ -96,7 +96,7 @@ void filmgrain(
   output = float4(clamp(rgb, min_rgb.xxx, max_rgb.xxx), 1.f);
 }
 
-technique filmgrain
+technique lilium__filmgrain
 {
   pass filmgrain
   {

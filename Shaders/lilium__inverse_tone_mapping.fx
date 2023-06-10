@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
-#include "inverse_tone_mappers.fxh"
-#include "DrawText_fix.fxh"
+#include "lilium__inverse_tone_mappers.fxh"
+#include "lilium__DrawText_fix.fxh"
 
 
 uniform uint INVERSE_TONE_MAPPING_METHOD
@@ -330,7 +330,7 @@ void BT2446_itm(
   output = float4(hdr, 1.f);
 }
 
-technique inverse_tone_mapping
+technique lilium__inverse_tone_mapping
 {
   pass inverse_tone_mapping
   {

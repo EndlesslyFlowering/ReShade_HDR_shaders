@@ -1,4 +1,4 @@
-#include "colorspace.fxh"
+#include "lilium__colorspace.fxh"
 
 //max is 32
 //#ifndef THREAD_SIZE0
@@ -44,7 +44,7 @@ static const uint WIDTH1 = BUFFER_WIDTH - WIDTH0;
 static const uint HEIGHT0 = BUFFER_HEIGHT / 2;
 static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 
-//matches CSP_* defines in colorspace.fxh
+//matches CSP_* defines in lilium__colorspace.fxh
 //uniform uint CSP_OVERRIDE
 //<
 //  ui_label   = "override current colourspace";
@@ -203,7 +203,7 @@ storage2D storage_final_4
 #define CIE_1931_BG_X 835
 #define CIE_1931_BG_Y 935
 #define CIE_BG_BORDER  50
-texture2D CIE_1931 <source = "CIE_1931_linear.png";>
+texture2D CIE_1931 <source = "lilium__CIE_1931_linear.png";>
 {
   Width     = CIE_1931_X;
   Height    = CIE_1931_Y;
@@ -217,7 +217,7 @@ sampler2D sampler_CIE_1931
   Texture = CIE_1931;
 };
 
-texture2D CIE_1931_black_bg <source = "CIE_1931_black_bg_linear.png";>
+texture2D CIE_1931_black_bg <source = "lilium__CIE_1931_black_bg_linear.png";>
 {
   Width     = CIE_1931_BG_X;
   Height    = CIE_1931_BG_Y;
@@ -256,7 +256,7 @@ storage2D storage_CIE_1931_cur
 #define CIE_1976_Y    587
 #define CIE_1976_BG_X 723
 #define CIE_1976_BG_Y 687
-texture2D CIE_1976 <source = "CIE_1976_UCS_linear.png";>
+texture2D CIE_1976 <source = "lilium__CIE_1976_UCS_linear.png";>
 {
   Width     = CIE_1976_X;
   Height    = CIE_1976_Y;
@@ -270,7 +270,7 @@ sampler2D sampler_CIE_1976
   Texture = CIE_1976;
 };
 
-texture2D CIE_1976_black_bg <source = "CIE_1976_UCS_black_bg_linear.png";>
+texture2D CIE_1976_black_bg <source = "lilium__CIE_1976_UCS_black_bg_linear.png";>
 {
   Width     = CIE_1976_BG_X;
   Height    = CIE_1976_BG_Y;
