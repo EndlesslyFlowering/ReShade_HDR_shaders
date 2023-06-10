@@ -5,6 +5,7 @@
 #define CSP_HLG     4
 #define CSP_PS5     5
 
+
 //#define K_BT709  float3(0.2126f, 0.7152f, 0.0722f)
 //#define K_BT2020 float3(0.2627f, 0.6780f, 0.0593f)
 
@@ -34,6 +35,74 @@
 //#define KG_BT2020_helper float2(0.164553126843658, 0.571353126843658)
 //(0.0593/0.6780)*(2-2*0.0593), (0.2627/0.6780)*(2-2*0.2627)
 
+
+//static const float3x3 IDENTITY =
+//  float3x3(1.f, 0.f, 0.f,
+//           0.f, 1.f, 0.f,
+//           0.f, 0.f, 1.f);
+//
+//struct colorspace
+//{
+//  bool     can_ycbcr;
+//
+//  float3   k;
+//  float    kb_helper;
+//  float    kr_helper;
+//  float2   kg_helper;
+//
+//  float3x3 to_xyz;
+//  float3x3 to_bt709;
+//  float3x3 to_dci_p3;
+//  float3x3 to_bt2020;
+//  float3x3 to_ap1;
+//  float3x3 to_ap1_d65;
+//  float3x3 to_ap0;
+//  float3x3 to_ap0_d65;
+//  float3x3 to_lms;
+//
+//  float3x3 from_xyz;
+//  float3x3 from_bt709;
+//  float3x3 from_dci_p3;
+//  float3x3 from_bt2020;
+//  float3x3 from_ap1;
+//  float3x3 from_ap1_d65;
+//  float3x3 from_ap0;
+//  float3x3 from_ap0_d65;
+//  float3x3 from_lms;
+//};
+
+/*
+default:
+struct colorspace
+{
+  can_ycbcr    = false;
+
+  k            = float3(0.f, 0.f, 0.f);
+  kb_helper    = 0.f;
+  kr_helper    = 0.f;
+  kg_helper    = float2(0.f, 0.f);
+
+  to_xyz       = IDENTITY;
+  to_bt709     = IDENTITY;
+  to_dci_p3    = IDENTITY;
+  to_bt2020    = IDENTITY;
+  to_ap1       = IDENTITY;
+  to_ap1_d65   = IDENTITY;
+  to_ap0       = IDENTITY;
+  to_ap0_d65   = IDENTITY;
+  to_lms       = IDENTITY;
+
+  from_xyz     = IDENTITY;
+  from_bt709   = IDENTITY;
+  from_dci_p3  = IDENTITY;
+  from_bt2020  = IDENTITY;
+  from_ap1     = IDENTITY;
+  from_ap1_d65 = IDENTITY;
+  from_ap0     = IDENTITY;
+  from_ap0_d65 = IDENTITY;
+  from_lms     = IDENTITY;
+};
+*/
 
 //float posPow(float x, float y)
 //{
@@ -328,6 +397,16 @@ static const float3x3 AP0_D65_to_BT709 = float3x3(
   -0.277330603707685,   1.37823643460965,  -0.100905830901963,
   -0.0171334337475196, -0.149886019090529,  1.16701945283805);
 
+static const float3x3 BT2020_to_AP0_D65 = float3x3(
+ 0.670246365605384,    0.152175527191681,  0.177578107202935,
+ 0.0445008795878928,   0.854497444583291,  0.101001675828816,
+ 4.58634334267322e-17, 0.0257811794360767, 0.974218820563924);
+
+static const float3x3 AP0_D65_to_BT2020 = float3x3(
+  1.98120359851493,   -0.484110148394926,  -0.267481115328003,
+ -1.49600189517300,    2.20017241853874,    0.171935552888793,
+  0.0395893535231033, -0.0582241265671916,  0.861149547243843);
+
 static const float3x3 BT709_to_XYZ = float3x3(
   0.412386563252992,  0.357591490920625, 0.180450491203564,
   0.212636821677324,  0.715182981841251, 0.0721801964814255,
@@ -379,10 +458,10 @@ static const float3x3 myExp_BT709_to_BT2020 = float3x3(
   0.00697011360541966, 0.0147953231418517, 0.978234563252729);
 
 // START Converted from (Copyright (c) Microsoft Corporation - Licensed under the MIT License.)  https://github.com/microsoft/Xbox-GDK-Samples/blob/main/Kits/ATGTK/HDR/HDRCommon.hlsli
-static const float3x3 expanded_BT709_to_BT2020_matrix = float3x3(
-   0.6274040,  0.3292820, 0.0433136,
-   0.0457456,  0.941777,  0.0124772,
-  -0.00121055, 0.0176041, 0.983607);
+//static const float3x3 expanded_BT709_to_BT2020_matrix = float3x3(
+//   0.6274040,  0.3292820, 0.0433136,
+//   0.0457456,  0.941777,  0.0124772,
+//  -0.00121055, 0.0176041, 0.983607);
 // END Converted from (Copyright (c) Microsoft Corporation - Licensed under the MIT License.)  https://github.com/microsoft/Xbox-GDK-Samples/blob/main/Kits/ATGTK/HDR/HDRCommon.hlsli
 
 static const float3x3 BT709_to_DCI_P3 = float3x3(
@@ -390,37 +469,263 @@ static const float3x3 BT709_to_DCI_P3 = float3x3(
   0.0331932273885255, 0.966806772611475,  0.000000000000000,
   0.0170850449332782, 0.0724098641777013, 0.910505090889021);
 
+//float3 ExpandColorGamutP3(float3 color, float start, float stop)
+//{
+//  // The original Rec.709 color, but rotated into the P3-D65 color space
+//  float3 Rec709 = mul(BT709_to_DCI_P3, color);
+//
+//  // Treat the color as if it was originally mastered in the P3 color space
+//  float3 P3 = color;
+//
+//  // Interpolate between Rec.709 and P3-D65, but only for bright HDR values, we don't want to change the overall look of the image
+//  float lum = max(max(color.r, color.g), color.b);
+//  float lerp = saturate((lum - start) / (stop - start));
+//  float3 expandedColorInP3 = ((1.f - lerp) * Rec709) + (lerp * P3);
+//
+//  return expandedColorInP3;
+//}
+//
+//float3 ExpandColorGamutBT2020(float3 color, float start, float stop)
+//{
+//  // The original Rec.709 color, but rotated into the BT2020 color space
+//  float3 Rec709 = mul(BT709_to_BT2020, color);
+//
+//  // Treat the color as if it was originally mastered in the BT2020 color space
+//  float3 BT2020 = color;
+//
+//  // Interpolate between Rec.709 and BT2020, but only for bright HDR values, we don't want to change the overall look of the image
+//  float lum = max(max(color.r, color.g), color.b);
+//  float lerp = saturate((lum - start) / (stop - start));
+//  float3 expandedColorInBT2020 = ((1.f - lerp) * Rec709) + (lerp * BT2020);
+//
+//  return expandedColorInBT2020;
+//}
 
-float3 ExpandColorGamutP3(float3 color, float start, float stop)
+//static const struct csp_bt709
+//{
+//  can_ycbcr    = true,
+//
+//  k            = float3(0.212636821677324, 0.715182981841251, 0.0721801964814255),
+//  kb_helper    = 1.85563960703715,
+//  kr_helper    = 1.57472635664535,
+//  kg_helper    = float2(0.187281345942859, 0.468194596334655),
+//
+//  to_xyz       = float3x3(0.412386563252992,  0.357591490920625, 0.180450491203564,
+//                          0.212636821677324,  0.715182981841251, 0.0721801964814255,
+//                          0.0193306201524840, 0.119197163640208, 0.950372587005435),
+//
+//  to_bt709     = IDENTITY,
+//
+//  to_dci_p3    = float3x3(0.822457548511777,  0.177542451488222,  0.000000000000000,
+//                          0.0331932273885255, 0.966806772611475,  0.000000000000000,
+//                          0.0170850449332782, 0.0724098641777013, 0.910505090889021),
+//
+//  to_bt2020    = float3x3(0.627401924722236,  0.329291971755002,  0.0433061035227622,
+//                          0.0690954897392608, 0.919544281267395,  0.0113602289933443,
+//                          0.0163937090881632, 0.0880281623979006, 0.895578128513936),
+//
+//  to_ap1       = IDENTITY,
+//  to_ap1_d65   = IDENTITY,
+//  to_ap0       = IDENTITY,
+//
+//  to_ap0_d65   = float3x3(0.433939666226453,  0.376270757528954, 0.189789576244594,
+//                          0.0886176490106605, 0.809293012830817, 0.102089338158523,
+//                          0.0177524231517299, 0.109465628662465, 0.872781948185805),
+//
+//  to_lms       = IDENTITY,
+//
+//
+//  from_xyz     = float3x3( 3.24100323297636,   -1.53739896948879,  -0.498615881996363,
+//                          -0.969224252202516,   1.87592998369518,   0.0415542263400847,
+//                           0.0556394198519755, -0.204011206123910,  1.05714897718753),
+//
+//  from_bt2020  = float3x3( 1.66049621914783,   -0.587656444131135, -0.0728397750166941,
+//                          -0.124547095586012,   1.13289510924730,  -0.00834801366128445,
+//                          -0.0181536813870718, -0.100597371685743,  1.11875105307281),
+//
+//  from_ap0_d65 = float3x3( 2.55243581004094,   -1.12951938115888,  -0.422916428882053,
+//                          -0.277330603707685,   1.37823643460965,  -0.100905830901963,
+//                          -0.0171334337475196, -0.149886019090529,  1.16701945283805),
+//};
+//
+//
+//static const colorspace csp_dci_p3 =
+//{
+//  can_ycbcr    = false;
+//
+//  k            = float3(0.f, 0.f, 0.f);
+//  kb_helper    = 0.f;
+//  kr_helper    = 0.f;
+//  kg_helper    = float2(0.f, 0.f);
+//
+//  to_xyz       = IDENTITY;
+//  to_bt709     = IDENTITY;
+//  to_dci_p3    = IDENTITY;
+//  to_bt2020    = IDENTITY;
+//  to_ap1       = IDENTITY;
+//  to_ap1_d65   = IDENTITY;
+//  to_ap0       = IDENTITY;
+//  to_ap0_d65   = IDENTITY;
+//  to_lms       = IDENTITY;
+//
+//  from_xyz     = float3x3( 2.49350912393461,   -0.931388179404778,  -0.402712756741651,
+//                          -0.829473213929555,   1.76263057960030,    0.0236242371055886,
+//                           0.0358512644339181, -0.0761839369220759,  0.957029586694311);
+//};
+//
+//
+//static const colorspace csp_bt2020 =
+//{
+//  can_ycbcr    = true;
+//
+//  k            = float3(0.262698338956556, 0.678008765772817, 0.0592928952706273);
+//  kb_helper    = 1.88141420945875;
+//  kr_helper    = 1.47460332208689;
+//  kg_helper    = float2(0.164532527178987, 0.571343414550845);
+//
+//  to_xyz       = float3x3(0.636953506785074,    0.144619184669233,  0.168855853922873,
+//                          0.262698338956556,    0.678008765772817,  0.0592928952706273,
+//                          4.99407096644439e-17, 0.0280731358475570, 1.06082723495057);
+//
+//  to_bt709     = bt709.from_bt2020;
+//
+//  to_dci_p3    = IDENTITY;
+//  to_bt2020    = IDENTITY;
+//  to_ap1       = IDENTITY;
+//  to_ap1_d65   = IDENTITY;
+//  to_ap0       = IDENTITY;
+//
+//  to_ap0_d65   = float3x3(0.670246365605384,    0.152175527191681,  0.177578107202935,
+//                          0.0445008795878928,   0.854497444583291,  0.101001675828816,
+//                          4.58634334267322e-17, 0.0257811794360767, 0.974218820563924);
+//
+//  to_lms       = float3x3(0.412109375,    0.52392578125,  0.06396484375,
+//                          0.166748046875, 0.720458984375, 0.11279296875,
+//                          0.024169921875, 0.075439453125, 0.900390625);
+//
+//
+//  from_xyz     = float3x3( 1.71666342779588,   -0.355673319730140, -0.253368087890248,
+//                          -0.666673836198887,   1.61645573982470,   0.0157682970961337,
+//                           0.0176424817849772, -0.0427769763827532, 0.942243281018431);
+//
+//  from_bt709   = bt709.to_bt2020;
+//
+//  from_ap0_d65 = float3x3( 1.98120359851493,   -0.484110148394926,  -0.267481115328003,
+//                          -1.49600189517300,    2.20017241853874,    0.171935552888793,
+//                           0.0395893535231033, -0.0582241265671916,  0.861149547243843);
+//
+//  from_lms     = float3x3( 3.43660669433308,   -2.50645211865627,    0.0698454243231915,
+//                          -0.791329555598929,   1.98360045179229,   -0.192270896193362,
+//                          -0.0259498996905927, -0.0989137147117265,  1.12486361440232);
+//};
+//
+//
+//static const colorspace csp_ap1 =
+//{
+//  can_ycbcr    = false;
+//
+//  k            = float3(0.f, 0.f, 0.f);
+//  kb_helper    = 0.f;
+//  kr_helper    = 0.f;
+//  kg_helper    = float2(0.f, 0.f);
+//
+//
+//  from_xyz     = float3x3( 1.64102337969433,   -0.324803294184790,   -0.236424695237612,
+//                          -0.663662858722983,   1.61533159165734,     0.0167563476855301,
+//                           0.0117218943283754, -0.00828444199623741,  0.988394858539022);
+//};
+//
+//
+//static const colorspace csp_ap1_d65 =
+//{
+//  can_ycbcr    = false;
+//
+//  k            = float3(0.f, 0.f, 0.f);
+//  kb_helper    = 0.f;
+//  kr_helper    = 0.f;
+//  kg_helper    = float2(0.f, 0.f);
+//
+//
+//  from_xyz     = float3x3( 0.647502080944762,   0.134381221854532,   0.168545242577887,
+//                           0.266084305353177,   0.675978267510674,   0.0579374271361486,
+//                          -0.00544882536559402, 0.00407215823801611, 1.09027703792571);
+//};
+//
+//static const colorspace csp_ap0 =
+//{
+//  can_ycbcr    = false;
+//
+//  k            = float3(0.f, 0.f, 0.f);
+//  kb_helper    = 0.f;
+//  kr_helper    = 0.f;
+//  kg_helper    = float2(0.f, 0.f);
+//
+//
+//  from_xyz     = float3x3( 1.04981101749797,  0.000000000000000, -0.0000974845405792529,
+//                          -0.495903023077320, 1.37331304581571,   0.0982400360573100,
+//                           0.000000000000000, 0.000000000000000,  0.991252018200499);
+//};
+//
+//
+//static const colorspace csp_ap0_d65 =
+//{
+//  can_ycbcr    = true;
+//
+//  k            = float3(0.343163015452697, 0.734695029446046, -0.0778580448987425);
+//  kb_helper    = 2.15571608979748;
+//  kr_helper    = 1.31367396909461;
+//  kg_helper    = float2(-0.228448313084334, 0.613593807618545);
+//
+//  to_xyz       = float3x3(0.950327431033156, 0.000000000000000,  0.000101114344024341,
+//                          0.343163015452697, 0.734695029446046, -0.0778580448987425,
+//                          0.000000000000000, 0.000000000000000,  1.08890037079813);
+//
+//  to_lms       = float3x3(0.580810546875, 0.512451171875, -0.09326171875,
+//                          0.195068359375, 0.808349609375, -0.00341796875,
+//                          0.0322265625,   0.054931640625,  0.91259765625);
+//
+//  from_lms     = float3x3( 2.17845648544721,   -1.39580019302982,    0.217396782969079,
+//                          -0.525889627357037,   1.57372643877619,   -0.0478484931801823,
+//                          -0.0452731647735950, -0.0454368173474335,  1.09097633376501);
+//};
+//
+//colorspace return_struct(float test)
+//{
+//  colorspace csp_bt709;
+//  csp_bt709.can_ycbcr = true;
+//  return csp_bt709;
+//}
+//
+
+
+float3 ycbcr_bt2020_to_rgb(const float3 col)
 {
-  // The original Rec.709 color, but rotated into the P3-D65 color space
-  float3 Rec709 = mul(BT709_to_DCI_P3, color);
-
-  // Treat the color as if it was originally mastered in the P3 color space
-  float3 P3 = color;
-
-  // Interpolate between Rec.709 and P3-D65, but only for bright HDR values, we don't want to change the overall look of the image
-  float lum = max(max(color.r, color.g), color.b);
-  float lerp = saturate((lum - start) / (stop - start));
-  float3 expandedColorInP3 = ((1.f - lerp) * Rec709) + (lerp * P3);
-
-  return expandedColorInP3;
+  return float3(col.x + KR_BT2020_helper    * col.z,
+                col.x - KG_BT2020_helper[0] * col.y - KG_BT2020_helper[1] * col.z,
+                col.x + KB_BT2020_helper    * col.y);
 }
 
-float3 ExpandColorGamutBT2020(float3 color, float start, float stop)
+float3 ycbcr_ap0_d65_to_rgb(const float3 col)
 {
-  // The original Rec.709 color, but rotated into the BT2020 color space
-  float3 Rec709 = mul(BT709_to_BT2020, color);
+  return float3(col.x + KR_AP0_D65_helper    * col.z,
+                col.x - KG_AP0_D65_helper[0] * col.y - KG_AP0_D65_helper[1] * col.z,
+                col.x + KB_AP0_D65_helper    * col.y);
+}
 
-  // Treat the color as if it was originally mastered in the BT2020 color space
-  float3 BT2020 = color;
+float3 rgb_bt2020_to_ycbcr(const float3 col)
+{
+  const float Y = dot(col, K_BT2020);
+  return float3(Y,
+                (col.b - Y) / KB_BT2020_helper,
+                (col.r - Y) / KR_BT2020_helper);
+}
 
-  // Interpolate between Rec.709 and BT2020, but only for bright HDR values, we don't want to change the overall look of the image
-  float lum = max(max(color.r, color.g), color.b);
-  float lerp = saturate((lum - start) / (stop - start));
-  float3 expandedColorInBT2020 = ((1.f - lerp) * Rec709) + (lerp * BT2020);
-
-  return expandedColorInBT2020;
+float3 rgb_ap0_d65_to_ycbcr(const float3 col)
+{
+  const float Y = dot(col, K_AP0_D65);
+  return float3(Y,
+                (col.b - Y) / KB_AP0_D65_helper,
+                (col.r - Y) / KR_AP0_D65_helper);
 }
 
 
@@ -473,8 +778,22 @@ float3 PQ_inverse_EOTF(float3 Y)
 
   //E'
   return pow(
-             (c1.xxx + c2 * Y_pow_m1) /
-             (1.f.xxx + c3 * Y_pow_m1)
+             ( c1.xxx + c2.xxx * Y_pow_m1) /
+             (1.f.xxx + c3.xxx * Y_pow_m1)
+         , m2);
+}
+
+// takes normalised values as input
+float2 PQ_inverse_EOTF(float2 Y)
+{
+  Y = clamp(Y, 0.f, 65504.f);
+
+  const float2 Y_pow_m1 = pow(Y, m1);
+
+  //E'
+  return pow(
+             ( c1.xx + c2.xx * Y_pow_m1) /
+             (1.f.xx + c3.xx * Y_pow_m1)
          , m2);
 }
 
@@ -487,7 +806,7 @@ float PQ_inverse_EOTF(float Y)
 
   //E'
   return pow(
-             (c1 + c2 * Y_pow_m1) /
+             ( c1 + c2 * Y_pow_m1) /
              (1.f + c3 * Y_pow_m1)
          , m2);
 }
@@ -504,6 +823,36 @@ float3 PQ_OETF(const float3 Fd)
              (c1.xxx + c2 * Y_pow_m1) /
              (1.f.xxx + c3 * Y_pow_m1)
          , m2);
+}
+
+float nits_to_I(const float nits)
+{
+  float  nits_normalised  = nits / 10000.f;
+
+  float3 nits_normalised3 =
+    float3(nits_normalised, nits_normalised, nits_normalised);
+
+  float2 LM_nits = float2(
+    dot(nits_normalised3, RGB_AP0_D65_to_LMS[0]),
+    dot(nits_normalised3, RGB_AP0_D65_to_LMS[1]));
+
+  float2 LM_PQ = PQ_inverse_EOTF(LM_nits);
+
+  return 0.5f * LM_PQ.x + 0.5f * LM_PQ.y;
+}
+
+float normalised_to_I(const float normalised)
+{
+  float3 normalised3 =
+    float3(normalised, normalised, normalised);
+
+  float2 LM_normalised = float2(
+    dot(normalised3, RGB_AP0_D65_to_LMS[0]),
+    dot(normalised3, RGB_AP0_D65_to_LMS[1]));
+
+  float2 LM_PQ = PQ_inverse_EOTF(LM_normalised);
+
+  return 0.5f * LM_PQ.x + 0.5f * LM_PQ.y;
 }
 
 bool IsNAN(const float input)
