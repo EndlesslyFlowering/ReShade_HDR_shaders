@@ -371,7 +371,7 @@ void BT2446A_tm(
 {
   const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  //float maxCLL = tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r;
+  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
 
   float maxCLL;
   switch (CLL_MODE)
@@ -456,14 +456,16 @@ void BT2446A_tm(
         }
         break;
       case TM_METHOD_DICE:
-        const float target_CLL_in_PQ = TARGET_CLL / 10000.f;
+      {
+        const float target_CLL_normalized = TARGET_CLL / 10000.f;
         hdr = dice(hdr,
-                   PQ_inverse_EOTF(target_CLL_in_PQ),
-                   PQ_inverse_EOTF(DICE_SHOULDER_START / 100.f * target_CLL_in_PQ),
+                   normalised_to_I(target_CLL_normalized),
+                   normalised_to_I(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
                    DICE_PROCESSING_MODE,
                    DICE_WORKING_COLOR_SPACE);
         //hdr = saturate(hdr);
-        break;
+      }
+      break;
 #ifdef _DEBUG
       case TM_METHOD_BT2446A_MOD1:
         const float testH = clamp(TEST_H + maxCLL,     0.f, 10000.f);
@@ -498,7 +500,7 @@ void BT2446A_tm(
 
   if (SHOW_ADAPTIVE_MAXCLL)
   {
-    float actualMaxCLL    = tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r;
+    float actualMaxCLL    = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
     float adaptiveMaxCLL0 = tex2Dfetch(samplerAdaptiveCLLvalue0,  int2(0, 0)).r;
     float adaptiveMaxCLL1 = tex2Dfetch(samplerAdaptiveCLLvalue1,  int2(0, 0)).r;
     DrawText_Digit(float2(100.f, 500.f), 30, 1, texcoord, 2, actualMaxCLL    + 0.01f, output, FONT_BRIGHTNESS);
@@ -511,7 +513,7 @@ void BT2446A_tm(
 
 void adaptiveCLL(uint3 id : SV_DispatchThreadID)
 {
-  const float currentMaxCLL      = tex2Dfetch(samplerMaxAvgMinCLLvalues, int2(0, 0)).r;
+  const float currentMaxCLL      = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
   const float currentAdaptiveCLL = tex2Dfetch(samplerAdaptiveCLLvalue0,  int2(0, 0)).r;
 
   const float abs_frametime = abs(FRAMETIME);
@@ -543,7 +545,7 @@ void copyAdaptiveCLL(uint3 id : SV_DispatchThreadID)
 }
 
 
-technique adaptive_maxCLL
+technique adaptive_maxCLL_OLD
 <
   enabled = false;
 >
@@ -552,7 +554,7 @@ technique adaptive_maxCLL
   {
     VertexShader = PostProcessVS;
      PixelShader = calcCLL;
-    RenderTarget = CLLvalues;
+    RenderTarget = CLL_values;
   }
 
   pass getMaxCLLvalue0
@@ -584,7 +586,7 @@ technique adaptive_maxCLL
   }
 }
 
-technique adaptive_maxCLL_NEW
+technique adaptive_maxCLL
 <
   enabled = false;
 >
@@ -593,7 +595,7 @@ technique adaptive_maxCLL_NEW
   {
     VertexShader = PostProcessVS;
      PixelShader = calcCLL;
-    RenderTarget = CLLvalues;
+    RenderTarget = CLL_values;
   }
 
   pass getMaxCLLvalue0_NEW
@@ -605,9 +607,9 @@ technique adaptive_maxCLL_NEW
 
   pass getMaxCLLvalue1_NEW
   {
-    ComputeShader = getMaxCLL1_NEW <4, 4>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
+    ComputeShader = getMaxCLL1_NEW <1, 1>;
+    DispatchSizeX = 2;
+    DispatchSizeY = 2;
   }
 
   pass getFinalMaxCLLvalue1_NEW

@@ -72,9 +72,7 @@ float3 BT2446A_tone_mapping(
 
   float3 hdrOut;
 
-  hdrOut.r = Y_tmo + KR_BT2020_helper    * C_r_tmo;
-  hdrOut.g = Y_tmo - KG_BT2020_helper[0] * C_b_tmo - KG_BT2020_helper[1] * C_r_tmo;
-  hdrOut.b = Y_tmo + KB_BT2020_helper    * C_b_tmo;
+  hdrOut = ycbcr_bt2020_to_rgb(float3(Y_tmo, C_b_tmo, C_r_tmo));
 
   hdrOut = saturate(hdrOut);
 
@@ -158,9 +156,7 @@ float3 BT2446A_tone_mapping_mod1(
 
   float3 hdrOut;
 
-  hdrOut.r = Y_tmo + KR_BT2020_helper    * C_r_tmo;
-  hdrOut.g = Y_tmo - KG_BT2020_helper[0] * C_b_tmo - KG_BT2020_helper[1] * C_r_tmo;
-  hdrOut.b = Y_tmo + KB_BT2020_helper    * C_b_tmo;
+  hdrOut = ycbcr_bt2020_to_rgb(float3(Y_tmo, C_b_tmo, C_r_tmo));
 
   hdrOut = saturate(hdrOut);
 
@@ -235,54 +231,64 @@ float3 BT2390_tone_mapping(
 
     //E2
     if (Y2 >= knee_start)
+    {
       Y2 = Hermite_spline(Y2, knee_start, max_lum);
 
-    //E3
-    Y2 = Y2 + min_lum * pow((1.f - Y2), 4.f);
+      //E3
+      Y2 = Y2 + min_lum * pow((1.f - Y2), 4.f);
 
-    //E4
-    //Y2 = Y2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
-    Y2 = Y2 * src_max_PQ;
+      //E4
+      //Y2 = Y2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
+      Y2 = Y2 * src_max_PQ;
 
-    Y2 = PQ_EOTF(Y2);
+      Y2 = PQ_EOTF(Y2);
 
-    return clamp(Y2 / Y1 * E_, 0.f, 65504.f);
+      return clamp(Y2 / Y1 * E_, 0.f, 65504.f);
+    }
+    else
+    {
+      return E_;
+    }
   }
   else if (processing_mode == PRO_MODE_YCBCR)
   {
     const float Y_1  = dot(E_, K_BT2020);
-    const float C_b1 = (E_.b - Y_1) /
-                       KB_BT2020_helper;
-    const float C_r1 = (E_.r - Y_1) /
-                       KR_BT2020_helper;
     //E1
     //float Y_2 = (Y_1 - src_min_PQ) / (src_max_PQ - src_min_PQ);
     float Y_2 = Y_1 / src_max_PQ;
 
     //E2
     if (Y_2 >= knee_start)
+    {
+      const float C_b1 = (E_.b - Y_1) /
+                         KB_BT2020_helper;
+      const float C_r1 = (E_.r - Y_1) /
+                         KR_BT2020_helper;
+
       Y_2 = Hermite_spline(Y_2, knee_start, max_lum);
 
-    //E3
-    Y_2 = Y_2 + min_lum * pow((1.f - Y_2), 4.f);
+      //E3
+      Y_2 = Y_2 + min_lum * pow((1.f - Y_2), 4.f);
 
-    //E4
-    //Y_2 = Y_2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
-    Y_2 = Y_2 * src_max_PQ;
+      //E4
+      //Y_2 = Y_2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
+      Y_2 = Y_2 * src_max_PQ;
 
-    const float min_Y = min((Y_1 / Y_2), (Y_2 / Y_1));
+      const float min_Y = min((Y_1 / Y_2), (Y_2 / Y_1));
 
-    //const float3 C_b2_C_r2 = cross(float3(C_b1, C_r1, 0.f), min_Y);
-    //const float  C_b2 = C_b2_C_r2.x;
-    //const float  C_r2 = C_b2_C_r2.y;
+      //const float3 C_b2_C_r2 = cross(float3(C_b1, C_r1, 0.f), min_Y);
+      //const float  C_b2 = C_b2_C_r2.x;
+      //const float  C_r2 = C_b2_C_r2.y;
 
-    const float C_b2 = min_Y * C_b1;
-    const float C_r2 = min_Y * C_r1;
+      const float C_b2 = min_Y * C_b1;
+      const float C_r2 = min_Y * C_r1;
 
-    return clamp(float3(Y_2 + KR_BT2020_helper    * C_r2,
-                        Y_2 - KG_BT2020_helper[0] * C_b2 - KG_BT2020_helper[1] * C_r2,
-                        Y_2 + KB_BT2020_helper    * C_b2)
-           , 0.f, 65504.f);
+      return clamp(ycbcr_bt2020_to_rgb(float3(Y_2, C_b2, C_r2)), 0.f, 65504.f);
+    }
+    else
+    {
+      return E_;
+    }
   }
   else if (processing_mode == PRO_MODE_ICTCP)
   {
@@ -290,34 +296,41 @@ float3 BT2390_tone_mapping(
     LMS = PQ_inverse_EOTF(LMS);
 
     const float I1  = 0.5f * LMS.x + 0.5f * LMS.y;
-    const float Ct1 = dot(LMS, LMS_to_ICtCp[1]);
-    const float Cp1 = dot(LMS, LMS_to_ICtCp[2]);
     //E1
     //float I2 = (I1 - src_min_PQ) / (src_max_PQ - src_min_PQ);
     float I2 = I1 / src_max_PQ;
 
     //E2
     if (I2 >= knee_start)
+    {
+      const float Ct1 = dot(LMS, LMS_to_ICtCp[1]);
+      const float Cp1 = dot(LMS, LMS_to_ICtCp[2]);
+
       I2 = Hermite_spline(I2, knee_start, max_lum);
 
-    //E3
-    I2 = I2 + min_lum * pow((1.f - I2), 4.f);
+      //E3
+      I2 = I2 + min_lum * pow((1.f - I2), 4.f);
 
-    //E4
-    //I2 = I2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
-    I2 = I2 * src_max_PQ;
+      //E4
+      //I2 = I2 * (src_max_PQ - src_min_PQ) + src_min_PQ;
+      I2 = I2 * src_max_PQ;
 
-    const float min_I = min((I1 / I2), (I2 / I1));
+      const float min_I = min((I1 / I2), (I2 / I1));
 
-    //const float3 Ct2_Cp2 = cross(float3(Ct1, Cp1, 0.f), min_I);
+      //const float3 Ct2_Cp2 = cross(float3(Ct1, Cp1, 0.f), min_I);
 
-    //to L'M'S'
-    //LMS = mul(ICtCp_to_LMS, float3(I2, Ct2_Cp2.x, Ct2_Cp2.y));
-    LMS = mul(ICtCp_to_LMS, float3(I2, 1 * Ct1, 1 * Cp1));
-    //to LMS
-    LMS = PQ_EOTF(LMS);
-    //to RGB
-    return clamp(mul(LMS_to_RGB_BT2020, LMS), 0.f, 65504.f);
+      //to L'M'S'
+      //LMS = mul(ICtCp_to_LMS, float3(I2, Ct2_Cp2.x, Ct2_Cp2.y));
+      LMS = mul(ICtCp_to_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+      //to LMS
+      LMS = PQ_EOTF(LMS);
+      //to RGB
+      return clamp(mul(LMS_to_RGB_BT2020, LMS), 0.f, 65504.f);
+    }
+    else
+    {
+      return E_;
+    }
   }
   else
     return float3(0.f, 0.f, 0.f);
@@ -397,8 +410,8 @@ float3 dice(
     RGB_to_LMS = RGB_BT2020_to_LMS;
     LMS_to_RGB = LMS_to_RGB_BT2020;
     K_factors  = K_BT2020;
-    KR_helper  = KB_BT2020_helper;
-    KB_helper  = KR_BT2020_helper;
+    KR_helper  = KR_BT2020_helper;
+    KB_helper  = KB_BT2020_helper;
     KG_helper  = KG_BT2020_helper;
   }
 
