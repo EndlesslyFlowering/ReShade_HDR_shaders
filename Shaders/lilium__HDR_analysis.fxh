@@ -81,13 +81,6 @@ sampler2D Sampler_CLL_Values
   SRGBTexture = false;
 };
 
-storage2D Storage_CLL_Values
-{
-  Texture = CLL_Values;
-
-  MipLevel = 0;
-};
-
 //  max = (0,0); max_99.99% = (1,0); avg = (2,0); min = (3,0)
 texture2D Max_Avg_Min_CLL_Values
 {
