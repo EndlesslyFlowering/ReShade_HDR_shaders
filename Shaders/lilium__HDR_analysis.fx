@@ -11,7 +11,64 @@ uniform float2 MOUSE_POSITION
   source = "mousepoint";
 >;
 
+uniform float2 NIT_PINGPONG0
+<
+  source    = "pingpong";
+  min       = 0.f;
+  max       = 1.75f;
+  step      = 1.f;
+  smoothing = 0.f;
+>;
 
+uniform float2 NIT_PINGPONG1
+<
+  source    = "pingpong";
+  min       =  0.f;
+  max       =  3.f;
+  step      =  1.f;
+  smoothing =  0.f;
+>;
+
+uniform float2 NIT_PINGPONG2
+<
+  source    = "pingpong";
+  min       = 0.f;
+  max       = 1.f;
+  step      = 1.f;
+  smoothing = 0.f;
+>;
+
+
+uniform uint FONT_SIZE
+<
+  ui_label    = "font size";
+  ui_type     = "slider";
+  ui_min      = 30;
+  ui_max      = 40;
+> = 30;
+
+// CLL
+uniform bool SHOW_CLL_VALUES
+<
+  ui_category = "CLL stuff";
+  ui_label    = "show CLL values";
+  ui_tooltip  = "shows max/avg/min Content Light Level";
+> = false;
+
+uniform bool SHOW_CLL_FROM_CURSOR
+<
+  ui_category = "CLL stuff";
+  ui_label    = "show CLL value from cursor position";
+> = false;
+
+uniform bool CLL_ROUNDING_WORKAROUND
+<
+  ui_category = "CLL stuff";
+  ui_label    = "work around rounding errors for displaying maxCLL";
+  ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
+> = false;
+
+// CIE
 uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram";
@@ -40,6 +97,7 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_step     = 1.f;
 > = 80.f;
 
+// CSPs
 uniform bool SHOW_CSPS
 <
   ui_category = "colour space %";
@@ -47,52 +105,43 @@ uniform bool SHOW_CSPS
   ui_tooltip  = "in %";
 > = false;
 
-uniform bool SHOW_CLL_VALUES
+uniform bool SHOW_CSP_MAP
 <
-  ui_category = "CLL stuff";
-  ui_label    = "show CLL values";
-  ui_tooltip  = "shows max/avg/min Content Light Level";
+  ui_category = "colour space %";
+  ui_label    = "show colour space map";
+  ui_tooltip  = "        colours:\n"
+                "black and white: BT.709\n"
+                "           teal: DCI-P3\n"
+                "         yellow: BT.2020\n"
+                "           blue: AP1\n"
+                "            red: AP0\n"
+                "           pink: else";
 > = false;
 
-uniform bool SHOW_CLL_FROM_CURSOR
+uniform bool SHOW_CSP_FROM_CURSOR
 <
-  ui_category = "CLL stuff";
-  ui_label    = "show CLL value from cursor position";
+  ui_category = "colour space %";
+  ui_label    = "show colour space from cursor position";
 > = false;
 
-uniform uint CLL_FONT_SIZE
-<
-  ui_category = "CLL stuff";
-  ui_label    = "font size for CLL values";
-  ui_type     = "slider";
-  ui_min      = 30;
-  ui_max      = 40;
-> = 30;
-
-uniform bool ROUNDING_WORKAROUND
-<
-  ui_category = "CLL stuff";
-  ui_label    = "work around rounding errors for displaying maxCLL";
-  ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
-> = false;
-
+// heatmap
 uniform bool SHOW_HEATMAP
 <
   ui_category = "heatmap stuff";
   ui_label    = "show heatmap";
+  ui_tooltip  = "         colours:   10000 nits:   1000 nits:\n"
+                " black and white:       0-  100       0- 100\n"
+                "  teal to green:      100-  203     100- 203\n"
+                " green to yellow:     203-  400     203- 400\n"
+                "yellow to red:        400- 1000     400- 600\n"
+                "   red to pink:      1000- 4000     600- 800\n"
+                "  pink to blue:      4000-10000     800-1000";
 > = false;
 
 uniform uint HEATMAP_CUTOFF_POINT
 <
   ui_category = "heatmap stuff";
   ui_label    = "heatmap cutoff point";
-  ui_tooltip  = "colours:            10000 nits:     1000 nits:\n"
-                "black and white        0-  100         0- 100 \n"
-                "teal   to green      100-  203       100- 203 \n"
-                "green  to yellow     203-  400       203- 400 \n"
-                "yellow to red        400- 1000       400- 600 \n"
-                "red    to pink      1000- 4000       600- 800 \n"
-                "pink   to blue      4000-10000       800-1000";
   ui_type     = "combo";
   ui_items    = "10000nits\0"
                 " 1000nits\0";
@@ -103,19 +152,57 @@ uniform float HEATMAP_WHITEPOINT
   ui_category = "heatmap stuff";
   ui_label    = "heatmap whitepoint (nits)";
   ui_type     = "slider";
-  ui_min      = 1.f;
-  ui_max      = 203.f;
-  ui_step     = 1.f;
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
 > = 80.f;
 
 #ifdef _DEBUG
 uniform bool HEATMAP_SDR
 <
   ui_category = "heatmap stuff";
-  ui_label    = "[DEBUG] output heatmap in SDR gamma 2.2";
+  ui_label    = "[DEBUG] Output heatmap in SDR gamma 2.2";
 > = false;
 #endif
 
+// highlight a certain nit range
+uniform bool HIGHLIGHT_NIT_RANGE
+<
+  ui_category = "highlight nit range stuff";
+  ui_label    = "highlight nit levels in a certain range";
+> = false;
+
+uniform float HIGHLIGHT_NIT_RANGE_START_POINT
+<
+  ui_category = "highlight nit range stuff";
+  ui_label    = "nit highlight range start point";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 0.001f;
+> = 0.f;
+
+uniform float HIGHLIGHT_NIT_RANGE_END_POINT
+<
+  ui_category = "highlight nit range stuff";
+  ui_label    = "nit highlight range end point";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 0.001f;
+> = 0.f;
+
+uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+<
+  ui_category = "highlight nit range stuff";
+  ui_label    = "nit highlight range brightness";
+  ui_type     = "slider";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
+> = 80.f;
+
+// draw pixels as black depending on their nits
 uniform bool DRAW_ABOVE_NITS_AS_BLACK
 <
   ui_category = "draw nits as black stuff";
@@ -168,7 +255,7 @@ uniform float TEST_THINGY
 
 
 //void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
-//void draw_maxCLL(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
+//void draw_maxCLL(float4 VPos : SV_Position, float2 TexCoord : TEXCOORD, out float4 fragment : SV_Target0)
 //{
 //  const uint int_maxCLL = int(round(maxCLL));
 //  uint digit1;
@@ -221,16 +308,16 @@ uniform float TEST_THINGY
   //res += tex2D(samplerText, (frac(uv) + float2(index % 14.0, trunc(index / 14.0))) /
   //            float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
 
-//  float4 hud = tex2D(samplerNumbers, texcoord);
-//  fragment = lerp(tex2Dfetch(ReShade::BackBuffer, texcoord), hud, 1.f);
+//  float4 hud = tex2D(samplerNumbers, TexCoord);
+//  fragment = lerp(tex2Dfetch(ReShade::BackBuffer, TexCoord), hud, 1.f);
 //
 //}
 
 #ifdef _TESTY
-void testy(
-      float4 vpos     : SV_Position,
-      float2 texcoord : TEXCOORD,
-  out float4 output   : SV_Target0)
+void Testy(
+      float4 VPos     : SV_Position,
+      float2 TexCoord : TEXCOORD,
+  out float4 Output   : SV_Target0)
 {
   if(ENABLE_TEST_THINGY == true)
   {
@@ -239,55 +326,20 @@ void testy(
     const float xxe = (BUFFER_WIDTH  - xxx);
     const float yyy = BUFFER_HEIGHT / 2.f - 100.f;
     const float yye = (BUFFER_HEIGHT - yyy);
-    if (texcoord.x > xxx / BUFFER_WIDTH
-     && texcoord.x < xxe / BUFFER_WIDTH
-     && texcoord.y > yyy / BUFFER_HEIGHT
-     && texcoord.y < yye / BUFFER_HEIGHT)
-      output = float4(0.f, xTest, 0.f, 1.f);
+    if (TexCoord.x > xxx / BUFFER_WIDTH
+     && TexCoord.x < xxe / BUFFER_WIDTH
+     && TexCoord.y > yyy / BUFFER_HEIGHT
+     && TexCoord.y < yye / BUFFER_HEIGHT)
+      Output = float4(0.f, xTest, 0.f, 1.f);
     else
-      output = float4(0.f, 0.f, 0.f, 0.f);
+      Output = float4(0.f, 0.f, 0.f, 0.f);
   }
   else
-    output = float4(tex2D(ReShade::BackBuffer, texcoord).rgb, 1.f);
+    Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
 }
 #endif
 
-void calcCLLown(
-      float4 vpos     : SV_Position,
-      float2 texcoord : TEXCOORD,
-  out float  curCLL   : SV_TARGET)
-{
-  const float3 pixel = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
-
-  float curPixel = 0.f;
-
-  if (ACTUAL_COLOR_SPACE == CSP_PQ)
-  {
-    curPixel = PQ_EOTF(dot(BT2020_to_XYZ[1].rgb, pixel)) * 10000.f;
-  }
-  else if (ACTUAL_COLOR_SPACE == CSP_SCRGB)
-  {
-    curPixel = dot(BT709_to_XYZ[1].rgb, pixel) * 80.f;
-  }
-  else if (ACTUAL_COLOR_SPACE == CSP_PS5)
-  {
-    curPixel = dot(BT2020_to_XYZ[1].rgb, pixel) * 100.f;
-  }
-  else
-  {
-    curPixel = 0.f;
-  }
-
-  curCLL = curPixel >= 0.f
-         ? curPixel
-         : 0.f;
-}
-
 ///text stuff
-
-#define yOffset0 CLL_FONT_SIZE / 2.f
-#define yOffset1 CLL_FONT_SIZE - 30
 
 // max/avg/min CLL
 static const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
@@ -307,11 +359,19 @@ static const uint text_B[2] = { __B, __Colon };
 
 // colour space percentages
 static const uint text_BT709[18]  = { __B, __T, __Dot, __7,     __0,     __9,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_BT2020[18] = { __B, __T, __Dot, __2,     __0,     __2,     __0,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
 static const uint text_DCI_P3[18] = { __D, __C, __I,   __Minus, __P,     __3,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_BT2020[18] = { __B, __T, __Dot, __2,     __0,     __2,     __0,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
 static const uint text_AP1[18]    = { __A, __P, __1,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
 static const uint text_AP0[18]    = { __A, __P, __0,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
 static const uint text_else[18]   = { __e, __l, __s,   __e,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+
+// colour space from cursor position
+static const uint text_cursor_BT709[17]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __7,     __0, __9 };
+static const uint text_cursor_DCI_P3[17] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __D, __C, __I,   __Minus, __P, __3 };
+static const uint text_cursor_BT2020[18] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __2,     __0, __2, __0 };
+static const uint text_cursor_AP1[14]    = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __1 };
+static const uint text_cursor_AP0[14]    = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __0 };
+static const uint text_cursor_else[15]   = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __e, __l, __s,   __e };
 
 // colour space not supported
 static const uint text_Error[24] = { __C, __O, __L, __O, __R, __S, __P, __A, __C, __E, __Space,
@@ -320,258 +380,403 @@ static const uint text_Error[24] = { __C, __O, __L, __O, __R, __S, __P, __A, __C
 
 
 void HDR_analysis(
-      float4 vpos     : SV_Position,
-      float2 texcoord : TEXCOORD,
-  out float4 output   : SV_Target0)
+      float4 VPos     : SV_Position,
+      float2 TexCoord : TEXCOORD,
+  out float4 Output   : SV_Target0)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
+  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+
+  Output = float4(input, 1.f);
 
 
-  if (ACTUAL_COLOR_SPACE == CSP_PQ
-   || ACTUAL_COLOR_SPACE == CSP_SCRGB
-   || ACTUAL_COLOR_SPACE == CSP_PS5)
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE == CSP_PQ    \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG   \
+  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r*10000.f+0.5)/100)/100.f;
+  //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(1, 0)).r*10000.f+0.5)/100)/100.f;
+  //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(2, 0)).r*10000.f+0.5)/100)/100.f;
+
+  if (SHOW_CSP_MAP
+   || SHOW_HEATMAP
+   || HIGHLIGHT_NIT_RANGE)
   {
-    //float maxCLL = float(uint(tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
-    //float avgCLL = float(uint(tex2Dfetch(sampler_max_avg_min_CLL_values, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
-    //float minCLL = float(uint(tex2Dfetch(sampler_max_avg_min_CLL_values, int2(2, 0)).r*10000.f+0.5)/100)/100.f;
+    float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
+
+    if (SHOW_CSP_MAP)
+    {
+      Output = float4(Create_CSP_Map(tex2D(Sampler_CSPs, TexCoord).r * 255.f,
+                                     pixelCLL), 1.f);
+    }
 
     if (SHOW_HEATMAP)
     {
 #ifdef _DEBUG
-      output = float4(heatmapRGBvalues(tex2D(sampler_CLL_values, texcoord).r, HEATMAP_CUTOFF_POINT, CSP_OVERRIDE, HEATMAP_WHITEPOINT, HEATMAP_SDR), 1.f);
+      Output = float4(Heatmap_RGB_Values(pixelCLL,
+                                         HEATMAP_CUTOFF_POINT,
+                                         HEATMAP_WHITEPOINT,
+                                         HEATMAP_SDR), 1.f);
 #else
-      output = float4(heatmapRGBvalues(tex2D(sampler_CLL_values, texcoord).r, HEATMAP_CUTOFF_POINT, CSP_OVERRIDE, HEATMAP_WHITEPOINT, false), 1.f);
+      Output = float4(Heatmap_RGB_Values(pixelCLL,
+                                         HEATMAP_CUTOFF_POINT,
+                                         HEATMAP_WHITEPOINT,
+                                         false), 1.f);
 #endif
     }
-    else
-      output = float4(input, 1.f);
-    
-    if (DRAW_ABOVE_NITS_AS_BLACK)
+
+    if (HIGHLIGHT_NIT_RANGE)
     {
-      float pixelCLL = tex2D(sampler_CLL_values, texcoord).r;
-      if (pixelCLL > ABOVE_NITS_AS_BLACK)
+      float pingpong0 = NIT_PINGPONG0.x + 0.25f;
+      float pingpong1 = NIT_PINGPONG1.y == 1
+                      ? NIT_PINGPONG1.x
+                      : 6.f - NIT_PINGPONG1.x;
+
+      if (pixelCLL >= HIGHLIGHT_NIT_RANGE_START_POINT
+       && pixelCLL <= HIGHLIGHT_NIT_RANGE_END_POINT
+       && pingpong0 >= 1.f)
       {
-        output = (0.f, 0.f, 0.f, 0.f);
-      }
-    }
-    else if (DRAW_BELOW_NITS_AS_BLACK)
-    {
-      float pixelCLL = tex2D(sampler_CLL_values, texcoord).r;
-      if (pixelCLL < BELOW_NITS_AS_BLACK)
-      {
-        output = (0.f, 0.f, 0.f, 0.f);
-      }
-    }
+        float3 out3;
+        float breathing = saturate(pingpong0 - 1.f);
+        //float breathing = 1.f;
 
-    if (SHOW_CIE)
-    {
-      uint CIE_BG_X = CIE_DIAGRAM == CIE_1931
-                    ? CIE_1931_BG_X
-                    : CIE_1976_BG_X;
-      uint CIE_BG_Y = CIE_DIAGRAM == CIE_1931
-                    ? CIE_1931_BG_Y
-                    : CIE_1976_BG_Y;
-
-      uint current_x_coord = texcoord.x * BUFFER_WIDTH;  // expand to actual pixel values
-      uint current_y_coord = texcoord.y * BUFFER_HEIGHT; // ^
-
-      // draw the diagram in the bottom left corner
-      if (current_x_coord < CIE_BG_X && current_y_coord >= (BUFFER_HEIGHT - CIE_BG_Y))
-      {
-        // get coords for the sampler
-        uint2 current_sampler_coords = uint2(current_x_coord,
-                                             current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
-
-        float3 current_pixel_to_display = CIE_DIAGRAM == CIE_1931
-                                        ? tex2Dfetch(sampler_CIE_1931_cur, current_sampler_coords).rgb
-                                        : tex2Dfetch(sampler_CIE_1976_cur, current_sampler_coords).rgb;
-
-        if (ACTUAL_COLOR_SPACE == CSP_PQ)
+        if (pingpong1 >= 0.f
+         && pingpong1 <= 1.f)
         {
-          output = float4(
-            PQ_inverse_EOTF(mul(BT709_to_BT2020, current_pixel_to_display) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+          out3 = float3(1.f, NIT_PINGPONG2.x, 0.f);
         }
-        else if (ACTUAL_COLOR_SPACE == CSP_SCRGB)
+        else if (pingpong1 > 1.f
+              && pingpong1 <= 2.f)
         {
-          output = float4(
-            current_pixel_to_display * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
+          out3 = float3(NIT_PINGPONG2.x, 1.f, 0.f);
         }
-        else if (ACTUAL_COLOR_SPACE == CSP_PS5)
+        else if (pingpong1 > 2.f
+              && pingpong1 <= 3.f)
         {
-          output = float4(
-            mul(BT709_to_BT2020, current_pixel_to_display) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
+          out3 = float3(0.f, 1.f, NIT_PINGPONG2.x);
+        }
+        else if (pingpong1 > 3.f
+              && pingpong1 <= 4.f)
+        {
+          out3 = float3(0.f, NIT_PINGPONG2.x, 1.f);
+        }
+        else if (pingpong1 > 4.f
+              && pingpong1 <= 5.f)
+        {
+          out3 = float3(NIT_PINGPONG2.x, 0.f, 1.f);
+        }
+        else if (pingpong1 > 5.f
+              && pingpong1 <= 6.f)
+        {
+          out3 = float3(1.f, 0.f, NIT_PINGPONG2.x);
+        }
+
+        out3 *= breathing;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        out3 = out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 80.f;
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+        out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+        out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+        out3 = mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 100.f);
+#endif
+
+        if (breathing > 0.f)
+        {
+          //Output = float4(out3, 1.f);
+          Output = float4(lerp(Output.rgb, out3, breathing), 1.f);
         }
       }
     }
+  }
 
-    if (SHOW_CLL_VALUES)
+  if (DRAW_ABOVE_NITS_AS_BLACK)
+  {
+    float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
+    if (pixelCLL > ABOVE_NITS_AS_BLACK)
     {
-      float maxCLL_show = tex2Dfetch(sampler_show_values, uint2(0, 0)).r;
-      float avgCLL_show = tex2Dfetch(sampler_show_values, uint2(1, 0)).r;
-      float minCLL_show = tex2Dfetch(sampler_show_values, uint2(2, 0)).r;
-
-      if (ROUNDING_WORKAROUND)
-      {
-        maxCLL_show += 0.005f;
-        //avgCLL_show += 0.005f;
-        //minCLL_show += 0.005f;
-      }
-
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 0), CLL_FONT_SIZE, 1, texcoord, text_maxCLL, 26, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 1), CLL_FONT_SIZE, 1, texcoord, text_avgCLL, 26, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 2), CLL_FONT_SIZE, 1, texcoord, text_minCLL, 26, output, FONT_BRIGHTNESS);
-
-      DrawText_Digit(float2(CLL_FONT_SIZE * 7, CLL_FONT_SIZE * 0), CLL_FONT_SIZE, 1, texcoord, 6, maxCLL_show, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 7, CLL_FONT_SIZE * 1), CLL_FONT_SIZE, 1, texcoord, 6, avgCLL_show, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 7, CLL_FONT_SIZE * 2), CLL_FONT_SIZE, 1, texcoord, 6, minCLL_show, output, FONT_BRIGHTNESS);
+      Output = (0.f, 0.f, 0.f, 0.f);
     }
+  }
+  if (DRAW_BELOW_NITS_AS_BLACK)
+  {
+    float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
+    if (pixelCLL < BELOW_NITS_AS_BLACK)
+    {
+      Output = (0.f, 0.f, 0.f, 0.f);
+    }
+  }
+
+  if (SHOW_CIE)
+  {
+    uint CIE_BG_X = CIE_DIAGRAM == CIE_1931
+                  ? CIE_1931_BG_X
+                  : CIE_1976_BG_X;
+    uint CIE_BG_Y = CIE_DIAGRAM == CIE_1931
+                  ? CIE_1931_BG_Y
+                  : CIE_1976_BG_Y;
+
+    uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
+    uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
+
+    // draw the diagram in the bottom left corner
+    if (current_x_coord < CIE_BG_X && current_y_coord >= (BUFFER_HEIGHT - CIE_BG_Y))
+    {
+      // get coords for the sampler
+      uint2 currentSamplerCoords = uint2(current_x_coord,
+                                         current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
+
+      float3 currentPixelToDisplay = CIE_DIAGRAM == CIE_1931
+                                   ? tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb
+                                   : tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(
+        currentPixelToDisplay * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+      Output = float4(
+        PQ_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+      Output = float4(
+        HLG_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 1000.f)), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+      Output = float4(
+        mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
+#endif
+    }
+  }
+
+  if (SHOW_CLL_VALUES)
+  {
+    float maxCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(0, 0)).r;
+    float avgCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(1, 0)).r;
+    float minCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(2, 0)).r;
+    //float maxCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r;
+    //float avgCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(1, 0)).r;
+    //float minCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(2, 0)).r;
+
+    if (CLL_ROUNDING_WORKAROUND)
+    {
+      maxCLL_show += 0.005f;
+      //avgCLL_show += 0.005f;
+      //minCLL_show += 0.005f;
+    }
+
+    DrawTextString(float2(0.f, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, text_maxCLL, 26, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, text_avgCLL, 26, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, text_minCLL, 26, Output, FONT_BRIGHTNESS);
+
+    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
+  }
+
+  if (SHOW_CLL_FROM_CURSOR || SHOW_CSP_FROM_CURSOR)
+  {
+    float mousePositionX = clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1);
+    float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
+    uint2 mouseXY        = uint2(mousePositionX, mousePositionY);
 
     if (SHOW_CLL_FROM_CURSOR)
     {
-      float mousePositionX = clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1);
-      float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
-      uint2 mouseXY        = uint2(mousePositionX, mousePositionY);
-      float cursorCLL      = tex2Dfetch(sampler_CLL_values, mouseXY).r;
+      float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
 
-      DrawText_String(float2(CLL_FONT_SIZE * 4, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, text_X, 2, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(CLL_FONT_SIZE * 4, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, text_Y, 2, output, FONT_BRIGHTNESS);
+      DrawTextString(float2(FONT_SIZE * 4, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(FONT_SIZE * 4, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
 
-      DrawText_Digit(float2(CLL_FONT_SIZE * 8, CLL_FONT_SIZE * 4), CLL_FONT_SIZE, 1, texcoord, -1, mousePositionX, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 8, CLL_FONT_SIZE * 5), CLL_FONT_SIZE, 1, texcoord, -1, mousePositionY, output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
 
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord, text_cursorCLL, 28, output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, text_cursorCLL, 28, Output, FONT_BRIGHTNESS);
 
-      DrawText_Digit(float2(CLL_FONT_SIZE * 8, CLL_FONT_SIZE * 6), CLL_FONT_SIZE, 1, texcoord, 6, cursorCLL, output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
 
       float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
 
-      DrawText_String(float2(0.f, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, text_R, 2, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, text_G, 2, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, text_B, 2, output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_R, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_G, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_B, 2, Output, FONT_BRIGHTNESS);
 
-      uint RGB_text_offset = 4;
-      if (ACTUAL_COLOR_SPACE == CSP_PQ
-       || ACTUAL_COLOR_SPACE == CSP_SRGB)
-      {
-        RGB_text_offset = 2;
-      }
-
-      DrawText_Digit(float2(CLL_FONT_SIZE * RGB_text_offset, CLL_FONT_SIZE *  8), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.r, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * RGB_text_offset, CLL_FONT_SIZE *  9), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.g, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * RGB_text_offset, CLL_FONT_SIZE * 10), CLL_FONT_SIZE, 1, texcoord, 8, cursorRGB.b, output, FONT_BRIGHTNESS);
-    }
-
-    if (SHOW_CSPS)
-    {
-#if ACTUAL_COLOR_SPACE == CSP_PQ
-      float precentage_BT709  = tex2Dfetch(sampler_show_values, uint2(0, 1)).r;
-      float precentage_DCI_P3 = tex2Dfetch(sampler_show_values, uint2(1, 1)).r;
-      float precentage_BT2020 = tex2Dfetch(sampler_show_values, uint2(2, 1)).r;
-#elif ACTUAL_COLOR_SPACE != CSP_SRGB
-      float precentage_BT709  = tex2Dfetch(sampler_show_values, uint2(0, 1)).r;
-      float precentage_DCI_P3 = tex2Dfetch(sampler_show_values, uint2(1, 1)).r;
-      float precentage_BT2020 = tex2Dfetch(sampler_show_values, uint2(2, 1)).r;
-      float precentage_AP1    = tex2Dfetch(sampler_show_values, uint2(3, 1)).r;
-      float precentage_AP0    = tex2Dfetch(sampler_show_values, uint2(4, 1)).r;
-      float precentage_else   = tex2Dfetch(sampler_show_values, uint2(5, 1)).r;
+#if (ACTUAL_COLOUR_SPACE == CSP_PQ  \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG \
+  || ACTUAL_COLOUR_SPACE == CSP_SRGB)
+      uint RGB_Text_Offset = 2;
 #else
-      float precentage_BT709  = 100.f;
-      float precentage_DCI_P3 =   0.f;
-      float precentage_BT2020 =   0.f;
-      float precentage_AP1    =   0.f;
-      float precentage_AP0    =   0.f;
-      float precentage_else   =   0.f;
+      uint RGB_Text_Offset = 4;
 #endif
 
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 12), CLL_FONT_SIZE, 1, texcoord, text_BT709,  18, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 13), CLL_FONT_SIZE, 1, texcoord, text_DCI_P3, 18, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 14), CLL_FONT_SIZE, 1, texcoord, text_BT2020, 18, output, FONT_BRIGHTNESS);
-#if ACTUAL_COLOR_SPACE != CSP_PQ
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 15), CLL_FONT_SIZE, 1, texcoord, text_AP1,    18, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 16), CLL_FONT_SIZE, 1, texcoord, text_AP0,    18, output, FONT_BRIGHTNESS);
-      DrawText_String(float2(0.f, CLL_FONT_SIZE * 17), CLL_FONT_SIZE, 1, texcoord, text_else,   18, output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
+    }
+
+    if (SHOW_CSP_FROM_CURSOR)
+    {
+      uint cursorCSP = tex2Dfetch(Sampler_CSPs, mouseXY).r * 255.f;
+
+      switch(cursorCSP)
+      {
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+  #define CURSOR_CLL_TEXT_POS 14
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
+    || ACTUAL_COLOUR_SPACE == CSP_HLQ)
+  #define CURSOR_CLL_TEXT_POS 16
+#else
+  #define CURSOR_CLL_TEXT_POS 18
 #endif
 
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 12), CLL_FONT_SIZE, 1, texcoord, 4, precentage_BT709,  output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 13), CLL_FONT_SIZE, 1, texcoord, 4, precentage_DCI_P3, output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 14), CLL_FONT_SIZE, 1, texcoord, 4, precentage_BT2020, output, FONT_BRIGHTNESS);
-#if ACTUAL_COLOR_SPACE != CSP_PQ
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 15), CLL_FONT_SIZE, 1, texcoord, 4, precentage_AP0,    output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 16), CLL_FONT_SIZE, 1, texcoord, 4, precentage_AP1,    output, FONT_BRIGHTNESS);
-      DrawText_Digit(float2(CLL_FONT_SIZE * 6, CLL_FONT_SIZE * 17), CLL_FONT_SIZE, 1, texcoord, 4, precentage_else,   output, FONT_BRIGHTNESS);
+        case 0:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,  17, Output, FONT_BRIGHTNESS);
+        } break;
+        case 1:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3, 17, Output, FONT_BRIGHTNESS);
+        } break;
+        case 2:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020, 18, Output, FONT_BRIGHTNESS);
+        } break;
+        case 3:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,    14, Output, FONT_BRIGHTNESS);
+        } break;
+        case 4:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,    14, Output, FONT_BRIGHTNESS);
+        } break;
+        default:
+        {
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_else,   15, Output, FONT_BRIGHTNESS);
+        } break;
+
+#undef CURSOR_CLL_TEXT_POS
+
+      }
+    }
+  }
+
+  if (SHOW_CSPS)
+  {
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+    float precentage_BT709  = 100.f;
+#else
+    float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, uint2(CSP_BT709,  1)).r;
+    float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, uint2(CSP_DCI_P3, 1)).r;
+    float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, uint2(CSP_BT2020, 1)).r;
+    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_BT709)).r  * 100.0001f;
+    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_DCI_P3)).r * 100.0001f;
+    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_BT2020)).r * 100.0001f;
+#endif
+#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+    float precentage_AP1    = tex2Dfetch(Sampler_Show_Values, uint2(CSP_AP1,    1)).r;
+    float precentage_AP0    = tex2Dfetch(Sampler_Show_Values, uint2(CSP_AP0,    1)).r;
+    float precentage_else   = tex2Dfetch(Sampler_Show_Values, uint2(CSP_ELSE,   1)).r;
+    //float precentage_AP1    = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_AP1)).r    * 100.0001f;
+    //float precentage_AP0    = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_AP0)).r    * 100.0001f;
+    //float precentage_else   = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_ELSE)).r   * 100.0001f;
+#endif
+
+    DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,  18, Output, FONT_BRIGHTNESS);
+#if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
+    DrawTextString(float2(0.f, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3, 18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020, 18, Output, FONT_BRIGHTNESS);
+#endif
+#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG \
+  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
+    DrawTextString(float2(0.f, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,    18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,    18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_else,   18, Output, FONT_BRIGHTNESS);
+#endif
+
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, 4, precentage_BT709,  Output, FONT_BRIGHTNESS);
+#if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, 4, precentage_DCI_P3, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
+#endif
+#if (ACTUAL_COLOUR_SPACE != CSP_PQ  \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG \
+  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,    Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,    Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_else,   Output, FONT_BRIGHTNESS);
 #endif
     }
 
-  }
-  else
-  {
-    output = float4(input, 1.f);
-    DrawText_String(float2(0.f, 0.f), 100.f, 1, texcoord, text_Error, 24, output, 1.f);
-  }
 }
+#else
+  Output = float4(input, 1.f);
+  DrawTextString(float2(0.f, 0.f), 100.f, 1, TexCoord, text_Error, 24, Output, 1.f);
+}
+#endif
 
 technique lilium__HDR_analysis_CLL_OLD
 <
   enabled = false;
 >
 {
-  pass calcCLLvalues
+  pass CalcCLLvalues
   {
     VertexShader = PostProcessVS;
-     PixelShader = calcCLLown;
-    RenderTarget = CLL_values;
+     PixelShader = CalcCLL;
+    RenderTarget = CLL_Values;
   }
 
-  pass getMaxAvgMinCLLvalue0
+  pass GetMaxAvgMinCLLvalue0
   {
-    ComputeShader = getMaxAvgMinCLL0 <THREAD_SIZE1, 1>;
+    ComputeShader = GetMaxAvgMinCLL0 <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 1;
   }
 
-  pass getMaxAvgMinCLLvalue1
+  pass GetMaxAvgMinCLLvalue1
   {
-    ComputeShader = getMaxAvgMinCLL1 <1, 1>;
+    ComputeShader = GetMaxAvgMinCLL1 <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-//  pass getMaxCLLvalue0
+//  pass GetMaxCLLvalue0
 //  {
 //    ComputeShader = getMaxCLL0 <THREAD_SIZE1, 1>;
 //    DispatchSizeX = DISPATCH_X1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass getMaxCLLvalue1
+//  pass GetMaxCLLvalue1
 //  {
 //    ComputeShader = getMaxCLL1 <1, 1>;
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass getAvgCLLvalue0
+//  pass GetAvgCLLvalue0
 //  {
 //    ComputeShader = getAvgCLL0 <THREAD_SIZE1, 1>;
 //    DispatchSizeX = DISPATCH_X1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass getAvgCLLvalue1
+//  pass GetAvgCLLvalue1
 //  {
 //    ComputeShader = getAvgCLL1 <1, 1>;
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass getMinCLLvalue0
+//  pass GetMinCLLvalue0
 //  {
 //    ComputeShader = getMinCLL0 <THREAD_SIZE1, 1>;
 //    DispatchSizeX = DISPATCH_X1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass getMinCLLvalue1
+//  pass GetMinCLLvalue1
 //  {
 //    ComputeShader = getMinCLL1 <1, 1>;
 //    DispatchSizeX = 1;
@@ -584,30 +789,30 @@ technique lilium__HDR_analysis_CLL
   enabled = false;
 >
 {
-  pass calcCLLvalues
+  pass CalcCLLvalues
   {
     VertexShader = PostProcessVS;
-     PixelShader = calcCLLown;
-    RenderTarget = CLL_values;
+     PixelShader = CalcCLL;
+    RenderTarget = CLL_Values;
   }
 
-  pass getMaxAvgMinCLL0_NEW
+  pass GetMaxAvgMinCLL0_NEW
   {
-    ComputeShader = getMaxAvgMinCLL0_NEW <THREAD_SIZE1, 1>;
+    ComputeShader = GetMaxAvgMinCLL0_NEW <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 2;
   }
 
-  pass getMaxAvgMinCLL1_NEW
+  pass GetMaxAvgMinCLL1_NEW
   {
-    ComputeShader = getMaxAvgMinCLL1_NEW <1, 1>;
+    ComputeShader = GetMaxAvgMinCLL1_NEW <1, 1>;
     DispatchSizeX = 2;
     DispatchSizeY = 2;
   }
 
-  pass getFinalMaxAvgMinCLL_NEW
+  pass GetFinalMaxAvgMinCLL_NEW
   {
-    ComputeShader = getFinalMaxAvgMinCLL_NEW <1, 1>;
+    ComputeShader = GetFinalMaxAvgMinCLL_NEW <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -618,23 +823,23 @@ technique lilium__HDR_analysis_CIE
   enabled = false;
 >
 {
-  pass copy_CIE_1931_bg
+  pass Copy_CIE_1931_BG
   {
     VertexShader = PostProcessVS;
-     PixelShader = copy_CIE_1931_bg;
-    RenderTarget = CIE_1931_cur;
+     PixelShader = Copy_CIE_1931_BG;
+    RenderTarget = CIE_1931_Current;
   }
 
-  pass copy_CIE_1976_bg
+  pass Copy_CIE_1976_BG
   {
     VertexShader = PostProcessVS;
-     PixelShader = copy_CIE_1976_bg;
-    RenderTarget = CIE_1976_cur;
+     PixelShader = Copy_CIE_1976_BG;
+    RenderTarget = CIE_1976_Current;
   }
 
-  pass generate_CIE_diagram
+  pass Generate_CIE_Diagram
   {
-    ComputeShader = generate_CIE_diagram <THREAD_SIZE1, THREAD_SIZE1>;
+    ComputeShader = Generate_CIE_Diagram <THREAD_SIZE1, THREAD_SIZE1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = DISPATCH_Y1;
   }
@@ -645,24 +850,24 @@ technique lilium__HDR_analysis_CSP
   enabled = false;
 >
 {
-#if ACTUAL_COLOR_SPACE != CSP_SRGB
-  pass calc_CSPs
+#if ACTUAL_COLOUR_SPACE != CSP_SRGB
+  pass CalcCSPs
   {
     VertexShader = PostProcessVS;
-     PixelShader = calc_CSPs;
+     PixelShader = CalcCSPs;
     RenderTarget = CSPs;
   }
 
-  pass count_CSPs_y
+  pass CountCSPs_y
   {
-    ComputeShader = count_CSPs_y <THREAD_SIZE0, 1>;
+    ComputeShader = CountCSPs_y <THREAD_SIZE0, 1>;
     DispatchSizeX = DISPATCH_X0;
     DispatchSizeY = 1;
   }
 
-  pass count_CSPs_x
+  pass CountCSPs_x
   {
-    ComputeShader = count_CSPs_x <1, 1>;
+    ComputeShader = CountCSPs_x <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -680,10 +885,17 @@ technique lilium__HDR_analysis
   }
 #endif
 
-  pass copy_show_values
+  pass CopyShowValues
   {
-    ComputeShader = show_values_copy <1, 1>;
+    ComputeShader = ShowValuesCopy <1, 1>;
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
     DispatchSizeX = 1;
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
+    || ACTUAL_COLOUR_SPACE == CSP_HLG)
+    DispatchSizeX = 2;
+#else
+    DispatchSizeX = 3;
+#endif
     DispatchSizeY = 1;
   }
 

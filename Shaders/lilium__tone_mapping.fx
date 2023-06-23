@@ -1,5 +1,7 @@
 #include "ReShade.fxh"
 #include "lilium__tone_mappers.fxh"
+#include "lilium__HDR_black_floor_fix.fxh"
+
 #include "lilium__DrawText_fix.fxh" //for testing! remove afterwards
 
 //#define _DEBUG
@@ -8,6 +10,11 @@
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
 // - maxCLL adapation: fade to actual maxCLL over time (should read time to render per frame for this); make adjustable
+
+
+#ifndef SHOW_ADAPTIVE_MAXCLL
+  #define SHOW_ADAPTIVE_MAXCLL 0
+#endif
 
 
 uniform float FRAMETIME
@@ -98,8 +105,8 @@ uniform float BT2446A_GAMUT_COMPRESSION
   ui_category = "BT.2446 Method A";
   ui_label    = "gamut compression";
   ui_tooltip  = "1.10 is the default of the spec\n"
-                "1.05 about matches the input color space\n"
-                "1.00 slightly expands the color space";
+                "1.05 about matches the input colour space\n"
+                "1.00 slightly expands the colour space";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 2.f;
@@ -110,15 +117,15 @@ uniform uint BT2390_PROCESSING_MODE
 <
   ui_category = "BT.2390";
   ui_label    = "processing mode";
-  ui_tooltip  = "RGB:   process each channel individually\n"
+  ui_tooltip  = "YCbCr: process in YCbCr space\n"
                 "YRGB:  process RGB according to luma\n"
-                "YCbCr: process in YCbCr space\n"
-                "ICtCp: process in ICtCp space";
+                "ICtCp: process in ICtCp space\n"
+                "RGB:   process each channel individually";
   ui_type     = "combo";
-  ui_items    = "RGB\0"
+  ui_items    = "YCbCr\0"
                 "YRGB\0"
-                "YCbCr\0"
-                "ICtCp\0";
+                "ICtCp\0"
+                "RGB\0";
 > = 0;
 
 //uniform float BT2390_SRC_BLACK_POINT
@@ -193,8 +200,8 @@ uniform uint DICE_WORKING_COLOR_SPACE
   ui_label    = "processing mode";
   ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point";
   ui_type     = "combo";
-  ui_items    = "AP0_D65\0"
-                "BT.2020\0";
+  ui_items    = "BT.2020\0"
+                "AP0_D65\0";
 > = 0;
 
 //adaptive tone mapping
@@ -218,7 +225,7 @@ uniform float TIME_TO_ADAPT
   ui_min      = 3.f;
   ui_max      = 30.f;
   ui_step     = 0.1f;
-> = 10.f;
+> = 2.2f;
 
 uniform float FINAL_ADAPT_START
 <
@@ -254,20 +261,6 @@ uniform float FINAL_ADAPT_SPEED
   ui_step     = 1.f;
 > = 50.f;
 
-uniform bool SHOW_ADAPTIVE_MAXCLL
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "show maxCLL and adaptive maxCLL";
-> = false;
-
-//uniform uint COLORSPACE
-//<
-//  ui_type  = "combo";
-//  ui_items = "HDR10\0"
-//             "scRGB\0";
-//  ui_label = "colorspace";
-//> = 0;
-
 #ifdef _DEBUG
 uniform float DEBUG_MAX_CLL
 <
@@ -280,7 +273,7 @@ uniform float DEBUG_MAX_CLL
 #endif
 
 
-texture2D adaptiveCLLvalue0
+texture2D Adaptive_CLL_Value0
 {
    Width = 1;
   Height = 1;
@@ -290,21 +283,21 @@ texture2D adaptiveCLLvalue0
   Format = R32F;
 };
 
-sampler2D samplerAdaptiveCLLvalue0
+sampler2D Sampler_Adaptive_CLL_Value0
 {
-  Texture = adaptiveCLLvalue0;
+  Texture = Adaptive_CLL_Value0;
 
   SRGBTexture = false;
 };
 
-storage2D storageTargetAdaptiveCLLvalue0
+storage2D Storage_Target_Adaptive_CLL_Value0
 {
-  Texture = adaptiveCLLvalue0;
+  Texture = Adaptive_CLL_Value0;
 
   MipLevel = 0;
 };
 
-texture2D adaptiveCLLvalue1
+texture2D Adaptive_CLL_Value1
 {
   Width = 1;
   Height = 1;
@@ -314,23 +307,23 @@ texture2D adaptiveCLLvalue1
   Format = R32F;
 };
 
-sampler2D samplerAdaptiveCLLvalue1
+sampler2D Sampler_Adaptive_CLL_Value1
 {
-  Texture = adaptiveCLLvalue1;
+  Texture = Adaptive_CLL_Value1;
 
   SRGBTexture = false;
 };
 
-storage2D storageTargetAdaptiveCLLvalue1
+storage2D Storage_Target_Adaptive_CLL_Value1
 {
-  Texture = adaptiveCLLvalue1;
+  Texture = Adaptive_CLL_Value1;
 
   MipLevel = 0;
 };
 
 
 //static const uint numberOfAdaptiveValues = 1000;
-//texture2D adaptiveCLLvalues
+//texture2D Adaptive_CLL_Values
 //{
 //   Width = numberOfAdaptiveValues;
 //  Height = 2;
@@ -340,38 +333,29 @@ storage2D storageTargetAdaptiveCLLvalue1
 //  Format = R32F;
 //};
 //
-//sampler2D samplerAdaptiveCLLvalues
+//sampler2D Sampler_Adaptive_CLL_Values
 //{
-//  Texture = adaptiveCLLvalues;
+//  Texture = Adaptive_CLL_Values;
 //
 //  SRGBTexture = false;
 //};
 //
-//storage2D storageTargetAdaptiveCLLvalues
+//storage2D Storage_TargetAdaptive_CLL_Values
 //{
-//  Texture = adaptiveCLLvalues;
+//  Texture = Adaptive_CLL_Values;
 //
 //  MipLevel = 0;
 //};
 
-//#if BUFFER_COLOR_SPACE == CSP_PQ || CSP_OVERRIDE == CSP_PQ
-//  #define FONT_BRIGHTNESS 0.58068888104160783796
-//#elif BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB
-//  #define FONT_BRIGHTNESS 203.f / 80.f
-//#elif BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5
-//  #define FONT_BRIGHTNESS 2.03f
-//#else
-//  #define FONT_BRIGHTNESS 1.f
-//#endif
 
-void BT2446A_tm(
-      float4 vpos     : SV_Position,
-      float2 texcoord : TEXCOORD,
-  out float4 output   : SV_Target0)
+void ToneMapping(
+      float4 VPos     : SV_Position,
+      float2 TexCoord : TEXCOORD,
+  out float4 Output   : SV_Target0)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
+  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
+  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, uint2(0, 0)).r;
 
   float maxCLL;
   switch (CLL_MODE)
@@ -380,7 +364,7 @@ void BT2446A_tm(
       maxCLL = MAX_CLL;
       break;
     case 1:
-      maxCLL = tex2Dfetch(samplerAdaptiveCLLvalue0, int2(0, 0)).r;
+      maxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0, uint2(0, 0)).r;
       break;
   }
 
@@ -388,79 +372,92 @@ void BT2446A_tm(
 
 //  if (maxCLL > TARGET_CLL)
 //  {
-    if ((BUFFER_COLOR_SPACE == CSP_PQ && TONE_MAPPING_METHOD != TM_METHOD_BT2390)
-     || (BUFFER_COLOR_SPACE == CSP_PQ && TONE_MAPPING_METHOD == TM_METHOD_BT2390
+
+#if (ACTUAL_COLOUR_SPACE == CSP_PQ)
+    if ((TONE_MAPPING_METHOD != TM_METHOD_BT2390)
+     || (TONE_MAPPING_METHOD == TM_METHOD_BT2390
       && (BT2390_PROCESSING_MODE != PRO_MODE_RGB || BT2390_PROCESSING_MODE != PRO_MODE_YCBCR)))
     {
       hdr = PQ_EOTF(hdr);
     }
-    else if (BUFFER_COLOR_SPACE == CSP_SCRGB || CSP_OVERRIDE == CSP_SCRGB)
-    {
-      //if (TONE_MAPPING_METHOD != TM_METHOD_DICE)
-      hdr = hdr * 0.0080f;
+#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    //if (TONE_MAPPING_METHOD != TM_METHOD_DICE)
+    hdr /= 125.f;
 
-      if (TONE_MAPPING_METHOD == TM_METHOD_BT2446A
-       || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1)
-      {
-        hdr = saturate(mul(BT709_to_BT2020, hdr));
-      }
-      else if (TONE_MAPPING_METHOD == TM_METHOD_BT2390)
-      {
-        hdr = clamp(mul(BT709_to_BT2020, hdr), 0.f, 65504.f);
-      }
-      else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
-      {
-        hdr = clamp(mul(BT709_to_AP0_D65, hdr), 0.f, 65504.f);
-      }
+    if (TONE_MAPPING_METHOD == TM_METHOD_BT2446A
+     || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1)
+    {
+      hdr = saturate(mul(BT709_To_BT2020, hdr));
     }
-    else
-      hdr = float3(0.f, 0.f, 0.f);
+    else if (TONE_MAPPING_METHOD == TM_METHOD_BT2390)
+    {
+      hdr = clamp(mul(BT709_To_BT2020, hdr), 0.f, 65504.f);
+    }
+    else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
+    {
+      hdr = clamp(mul(BT709_To_AP0_D65, hdr), 0.f, 65504.f);
+    }
+#else
+    hdr = float3(0.f, 0.f, 0.f);
+#endif
 
     switch (TONE_MAPPING_METHOD)
     {
       case TM_METHOD_BT2446A:
-        hdr = BT2446A_tone_mapping(hdr, TARGET_CLL, maxCLL, BT2446A_GAMUT_COMPRESSION);
-        break;
+      {
+        hdr = BT2446A_ToneMapping(hdr,
+                                  TARGET_CLL,
+                                  maxCLL,
+                                  BT2446A_GAMUT_COMPRESSION);
+      } break;
       case TM_METHOD_BT2390:
-        //const float src_min_PQ = PQ_inverse_EOTF(0.f / 10000.f); // Lb in PQ
-        //const float tgt_min_PQ = PQ_inverse_EOTF(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
-        //const float tgt_max_PQ = PQ_inverse_EOTF(BT2390_TARGET_WHITE_POINT / 10000.f); // Lmax in PQ
-        //const float min_lum = (tgt_min_PQ - src_min_PQ) / (src_max_PQ - src_min_PQ);
-        //const float max_lum = (tgt_max_PQ - src_min_PQ) / (src_max_PQ - src_min_PQ);
+      {
+        //const float srcMinPQ = PQ_Inverse_EOTF(0.f / 10000.f); // Lb in PQ
+        //const float tgtMinPQ = PQ_Inverse_EOTF(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
+        //const float tgtMaxPQ = PQ_Inverse_EOTF(BT2390_TARGET_WHITE_POINT / 10000.f); // Lmax in PQ
+        //const float minLum = (tgtMinPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
+        //const float maxLum = (tgtMaxPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
 
         // this assumes the source black point is always 0 nits
-        const float src_max_PQ = PQ_inverse_EOTF(maxCLL / 10000.f); // Lw in PQ
-        const float tgt_min_PQ = BT2390_TARGET_BLACK_POINT == 0.f   // Lmin in PQ
-                               ? 0.f
-                               : PQ_inverse_EOTF(BT2390_TARGET_BLACK_POINT / 10000.f);
-        const float tgt_max_PQ = PQ_inverse_EOTF(TARGET_CLL                / 10000.f); // Lmax in PQ
-        const float min_lum    = tgt_min_PQ / src_max_PQ;
-        const float max_lum    = tgt_max_PQ / src_max_PQ;
-        const float knee_start = BT2390_KNEE_FACTOR * max_lum - BT2390_KNEE_MINUS;
+        const float srcMaxPQ  = PQ_Inverse_EOTF(maxCLL / 10000.f); // Lw in PQ
+        const float tgtMinPQ  = BT2390_TARGET_BLACK_POINT == 0.f   // Lmin in PQ
+                              ? 0.f
+                              : PQ_Inverse_EOTF(BT2390_TARGET_BLACK_POINT / 10000.f);
+        const float tgtMaxPQ  = PQ_Inverse_EOTF(TARGET_CLL                / 10000.f); // Lmax in PQ
+        const float minLum    = tgtMinPQ / srcMaxPQ;
+        const float maxLum    = tgtMaxPQ / srcMaxPQ;
+        const float KneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
 
-        if (BUFFER_COLOR_SPACE == CSP_SCRGB && (BT2390_PROCESSING_MODE == PRO_MODE_RGB
-                                             || BT2390_PROCESSING_MODE == PRO_MODE_YCBCR))
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        if (BT2390_PROCESSING_MODE == PRO_MODE_RGB
+         || BT2390_PROCESSING_MODE == PRO_MODE_YCBCR)
         {
-          hdr = PQ_inverse_EOTF(hdr);
+          hdr = PQ_Inverse_EOTF(hdr);
         }
-        hdr = BT2390_tone_mapping(hdr,
-                                  BT2390_PROCESSING_MODE,
-                                  src_max_PQ,
-                                  min_lum,
-                                  max_lum,
-                                  knee_start);
-        if (BUFFER_COLOR_SPACE == CSP_SCRGB && (BT2390_PROCESSING_MODE == PRO_MODE_RGB
-                                             || BT2390_PROCESSING_MODE == PRO_MODE_YCBCR))
+#endif
+
+        hdr = BT2390_ToneMapping(hdr,
+                                 BT2390_PROCESSING_MODE,
+                                 srcMaxPQ,
+                                 minLum,
+                                 maxLum,
+                                 KneeStart);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        if (BT2390_PROCESSING_MODE == PRO_MODE_RGB
+         || BT2390_PROCESSING_MODE == PRO_MODE_YCBCR)
         {
           hdr = PQ_EOTF(hdr);
         }
-        break;
+#endif
+
+      } break;
       case TM_METHOD_DICE:
       {
         const float target_CLL_normalized = TARGET_CLL / 10000.f;
         hdr = dice(hdr,
-                   normalised_to_I(target_CLL_normalized),
-                   normalised_to_I(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
+                   Normalised_To_I_AP0_D65(target_CLL_normalized),
+                   Normalised_To_I_AP0_D65(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
                    DICE_PROCESSING_MODE,
                    DICE_WORKING_COLOR_SPACE);
         //hdr = saturate(hdr);
@@ -468,80 +465,82 @@ void BT2446A_tm(
       break;
 #ifdef _DEBUG
       case TM_METHOD_BT2446A_MOD1:
+      {
         const float testH = clamp(TEST_H + maxCLL,     0.f, 10000.f);
         const float testS = clamp(TEST_S + TARGET_CLL, 0.f, 10000.f);
-        hdr = BT2446A_tone_mapping_mod1(hdr, TARGET_CLL, maxCLL, BT2446A_GAMUT_COMPRESSION, testH, testS);
-        break;
+        hdr = BT2446A_ToneMapping_mod1(hdr,
+                                       TARGET_CLL,
+                                       maxCLL,
+                                       BT2446A_GAMUT_COMPRESSION,
+                                       testH,
+                                       testS);
+      } break;
 #endif
     }
-    if (BUFFER_COLOR_SPACE == CSP_SCRGB)
-    {
-      if (TONE_MAPPING_METHOD == TM_METHOD_BT2446A
-       || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1
-       || TONE_MAPPING_METHOD == TM_METHOD_BT2390)
-      {
-        hdr = mul(BT2020_to_BT709, hdr);
-      }
-      else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
-      {
-        hdr = mul(AP0_D65_to_BT709, hdr);
-      }
-    }
 
-    if (BUFFER_COLOR_SPACE == CSP_PQ)
-      hdr = PQ_inverse_EOTF(hdr);
-    else if (BUFFER_COLOR_SPACE  == CSP_SCRGB)// && TONE_MAPPING_METHOD != TM_METHOD_DICE)
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    if (TONE_MAPPING_METHOD == TM_METHOD_BT2446A
+     || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1
+     || TONE_MAPPING_METHOD == TM_METHOD_BT2390)
     {
-      hdr = hdr * 125.f;
+      hdr = mul(BT2020_To_BT709, hdr);
     }
+    else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
+    {
+      hdr = mul(AP0_D65_To_BT709, hdr);
+    }
+    hdr *= 125.f;
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+    hdr = PQ_Inverse_EOTF(hdr);
+#endif
 //  }
 
-  output = float4(hdr, 1.f);
+  Output = float4(hdr, 1.f);
 
-  if (SHOW_ADAPTIVE_MAXCLL)
-  {
-    float actualMaxCLL    = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
-    float adaptiveMaxCLL0 = tex2Dfetch(samplerAdaptiveCLLvalue0,  int2(0, 0)).r;
-    float adaptiveMaxCLL1 = tex2Dfetch(samplerAdaptiveCLLvalue1,  int2(0, 0)).r;
-    DrawText_Digit(float2(100.f, 500.f), 30, 1, texcoord, 2, actualMaxCLL    + 0.01f, output, FONT_BRIGHTNESS);
-    DrawText_Digit(float2(100.f, 530.f), 30, 1, texcoord, 2, adaptiveMaxCLL0 + 0.01f, output, FONT_BRIGHTNESS);
-    DrawText_Digit(float2(100.f, 560.f), 30, 1, texcoord, 2, adaptiveMaxCLL1 + 0.01f, output, FONT_BRIGHTNESS);
-    //DrawText_Digit(float2(100.f, 590.f), 30, 1, texcoord, 0, CLL_MODE, output, FONT_BRIGHTNESS);
-  }
+#if (SHOW_ADAPTIVE_MAXCLL)
+  float actualMaxCLL    = tex2Dfetch(sampler_max_avg_min_CLL_values, uint2(0, 0)).r;
+  float adaptiveMaxCLL0 = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    uint2(0, 0)).r;
+  float adaptiveMaxCLL1 = tex2Dfetch(Sampler_Adaptive_CLL_Value1,    uint2(0, 0)).r;
+  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f),        30, 1, TexCoord, 6, actualMaxCLL,    Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, 6, adaptiveMaxCLL0, Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 60.f), 30, 1, TexCoord, 6, adaptiveMaxCLL1, Output, FONT_BRIGHTNESS);
+  //DrawText_Digit(float2(100.f, 590.f), 30, 1, TexCoord, 0, CLL_MODE, Output, FONT_BRIGHTNESS);
+#endif
+
 }
 
 
-void adaptiveCLL(uint3 id : SV_DispatchThreadID)
+void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCLL      = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
-  const float currentAdaptiveCLL = tex2Dfetch(samplerAdaptiveCLLvalue0,  int2(0, 0)).r;
+  const float currentMaxCLL      = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r;
+  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    uint2(0, 0)).r;
 
-  const float abs_frametime = abs(FRAMETIME);
+  const float absFrametime = abs(FRAMETIME);
 
   const float curDiff = currentMaxCLL - currentAdaptiveCLL;
-  float adapt = curDiff * (abs_frametime / (TIME_TO_ADAPT * 1000.f));
+  float adapt = curDiff * (absFrametime / (TIME_TO_ADAPT * 1000.f));
   if (abs(curDiff) < FINAL_ADAPT_START)
   {
-    const float actualFinalAdapt = abs_frametime * FINAL_ADAPT * (FINAL_ADAPT_SPEED / 1000.f);
+    const float actualFinalAdapt = absFrametime * FINAL_ADAPT * (FINAL_ADAPT_SPEED / 1000.f);
     adapt = adapt > 0.f
           ? actualFinalAdapt
           : -actualFinalAdapt;
   }
   //else
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
-  const float adaptiveCLL = currentAdaptiveCLL + adapt;
+  const float AdaptiveCLL = currentAdaptiveCLL + adapt;
 
-  tex2Dstore(storageTargetAdaptiveCLLvalue1, int2(0, 0), adaptiveCLL);
+  tex2Dstore(Storage_Target_Adaptive_CLL_Value1, uint2(0, 0), AdaptiveCLL);
 }
 
-void copyAdaptiveCLL(uint3 id : SV_DispatchThreadID)
+void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  float currentAdaptiveCLL = tex2Dfetch(samplerAdaptiveCLLvalue1, int2(0, 0)).r;
+  float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value1, uint2(0, 0)).r;
   currentAdaptiveCLL = currentAdaptiveCLL < MAX_CLL_CAP
                      ? currentAdaptiveCLL
                      : MAX_CLL_CAP;
 
-  tex2Dstore(storageTargetAdaptiveCLLvalue0, int2(0, 0), currentAdaptiveCLL);
+  tex2Dstore(Storage_Target_Adaptive_CLL_Value0, uint2(0, 0), currentAdaptiveCLL);
 }
 
 
@@ -550,37 +549,37 @@ technique lilium__tone_mapping_adaptive_maxCLL_OLD
   enabled = false;
 >
 {
-  pass calcCLLvalues
+  pass CalcCLL
   {
     VertexShader = PostProcessVS;
-     PixelShader = calcCLL;
-    RenderTarget = CLL_values;
+     PixelShader = CalcCLL;
+    RenderTarget = CLL_Values;
   }
 
-  pass getMaxCLLvalue0
+  pass GetMaxCLL0
   {
-    ComputeShader = getMaxCLL0 <THREAD_SIZE1, 1>;
+    ComputeShader = GetMaxCLL0 <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 1;
   }
 
-  pass getMaxCLLvalue1
+  pass GetMaxCLL1
   {
-    ComputeShader = getMaxCLL1 <1, 1>;
+    ComputeShader = GetMaxCLL1 <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass adaptiveCLL
+  pass AdaptiveCLL
   {
-    ComputeShader = adaptiveCLL <1, 1>;
+    ComputeShader = AdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass copyAdaptiveCLL
+  pass CopyAdaptiveCLL
   {
-    ComputeShader = copyAdaptiveCLL <1, 1>;
+    ComputeShader = CopyAdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -591,44 +590,44 @@ technique lilium__tone_mapping_adaptive_maxCLL
   enabled = false;
 >
 {
-  pass calcCLLvalues
+  pass CalcCLL
   {
     VertexShader = PostProcessVS;
-     PixelShader = calcCLL;
-    RenderTarget = CLL_values;
+     PixelShader = CalcCLL;
+    RenderTarget = CLL_Values;
   }
 
-  pass getMaxCLLvalue0_NEW
+  pass GetMaxCLL0_NEW
   {
-    ComputeShader = getMaxCLL0_NEW <THREAD_SIZE1, 1>;
+    ComputeShader = GetMaxCLL0_NEW <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 2;
   }
 
-  pass getMaxCLLvalue1_NEW
+  pass GetMaxCLL1_NEW
   {
-    ComputeShader = getMaxCLL1_NEW <1, 1>;
+    ComputeShader = GetMaxCLL1_NEW <1, 1>;
     DispatchSizeX = 2;
     DispatchSizeY = 2;
   }
 
-  pass getFinalMaxCLLvalue1_NEW
+  pass GetFinalMaxCLL_NEW
   {
-    ComputeShader = getFinalMaxCLL_NEW <1, 1>;
+    ComputeShader = GetFinalMaxCLL_NEW <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass adaptiveCLL
+  pass AdaptiveCLL
   {
-    ComputeShader = adaptiveCLL <1, 1>;
+    ComputeShader = AdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass copyAdaptiveCLL
+  pass CopyAdaptiveCLL
   {
-    ComputeShader = copyAdaptiveCLL <1, 1>;
+    ComputeShader = CopyAdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -636,9 +635,9 @@ technique lilium__tone_mapping_adaptive_maxCLL
 
 technique lilium__tone_mapping
 {
-  pass tone_mapping
+  pass ToneMapping
   {
     VertexShader = PostProcessVS;
-     PixelShader = BT2446A_tm;
+     PixelShader = ToneMapping;
   }
 }

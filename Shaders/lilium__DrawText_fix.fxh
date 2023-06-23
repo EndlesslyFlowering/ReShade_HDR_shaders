@@ -1,5 +1,5 @@
-#ifndef _DRAWTEXT_H_
-#define _DRAWTEXT_H_
+#pragma once
+
 
 #define _DRAWTEXT_GRID_X 14.f
 #define _DRAWTEXT_GRID_Y 7.f
@@ -182,7 +182,7 @@ sampler samplerText {
 };
 
 //accomodate for undef array size.
-#define DrawText_String( \
+#define DrawTextString( \
   pos,     \
   size,    \
   ratio,   \
@@ -206,7 +206,7 @@ sampler samplerText {
       output += text; \
 }
 
-float2 DrawText_Shift(
+float2 DrawTextShift(
   float2 pos,
   int2   shift,
   float  size,
@@ -215,7 +215,7 @@ float2 DrawText_Shift(
   return pos + size * shift * float2(0.f, 1.f) / ratio;
 }
 
-void DrawText_Digit(
+void DrawTextDigit(
         float2 pos,
         float  size,
         float  ratio,
@@ -262,5 +262,3 @@ void DrawText_Digit(
   else
     res += numbers;
 }
-
-#endif

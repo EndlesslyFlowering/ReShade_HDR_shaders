@@ -1,28 +1,20 @@
 #include "ReShade.fxh"
-#include "lilium__colorspace.fxh"
+#include "lilium__colour_space.fxh"
 
-uniform uint INPUT_GAMMA
+uniform uint INPUT_TRC
 <
-  ui_label  = "input Gamma";
+  ui_label  = "input TRC";
   ui_type   = "combo";
   ui_items  = "sRGB\0"
               "gamma 2.2\0"
-              "gamma 2.4\0";
+              "gamma 2.4\0"
+              "PQ\0";
 > = 0;
 
-//matches CSP_* defines in colorspace.fxh
-uniform uint OVERRIDE_CSP
-<
-  ui_label   = "override current colourspace";
-  ui_tooltip = "only PS5 works";
-  ui_type    = "combo";
-  ui_items   = "no\0"
-               "sRGB\0"
-               "scRGB\0"
-               "PQ\0"
-               "HLG\0"
-               "PS5\0";
-> = 0;
+#define TRC_SRGB     0
+#define TRC_GAMMA_22 1
+#define TRC_GAMMA_24 2
+#define TRC_PQ       3
 
 uniform float SDR_WHITEPOINT_NITS
 <
@@ -74,7 +66,7 @@ uniform float CLAMP_POSITIVE_TO
 > = 125.f;
 
 
-void scRGB_gamma_fix(
+void scRGB_TRC_Fix(
       float4 vpos     : SV_Position,
       float2 texcoord : TEXCOORD,
   out float4 output   : SV_Target0)
@@ -83,29 +75,37 @@ void scRGB_gamma_fix(
 
   float3 fixedGamma = input;
 
+  if (INPUT_TRC == TRC_SRGB) {
+    fixedGamma = Extended_sRGB_TRC(fixedGamma);
+  }
+  else if (INPUT_TRC == TRC_GAMMA_22) {
+    fixedGamma = Extended_22_TRC(fixedGamma);
+  }
+  else if (INPUT_TRC == TRC_GAMMA_24) {
+    fixedGamma = Extended_24_TRC(fixedGamma);
+  }
+  else if (INPUT_TRC == TRC_PQ) {
+    fixedGamma = mul(BT2020_To_BT709, PQ_EOTF(fixedGamma)) * 125.f;
+  }
+
   if (CLAMP)
     fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
 
-  if (INPUT_GAMMA == 0)
-    fixedGamma = extended_sRGB_EOTF(fixedGamma);
-  else if (INPUT_GAMMA == 1)
-    fixedGamma = extended_22_EOTF(fixedGamma);
-  else
-    fixedGamma = extended_24_EOTF(fixedGamma);
-
-  if (OVERRIDE_CSP == CSP_PS5)
-    fixedGamma = mul(BT709_to_BT2020, fixedGamma);
+#if (CSP_OVERRIDE == CSP_PS5)
+    fixedGamma = mul(BT709_To_BT2020, fixedGamma);
+#endif
 
   if (DO_GAMMA_ADJUST)
-    fixedGamma = extended_gamma_adjust(fixedGamma, 1.f + GAMMA_ADJUST);
+    fixedGamma = ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
 
-//  if (dot(BT709_to_XYZ[1].rgb, fixedGamma) < 0.f)
+//  if (dot(BT709_To_XYZ[1].rgb, fixedGamma) < 0.f)
 //    fixedGamma = float3(0.f, 0.f, 0.f);
 
-  if (OVERRIDE_CSP == CSP_PS5)
+#if (CSP_OVERRIDE == CSP_PS5)
     fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
-  else
+#else
     fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
+#endif
 
   fixedGamma = fixNAN(fixedGamma);
 
@@ -115,11 +115,11 @@ void scRGB_gamma_fix(
 }
 
 
-technique lilium__scRGB_gamma_fix
+technique lilium__scRGB_TRC_Fix
 {
-  pass scRGB_gamma_fix
+  pass scRGB_TRC_Fix
   {
     VertexShader = PostProcessVS;
-     PixelShader = scRGB_gamma_fix;
+     PixelShader = scRGB_TRC_Fix;
   }
 }

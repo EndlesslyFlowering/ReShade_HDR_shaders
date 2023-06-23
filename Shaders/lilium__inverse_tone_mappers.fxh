@@ -1,25 +1,27 @@
-#include "lilium__colorspace.fxh"
+#pragma once
+
+#include "lilium__colour_space.fxh"
 
 //float3 gamut(
-//  const float3 input,
+//  const float3 Input,
 //  const uint   gamutExpansionType)
 //{
-//  float3 sdr = input;
+//  float3 sdr = Input;
 //
-//  //BT.709->BT.2020 colorspace conversion
+//  //BT.709->BT.2020 colourspace conversion
 //  switch (gamutExpansionType)
 //  {
 //    case 0:
-//      sdr = mul(BT709_to_BT2020, sdr);
+//      sdr = mul(BT709_To_BT2020, sdr);
 //      break;
 //    case 1:
-//      sdr = mul(myExp_BT709_to_BT2020, sdr);
+//      sdr = mul(myExp_BT709_To_BT2020, sdr);
 //      break;
 //    case 2:
-//      sdr = mul(expanded_BT709_to_BT2020_matrix, sdr);
+//      sdr = mul(expanded_BT709_To_BT2020_matrix, sdr);
 //      break;
 //    case 3:
-//      sdr = ExpandColorGamutBT2020(sdr, 1.f, 5.f);
+//      sdr = ExpandColourGamutBT2020(sdr, 1.f, 5.f);
 //      break;
 //  }
 //
@@ -27,23 +29,23 @@
 //}
 
 // outputs normalised values
-float3 BT2446A_inverse_tone_mapping(
-  const float3 input,
+float3 BT2446A_InverseToneMapping(
+  const float3 Input,
   const float  Lhdr,
   const float  Lsdr,
-  const float  inputNitsFactor,
-  const float  gamut_expansion,
-  const float  gammaIn,
-  const float  gammaOut)
+  const float  InputNitsFactor,
+  const float  GamutExpansion,
+  const float  GammaIn,
+  const float  GammaOut)
 {
-  float3 sdr = saturate(input / inputNitsFactor);
+  float3 sdr = saturate(Input / InputNitsFactor);
 
   //gamma
   const float gamma        = 2.4f;
   const float inverseGamma = 1.f / gamma;
 
   //RGB->R'G'B' gamma compression
-  sdr = pow(sdr, 1.f / (gamma + gammaIn));
+  sdr = pow(sdr, 1.f / (gamma + GammaIn));
 
   // Rec. ITU-R BT.2020-2 Table 4
   //Y'tmo
@@ -51,10 +53,10 @@ float3 BT2446A_inverse_tone_mapping(
 
   //C'b,tmo
   const float C_b_tmo = (sdr.b - Y_tmo) /
-                        KB_BT2020_helper;
+                        KB_BT2020_HELPER;
   //C'r,tmo
   const float C_r_tmo = (sdr.r - Y_tmo) /
-                        KR_BT2020_helper;
+                        KR_BT2020_HELPER;
 
   // adjusted luma component (inverse)
   // get Y'sdr
@@ -125,36 +127,34 @@ float3 BT2446A_inverse_tone_mapping(
                       (pHDR - 1.f);
 
   // Colour scaling function
-  // TODO: analyse behaviour of colScale being 1 or 0.00000001
-  //float colScale = 0.0000001f;
+  // TODO: analyse behaviour of colourScale being 1 or 0.00000001
+  //float colourScale = 0.0000001f;
   //if (Y_hdr > 0.f && Y_sdr > 0.f) // avoid division by zero
   // this is actually fine to be infinite because it will create 0 as a result in the next step
-  const float colScale = Y_sdr /
-                         (gamut_expansion * Y_hdr);
+  const float colourScale = Y_sdr /
+                           (GamutExpansion * Y_hdr);
 
   // Colour difference signals (inverse) and Luma (inverse)
   // get R'G'B'
-  float3 hdr;
+
 //  hdr.b = ((C_b_tmo * 1.8814f) /
-//           colScale) + Y_hdr;
+//           colourScale) + Y_hdr;
 //  hdr.r = ((C_r_tmo * 1.4746f) /
-//           colScale) + Y_hdr;
+//           colourScale) + Y_hdr;
 //  hdr.g = (Y_hdr - (K_BT2020.r * hdr.r + K_BT2020.b * hdr.b)) /
 //          K_BT2020.g;
 
 //  produces the same results
-  const float C_b_hdr = C_b_tmo / colScale;
-  const float C_r_hdr = C_r_tmo / colScale;
+  const float C_b_hdr = C_b_tmo / colourScale;
+  const float C_r_hdr = C_r_tmo / colourScale;
 
-  hdr.r = Y_hdr + KR_BT2020_helper    * C_r_hdr;
-  hdr.g = Y_hdr - KG_BT2020_helper[0] * C_b_hdr - KG_BT2020_helper[1] * C_r_hdr;
-  hdr.b = Y_hdr + KB_BT2020_helper    * C_b_hdr;
+  float3 hdr = YCbCr_BT2020_To_RGB(float3(Y_hdr, C_b_hdr, C_r_hdr));
 
   hdr = saturate(hdr); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
   // Non-linear transfer function (inverse)
   // get RGB
-  hdr = pow(hdr, gamma + gammaIn + gammaOut);
+  hdr = pow(hdr, gamma + GammaIn + GammaOut);
 
   //expand to target luminance
   hdr *= (Lhdr / 10000.f);
@@ -164,26 +164,26 @@ float3 BT2446A_inverse_tone_mapping(
 
 
 // outputs normalised values
-float3 mapSDRintoHDR(
-  const float3 input,
-  const float  paperWhiteNits)
+float3 Map_SDR_Into_HDR(
+  const float3 Input,
+  const float  Brightness)
 {
   //map SDR into HDR
-  return input * (paperWhiteNits / 10000.f);
+  return Input * (Brightness / 10000.f);
 }
 
 
 // HDR reference white in XYZ
-#define hdr_ref_white_XYZ float3(192.93f, 203.f, 221.05f)
-#define delta             6.f / 29.f
-#define pow_delta_3       pow(delta, 3.f)
-#define _3_x_pow_delta_2  3.f * pow(delta, 2.f)
+#define HDR_REF_WHITE_XYZ float3(192.93f, 203.f, 221.05f)
+#define DELTA             6.f / 29.f
+#define POW_DELTA_3       pow(DELTA, 3.f)
+#define _3_X_POW_DELTA_2  3.f * pow(DELTA, 2.f)
 
 //// outputs normalised values
-//float3 BT2446C_inverse_tone_mapping(
-//  const float3 input,
+//float3 BT2446C_InverseToneMapping(
+//  const float3 Input,
 //  const float  sdr_brightness,
-//  const float  alpha,
+//  const float  Alpha,
 ////        float  k1,
 ////        float  inf_point,
 //  const bool   use_achromatic_correction,
@@ -197,24 +197,24 @@ float3 mapSDRintoHDR(
 //  //114.8 =  800 nits
 //  //116.7 =  900 nits
 //  //118.4 = 1000 nits
-//  //153.7 is just under 10000 nits for alpha=0 and above it starts clipping
-//  float3 sdr = input * (sdr_brightness > 153.7f
+//  //153.7 is just under 10000 nits for Alpha=0 and above it starts clipping
+//  float3 sdr = Input * (sdr_brightness > 153.7f
 //                      ? 153.7f
 //                      : sdr_brightness);
 //
 //  //6.1.6 (inverse)
 //  //crosstalk matrix from 6.1.2
-//  //const float alpha   = 0.f; //hardcode for now as it gives the best results imo
-//  const float xlpha = 1.f - 2.f * alpha;
-//  const float3x3 crosstalk_matrix = float3x3(xlpha, alpha, alpha,
-//                                             alpha, xlpha, alpha,
-//                                             alpha, alpha, xlpha);
+//  //const float Alpha   = 0.f; //hardcode for now as it gives the best results imo
+//  const float xlpha = 1.f - 2.f * Alpha;
+//  const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
+//                                             Alpha, xlpha, Alpha,
+//                                             Alpha, Alpha, xlpha);
 //
-//  sdr = mul(crosstalk_matrix, sdr);
+//  sdr = mul(crosstalkMatrix, sdr);
 //
 //  //6.1.5 (inverse)
 //  //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-//  sdr = mul(BT2020_to_XYZ, sdr);
+//  sdr = mul(BT2020_To_XYZ, sdr);
 //  const float Y_sdr = sdr.y;
 //  const float xyz   = sdr.x + sdr.y + sdr.z;
 //  const float x_sdr = sdr.x /
@@ -249,7 +249,7 @@ float3 mapSDRintoHDR(
 //  //convert to XYZ
 //  const float  X_hdr_uncor = (x_sdr / y_sdr) * Y_hdr;
 //  const float  Z_hdr_uncor = ((1.f - x_sdr - y_sdr) / y_sdr) * Y_hdr;
-//        float3 hdr  = float3(X_hdr_uncor, Y_hdr, Z_hdr_uncor);
+//        float3 hdr         = float3(X_hdr_uncor, Y_hdr, Z_hdr_uncor);
 //
 //  bool  useful_correction = false;
 //  float x_cor = 0.f;
@@ -261,42 +261,42 @@ float3 mapSDRintoHDR(
 //    // XYZ->L*a*b* from (1) which is actually wrong
 //    // using correct conversion here
 //    //==========================================================================
-//    // it seems the ITU was trying to make a faster version for t <= pow_delta_3
+//    // it seems the ITU was trying to make a faster version for t <= POW_DELTA_3
 //    // corrected version is here:
-//    // L* = (116 * (t / pow_delta_3) - 16) / 10.f
+//    // L* = (116 * (t / POW_DELTA_3) - 16) / 10.f
 //    // it's missing the division by 10 in the ITU doc
 //
 //    // get L*
-//    const float t_Y = Y_hdr / hdr_ref_white_XYZ.y;
+//    const float t_Y = Y_hdr / HDR_REF_WHITE_XYZ.y;
 //          float f_Y = 0.f;
 //
-//    if (t_Y > pow_delta_3)
+//    if (t_Y > POW_DELTA_3)
 //      f_Y = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_Y = (t_Y / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_Y = (t_Y / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //
 //    const float L_star = 116.f * f_Y - 16.f;
 //
 //    // get a*
-//    const float t_X = sdr.x / hdr_ref_white_XYZ.x;
+//    const float t_X = sdr.x / HDR_REF_WHITE_XYZ.x;
 //          float f_X = 0.f;
 //
-//    if (t_X > pow_delta_3)
+//    if (t_X > POW_DELTA_3)
 //      f_X = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_X = (t_X / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_X = (t_X / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //    f_X -= f_Y;
 //
 //    const float a_star = 116.f * f_X - 16.f;
 //
 //    // get b*
-//    const float t_Z = sdr.z / hdr_ref_white_XYZ.z;
+//    const float t_Z = sdr.z / HDR_REF_WHITE_XYZ.z;
 //          float f_Z = 0.f;
 //
-//    if (t_Z > pow_delta_3)
+//    if (t_Z > POW_DELTA_3)
 //      f_Z = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_Z = (t_Z / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_Z = (t_Z / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //    f_Z = f_Y - f_Z;
 //
 //    const float b_star = 116.f * f_Z - 16.f;
@@ -337,24 +337,24 @@ float3 mapSDRintoHDR(
 //                                      200.f;
 //
 //      //X
-//      if (f_X_cor > delta)
-//        XYZ_cor.x = hdr_ref_white_XYZ.x * pow(f_X_cor, 3);
+//      if (f_X_cor > DELTA)
+//        XYZ_cor.x = HDR_REF_WHITE_XYZ.x * pow(f_X_cor, 3);
 //      else
-//        XYZ_cor.x = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.x;
+//        XYZ_cor.x = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.x;
 //
 //      // can you just take the XYZ Y from the input here since it's unchanged?
 //      // probably yes
 //      //Y
-//      if (f_Y_cor > delta)
-//        XYZ_cor.y = hdr_ref_white_XYZ.y * pow(f_Y_cor, 3.f);
+//      if (f_Y_cor > DELTA)
+//        XYZ_cor.y = HDR_REF_WHITE_XYZ.y * pow(f_Y_cor, 3.f);
 //      else
-//        XYZ_cor.y = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.y;
+//        XYZ_cor.y = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.y;
 //
 //      //Z
-//      if (f_Z_cor > delta)
-//        XYZ_cor.z = hdr_ref_white_XYZ.z * pow(f_Z_cor, 3.f);
+//      if (f_Z_cor > DELTA)
+//        XYZ_cor.z = HDR_REF_WHITE_XYZ.z * pow(f_Z_cor, 3.f);
 //      else
-//        XYZ_cor.z = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.z;
+//        XYZ_cor.z = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.z;
 //
 //      //convert to Yxy without the Y as it is unneeded
 //      const float xyz = XYZ_cor.x + XYZ_cor.y + XYZ_cor.z;
@@ -376,16 +376,16 @@ float3 mapSDRintoHDR(
 //
 //    hdr = float3(X_hdr_cor, Y_hdr, Z_hdr_cor);
 //  }
-//  hdr = mul(XYZ_to_BT2020, hdr);
+//  hdr = mul(XYZ_To_BT2020, hdr);
 //
 //  //6.1.2 (inverse)
 //  //inverse crosstalk matrix from 6.1.6
-//  const float mlpha = 1.f - alpha;
-//  const float3x3 inverse_crosstalk_matrix =
-//    mul(1.f / (1.f - 3.f * alpha), float3x3( mlpha, -alpha, -alpha,
-//                                            -alpha,  mlpha, -alpha,
-//                                            -alpha, -alpha,  mlpha));
-//  hdr = mul(inverse_crosstalk_matrix, hdr);
+//  const float mlpha = 1.f - Alpha;
+//  const float3x3 inverseCrosstalkMatrix =
+//    mul(1.f / (1.f - 3.f * Alpha), float3x3( mlpha, -Alpha, -Alpha,
+//                                            -Alpha,  mlpha, -Alpha,
+//                                            -Alpha, -Alpha,  mlpha));
+//  hdr = mul(inverseCrosstalkMatrix, hdr);
 //
 //  hdr = clamp(hdr / 10000.f, 0.f, 1.f);
 //
@@ -393,10 +393,10 @@ float3 mapSDRintoHDR(
 //}
 
 // outputs normalised values
-float3 BT2446C_inverse_tone_mapping(
-  const float3 input,
-  const float  sdr_relative_brightness,
-  const float  alpha)
+float3 BT2446C_InverseToneMapping(
+  const float3 Input,
+  const float  SdrRelativeBrightness,
+  const float  Alpha)
 //        float  k1,
 //        float  inf_point,
 //  const bool   use_achromatic_correction,
@@ -410,22 +410,22 @@ float3 BT2446C_inverse_tone_mapping(
   //114.8 =  800 nits
   //116.7 =  900 nits
   //118.4 = 1000 nits
-  //153.7 is just under 10000 nits for alpha=0 and above it starts clipping
-  float3 sdr = input * sdr_relative_brightness;
+  //153.7 is just under 10000 nits for Alpha == 0 and above it starts clipping
+  float3 sdr = Input * SdrRelativeBrightness;
 
   //6.1.6 (inverse)
   //crosstalk matrix from 6.1.2
-  //const float alpha   = 0.f; //hardcode for now as it gives the best results imo
-  const float xlpha = 1.f - 2.f * alpha;
-  const float3x3 crosstalk_matrix = float3x3(xlpha, alpha, alpha,
-                                             alpha, xlpha, alpha,
-                                             alpha, alpha, xlpha);
+  //const float Alpha   = 0.f; //hardcode for now as it gives the best results imo
+  const float xlpha = 1.f - 2.f * Alpha;
+  const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
+                                             Alpha, xlpha, Alpha,
+                                             Alpha, Alpha, xlpha);
 
-  sdr = mul(crosstalk_matrix, sdr);
+  sdr = mul(crosstalkMatrix, sdr);
 
   //6.1.5 (inverse)
   //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-  sdr = mul(BT2020_to_XYZ, sdr);
+  sdr = mul(BT2020_To_XYZ, sdr);
   const float Y_sdr = sdr.y;
   const float xyz   = sdr.x + sdr.y + sdr.z;
   const float x_sdr = sdr.x /
@@ -462,7 +462,7 @@ float3 BT2446C_inverse_tone_mapping(
   //convert to XYZ
   const float  X_hdr_uncor = (x_sdr / y_sdr) * Y_hdr;
   const float  Z_hdr_uncor = ((1.f - x_sdr - y_sdr) / y_sdr) * Y_hdr;
-        float3 hdr = float3(X_hdr_uncor, Y_hdr, Z_hdr_uncor);
+        float3 hdr         = float3(X_hdr_uncor, Y_hdr, Z_hdr_uncor);
 
 //  bool  useful_correction = false;
 //  float x_cor = 0.f;
@@ -474,42 +474,42 @@ float3 BT2446C_inverse_tone_mapping(
 //    // XYZ->L*a*b* from (1) which is actually wrong
 //    // using correct conversion here
 //    //==========================================================================
-//    // it seems the ITU was trying to make a faster version for t <= pow_delta_3
+//    // it seems the ITU was trying to make a faster version for t <= POW_DELTA_3
 //    // corrected version is here:
-//    // L* = (116 * (t / pow_delta_3) - 16) / 10.f
+//    // L* = (116 * (t / POW_DELTA_3) - 16) / 10.f
 //    // it's missing the division by 10 in the ITU doc
 //
 //    // get L*
-//    const float t_Y = Y_hdr / hdr_ref_white_XYZ.y;
+//    const float t_Y = Y_hdr / HDR_REF_WHITE_XYZ.y;
 //          float f_Y = 0.f;
 //
-//    if (t_Y > pow_delta_3)
+//    if (t_Y > POW_DELTA_3)
 //      f_Y = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_Y = (t_Y / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_Y = (t_Y / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //
 //    const float L_star = 116.f * f_Y - 16.f;
 //
 //    // get a*
-//    const float t_X = sdr.x / hdr_ref_white_XYZ.x;
+//    const float t_X = sdr.x / HDR_REF_WHITE_XYZ.x;
 //          float f_X = 0.f;
 //
-//    if (t_X > pow_delta_3)
+//    if (t_X > POW_DELTA_3)
 //      f_X = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_X = (t_X / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_X = (t_X / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //    f_X -= f_Y;
 //
 //    const float a_star = 116.f * f_X - 16.f;
 //
 //    // get b*
-//    const float t_Z = sdr.z / hdr_ref_white_XYZ.z;
+//    const float t_Z = sdr.z / HDR_REF_WHITE_XYZ.z;
 //          float f_Z = 0.f;
 //
-//    if (t_Z > pow_delta_3)
+//    if (t_Z > POW_DELTA_3)
 //      f_Z = (pow(t_Y, 1.f / 3.f));
 //    else
-//      f_Z = (t_Z / (3.f * pow(delta, 2.f)) + (16.f / 116.f));
+//      f_Z = (t_Z / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
 //    f_Z = f_Y - f_Z;
 //
 //    const float b_star = 116.f * f_Z - 16.f;
@@ -550,24 +550,24 @@ float3 BT2446C_inverse_tone_mapping(
 //                                      200.f;
 //
 //      //X
-//      if (f_X_cor > delta)
-//        XYZ_cor.x = hdr_ref_white_XYZ.x * pow(f_X_cor, 3);
+//      if (f_X_cor > DELTA)
+//        XYZ_cor.x = HDR_REF_WHITE_XYZ.x * pow(f_X_cor, 3);
 //      else
-//        XYZ_cor.x = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.x;
+//        XYZ_cor.x = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.x;
 //
 //      // can you just take the XYZ Y from the input here since it's unchanged?
 //      // probably yes
 //      //Y
-//      if (f_Y_cor > delta)
-//        XYZ_cor.y = hdr_ref_white_XYZ.y * pow(f_Y_cor, 3.f);
+//      if (f_Y_cor > DELTA)
+//        XYZ_cor.y = HDR_REF_WHITE_XYZ.y * pow(f_Y_cor, 3.f);
 //      else
-//        XYZ_cor.y = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.y;
+//        XYZ_cor.y = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.y;
 //
 //      //Z
-//      if (f_Z_cor > delta)
-//        XYZ_cor.z = hdr_ref_white_XYZ.z * pow(f_Z_cor, 3.f);
+//      if (f_Z_cor > DELTA)
+//        XYZ_cor.z = HDR_REF_WHITE_XYZ.z * pow(f_Z_cor, 3.f);
 //      else
-//        XYZ_cor.z = L_star * _3_x_pow_delta_2 * hdr_ref_white_XYZ.z;
+//        XYZ_cor.z = L_star * _3_X_POW_DELTA_2 * HDR_REF_WHITE_XYZ.z;
 //
 //      //convert to Yxy without the Y as it is unneeded
 //      const float xyz = XYZ_cor.x + XYZ_cor.y + XYZ_cor.z;
@@ -589,16 +589,16 @@ float3 BT2446C_inverse_tone_mapping(
 //
 //    hdr = float3(X_hdr_cor, Y_hdr, Z_hdr_cor);
 //  }
-  hdr = mul(XYZ_to_BT2020, hdr);
+  hdr = mul(XYZ_To_BT2020, hdr);
 
   //6.1.2 (inverse)
   //inverse crosstalk matrix from 6.1.6
-  const float mlpha = 1.f - alpha;
-  const float3x3 inverse_crosstalk_matrix =
-    mul(1.f / (1.f - 3.f * alpha), float3x3( mlpha, -alpha, -alpha,
-                                            -alpha,  mlpha, -alpha,
-                                            -alpha, -alpha,  mlpha));
-  hdr = mul(inverse_crosstalk_matrix, hdr);
+  const float mlpha = 1.f - Alpha;
+  const float3x3 inverseCrosstalkMatrix =
+    mul(1.f / (1.f - 3.f * Alpha), float3x3( mlpha, -Alpha, -Alpha,
+                                            -Alpha,  mlpha, -Alpha,
+                                            -Alpha, -Alpha,  mlpha));
+  hdr = mul(inverseCrosstalkMatrix, hdr);
 
   hdr = clamp(hdr, 0.f, 1.f);
 
@@ -607,52 +607,52 @@ float3 BT2446C_inverse_tone_mapping(
 
 
 
-float luminance_expand(float colour, float max_nits, float shoulder_start)
+float LuminanceExpand(float Colour, float MaxNits, float ShoulderStart)
 {
-  float u = log(-((-max_nits + colour) / (max_nits - shoulder_start)));
+  float u = log(-((-MaxNits + Colour) / (MaxNits - ShoulderStart)));
 
-  return -max_nits * u + shoulder_start * u + shoulder_start;
+  return -MaxNits * u + ShoulderStart * u + ShoulderStart;
 }
 
-float3 dice_inverse_tone_mapper(
-  const float3 input,
-        float  max_nits,
-        float  shoulder_start)
+float3 DiceInverseToneMapper(
+  const float3 Input,
+        float  MaxNits,
+        float  ShoulderStart)
 {
 
-  float3x3 RGB_to_LMS = RGB_AP0_D65_to_LMS;
-  float3x3 LMS_to_RGB = LMS_to_RGB_AP0_D65;
+  float3x3 RGB_To_LMS = RGB_AP0_D65_To_LMS;
+  float3x3 LMS_To_RGB = LMS_To_RGB_AP0_D65;
   float3   K_factors  = K_AP0_D65;
-  float    KR_helper  = KR_AP0_D65_helper;
-  float    KB_helper  = KB_AP0_D65_helper;
-  float2   KG_helper  = KG_AP0_D65_helper;
+  float    KR_helper  = KR_AP0_D65_HELPER;
+  float    KB_helper  = KB_AP0_D65_HELPER;
+  float2   KG_helper  = KG_AP0_D65_HELPER;
 
 
-  float3 LMS = mul(RGB_to_LMS, input);
+  float3 LMS = mul(RGB_To_LMS, Input);
 
-  LMS = PQ_inverse_EOTF(LMS);
+  LMS = PQ_Inverse_EOTF(LMS);
 
   const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
-  if (I1 < shoulder_start)
+  if (I1 < ShoulderStart)
   {
-    return input;
+    return Input;
   }
   else
   {
-    const float Ct1 = dot(LMS, LMS_to_ICtCp[1]);
-    const float Cp1 = dot(LMS, LMS_to_ICtCp[2]);
+    const float Ct1 = dot(LMS, LMS_To_ICtCp[1]);
+    const float Cp1 = dot(LMS, LMS_To_ICtCp[2]);
 
-    const float I2 = luminance_expand(I1, max_nits, shoulder_start);
+    const float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 
     const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
     //to L'M'S'
-    LMS = mul(ICtCp_to_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+    LMS = mul(ICtCp_To_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
     //to LMS
     LMS = PQ_EOTF(LMS);
     //to RGB
-    return clamp(mul(LMS_to_RGB, LMS), 0.f, 65504.f);
+    return clamp(mul(LMS_To_RGB, LMS), 0.f, 65504.f);
   }
 
 }
