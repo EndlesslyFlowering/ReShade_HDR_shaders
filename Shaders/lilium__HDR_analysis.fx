@@ -394,9 +394,9 @@ void HDR_analysis(
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r*10000.f+0.5)/100)/100.f;
-  //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(1, 0)).r*10000.f+0.5)/100)/100.f;
-  //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(2, 0)).r*10000.f+0.5)/100)/100.f;
+  //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
+  //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
+  //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r*10000.f+0.5)/100)/100.f;
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -525,8 +525,8 @@ void HDR_analysis(
     if (current_x_coord < CIE_BG_X && current_y_coord >= (BUFFER_HEIGHT - CIE_BG_Y))
     {
       // get coords for the sampler
-      uint2 currentSamplerCoords = uint2(current_x_coord,
-                                         current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
+      int2 currentSamplerCoords = int2(current_x_coord,
+                                       current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
       float3 currentPixelToDisplay = CIE_DIAGRAM == CIE_1931
                                    ? tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb
@@ -550,12 +550,12 @@ void HDR_analysis(
 
   if (SHOW_CLL_VALUES)
   {
-    float maxCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(0, 0)).r;
-    float avgCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(1, 0)).r;
-    float minCLL_show = tex2Dfetch(Sampler_Show_Values, uint2(2, 0)).r;
-    //float maxCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r;
-    //float avgCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(1, 0)).r;
-    //float minCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(2, 0)).r;
+    float maxCLL_show = tex2Dfetch(Sampler_Show_Values, int2(0, 0)).r;
+    float avgCLL_show = tex2Dfetch(Sampler_Show_Values, int2(1, 0)).r;
+    float minCLL_show = tex2Dfetch(Sampler_Show_Values, int2(2, 0)).r;
+    //float maxCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
+    //float avgCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r;
+    //float minCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r;
 
     if (CLL_ROUNDING_WORKAROUND)
     {
@@ -577,7 +577,7 @@ void HDR_analysis(
   {
     float mousePositionX = clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1);
     float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
-    uint2 mouseXY        = uint2(mousePositionX, mousePositionY);
+    int2  mouseXY        = int2(mousePositionX, mousePositionY);
 
     if (SHOW_CLL_FROM_CURSOR)
     {
@@ -664,21 +664,21 @@ void HDR_analysis(
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
     float precentage_BT709  = 100.f;
 #else
-    float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, uint2(CSP_BT709,  1)).r;
-    float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, uint2(CSP_DCI_P3, 1)).r;
-    float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, uint2(CSP_BT2020, 1)).r;
-    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_BT709)).r  * 100.0001f;
-    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_DCI_P3)).r * 100.0001f;
-    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_BT2020)).r * 100.0001f;
+    float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT709,  1)).r;
+    float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, int2(CSP_DCI_P3, 1)).r;
+    float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT2020, 1)).r;
+    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT709)).r  * 100.0001f;
+    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_DCI_P3)).r * 100.0001f;
+    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT2020)).r * 100.0001f;
 #endif
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
-    float precentage_AP1    = tex2Dfetch(Sampler_Show_Values, uint2(CSP_AP1,    1)).r;
-    float precentage_AP0    = tex2Dfetch(Sampler_Show_Values, uint2(CSP_AP0,    1)).r;
-    float precentage_else   = tex2Dfetch(Sampler_Show_Values, uint2(CSP_ELSE,   1)).r;
-    //float precentage_AP1    = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_AP1)).r    * 100.0001f;
-    //float precentage_AP0    = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_AP0)).r    * 100.0001f;
-    //float precentage_else   = tex2Dfetch(Sampler_CSP_Counter_Final, uint2(0, CSP_ELSE)).r   * 100.0001f;
+    float precentage_AP1    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP1,    1)).r;
+    float precentage_AP0    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP0,    1)).r;
+    float precentage_else   = tex2Dfetch(Sampler_Show_Values, int2(CSP_ELSE,   1)).r;
+    //float precentage_AP1    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r    * 100.0001f;
+    //float precentage_AP0    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r    * 100.0001f;
+    //float precentage_else   = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_ELSE)).r   * 100.0001f;
 #endif
 
     DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,  18, Output, FONT_BRIGHTNESS);

@@ -358,7 +358,7 @@ void ToneMapping(
 {
   const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, uint2(0, 0)).r;
+  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
 
   float maxCLL;
   switch (CLL_MODE)
@@ -367,7 +367,7 @@ void ToneMapping(
       maxCLL = MAX_CLL;
       break;
     case 1:
-      maxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0, uint2(0, 0)).r;
+      maxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0, int2(0, 0)).r;
       break;
   }
 
@@ -501,9 +501,9 @@ void ToneMapping(
   Output = float4(hdr, 1.f);
 
 #if (SHOW_ADAPTIVE_MAXCLL)
-  float actualMaxCLL    = tex2Dfetch(sampler_max_avg_min_CLL_values, uint2(0, 0)).r;
-  float adaptiveMaxCLL0 = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    uint2(0, 0)).r;
-  float adaptiveMaxCLL1 = tex2Dfetch(Sampler_Adaptive_CLL_Value1,    uint2(0, 0)).r;
+  float actualMaxCLL    = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
+  float adaptiveMaxCLL0 = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    int2(0, 0)).r;
+  float adaptiveMaxCLL1 = tex2Dfetch(Sampler_Adaptive_CLL_Value1,    int2(0, 0)).r;
   DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f),        30, 1, TexCoord, 6, actualMaxCLL,    Output, FONT_BRIGHTNESS);
   DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, 6, adaptiveMaxCLL0, Output, FONT_BRIGHTNESS);
   DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 60.f), 30, 1, TexCoord, 6, adaptiveMaxCLL1, Output, FONT_BRIGHTNESS);
@@ -515,8 +515,8 @@ void ToneMapping(
 
 void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCLL      = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, uint2(0, 0)).r;
-  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    uint2(0, 0)).r;
+  const float currentMaxCLL      = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
+  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    int2(0, 0)).r;
 
   const float absFrametime = abs(FRAMETIME);
 
@@ -533,17 +533,17 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
   const float AdaptiveCLL = currentAdaptiveCLL + adapt;
 
-  tex2Dstore(Storage_Target_Adaptive_CLL_Value1, uint2(0, 0), AdaptiveCLL);
+  tex2Dstore(Storage_Target_Adaptive_CLL_Value1, int2(0, 0), AdaptiveCLL);
 }
 
 void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value1, uint2(0, 0)).r;
+  float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value1, int2(0, 0)).r;
   currentAdaptiveCLL = currentAdaptiveCLL < MAX_CLL_CAP
                      ? currentAdaptiveCLL
                      : MAX_CLL_CAP;
 
-  tex2Dstore(Storage_Target_Adaptive_CLL_Value0, uint2(0, 0), currentAdaptiveCLL);
+  tex2Dstore(Storage_Target_Adaptive_CLL_Value0, int2(0, 0), currentAdaptiveCLL);
 }
 
 
