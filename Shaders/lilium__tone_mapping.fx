@@ -1,6 +1,9 @@
 #include "ReShade.fxh"
 #include "lilium__tone_mappers.fxh"
+
+#if 0
 #include "lilium__HDR_black_floor_fix.fxh"
+#endif
 
 #include "lilium__DrawText_fix.fxh" //for testing! remove afterwards
 
