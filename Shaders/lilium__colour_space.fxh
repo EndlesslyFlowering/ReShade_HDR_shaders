@@ -1,5 +1,8 @@
 #pragma once
 
+#define YES 1
+#define NO  0
+
 #define CSP_UNKNOWN 0
 #define CSP_SRGB    1
 #define CSP_SCRGB   2

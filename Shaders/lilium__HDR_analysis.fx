@@ -5,12 +5,30 @@
 //#define _DEBUG
 //#define _TESTY
 
+#ifndef ENABLE_CLL_FEATURES
+  #define ENABLE_CLL_FEATURES YES
+#endif
 
+#ifndef ENABLE_CIE_FEATURES
+  #define ENABLE_CIE_FEATURES YES
+#endif
+
+#ifndef ENABLE_CSP_FEATURES
+  #define ENABLE_CSP_FEATURES YES
+#endif
+
+
+#if (ENABLE_CLL_FEATURES == YES \
+  || ENABLE_CSP_FEATURES == YES)
 uniform float2 MOUSE_POSITION
 <
   source = "mousepoint";
 >;
+#else
+  static const float2 MOUSE_POSITION = float2(0.f, 0.f);
+#endif
 
+#if (ENABLE_CLL_FEATURES == YES)
 uniform float2 NIT_PINGPONG0
 <
   source    = "pingpong";
@@ -37,6 +55,11 @@ uniform float2 NIT_PINGPONG2
   step      = 1.f;
   smoothing = 0.f;
 >;
+#else
+  static const float2 NIT_PINGPONG0 = float2(0.f, 0.f);
+  static const float2 NIT_PINGPONG1 = float2(0.f, 0.f);
+  static const float2 NIT_PINGPONG2 = float2(0.f, 0.f);
+#endif
 
 
 uniform uint FONT_SIZE
@@ -48,18 +71,19 @@ uniform uint FONT_SIZE
 > = 30;
 
 // CLL
+#if (ENABLE_CLL_FEATURES == YES)
 uniform bool SHOW_CLL_VALUES
 <
   ui_category = "CLL stuff";
   ui_label    = "show CLL values";
   ui_tooltip  = "shows max/avg/min Content Light Level";
-> = false;
+> = true;
 
 uniform bool SHOW_CLL_FROM_CURSOR
 <
   ui_category = "CLL stuff";
   ui_label    = "show CLL value from cursor position";
-> = false;
+> = true;
 
 uniform bool CLL_ROUNDING_WORKAROUND
 <
@@ -67,13 +91,19 @@ uniform bool CLL_ROUNDING_WORKAROUND
   ui_label    = "work around rounding errors for displaying maxCLL";
   ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
 > = false;
+#else
+  static const bool SHOW_CLL_VALUES         = false;
+  static const bool SHOW_CLL_FROM_CURSOR    = false;
+  static const bool CLL_ROUNDING_WORKAROUND = false;
+#endif
 
 // CIE
+#if (ENABLE_CIE_FEATURES == YES)
 uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram";
   ui_label    = "show CIE diagram";
-> = false;
+> = true;
 
 uniform uint CIE_DIAGRAM
 <
@@ -96,14 +126,20 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_max      = 250.f;
   ui_step     = 1.f;
 > = 80.f;
+#else
+  static const bool  SHOW_CIE               = false;
+  static const uint  CIE_DIAGRAM            = 0;
+  static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
+#endif
 
 // CSPs
+#if (ENABLE_CSP_FEATURES == YES)
 uniform bool SHOW_CSPS
 <
   ui_category = "colour space %";
   ui_label    = "show colour spaces used";
   ui_tooltip  = "in %";
-> = false;
+> = true;
 
 uniform bool SHOW_CSP_MAP
 <
@@ -122,9 +158,15 @@ uniform bool SHOW_CSP_FROM_CURSOR
 <
   ui_category = "colour space %";
   ui_label    = "show colour space from cursor position";
-> = false;
+> = true;
+#else
+  static const bool SHOW_CSPS            = false;
+  static const bool SHOW_CSP_MAP         = false;
+  static const bool SHOW_CSP_FROM_CURSOR = false;
+#endif
 
 // heatmap
+#if (ENABLE_CLL_FEATURES == YES)
 uniform bool SHOW_HEATMAP
 <
   ui_category = "heatmap stuff";
@@ -234,6 +276,20 @@ uniform float BELOW_NITS_AS_BLACK
   ui_max      = 10000.f;
   ui_step     = 1.f;
 > = 0.f;
+#else
+  static const bool  SHOW_HEATMAP                     = false;
+  static const uint  HEATMAP_CUTOFF_POINT             = 0;
+  static const float HEATMAP_WHITEPOINT               = 0.f;
+  static const bool  HEATMAP_SDR                      = false;
+  static const bool  HIGHLIGHT_NIT_RANGE              = false;
+  static const float HIGHLIGHT_NIT_RANGE_START_POINT  = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_END_POINT    = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS   = 0.f;
+  static const bool  DRAW_ABOVE_NITS_AS_BLACK         = false;
+  static const float ABOVE_NITS_AS_BLACK              = 0.f;
+  static const bool  DRAW_BELOW_NITS_AS_BLACK         = false;
+  static const float BELOW_NITS_AS_BLACK              = 0.f;
+#endif
 
 #ifdef _TESTY
 uniform bool ENABLE_TEST_THINGY
@@ -404,12 +460,15 @@ void HDR_analysis(
   {
     float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
 
+#if (ENABLE_CSP_FEATURES == YES)
     if (SHOW_CSP_MAP)
     {
       Output = float4(Create_CSP_Map(tex2D(Sampler_CSPs, TexCoord).r * 255.f,
                                      pixelCLL), 1.f);
     }
+#endif
 
+#if (ENABLE_CLL_FEATURES == YES)
     if (SHOW_HEATMAP)
     {
 #ifdef _DEBUG
@@ -490,8 +549,10 @@ void HDR_analysis(
         }
       }
     }
+#endif
   }
 
+#if (ENABLE_CLL_FEATURES == YES)
   if (DRAW_ABOVE_NITS_AS_BLACK)
   {
     float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
@@ -508,7 +569,9 @@ void HDR_analysis(
       Output = (0.f, 0.f, 0.f, 0.f);
     }
   }
+#endif
 
+#if (ENABLE_CIE_FEATURES == YES)
   if (SHOW_CIE)
   {
     uint CIE_BG_X = CIE_DIAGRAM == CIE_1931
@@ -547,7 +610,9 @@ void HDR_analysis(
 #endif
     }
   }
+#endif
 
+#if (ENABLE_CLL_FEATURES == YES)
   if (SHOW_CLL_VALUES)
   {
     float maxCLL_show = tex2Dfetch(Sampler_Show_Values, int2(0, 0)).r;
@@ -572,6 +637,7 @@ void HDR_analysis(
     DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
     DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
   }
+#endif
 
   if (SHOW_CLL_FROM_CURSOR || SHOW_CSP_FROM_CURSOR)
   {
@@ -579,6 +645,7 @@ void HDR_analysis(
     float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
     int2  mouseXY        = int2(mousePositionX, mousePositionY);
 
+#if (ENABLE_CLL_FEATURES == YES)
     if (SHOW_CLL_FROM_CURSOR)
     {
       float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
@@ -611,7 +678,9 @@ void HDR_analysis(
       DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
       DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
     }
+#endif
 
+#if (ENABLE_CSP_FEATURES == YES)
     if (SHOW_CSP_FROM_CURSOR)
     {
       uint cursorCSP = tex2Dfetch(Sampler_CSPs, mouseXY).r * 255.f;
@@ -657,8 +726,10 @@ void HDR_analysis(
 
       }
     }
+#endif
   }
 
+#if (ENABLE_CSP_FEATURES == YES)
   if (SHOW_CSPS)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
@@ -707,6 +778,7 @@ void HDR_analysis(
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_else,   Output, FONT_BRIGHTNESS);
 #endif
     }
+#endif
 
 }
 #else
@@ -715,32 +787,32 @@ void HDR_analysis(
 }
 #endif
 
-technique lilium__HDR_analysis_CLL_OLD
-<
-  enabled = false;
->
-{
-  pass CalcCLLvalues
-  {
-    VertexShader = PostProcessVS;
-     PixelShader = CalcCLL;
-    RenderTarget = CLL_Values;
-  }
-
-  pass GetMaxAvgMinCLLvalue0
-  {
-    ComputeShader = GetMaxAvgMinCLL0 <THREAD_SIZE1, 1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = 1;
-  }
-
-  pass GetMaxAvgMinCLLvalue1
-  {
-    ComputeShader = GetMaxAvgMinCLL1 <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
+//technique lilium__HDR_analysis_CLL_OLD
+//<
+//  enabled = false;
+//>
+//{
+//  pass CalcCLLvalues
+//  {
+//    VertexShader = PostProcessVS;
+//     PixelShader = CalcCLL;
+//    RenderTarget = CLL_Values;
+//  }
+//
+//  pass GetMaxAvgMinCLLvalue0
+//  {
+//    ComputeShader = GetMaxAvgMinCLL0 <THREAD_SIZE1, 1>;
+//    DispatchSizeX = DISPATCH_X1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass GetMaxAvgMinCLLvalue1
+//  {
+//    ComputeShader = GetMaxAvgMinCLL1 <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
+//
 //  pass GetMaxCLLvalue0
 //  {
 //    ComputeShader = getMaxCLL0 <THREAD_SIZE1, 1>;
@@ -782,13 +854,21 @@ technique lilium__HDR_analysis_CLL_OLD
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
-}
+//}
 
-technique lilium__HDR_analysis_CLL
-<
-  enabled = false;
->
+technique lilium__HDR_analysis
 {
+
+#ifdef _TESTY
+  pass test_thing
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = testy;
+  }
+#endif
+
+//CLL
+#if (ENABLE_CLL_FEATURES == YES)
   pass CalcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -816,13 +896,9 @@ technique lilium__HDR_analysis_CLL
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
-}
+#endif
 
-technique lilium__HDR_analysis_CIE
-<
-  enabled = false;
->
-{
+#if (ENABLE_CIE_FEATURES == YES)
   pass Copy_CIE_1931_BG
   {
     VertexShader = PostProcessVS;
@@ -843,14 +919,10 @@ technique lilium__HDR_analysis_CIE
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = DISPATCH_Y1;
   }
-}
+#endif
 
-technique lilium__HDR_analysis_CSP
-<
-  enabled = false;
->
-{
-#if ACTUAL_COLOUR_SPACE != CSP_SRGB
+#if (ENABLE_CSP_FEATURES == YES \
+  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
   pass CalcCSPs
   {
     VertexShader = PostProcessVS;
@@ -870,18 +942,6 @@ technique lilium__HDR_analysis_CSP
     ComputeShader = CountCSPs_x <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
-  }
-#endif
-}
-
-technique lilium__HDR_analysis
-{
-
-#ifdef _TESTY
-  pass test_thing
-  {
-    VertexShader = PostProcessVS;
-     PixelShader = testy;
   }
 #endif
 
