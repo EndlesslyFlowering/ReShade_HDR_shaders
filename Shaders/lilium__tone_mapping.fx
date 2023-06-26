@@ -16,7 +16,7 @@
 
 
 #ifndef SHOW_ADAPTIVE_MAXCLL
-  #define SHOW_ADAPTIVE_MAXCLL 0
+  #define SHOW_ADAPTIVE_MAXCLL NO
 #endif
 
 
@@ -277,11 +277,12 @@ uniform float DEBUG_MAX_CLL
 
 
 texture2D Adaptive_CLL_Value0
+<
+  pooled = true;
+>
 {
-   Width = 1;
+  Width  = 1;
   Height = 1;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -289,8 +290,6 @@ texture2D Adaptive_CLL_Value0
 sampler2D Sampler_Adaptive_CLL_Value0
 {
   Texture = Adaptive_CLL_Value0;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Target_Adaptive_CLL_Value0
@@ -301,11 +300,12 @@ storage2D Storage_Target_Adaptive_CLL_Value0
 };
 
 texture2D Adaptive_CLL_Value1
+<
+  pooled = true;
+>
 {
-  Width = 1;
+  Width  = 1;
   Height = 1;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -313,15 +313,11 @@ texture2D Adaptive_CLL_Value1
 sampler2D Sampler_Adaptive_CLL_Value1
 {
   Texture = Adaptive_CLL_Value1;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Target_Adaptive_CLL_Value1
 {
   Texture = Adaptive_CLL_Value1;
-
-  MipLevel = 0;
 };
 
 

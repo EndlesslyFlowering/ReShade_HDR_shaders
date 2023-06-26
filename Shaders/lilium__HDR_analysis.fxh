@@ -65,11 +65,12 @@ uniform float2 PINGPONG
 
 
 texture2D CLL_Values
+<
+  pooled = true;
+>
 {
   Width  = BUFFER_WIDTH;
   Height = BUFFER_HEIGHT;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -77,17 +78,16 @@ texture2D CLL_Values
 sampler2D Sampler_CLL_Values
 {
   Texture = CLL_Values;
-
-  SRGBTexture = false;
 };
 
 //  max = (0,0); max_99.99% = (1,0); avg = (2,0); min = (3,0)
 texture2D Max_Avg_Min_CLL_Values
+<
+  pooled = true;
+>
 {
   Width  = 4;
   Height = 1;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -95,23 +95,20 @@ texture2D Max_Avg_Min_CLL_Values
 sampler2D Sampler_Max_Avg_Min_CLL_Values
 {
   Texture = Max_Avg_Min_CLL_Values;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Max_Avg_Min_CLL_Values
 {
   Texture = Max_Avg_Min_CLL_Values;
-
-  MipLevel = 0;
 };
 
 texture2D Intermediate_CLL_Values
+<
+  pooled = true;
+>
 {
   Width  = BUFFER_WIDTH;
   Height = 6;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -119,15 +116,11 @@ texture2D Intermediate_CLL_Values
 sampler2D Sampler_Intermediate_CLL_Values
 {
   Texture = Intermediate_CLL_Values;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Intermediate_CLL_Values
 {
   Texture = Intermediate_CLL_Values;
-
-  MipLevel = 0;
 };
 
 #if 0
@@ -135,11 +128,12 @@ static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01
 static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
 
 texture2D Max_CLL_0_Dot_01_Percent
+<
+  pooled = true;
+>
 {
   Width  = _0_Dot_01_Percent_Texture_Width;
   Height = 16;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -147,24 +141,21 @@ texture2D Max_CLL_0_Dot_01_Percent
 sampler2D Sampler_Max_CLL_0_Dot_01_Percent
 {
   Texture = Max_CLL_0_Dot_01_Percent;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Max_CLL_0_Dot_01_Percent
 {
   Texture = Max_CLL_0_Dot_01_Percent;
-
-  MipLevel = 0;
 };
 #endif
 
 texture2D Final_4
+<
+  pooled = true;
+>
 {
   Width  = 6;
   Height = 2;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -172,15 +163,11 @@ texture2D Final_4
 sampler2D Sampler_Final_4
 {
   Texture = Final_4;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Final_4
 {
   Texture = Final_4;
-
-  MipLevel = 0;
 };
 
 #define CIE_1931_X    735
@@ -188,13 +175,14 @@ storage2D Storage_Final_4
 #define CIE_1931_BG_X 835
 #define CIE_1931_BG_Y 935
 #define CIE_BG_BORDER  50
-texture2D CIE_1931 <source = "lilium__CIE_1931_linear.png";>
+texture2D CIE_1931
+<
+  source = "lilium__CIE_1931_linear.png";
+  pooled = true;
+>
 {
-  Width     = CIE_1931_X;
-  Height    = CIE_1931_Y;
-  MipLevels = 0;
-
-  SRGBTexture = false;
+  Width  = CIE_1931_X;
+  Height = CIE_1931_Y;
 };
 
 sampler2D Sampler_CIE_1931
@@ -202,13 +190,14 @@ sampler2D Sampler_CIE_1931
   Texture = CIE_1931;
 };
 
-texture2D CIE_1931_Black_BG <source = "lilium__CIE_1931_Black_BG_Linear.png";>
+texture2D CIE_1931_Black_BG
+<
+  source = "lilium__CIE_1931_Black_BG_Linear.png";
+  pooled = true;
+>
 {
-  Width     = CIE_1931_BG_X;
-  Height    = CIE_1931_BG_Y;
-  MipLevels = 0;
-
-  SRGBTexture = false;
+  Width  = CIE_1931_BG_X;
+  Height = CIE_1931_BG_Y;
 };
 
 sampler2D Sampler_CIE_1931_Black_BG
@@ -217,13 +206,14 @@ sampler2D Sampler_CIE_1931_Black_BG
 };
 
 texture2D CIE_1931_Current
+<
+  pooled = true;
+>
 {
-  Width     = CIE_1931_BG_X;
-  Height    = CIE_1931_BG_Y;
-  MipLevels = 0;
-  Format    = RGBA8;
+  Width  = CIE_1931_BG_X;
+  Height = CIE_1931_BG_Y;
 
-  SRGBTexture = false;
+  Format = RGBA8;
 };
 
 sampler2D Sampler_CIE_1931_Current
@@ -234,20 +224,20 @@ sampler2D Sampler_CIE_1931_Current
 storage2D Storage_CIE_1931_Current
 {
   Texture  = CIE_1931_Current;
-  MipLevel = 0;
 };
 
 #define CIE_1976_X    623
 #define CIE_1976_Y    587
 #define CIE_1976_BG_X 723
 #define CIE_1976_BG_Y 687
-texture2D CIE_1976 <source = "lilium__CIE_1976_UCS_Linear.png";>
+texture2D CIE_1976
+<
+  source = "lilium__CIE_1976_UCS_Linear.png";
+  pooled = true;
+>
 {
-  Width     = CIE_1976_X;
-  Height    = CIE_1976_Y;
-  MipLevels = 0;
-
-  SRGBTexture = false;
+  Width  = CIE_1976_X;
+  Height = CIE_1976_Y;
 };
 
 sampler2D Sampler_CIE_1976
@@ -255,13 +245,14 @@ sampler2D Sampler_CIE_1976
   Texture = CIE_1976;
 };
 
-texture2D CIE_1976_Black_BG <source = "lilium__CIE_1976_UCS_Black_BG_linear.png";>
+texture2D CIE_1976_Black_BG
+<
+  source = "lilium__CIE_1976_UCS_Black_BG_linear.png";
+  pooled = true;
+>
 {
-  Width     = CIE_1976_BG_X;
-  Height    = CIE_1976_BG_Y;
-  MipLevels = 0;
-
-  SRGBTexture = false;
+  Width  = CIE_1976_BG_X;
+  Height = CIE_1976_BG_Y;
 };
 
 sampler2D Sampler_CIE_1976_Black_BG
@@ -270,13 +261,14 @@ sampler2D Sampler_CIE_1976_Black_BG
 };
 
 texture2D CIE_1976_Current
+<
+  pooled = true;
+>
 {
-  Width     = CIE_1976_BG_X;
-  Height    = CIE_1976_BG_Y;
-  MipLevels = 0;
-  Format    = RGBA8;
+  Width  = CIE_1976_BG_X;
+  Height = CIE_1976_BG_Y;
 
-  SRGBTexture = false;
+  Format = RGBA8;
 };
 
 sampler2D Sampler_CIE_1976_Current
@@ -287,15 +279,17 @@ sampler2D Sampler_CIE_1976_Current
 storage2D Storage_CIE_1976_Current
 {
   Texture  = CIE_1976_Current;
-  MipLevel = 0;
 };
 
 texture2D CSPs
+<
+  pooled = true;
+>
 {
-  Width     = BUFFER_WIDTH;
-  Height    = BUFFER_HEIGHT;
-  MipLevels = 0;
-  Format    = R8;
+  Width  = BUFFER_WIDTH;
+  Height = BUFFER_HEIGHT;
+
+  Format = R8;
 };
 
 sampler2D Sampler_CSPs
@@ -305,11 +299,14 @@ sampler2D Sampler_CSPs
 };
 
 texture2D CSP_Counter
+<
+  pooled = true;
+>
 {
-  Width     = BUFFER_WIDTH;
-  Height    = 6;
-  MipLevels = 0;
-  Format    = R16;
+  Width  = BUFFER_WIDTH;
+  Height = 6;
+
+  Format = R16;
 };
 
 sampler2D Sampler_CSP_Counter
@@ -321,15 +318,17 @@ sampler2D Sampler_CSP_Counter
 storage2D Storage_CSP_Counter
 {
   Texture  = CSP_Counter;
-  MipLevel = 0;
 };
 
 texture2D CSP_Counter_Final
+<
+  pooled = true;
+>
 {
-  Width     = 1;
-  Height    = 6;
-  MipLevels = 0;
-  Format    = R32F;
+  Width  = 1;
+  Height = 6;
+
+  Format = R32F;
 };
 
 sampler2D Sampler_CSP_Counter_Final
@@ -340,18 +339,18 @@ sampler2D Sampler_CSP_Counter_Final
 
 storage2D Storage_CSP_Counter_Final
 {
-  Texture  = CSP_Counter_Final;
-  MipLevel = 0;
+  Texture = CSP_Counter_Final;
 };
 
 //  max = (0, 0); avg = (1, 0); min = (2, 0)
 // (0, 1) to (5, 1) = CSPs
 texture2D Show_Values
+<
+  pooled = true;
+>
 {
   Width  = 6;
   Height = 2;
-
-  MipLevels = 0;
 
   Format = R32F;
 };
@@ -359,15 +358,11 @@ texture2D Show_Values
 sampler2D Sampler_Show_Values
 {
   Texture = Show_Values;
-
-  SRGBTexture = false;
 };
 
 storage2D Storage_Show_Values
 {
   Texture = Show_Values;
-
-  MipLevel = 0;
 };
 
 
