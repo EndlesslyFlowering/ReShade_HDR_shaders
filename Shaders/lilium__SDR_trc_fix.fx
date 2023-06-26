@@ -94,7 +94,7 @@ void SDR_TRC_Fix(
 
   if (INPUT_TRC == 0)
   {
-    fixedGamma = sRGB_TRC(input);
+    fixedGamma = CSP::TRC::FromsRGB(input);
   }
   else
   {
@@ -111,7 +111,7 @@ void SDR_TRC_Fix(
   }
   else
   {
-    sRGB_Inverse_TRC(fixedGamma);
+    CSP::TRC::TosRGB(fixedGamma);
   }
 
   Output = float4(fixedGamma, 1.f);

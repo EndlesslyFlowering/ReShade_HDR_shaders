@@ -232,17 +232,17 @@ void InverseToneMapping(
     break;
     case CONTENT_TRC_SRGB:
     {
-      hdr = Extended_sRGB_TRC(input);
+      hdr = CSP::TRC::FromExtendedsRGB(input);
     }
     break;
     case CONTENT_TRC_GAMMA_22:
     {
-      hdr = Extended_22_TRC(input);
+      hdr = CSP::TRC::FromExtendedGamma22(input);
     }
     break;
     case CONTENT_TRC_GAMMA_24:
     {
-      hdr = Extended_24_TRC(input);
+      hdr = CSP::TRC::FromExtendedGamma24(input);
     }
     break;
   }
@@ -255,12 +255,12 @@ void InverseToneMapping(
 
   if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = mul(BT709_To_BT2020, hdr);
+    hdr = CSP::Mat::BT709To::BT2020(hdr);
   }
 #if (ENABLE_DICE != 0)
   else
   {
-    hdr = clamp(mul(BT709_To_AP0_D65, hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
+    hdr = clamp(CSP::Mat::BT709To::AP0_D65(hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
   }
 #endif
 
@@ -284,7 +284,8 @@ void InverseToneMapping(
                                        BT2446A_GAMUT_EXPANSION,
                                        BT2446A_GAMMA_IN,
                                        BT2446A_GAMMA_OUT);
-    } break;
+    }
+    break;
     case ITM_METHOD_BT2446C:
     {
       hdr = BT2446C_InverseToneMapping(hdr,
@@ -294,45 +295,66 @@ void InverseToneMapping(
                                        0.33f - BT2446C_ALPHA);
                                        //BT2446C_USE_ACHROMATIC_CORRECTION,
                                        //BT2446C_SIGMA);
-    } break;
+    }
+    break;
+
 #if (ENABLE_DICE != 0)
+
     case ITM_METHOD_DICE_INVERSE:
     {
       const float target_CLL_normalised = TARGET_PEAK_NITS / 10000.f;
-      hdr = DiceInverseToneMapper(hdr,
-                                  Nits_To_I_AP0_D65(DICE_REFERENCE_WHITE),
-                                  Nits_To_I_AP0_D65(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
-    } break;
+      hdr = DiceInverseToneMapper(
+        hdr,
+        CSP::ICtCp::AP0_D65::NitsToIntensity(DICE_REFERENCE_WHITE),
+        CSP::ICtCp::AP0_D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
+    }
+    break;
+
 #endif
+
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
       hdr = Map_SDR_Into_HDR(hdr,
                              MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS);
-    } break;
+    }
+    break;
   }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_PQ)
-  #if (ENABLE_DICE != 0)
+
+#if (ENABLE_DICE != 0)
+
   if (INVERSE_TONE_MAPPING_METHOD == ITM_METHOD_DICE_INVERSE)
   {
-    hdr = mul(AP0_D65_To_BT2020, hdr);
+    hdr = CSP::Mat::AP0_D65To::BT2020(hdr);
   }
-  #endif
+
+#endif
+
   hdr = PQ_Inverse_EOTF(hdr);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
   if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = mul(BT2020_To_BT709, hdr);
+    hdr = CSP::Mat::BT2020To::BT709(hdr);
   }
-  #if (ENABLE_DICE != 0)
+
+#if (ENABLE_DICE != 0)
+
   else
   {
-    hdr = mul(AP0_D65_To_BT709, hdr);
+    hdr = CSP::Mat::AP0_D65To::BT709(hdr);
   }
-  #endif
+
+#endif
+
   hdr = hdr * 125.f; // 125 = 10000 / 80
+
 #else
+
   hdr = float3(0.f, 0.f, 0.f);
+
 #endif
 
   Output = float4(hdr, 1.f);

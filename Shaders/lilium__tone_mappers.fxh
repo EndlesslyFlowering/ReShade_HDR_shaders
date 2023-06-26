@@ -3,6 +3,11 @@
 #include "lilium__HDR_analysis.fxh"
 
 // Rep. ITU-R BT.2446-1 Table 2 & 3
+
+// gamma
+static const float inverseGamma = 2.4f;
+static const float gamma        = 1.f / inverseGamma;
+
 float3 BT2446A_ToneMapping(
   const float3 Input,
   const float  TargetCLL,
@@ -10,10 +15,6 @@ float3 BT2446A_ToneMapping(
   const float  GamutCompression)
 {
   float3 hdrIn = Input;
-
-  // gamma
-  const float inverseGamma = 2.4f;
-  const float gamma        = 1.f / inverseGamma;
 
   const float maxCLL = Max_CLL_In > TargetCLL
                      ? Max_CLL_In
@@ -25,8 +26,8 @@ float3 BT2446A_ToneMapping(
   // non-linear transfer function RGB->R'G'B'
   hdrIn = pow(hdrIn, gamma);
 
-  //Y'
-  const float Y_ = dot(hdrIn, K_BT2020);
+  //Y'C'bC'r
+  const float3 YCbCr = CSP::YCbCr::FromRGB::BT2020(hdrIn);
 
   // tone mapping step 1
   const float pHDR = 1.f + 32.f * pow(
@@ -35,7 +36,7 @@ float3 BT2446A_ToneMapping(
                                   , gamma);
 
   //Y'p
-  const float Y_p = (log(1.f + (pHDR - 1.f) * Y_)) /
+  const float Y_p = (log(1.f + (pHDR - 1.f) * YCbCr.x)) /
                     log(pHDR);
 
   // tone mapping step 2
@@ -58,15 +59,13 @@ float3 BT2446A_ToneMapping(
 
   //f(Y'sdr)
   const float colourScaling = Y_sdr /
-                             (GamutCompression * Y_);
+                              (GamutCompression * YCbCr.x);
 
   //C'b,tmo
-  const float C_b_tmo = colourScaling * (hdrIn.b - Y_) /
-                                       KB_BT2020_HELPER;
+  const float C_b_tmo = colourScaling * YCbCr.y;
 
   //C'r,tmo
-  const float C_r_tmo = colourScaling * (hdrIn.r - Y_) /
-                                       KR_BT2020_HELPER;
+  const float C_r_tmo = colourScaling * YCbCr.z;
 
   //Y'tmo
   const float Y_tmo = Y_sdr
@@ -74,7 +73,7 @@ float3 BT2446A_ToneMapping(
 
   float3 hdrOut;
 
-  hdrOut = YCbCr_BT2020_To_RGB(float3(Y_tmo, C_b_tmo, C_r_tmo));
+  hdrOut = CSP::YCbCr::ToRGB::BT2020(float3(Y_tmo, C_b_tmo, C_r_tmo));
 
   hdrOut = saturate(hdrOut);
 
@@ -94,10 +93,6 @@ float3 BT2446A_ToneMapping_Mod1(
 {
   float3 hdrIn = Input;
 
-  // gamma
-  const float inverseGamma = 2.4f;
-  const float gamma        = 1.f / inverseGamma;
-
   const float maxCLL = Max_CLL_In > TargetCLL
                      ? Max_CLL_In
                      : TargetCLL;
@@ -108,8 +103,8 @@ float3 BT2446A_ToneMapping_Mod1(
   // non-linear transfer function RGB->R'G'B'
   hdrIn = pow(hdrIn, gamma);
 
-  //Y'
-  const float Y_ = dot(hdrIn, K_BT2020);
+  //Y'C'bC'r
+  const float3 YCbCr = CSP::YCbCr::FromRGB::BT2020(hdrIn);
 
   // tone mapping step 1
   const float pHDR = 1.f + 32.f * pow(
@@ -118,7 +113,7 @@ float3 BT2446A_ToneMapping_Mod1(
                                   , gamma);
 
   //Y'p
-  const float Y_p = (log(1.f + (pHDR - 1.f) * Y_)) /
+  const float Y_p = (log(1.f + (pHDR - 1.f) * YCbCr.x)) /
                     log(pHDR);
 
   // tone mapping step 2
@@ -142,15 +137,13 @@ float3 BT2446A_ToneMapping_Mod1(
 
   //f(Y'sdr)
   const float colourScaling = Y_sdr /
-                             (GamutCompression * Y_);
+                              (GamutCompression * YCbCr.x);
 
   //C'b,tmo
-  const float C_b_tmo = colourScaling * (hdrIn.b - Y_) /
-                                       KB_BT2020_HELPER;
+  const float C_b_tmo = colourScaling * YCbCr.y;
 
   //C'r,tmo
-  const float C_r_tmo = colourScaling * (hdrIn.r - Y_) /
-                                       KR_BT2020_HELPER;
+  const float C_r_tmo = colourScaling * YCbCr.z;
 
   //Y'tmo
   const float Y_tmo = Y_sdr
@@ -158,7 +151,7 @@ float3 BT2446A_ToneMapping_Mod1(
 
   float3 hdrOut;
 
-  hdrOut = YCbCr_BT2020_To_RGB(float3(Y_tmo, C_b_tmo, C_r_tmo));
+  hdrOut = CSP::YCbCr::ToRGB::BT2020(float3(Y_tmo, C_b_tmo, C_r_tmo));
 
   hdrOut = saturate(hdrOut);
 
@@ -185,51 +178,54 @@ float HermiteSpline(
 
 //const float tgt_max_PQ, // Lmax in PQ
 //const float tgt_min_PQ, // Lmin in PQ
-//const float Src_Max_PQ, // Lw in PQ
+//const float SrcMaxPq, // Lw in PQ
 
-#define PRO_MODE_RGB   0
-#define PRO_MODE_YRGB  1
-#define PRO_MODE_YCBCR 2
-#define PRO_MODE_ICTCP 3
+#define BT2390_PRO_MODE_RGB   0
+#define BT2390_PRO_MODE_YRGB  1
+#define BT2390_PRO_MODE_YCBCR 2
+#define BT2390_PRO_MODE_ICTCP 3
 
 // works in PQ
 float3 BT2390_ToneMapping(
   const float3 E_,
   const uint   ProcessingMode,
-//  const float  Src_Min_PQ, // Lb in PQ
-  const float  Src_Max_PQ,   // Lw in PQ
+//  const float  SrcMinPq, // Lb in PQ
+  const float  SrcMaxPq,     // Lw in PQ
   const float  MinLum,       // minLum
   const float  MaxLum,       // maxLum
   const float  KneeStart     // KS
 )
 {
-  if (ProcessingMode == PRO_MODE_RGB)
+  if (ProcessingMode == BT2390_PRO_MODE_RGB)
   {
     //E1
-    //float3 col = (E_ - Src_Min_PQ) / (Src_Max_PQ - Src_Min_PQ);
-    float3 col = E_ / Src_Max_PQ;
+    //float3 col = (E_ - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+    float3 col = E_ / SrcMaxPq;
 
     //E2
-    if (col.r >= KneeStart)
+    if (col.r >= KneeStart) {
       col.r = HermiteSpline(col.r, KneeStart, MaxLum);
-    if (col.g >= KneeStart)
+    }
+    if (col.g >= KneeStart) {
       col.g = HermiteSpline(col.g, KneeStart, MaxLum);
-    if (col.b >= KneeStart)
+    }
+    if (col.b >= KneeStart) {
       col.b = HermiteSpline(col.b, KneeStart, MaxLum);
+    }
 
     //E3
     col = col + MinLum * pow((1.f.xxx - col), 4.f);
 
     //E4
-    //return col * (Src_Max_PQ - Src_Min_PQ) + Src_Min_PQ;
-    return col * Src_Max_PQ;
+    //return col * (SrcMaxPq - SrcMinPq) + SrcMinPq;
+    return col * SrcMaxPq;
   }
-  else if (ProcessingMode == PRO_MODE_YRGB)
+  else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
   {
-    const float Y1 = dot(E_, BT2020_To_XYZ[1].rgb);
+    const float Y1 = dot(E_, CSP::Mat::BT2020_To_XYZ[1].rgb);
     //E1 relative luminance
-    //float Y2 = (PQ_Inverse_EOTF(Y1) - Src_Min_PQ) / (Src_Max_PQ - Src_Min_PQ);
-    float Y2 = PQ_Inverse_EOTF(Y1) / Src_Max_PQ;
+    //float Y2 = (PQ_Inverse_EOTF(Y1) - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+    float Y2 = CSP::TRC::ToPq(Y1) / SrcMaxPq;
 
     //E2
     if (Y2 >= KneeStart)
@@ -240,10 +236,10 @@ float3 BT2390_ToneMapping(
       Y2 = Y2 + MinLum * pow((1.f - Y2), 4.f);
 
       //E4
-      //Y2 = Y2 * (Src_Max_PQ - Src_Min_PQ) + Src_Min_PQ;
-      Y2 = Y2 * Src_Max_PQ;
+      //Y2 = Y2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
+      Y2 = Y2 * SrcMaxPq;
 
-      Y2 = PQ_EOTF(Y2);
+      Y2 = CSP::TRC::FromPq(Y2);
 
       return clamp(Y2 / Y1 * E_, 0.f, 65504.f);
     }
@@ -252,20 +248,20 @@ float3 BT2390_ToneMapping(
       return E_;
     }
   }
-  else if (ProcessingMode == PRO_MODE_YCBCR)
+  else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
   {
-    const float Y_1  = dot(E_, K_BT2020);
+    const float Y_1  = dot(E_, CSP::K_Helpers::BT2020::K);
     //E1
-    //float Y_2 = (Y_1 - Src_Min_PQ) / (Src_Max_PQ - Src_Min_PQ);
-    float Y_2 = Y_1 / Src_Max_PQ;
+    //float Y_2 = (Y_1 - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+    float Y_2 = Y_1 / SrcMaxPq;
 
     //E2
     if (Y_2 >= KneeStart)
     {
       const float C_b1 = (E_.b - Y_1) /
-                         KB_BT2020_HELPER;
+                         CSP::K_Helpers::BT2020::KB;
       const float C_r1 = (E_.r - Y_1) /
-                         KR_BT2020_HELPER;
+                         CSP::K_Helpers::BT2020::KR;
 
       Y_2 = HermiteSpline(Y_2, KneeStart, MaxLum);
 
@@ -273,8 +269,8 @@ float3 BT2390_ToneMapping(
       Y_2 = Y_2 + MinLum * pow((1.f - Y_2), 4.f);
 
       //E4
-      //Y_2 = Y_2 * (Src_Max_PQ - Src_Min_PQ) + Src_Min_PQ;
-      Y_2 = Y_2 * Src_Max_PQ;
+      //Y_2 = Y_2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
+      Y_2 = Y_2 * SrcMaxPq;
 
       const float min_Y = min((Y_1 / Y_2), (Y_2 / Y_1));
 
@@ -285,28 +281,28 @@ float3 BT2390_ToneMapping(
       const float C_b2 = min_Y * C_b1;
       const float C_r2 = min_Y * C_r1;
 
-      return clamp(YCbCr_BT2020_To_RGB(float3(Y_2, C_b2, C_r2)), 0.f, 65504.f);
+      return clamp(CSP::YCbCr::ToRGB::BT2020(float3(Y_2, C_b2, C_r2)), 0.f, 65504.f);
     }
     else
     {
       return E_;
     }
   }
-  else if (ProcessingMode == PRO_MODE_ICTCP)
+  else if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
   {
-    float3 LMS = mul(RGB_BT2020_To_LMS, E_);
-    LMS = PQ_Inverse_EOTF(LMS);
+    float3 LMS = CSP::ICtCp::Mat::BT2020To::LMS(E_);
+    LMS = CSP::TRC::ToPq(LMS);
 
-    const float I1  = 0.5f * LMS.x + 0.5f * LMS.y;
+    const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
     //E1
-    //float I2 = (I1 - Src_Min_PQ) / (Src_Max_PQ - Src_Min_PQ);
-    float I2 = I1 / Src_Max_PQ;
+    //float I2 = (I1 - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+    float I2 = I1 / SrcMaxPq;
 
     //E2
     if (I2 >= KneeStart)
     {
-      const float Ct1 = dot(LMS, LMS_To_ICtCp[1]);
-      const float Cp1 = dot(LMS, LMS_To_ICtCp[2]);
+      const float Ct1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[1]);
+      const float Cp1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[2]);
 
       I2 = HermiteSpline(I2, KneeStart, MaxLum);
 
@@ -314,8 +310,8 @@ float3 BT2390_ToneMapping(
       I2 = I2 + MinLum * pow((1.f - I2), 4.f);
 
       //E4
-      //I2 = I2 * (Src_Max_PQ - Src_Min_PQ) + Src_Min_PQ;
-      I2 = I2 * Src_Max_PQ;
+      //I2 = I2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
+      I2 = I2 * SrcMaxPq;
 
       const float min_I = min((I1 / I2), (I2 / I1));
 
@@ -323,11 +319,11 @@ float3 BT2390_ToneMapping(
 
       //to L'M'S'
       //LMS = mul(ICtCp_To_LMS, float3(I2, Ct2_Cp2.x, Ct2_Cp2.y));
-      LMS = mul(ICtCp_To_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+      LMS = CSP::ICtCp::Mat::ICtCpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
       //to LMS
-      LMS = PQ_EOTF(LMS);
+      LMS = CSP::TRC::FromPq(LMS);
       //to RGB
-      return clamp(mul(LMS_To_RGB_BT2020, LMS), 0.f, 65504.f);
+      return clamp(CSP::ICtCp::Mat::LmsTo::BT2020(LMS), 0.f, 65504.f);
     }
     else
     {
@@ -351,9 +347,9 @@ float RangeCompress(float x)
 }
 
 float LuminanceCompress(
-  float Colour,
-  float MaxNits,
-  float ShoulderStart)
+  const float Colour,
+  const float MaxNits,
+  const float ShoulderStart)
 {
 #if 1
   return ShoulderStart
@@ -374,8 +370,8 @@ float LuminanceCompress(
 // ShoulderStart denotes the point where we change from linear to shoulder
 float3 dice(
         float3 Input,
-        float  MaxNits,
-        float  ShoulderStart,
+  const float  MaxNits,
+  const float  ShoulderStart,
   const uint   ProcessingMode,
   const uint   WorkingColourSpace)
 {
@@ -403,21 +399,21 @@ float3 dice(
 //                   ? KG_AP0_D65_HELPER
 //                   : KG_BT2020_HELPER;
 
-  float3x3 RGB_To_LMS = RGB_AP0_D65_To_LMS;
-  float3x3 LMS_To_RGB = LMS_To_RGB_AP0_D65;
-  float3   K_Factors  = K_AP0_D65;
-  float    KR_Helper  = KR_AP0_D65_HELPER;
-  float    KB_Helper  = KB_AP0_D65_HELPER;
-  float2   KG_Helper  = KG_AP0_D65_HELPER;
+  float3x3 RGB_To_LMS = CSP::ICtCp::Mat::AP0_D65_To_LMS;
+  float3x3 LMS_To_RGB = CSP::ICtCp::Mat::LMS_To_AP0_D65;
+  float3   K_Factors  = CSP::K_Helpers::AP0_D65::K;
+  float    KR_Helper  = CSP::K_Helpers::AP0_D65::KR;
+  float    KB_Helper  = CSP::K_Helpers::AP0_D65::KB;
+  float2   KG_Helper  = CSP::K_Helpers::AP0_D65::KG;
 
   if (WorkingColourSpace == DICE_USE_BT2020)
   {
-    RGB_To_LMS = RGB_BT2020_To_LMS;
-    LMS_To_RGB = LMS_To_RGB_BT2020;
-    K_Factors  = K_BT2020;
-    KR_Helper  = KR_BT2020_HELPER;
-    KB_Helper  = KB_BT2020_HELPER;
-    KG_Helper  = KG_BT2020_HELPER;
+    RGB_To_LMS = CSP::ICtCp::Mat::BT2020_To_LMS;
+    LMS_To_RGB = CSP::ICtCp::Mat::LMS_To_BT2020;
+    K_Factors  = CSP::K_Helpers::BT2020::K;
+    KR_Helper  = CSP::K_Helpers::BT2020::KR;
+    KB_Helper  = CSP::K_Helpers::BT2020::KB;
+    KG_Helper  = CSP::K_Helpers::BT2020::KG;
   }
 
   //YCbCr method copied from BT.2390
@@ -425,7 +421,7 @@ float3 dice(
   {
     float3 LMS = mul(RGB_To_LMS, Input);
 
-    LMS = PQ_Inverse_EOTF(LMS);
+    LMS = CSP::TRC::ToPq(LMS);
 
     const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
@@ -433,24 +429,24 @@ float3 dice(
       return Input;
     else
     {
-      const float Ct1 = dot(LMS, LMS_To_ICtCp[1]);
-      const float Cp1 = dot(LMS, LMS_To_ICtCp[2]);
+      const float Ct1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[1]);
+      const float Cp1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[2]);
 
       const float I2 = LuminanceCompress(I1, MaxNits, ShoulderStart);
 
       const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
       //to L'M'S'
-      LMS = mul(ICtCp_To_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+      LMS = CSP::ICtCp::Mat::ICtCpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
       //to LMS
-      LMS = PQ_EOTF(LMS);
+      LMS = CSP::TRC::FromPq(LMS);
       //to RGB
       return clamp(mul(LMS_To_RGB, LMS), 0.f, 65504.f);
     }
   }
   else
   {
-    float3 Colour = PQ_Inverse_EOTF(Input);
+    float3 Colour = CSP::TRC::ToPq(Input);
 
     const float Y_1 = dot(Colour, K_Factors);
 
@@ -471,9 +467,9 @@ float3 dice(
       //                       Y_2 - KG_Helper[0] * C_b2 - KG_Helper[1] * C_r2,
       //                       Y_2 + KB_Helper * C_b2));
 
-      return clamp(PQ_EOTF(float3(Y_2 + KR_Helper    * C_r2,
-                                  Y_2 - KG_Helper[0] * C_b2 - KG_Helper[1] * C_r2,
-                                  Y_2 + KB_Helper    * C_b2)), 0, 65504.f);
+      return clamp(CSP::TRC::FromPq(float3(Y_2 + KR_Helper    * C_r2,
+                                           Y_2 - KG_Helper[0] * C_b2 - KG_Helper[1] * C_r2,
+                                           Y_2 + KB_Helper    * C_b2)), 0, 65504.f);
     }
   }
 

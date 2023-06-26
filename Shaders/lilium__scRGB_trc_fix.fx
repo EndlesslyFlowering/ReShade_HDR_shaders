@@ -75,36 +75,45 @@ void scRGB_TRC_Fix(
 
   float3 fixedGamma = input;
 
-  if (INPUT_TRC == TRC_SRGB) {
-    fixedGamma = Extended_sRGB_TRC(fixedGamma);
+  if (INPUT_TRC == TRC_SRGB){
+    fixedGamma = CSP::TRC::FromExtendedsRGB(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_22) {
-    fixedGamma = Extended_22_TRC(fixedGamma);
+    fixedGamma = CSP::TRC::FromExtendedGamma22(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_24) {
-    fixedGamma = Extended_24_TRC(fixedGamma);
+    fixedGamma = CSP::TRC::FromExtendedGamma24(fixedGamma);
   }
-  else if (INPUT_TRC == TRC_PQ) {
-    fixedGamma = mul(BT2020_To_BT709, PQ_EOTF(fixedGamma)) * 125.f;
+  else if (INPUT_TRC    == TRC_PQ
+        && CSP_OVERRIDE != CSP_PS5) {
+    fixedGamma = CSP::Mat::BT2020To::BT709(CSP::TRC::FromPq(fixedGamma)) * 125.f;
   }
 
-  if (CLAMP)
+  if (CLAMP) {
     fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
+  }
 
-#if (CSP_OVERRIDE == CSP_PS5)
-    fixedGamma = mul(BT709_To_BT2020, fixedGamma);
-#endif
+  if (CSP_OVERRIDE == CSP_PS5
+   && INPUT_TRC    != TRC_PQ) {
+    fixedGamma = CSP::Mat::BT709To::BT2020(fixedGamma);
+   }
 
-  if (DO_GAMMA_ADJUST)
-    fixedGamma = ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
+
+  if (DO_GAMMA_ADJUST) {
+    fixedGamma = CSP::TRC::ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
+  }
 
 //  if (dot(BT709_To_XYZ[1].rgb, fixedGamma) < 0.f)
 //    fixedGamma = float3(0.f, 0.f, 0.f);
 
 #if (CSP_OVERRIDE == CSP_PS5)
+
     fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
+
 #else
+
     fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
+
 #endif
 
   fixedGamma = fixNAN(fixedGamma);

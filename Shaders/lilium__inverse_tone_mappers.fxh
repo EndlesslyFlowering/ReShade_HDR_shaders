@@ -28,6 +28,11 @@
 //  return sdr;
 //}
 
+
+//gamma
+static const float gamma        = 2.4f;
+static const float inverseGamma = 1.f / gamma;
+
 // outputs normalised values
 float3 BT2446A_InverseToneMapping(
   const float3 Input,
@@ -40,27 +45,16 @@ float3 BT2446A_InverseToneMapping(
 {
   float3 sdr = saturate(Input / InputNitsFactor);
 
-  //gamma
-  const float gamma        = 2.4f;
-  const float inverseGamma = 1.f / gamma;
-
   //RGB->R'G'B' gamma compression
   sdr = pow(sdr, 1.f / (gamma + GammaIn));
 
   // Rec. ITU-R BT.2020-2 Table 4
-  //Y'tmo
-  const float Y_tmo   = dot(sdr, K_BT2020);
-
-  //C'b,tmo
-  const float C_b_tmo = (sdr.b - Y_tmo) /
-                        KB_BT2020_HELPER;
-  //C'r,tmo
-  const float C_r_tmo = (sdr.r - Y_tmo) /
-                        KR_BT2020_HELPER;
+  //Y'C'bC'r,tmo
+  const float3 YCbCr_tmo = CSP::YCbCr::FromRGB::BT2020(sdr);
 
   // adjusted luma component (inverse)
   // get Y'sdr
-  const float Y_sdr = Y_tmo + max(0.1f * C_r_tmo, 0.f);
+  const float Y_sdr = YCbCr_tmo.x + max(0.1f * YCbCr_tmo.z, 0.f);
 
   // Tone mapping step 3 (inverse)
   // get Y'c
@@ -132,7 +126,7 @@ float3 BT2446A_InverseToneMapping(
   //if (Y_hdr > 0.f && Y_sdr > 0.f) // avoid division by zero
   // this is actually fine to be infinite because it will create 0 as a result in the next step
   const float colourScale = Y_sdr /
-                           (GamutExpansion * Y_hdr);
+                            (GamutExpansion * Y_hdr);
 
   // Colour difference signals (inverse) and Luma (inverse)
   // get R'G'B'
@@ -145,10 +139,10 @@ float3 BT2446A_InverseToneMapping(
 //          K_BT2020.g;
 
 //  produces the same results
-  const float C_b_hdr = C_b_tmo / colourScale;
-  const float C_r_hdr = C_r_tmo / colourScale;
+  const float C_b_hdr = YCbCr_tmo.y / colourScale;
+  const float C_r_hdr = YCbCr_tmo.z / colourScale;
 
-  float3 hdr = YCbCr_BT2020_To_RGB(float3(Y_hdr, C_b_hdr, C_r_hdr));
+  float3 hdr = CSP::YCbCr::ToRGB::BT2020(float3(Y_hdr, C_b_hdr, C_r_hdr));
 
   hdr = saturate(hdr); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
@@ -418,14 +412,14 @@ float3 BT2446C_InverseToneMapping(
   //const float Alpha   = 0.f; //hardcode for now as it gives the best results imo
   const float xlpha = 1.f - 2.f * Alpha;
   const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
-                                             Alpha, xlpha, Alpha,
-                                             Alpha, Alpha, xlpha);
+                                                    Alpha, xlpha, Alpha,
+                                                    Alpha, Alpha, xlpha);
 
   sdr = mul(crosstalkMatrix, sdr);
 
   //6.1.5 (inverse)
   //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-  sdr = mul(BT2020_To_XYZ, sdr);
+  sdr = CSP::Mat::BT2020To::XYZ(sdr);
   const float Y_sdr = sdr.y;
   const float xyz   = sdr.x + sdr.y + sdr.z;
   const float x_sdr = sdr.x /
@@ -589,18 +583,18 @@ float3 BT2446C_InverseToneMapping(
 //
 //    hdr = float3(X_hdr_cor, Y_hdr, Z_hdr_cor);
 //  }
-  hdr = mul(XYZ_To_BT2020, hdr);
+  hdr = CSP::Mat::XYZTo::BT2020(hdr);
 
   //6.1.2 (inverse)
   //inverse crosstalk matrix from 6.1.6
   const float mlpha = 1.f - Alpha;
   const float3x3 inverseCrosstalkMatrix =
-    mul(1.f / (1.f - 3.f * Alpha), float3x3( mlpha, -Alpha, -Alpha,
-                                            -Alpha,  mlpha, -Alpha,
-                                            -Alpha, -Alpha,  mlpha));
+    mul(1.f / (1.f - 3.f * Alpha), float3x3(mlpha, -Alpha, -Alpha,
+                                           -Alpha,  mlpha, -Alpha,
+                                           -Alpha, -Alpha,  mlpha));
   hdr = mul(inverseCrosstalkMatrix, hdr);
 
-  hdr = clamp(hdr, 0.f, 1.f);
+  hdr = saturate(hdr);
 
   return hdr;
 }
@@ -620,17 +614,17 @@ float3 DiceInverseToneMapper(
         float  ShoulderStart)
 {
 
-  float3x3 RGB_To_LMS = RGB_AP0_D65_To_LMS;
-  float3x3 LMS_To_RGB = LMS_To_RGB_AP0_D65;
-  float3   K_factors  = K_AP0_D65;
-  float    KR_helper  = KR_AP0_D65_HELPER;
-  float    KB_helper  = KB_AP0_D65_HELPER;
-  float2   KG_helper  = KG_AP0_D65_HELPER;
+  float3x3 RGB_To_LMS = CSP::ICtCp::Mat::AP0_D65_To_LMS;
+  float3x3 LMS_To_RGB = CSP::ICtCp::Mat::LMS_To_AP0_D65;
+  float3   K_factors  = CSP::K_Helpers::AP0_D65::K;
+  float    KR_helper  = CSP::K_Helpers::AP0_D65::KR;
+  float    KB_helper  = CSP::K_Helpers::AP0_D65::KB;
+  float2   KG_helper  = CSP::K_Helpers::AP0_D65::KG;
 
 
   float3 LMS = mul(RGB_To_LMS, Input);
 
-  LMS = PQ_Inverse_EOTF(LMS);
+  LMS = CSP::TRC::ToPq(LMS);
 
   const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
@@ -640,17 +634,17 @@ float3 DiceInverseToneMapper(
   }
   else
   {
-    const float Ct1 = dot(LMS, LMS_To_ICtCp[1]);
-    const float Cp1 = dot(LMS, LMS_To_ICtCp[2]);
+    const float Ct1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[1]);
+    const float Cp1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[2]);
 
     const float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 
     const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
     //to L'M'S'
-    LMS = mul(ICtCp_To_LMS, float3(I2, min_I * Ct1, min_I * Cp1));
+    LMS = CSP::ICtCp::Mat::ICtCpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
     //to LMS
-    LMS = PQ_EOTF(LMS);
+    LMS = CSP::TRC::FromPq(LMS);
     //to RGB
     return clamp(mul(LMS_To_RGB, LMS), 0.f, 65504.f);
   }

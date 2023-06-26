@@ -277,18 +277,18 @@ uniform float BELOW_NITS_AS_BLACK
   ui_step     = 1.f;
 > = 0.f;
 #else
-  static const bool  SHOW_HEATMAP                     = false;
-  static const uint  HEATMAP_CUTOFF_POINT             = 0;
-  static const float HEATMAP_WHITEPOINT               = 0.f;
-  static const bool  HEATMAP_SDR                      = false;
-  static const bool  HIGHLIGHT_NIT_RANGE              = false;
-  static const float HIGHLIGHT_NIT_RANGE_START_POINT  = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_END_POINT    = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS   = 0.f;
-  static const bool  DRAW_ABOVE_NITS_AS_BLACK         = false;
-  static const float ABOVE_NITS_AS_BLACK              = 0.f;
-  static const bool  DRAW_BELOW_NITS_AS_BLACK         = false;
-  static const float BELOW_NITS_AS_BLACK              = 0.f;
+  static const bool  SHOW_HEATMAP                    = false;
+  static const uint  HEATMAP_CUTOFF_POINT            = 0;
+  static const float HEATMAP_WHITEPOINT              = 0.f;
+  static const bool  HEATMAP_SDR                     = false;
+  static const bool  HIGHLIGHT_NIT_RANGE             = false;
+  static const float HIGHLIGHT_NIT_RANGE_START_POINT = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_END_POINT   = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS  = 0.f;
+  static const bool  DRAW_ABOVE_NITS_AS_BLACK        = false;
+  static const float ABOVE_NITS_AS_BLACK             = 0.f;
+  static const bool  DRAW_BELOW_NITS_AS_BLACK        = false;
+  static const float BELOW_NITS_AS_BLACK             = 0.f;
 #endif
 
 #ifdef _TESTY
@@ -461,26 +461,34 @@ void HDR_analysis(
     float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
 
 #if (ENABLE_CSP_FEATURES == YES)
+
     if (SHOW_CSP_MAP)
     {
       Output = float4(Create_CSP_Map(tex2D(Sampler_CSPs, TexCoord).r * 255.f,
                                      pixelCLL), 1.f);
     }
+
 #endif
 
 #if (ENABLE_CLL_FEATURES == YES)
+
     if (SHOW_HEATMAP)
     {
+
 #ifdef _DEBUG
+
       Output = float4(Heatmap_RGB_Values(pixelCLL,
                                          HEATMAP_CUTOFF_POINT,
                                          HEATMAP_WHITEPOINT,
                                          HEATMAP_SDR), 1.f);
+
 #else
+
       Output = float4(Heatmap_RGB_Values(pixelCLL,
                                          HEATMAP_CUTOFF_POINT,
                                          HEATMAP_WHITEPOINT,
                                          false), 1.f);
+
 #endif
     }
 
@@ -533,13 +541,21 @@ void HDR_analysis(
         out3 *= breathing;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
         out3 = out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 80.f;
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+
         out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
         out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
         out3 = mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 100.f);
+
 #endif
 
         if (breathing > 0.f)
@@ -549,10 +565,12 @@ void HDR_analysis(
         }
       }
     }
+
 #endif
   }
 
 #if (ENABLE_CLL_FEATURES == YES)
+
   if (DRAW_ABOVE_NITS_AS_BLACK)
   {
     float pixelCLL = tex2D(Sampler_CLL_Values, TexCoord).r;
@@ -569,9 +587,11 @@ void HDR_analysis(
       Output = (0.f, 0.f, 0.f, 0.f);
     }
   }
+
 #endif
 
 #if (ENABLE_CIE_FEATURES == YES)
+
   if (SHOW_CIE)
   {
     uint CIE_BG_X = CIE_DIAGRAM == CIE_1931
@@ -596,28 +616,39 @@ void HDR_analysis(
                                    : tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
       Output = float4(
         currentPixelToDisplay * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+
       Output = float4(
         PQ_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
       Output = float4(
         HLG_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 1000.f)), 1.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
       Output = float4(
         mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
+
 #endif
     }
   }
+
 #endif
 
 #if (ENABLE_CLL_FEATURES == YES)
+
   if (SHOW_CLL_VALUES)
   {
     float maxCLL_show = tex2Dfetch(Sampler_Show_Values, int2(0, 0)).r;
     float avgCLL_show = tex2Dfetch(Sampler_Show_Values, int2(1, 0)).r;
     float minCLL_show = tex2Dfetch(Sampler_Show_Values, int2(2, 0)).r;
+
     //float maxCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
     //float avgCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r;
     //float minCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r;
@@ -637,6 +668,7 @@ void HDR_analysis(
     DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
     DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
   }
+
 #endif
 
   if (SHOW_CLL_FROM_CURSOR || SHOW_CSP_FROM_CURSOR)
@@ -646,6 +678,7 @@ void HDR_analysis(
     int2  mouseXY        = int2(mousePositionX, mousePositionY);
 
 #if (ENABLE_CLL_FEATURES == YES)
+
     if (SHOW_CLL_FROM_CURSOR)
     {
       float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
@@ -669,18 +702,24 @@ void HDR_analysis(
 #if (ACTUAL_COLOUR_SPACE == CSP_PQ  \
   || ACTUAL_COLOUR_SPACE == CSP_HLG \
   || ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
       uint RGB_Text_Offset = 2;
+
 #else
+
       uint RGB_Text_Offset = 4;
+
 #endif
 
       DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
       DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
       DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
     }
+
 #endif
 
 #if (ENABLE_CSP_FEATURES == YES)
+
     if (SHOW_CSP_FROM_CURSOR)
     {
       uint cursorCSP = tex2Dfetch(Sampler_CSPs, mouseXY).r * 255.f;
@@ -689,12 +728,18 @@ void HDR_analysis(
       {
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
   #define CURSOR_CLL_TEXT_POS 14
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
     || ACTUAL_COLOUR_SPACE == CSP_HLQ)
+
   #define CURSOR_CLL_TEXT_POS 16
+
 #else
-  #define CURSOR_CLL_TEXT_POS 18
+
+  #define CURSOR_CLL_TEXT_POS 19
+
 #endif
 
         case 0:
@@ -726,65 +771,88 @@ void HDR_analysis(
 
       }
     }
+
 #endif
   }
 
 #if (ENABLE_CSP_FEATURES == YES)
+
   if (SHOW_CSPS)
   {
+
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
     float precentage_BT709  = 100.f;
+
 #else
+
     float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT709,  1)).r;
     float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, int2(CSP_DCI_P3, 1)).r;
     float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT2020, 1)).r;
     //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT709)).r  * 100.0001f;
     //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_DCI_P3)).r * 100.0001f;
     //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT2020)).r * 100.0001f;
+
 #endif
+
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
     float precentage_AP1    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP1,    1)).r;
     float precentage_AP0    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP0,    1)).r;
     float precentage_else   = tex2Dfetch(Sampler_Show_Values, int2(CSP_ELSE,   1)).r;
     //float precentage_AP1    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r    * 100.0001f;
     //float precentage_AP0    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r    * 100.0001f;
     //float precentage_else   = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_ELSE)).r   * 100.0001f;
+
 #endif
 
     DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,  18, Output, FONT_BRIGHTNESS);
+
 #if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
+
     DrawTextString(float2(0.f, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3, 18, Output, FONT_BRIGHTNESS);
     DrawTextString(float2(0.f, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020, 18, Output, FONT_BRIGHTNESS);
+
 #endif
+
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
+
     DrawTextString(float2(0.f, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,    18, Output, FONT_BRIGHTNESS);
     DrawTextString(float2(0.f, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,    18, Output, FONT_BRIGHTNESS);
     DrawTextString(float2(0.f, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_else,   18, Output, FONT_BRIGHTNESS);
+
 #endif
 
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, 4, precentage_BT709,  Output, FONT_BRIGHTNESS);
 #if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
+
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, 4, precentage_DCI_P3, Output, FONT_BRIGHTNESS);
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
 #endif
+
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ  \
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
+
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,    Output, FONT_BRIGHTNESS);
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,    Output, FONT_BRIGHTNESS);
     DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_else,   Output, FONT_BRIGHTNESS);
+
 #endif
     }
-#endif
 
+#endif
 }
+
 #else
+
   Output = float4(input, 1.f);
   DrawTextString(float2(0.f, 0.f), 100.f, 1, TexCoord, text_Error, 24, Output, 1.f);
 }
+
 #endif
 
 //technique lilium__HDR_analysis_CLL_OLD
@@ -860,15 +928,19 @@ technique lilium__HDR_analysis
 {
 
 #ifdef _TESTY
+
   pass test_thing
   {
     VertexShader = PostProcessVS;
      PixelShader = testy;
   }
+
 #endif
+
 
 //CLL
 #if (ENABLE_CLL_FEATURES == YES)
+
   pass CalcCLLvalues
   {
     VertexShader = PostProcessVS;
@@ -896,9 +968,12 @@ technique lilium__HDR_analysis
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+
 #endif
 
+
 #if (ENABLE_CIE_FEATURES == YES)
+
   pass Copy_CIE_1931_BG
   {
     VertexShader = PostProcessVS;
@@ -919,10 +994,13 @@ technique lilium__HDR_analysis
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = DISPATCH_Y1;
   }
+
 #endif
+
 
 #if (ENABLE_CSP_FEATURES == YES \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
+
   pass CalcCSPs
   {
     VertexShader = PostProcessVS;
@@ -943,19 +1021,28 @@ technique lilium__HDR_analysis
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+
 #endif
+
 
   pass CopyShowValues
   {
     ComputeShader = ShowValuesCopy <1, 1>;
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
     DispatchSizeX = 1;
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
     DispatchSizeX = 2;
+
 #else
+
     DispatchSizeX = 3;
+
 #endif
+
     DispatchSizeY = 1;
   }
 
