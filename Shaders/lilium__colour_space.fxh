@@ -469,9 +469,9 @@ static const float3x3 BT709_To_AP0_D65 = float3x3(
   0.0177530102658331, 0.109561562944343, 0.872889419606533);
 
 static const float3x3 AP0_D65_To_BT709 = float3x3(
-   4.16950193129902,  -2.09370503254065,  -0.608571628857482,
-  -1.94167536514522,   2.55258054992803,   0.220870975313075,
-   0.158911053371001, -0.277807408599857,  0.952091082956431);
+   2.55325882463675,   -1.13028251504951,  -0.422902442510382,
+  -0.277186279374805,   1.37800555426763,  -0.100817475751080,
+  -0.0171374148821935, -0.149973779310547,  1.16687576769787);
 
 static const float3x3 BT2020_To_AP0_D65 = float3x3(
   0.670218991540148,    0.152244595663773,  0.177548363071589,
@@ -479,9 +479,9 @@ static const float3x3 BT2020_To_AP0_D65 = float3x3(
   4.58778652504860e-17, 0.0258020508708645, 0.974401941945845);
 
 static const float3x3 AP0_D65_To_BT2020 = float3x3(
-   1.98236047774887,   -0.484236949434716,  -0.267716185193201,
-  -1.49590141201230,    2.19966045032977,    0.171905827977915,
-   0.0396112966005198, -0.0582467546449039,  0.862097728487838);
+   1.50940006298040,    -0.261414358078325,  -0.247948974278613,
+  -0.0788148360852721,   1.18748233748891,   -0.108663419645253,
+   0.00208700775574192, -0.0314443951322142,  1.02914792747532);
 
 //to XYZ
 
@@ -832,20 +832,6 @@ static const float _1_div_PQ_m2 = 0.01268331351565596512;
 
 // Rec. ITU-R BT.2100-2 Table 4
 // takes normalised values as input
-float3 PQ_EOTF(float3 E_)
-{
-  E_ = clamp(E_, 0.f, 65504.f);
-
-  const float3 E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);
-
-  //Y
-  return pow(
-             (max(E_pow_1_div_m2 - PQ_c1.xxx, 0.f.xxx)) /
-             (PQ_c2.xxx - PQ_c3 * E_pow_1_div_m2)
-         , _1_div_PQ_m1);
-}
-
-// takes normalised values as input
 float PQ_EOTF(float E_)
 {
   E_ = clamp(E_, 0.f, 65504.f);
@@ -859,35 +845,22 @@ float PQ_EOTF(float E_)
          , _1_div_PQ_m1);
 }
 
+// takes normalised values as input
+float2 PQ_EOTF(float2 E_)
+{
+  return float2(PQ_EOTF(E_.x),
+                PQ_EOTF(E_.y));
+}
+
+// takes normalised values as input
+float3 PQ_EOTF(float3 E_)
+{
+  return float3(PQ_EOTF(E_.r),
+                PQ_EOTF(E_.g),
+                PQ_EOTF(E_.b));
+}
+
 // Rec. ITU-R BT.2100-2 Table 4 (end)
-// takes normalised values as input
-float3 PQ_Inverse_EOTF(float3 Y)
-{
-  Y = clamp(Y, 0.f, 65504.f);
-
-  const float3 Y_pow_m1 = pow(Y, PQ_m1);
-
-  //E'
-  return pow(
-             (PQ_c1.xxx + PQ_c2.xxx * Y_pow_m1) /
-             (  1.f.xxx + PQ_c3.xxx * Y_pow_m1)
-         , PQ_m2);
-}
-
-// takes normalised values as input
-float2 PQ_Inverse_EOTF(float2 Y)
-{
-  Y = clamp(Y, 0.f, 65504.f);
-
-  const float2 Y_pow_m1 = pow(Y, PQ_m1);
-
-  //E'
-  return pow(
-             (PQ_c1.xx + PQ_c2.xx * Y_pow_m1) /
-             (  1.f.xx + PQ_c3.xx * Y_pow_m1)
-         , PQ_m2);
-}
-
 // takes normalised values as input
 float PQ_Inverse_EOTF(float Y)
 {
@@ -900,6 +873,21 @@ float PQ_Inverse_EOTF(float Y)
              (PQ_c1 + PQ_c2 * Y_pow_m1) /
              (  1.f + PQ_c3 * Y_pow_m1)
          , PQ_m2);
+}
+
+// takes normalised values as input
+float2 PQ_Inverse_EOTF(float2 Y)
+{
+  return float2(PQ_Inverse_EOTF(Y.x),
+                PQ_Inverse_EOTF(Y.y));
+}
+
+// takes normalised values as input
+float3 PQ_Inverse_EOTF(float3 Y)
+{
+  return float3(PQ_Inverse_EOTF(Y.r),
+                PQ_Inverse_EOTF(Y.g),
+                PQ_Inverse_EOTF(Y.b));
 }
 
 // takes nits as input
