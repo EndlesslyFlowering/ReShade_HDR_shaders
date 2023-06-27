@@ -13,7 +13,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                                                                                   //
 //  Available functions:                                                                             //
-//      DrawText_String( offset, text size, xy ratio, input coord, string array, array size, output) //
+//      DrawTextString( offset, text size, xy ratio, input coord, string array, array size, output) //
 //          float2 offset       = top left corner of string, screen hight pixel unit.                //
 //          float  text size    = text size, screen hight pixel unit.                                //
 //          float  xy ratio     = xy ratio of text.                                                  //
@@ -23,7 +23,7 @@
 //          int    string size  = size of the string array.                                          //
 //          float  output       = output.                                                            //
 //                                                                                                   //
-//      DrawText_Digit( offset, text size, xy ratio, input coord, precision after dot, data, output) //
+//      DrawTextDigit( offset, text size, xy ratio, input coord, precision after dot, data, output) //
 //          float2 offset       = same as DrawText_String.                                           //
 //          float  text size    = same as DrawText_String.                                           //
 //          float  xy ratio     = same as DrawText_String.                                           //
@@ -32,7 +32,7 @@
 //          float  data         = input float.                                                       //
 //          float  output       = output.                                                            //
 //                                                                                                   //
-//      float2 DrawText_Shift(offset, shift, text size, xy ratio)                                    //
+//      float2 DrawTextShift(offset, shift, text size, xy ratio)                                    //
 //          float2 offset       = same as DrawText_String.                                           //
 //          float2 shift        = shift line(y) and column.                                          //
 //          float text size     = same as DrawText_String.                                           //
@@ -55,10 +55,10 @@ float4 main_fragment( float4 position : POSITION,
   int line1[15] = { __b, __y, __Space, __k, __i, __n, __g, __e, __r, __i, __c, __1, __9, __9, __2 }; //by kingeric1992
   int line2[6]  = { __S, __i, __z, __e, __Colon, __Space }; // Size: %d.
 
-  DrawText_String(float2(100.0 , 100.0), 32, 1, txcoord,  line0, 9, res);
-  DrawText_String(float2(100.0 , 134.0), textSize, 1, txcoord,  line1, 15, res);
-  DrawText_String(DrawText_Shift(float2(100.0 , 134.0), int2(0, 1), textSize, 1), 18, 1, txcoord,  line2, 6, res);
-  DrawText_Digit(DrawText_Shift(DrawText_Shift(float2(100.0 , 134.0), int2(0, 1), textSize, 1), int2(8, 0), 18, 1),
+  DrawTextString(float2(100.0 , 100.0), 32, 1, txcoord,  line0, 9, res);
+  DrawTextString(float2(100.0 , 134.0), textSize, 1, txcoord,  line1, 15, res);
+  DrawTextString(DrawTextShift(float2(100.0 , 134.0), int2(0, 1), textSize, 1), 18, 1, txcoord,  line2, 6, res);
+  DrawTextDigit(DrawTextShift(DrawText_Shift(float2(100.0 , 134.0), int2(0, 1), textSize, 1), int2(8, 0), 18, 1),
                   18, 1, txcoord,  0, textSize, res);
   return res;
 }
@@ -172,13 +172,18 @@ float4 main_fragment( float4 position : POSITION,
 #define __empty1     97 // (null)
 //Character indexing ends
 
-texture Texttex < source = "lilium__FontAtlas.png"; > {
+texture HDR_Text
+<
+  source = "lilium__font_atlas.png";
+>
+{
   Width  = 512;
   Height = 512;
 };
 
-sampler samplerText {
-  Texture = Texttex;
+sampler Sampler_HDR_Text
+{
+  Texture = HDR_Text;
 };
 
 //accomodate for undef array size.
@@ -198,7 +203,7 @@ sampler samplerText {
   uv.x     *= ratio * 2.f; \
   float  id = array[uint(trunc(uv.x))]; \
   if(uv.x <= arrSize && uv.x >= 0.f) \
-    text    = tex2D(samplerText, (frac(uv) + float2(id % 14.f, trunc(id / 14.f))) / \
+    text    = tex2D(Sampler_HDR_Text, (frac(uv) + float2(id % 14.f, trunc(id / 14.f))) / \
               float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x; \
   if(text > 0.f) \
       output = text * bright; \
@@ -255,7 +260,7 @@ void DrawTextDigit(
         ? 12.f
         : index; //adding dot
   index = digits[(uint)index];
-  float numbers = tex2D(samplerText, (frac(uv) + float2(index % 14.f, trunc(index / 14.f))) /
+  float numbers = tex2D(Sampler_HDR_Text, (frac(uv) + float2(index % 14.f, trunc(index / 14.f))) /
                   float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
   if (numbers > 0.f)
     res = numbers * bright;

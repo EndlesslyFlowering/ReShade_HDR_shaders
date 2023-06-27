@@ -182,7 +182,7 @@ storage2D Storage_Final_4
 #define CIE_BG_BORDER  50
 texture2D CIE_1931
 <
-  source = "lilium__CIE_1931_linear.png";
+  source = "lilium__cie_1931_linear.png";
   pooled = true;
 >
 {
@@ -197,7 +197,7 @@ sampler2D Sampler_CIE_1931
 
 texture2D CIE_1931_Black_BG
 <
-  source = "lilium__CIE_1931_Black_BG_Linear.png";
+  source = "lilium__cie_1931_black_bg_Linear.png";
   pooled = true;
 >
 {
@@ -237,7 +237,7 @@ storage2D Storage_CIE_1931_Current
 #define CIE_1976_BG_Y 687
 texture2D CIE_1976
 <
-  source = "lilium__CIE_1976_UCS_Linear.png";
+  source = "lilium__cie_1976_ucs_linear.png";
   pooled = true;
 >
 {
@@ -252,7 +252,7 @@ sampler2D Sampler_CIE_1976
 
 texture2D CIE_1976_Black_BG
 <
-  source = "lilium__CIE_1976_UCS_Black_BG_linear.png";
+  source = "lilium__cie_1976_ucs_black_bg_linear.png";
   pooled = true;
 >
 {
