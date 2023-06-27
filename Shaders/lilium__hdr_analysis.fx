@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
-#include "lilium__HDR_analysis.fxh"
-#include "lilium__DrawText_fix.fxh"
+#include "lilium__include\hdr_analysis.fxh"
+#include "lilium__include\draw_text_fix.fxh"
 
 //#define _DEBUG
 //#define _TESTY
@@ -924,7 +924,7 @@ void HDR_analysis(
 //  }
 //}
 
-technique lilium__HDR_analysis
+technique lilium__hdr_analysis
 {
 
 #ifdef _TESTY

@@ -1,5 +1,11 @@
 #pragma once
 
+
+#ifndef __RESHADE__
+  #include "_no.fxh"
+#endif
+
+
 #define YES 1
 #define NO  0
 

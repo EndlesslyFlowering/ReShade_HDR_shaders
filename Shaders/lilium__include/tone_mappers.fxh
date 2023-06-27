@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lilium__HDR_analysis.fxh"
+#include "hdr_analysis.fxh"
 
 // Rep. ITU-R BT.2446-1 Table 2 & 3
 

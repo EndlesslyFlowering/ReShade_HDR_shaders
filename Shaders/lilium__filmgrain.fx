@@ -1,7 +1,7 @@
 // gaussian film grain by haasn (https://github.com/haasn/gentoo-conf/blob/xor/home/nand/.mpv/shaders/filmgrain.glsl)
 
 #include "ReShade.fxh"
-#include "lilium__colour_space.fxh"
+#include "lilium__include\colour_space.fxh"
 
 uniform float INTENSITY
 <

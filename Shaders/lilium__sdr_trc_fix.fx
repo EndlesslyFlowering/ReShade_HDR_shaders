@@ -1,5 +1,5 @@
 #include "ReShade.fxh"
-#include "lilium__colour_space.fxh"
+#include "lilium__include\colour_space.fxh"
 
 //#define _DEBUG
 
@@ -118,7 +118,7 @@ void SDR_TRC_Fix(
 }
 
 
-technique lilium__SDR_TRC_Fix
+technique lilium__sdr_trc_Fix
 {
   pass SDR_TRC_Fix
   {

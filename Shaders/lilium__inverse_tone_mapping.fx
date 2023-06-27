@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
-#include "lilium__inverse_tone_mappers.fxh"
-#include "lilium__DrawText_fix.fxh"
+#include "lilium__include\inverse_tone_mappers.fxh"
+#include "lilium__include\draw_text_fix.fxh"
 
 #define ENABLE_DICE 0
 

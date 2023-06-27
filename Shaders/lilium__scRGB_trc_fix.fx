@@ -1,5 +1,5 @@
 #include "ReShade.fxh"
-#include "lilium__colour_space.fxh"
+#include "lilium__include\colour_space.fxh"
 
 uniform uint INPUT_TRC
 <
@@ -124,7 +124,7 @@ void scRGB_TRC_Fix(
 }
 
 
-technique lilium__scRGB_TRC_Fix
+technique lilium__scRGB_trc_fix
 {
   pass scRGB_TRC_Fix
   {
