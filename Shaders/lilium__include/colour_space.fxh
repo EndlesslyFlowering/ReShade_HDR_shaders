@@ -1,8 +1,12 @@
 #pragma once
 
+#include "../ReShade.fxh"
 
 #ifndef __RESHADE__
   #include "_no.fxh"
+  #define BUFFER_WIDTH       3840
+  #define BUFFER_HEIGHT      2160
+  #define BUFFER_COLOR_SPACE    2
 #endif
 
 

@@ -1,4 +1,3 @@
-#include "ReShade.fxh"
 #include "lilium__include\tone_mappers.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 

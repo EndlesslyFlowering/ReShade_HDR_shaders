@@ -1,4 +1,3 @@
-#include "ReShade.fxh"
 #include "lilium__include\inverse_tone_mappers.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 
@@ -331,7 +330,7 @@ void InverseToneMapping(
 
 #endif
 
-  hdr = PQ_Inverse_EOTF(hdr);
+  hdr = CSP::TRC::ToPq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

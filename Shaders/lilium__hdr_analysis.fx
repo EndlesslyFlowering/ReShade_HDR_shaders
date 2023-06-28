@@ -1,4 +1,3 @@
-#include "ReShade.fxh"
 #include "lilium__include\hdr_analysis.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 
@@ -62,12 +61,13 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 
-uniform uint FONT_SIZE
+uniform float FONT_SIZE
 <
   ui_label    = "font size";
   ui_type     = "slider";
-  ui_min      = 30;
-  ui_max      = 40;
+  ui_min      = 30.f;
+  ui_max      = 40.f;
+  ui_step     = 1.f;
 > = 30;
 
 // CLL
@@ -151,7 +151,7 @@ uniform bool SHOW_CSP_MAP
                 "         yellow: BT.2020\n"
                 "           blue: AP1\n"
                 "            red: AP0\n"
-                "           pink: else";
+                "           pink: invalid";
 > = false;
 
 uniform bool SHOW_CSP_FROM_CURSOR
@@ -303,9 +303,9 @@ uniform float TEST_THINGY
   ui_category = "TESTY";
   ui_label    = "test thingy";
   ui_type     = "drag";
-  ui_min      = 0.f;
+  ui_min      = -125.f;
   ui_max      = 125.f;
-  ui_step     = 0.1f;
+  ui_step     = 0.001f;
 > = 0.f;
 #endif
 
@@ -413,24 +413,38 @@ static const uint text_R[2] = { __R, __Colon };
 static const uint text_G[2] = { __G, __Colon };
 static const uint text_B[2] = { __B, __Colon };
 
+static const uint text_signNegative[1] = { __Minus };
+
+#if (ACTUAL_COLOUR_SPACE == CSP_PQ  \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG \
+  || ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+static const uint RGB_Text_Offset = 4;
+
+#else
+
+static const uint RGB_Text_Offset = 10;
+
+#endif
+
 // colour space percentages
-static const uint text_BT709[18]  = { __B, __T, __Dot, __7,     __0,     __9,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_DCI_P3[18] = { __D, __C, __I,   __Minus, __P,     __3,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_BT2020[18] = { __B, __T, __Dot, __2,     __0,     __2,     __0,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_AP1[18]    = { __A, __P, __1,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_AP0[18]    = { __A, __P, __0,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_else[18]   = { __e, __l, __s,   __e,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_BT709[18]   = { __B, __T, __Dot, __7,     __0,     __9,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_DCI_P3[18]  = { __D, __C, __I,   __Minus, __P,     __3,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_BT2020[18]  = { __B, __T, __Dot, __2,     __0,     __2,     __0,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_AP1[18]     = { __A, __P, __1,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_AP0[18]     = { __A, __P, __0,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
+static const uint text_invalid[18] = { __i, __n, __v,   __a,     __l,     __i,     __d,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
 
 // colour space from cursor position
-static const uint text_cursor_BT709[17]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __7,     __0, __9 };
-static const uint text_cursor_DCI_P3[17] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __D, __C, __I,   __Minus, __P, __3 };
-static const uint text_cursor_BT2020[18] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __2,     __0, __2, __0 };
-static const uint text_cursor_AP1[14]    = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __1 };
-static const uint text_cursor_AP0[14]    = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __0 };
-static const uint text_cursor_else[15]   = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __e, __l, __s,   __e };
+static const uint text_cursor_BT709[17]   = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __7,     __0, __9 };
+static const uint text_cursor_DCI_P3[17]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __D, __C, __I,   __Minus, __P, __3 };
+static const uint text_cursor_BT2020[18]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __2,     __0, __2, __0 };
+static const uint text_cursor_AP1[14]     = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __1 };
+static const uint text_cursor_AP0[14]     = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __0 };
+static const uint text_cursor_invalid[18] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __i, __n, __v,   __a,     __l, __i, __d };
 
 // colour space not supported
-static const uint text_Error[24] = { __C, __O, __L, __O, __R, __S, __P, __A, __C, __E, __Space,
+static const uint text_Error[26] = { __C, __O, __L, __O, __U, __R, __Space, __S, __P, __A, __C, __E, __Space,
                                      __N, __O, __T, __Space,
                                      __S, __U, __P, __P, __O, __R, __T, __E, __D};
 
@@ -453,6 +467,8 @@ void HDR_analysis(
   //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
   //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
   //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r*10000.f+0.5)/100)/100.f;
+
+  const float fontWidth = FONT_SIZE / 2.f;
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -546,15 +562,15 @@ void HDR_analysis(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
 
-        out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+        out3 =  CSP::TRC::ToPqFromNits(CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-        out3 = PQ_OETF(mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+        out3 = CSP::TRC::ToHlgFromNits(CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-        out3 = mul(BT709_To_BT2020, out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 100.f);
+        out3 = CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 100.f);
 
 #endif
 
@@ -623,17 +639,17 @@ void HDR_analysis(
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
 
       Output = float4(
-        PQ_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
       Output = float4(
-        HLG_Inverse_EOTF(mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 1000.f)), 1.f);
+        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 1000.f)), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
       Output = float4(
-        mul(BT709_To_BT2020, currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
+        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
 
 #endif
     }
@@ -664,9 +680,9 @@ void HDR_analysis(
     DrawTextString(float2(0.f, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, text_avgCLL, 26, Output, FONT_BRIGHTNESS);
     DrawTextString(float2(0.f, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, text_minCLL, 26, Output, FONT_BRIGHTNESS);
 
-    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 7, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
   }
 
 #endif
@@ -683,37 +699,85 @@ void HDR_analysis(
     {
       float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
 
-      DrawTextString(float2(FONT_SIZE * 4, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(FONT_SIZE * 4, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(fontWidth * 8, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(fontWidth * 8, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
 
-      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
 
       DrawTextString(float2(0.f, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, text_cursorCLL, 28, Output, FONT_BRIGHTNESS);
 
-      DrawTextDigit(float2(FONT_SIZE * 8, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
 
       float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+      const bool cursorRIsNeg = cursorRGB.r >= 0.f
+                              ? false
+                              : true;
+      const bool cursorGIsNeg = cursorRGB.g >= 0.f
+                              ? false
+                              : true;
+      const bool cursorBIsNeg = cursorRGB.b >= 0.f
+                              ? false
+                              : true;
+
+      cursorRGB = abs(cursorRGB);
+
+#endif
 
       DrawTextString(float2(0.f, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_R, 2, Output, FONT_BRIGHTNESS);
       DrawTextString(float2(0.f, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_G, 2, Output, FONT_BRIGHTNESS);
       DrawTextString(float2(0.f, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_B, 2, Output, FONT_BRIGHTNESS);
 
-#if (ACTUAL_COLOUR_SPACE == CSP_PQ  \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG \
-  || ACTUAL_COLOUR_SPACE == CSP_SRGB)
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
 
-      uint RGB_Text_Offset = 2;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-#else
-
-      uint RGB_Text_Offset = 4;
+      if (cursorRIsNeg) {
+        const float offset = cursorRGB.r < 10.f
+                           ? fontWidth * 8
+                           : cursorRGB.r < 100.f
+                           ? fontWidth * 7
+                           : cursorRGB.r < 1000.f
+                           ? fontWidth * 6
+                           : cursorRGB.r < 10000.f
+                           ? fontWidth * 5
+                           : fontWidth * 4;
+        DrawTextString(float2(offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+      }
+      if (cursorGIsNeg) {
+        const float offset = cursorRGB.g < 10.f
+                           ? fontWidth * 8
+                           : cursorRGB.g < 100.f
+                           ? fontWidth * 7
+                           : cursorRGB.g < 1000.f
+                           ? fontWidth * 6
+                           : cursorRGB.g < 10000.f
+                           ? fontWidth * 5
+                           : fontWidth * 4;
+        DrawTextString(float2(offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+      }
+      if (cursorBIsNeg) {
+        const float offset = cursorRGB.b < 10.f
+                           ? fontWidth * 8
+                           : cursorRGB.b < 100.f
+                           ? fontWidth * 7
+                           : cursorRGB.b < 1000.f
+                           ? fontWidth * 6
+                           : cursorRGB.b < 10000.f
+                           ? fontWidth * 5
+                           : fontWidth * 4;
+        DrawTextString(float2(offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+      }
 
 #endif
 
-      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(FONT_SIZE * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
     }
 
 #endif
@@ -732,7 +796,7 @@ void HDR_analysis(
   #define CURSOR_CLL_TEXT_POS 14
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
-    || ACTUAL_COLOUR_SPACE == CSP_HLQ)
+    || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   #define CURSOR_CLL_TEXT_POS 16
 
@@ -744,27 +808,27 @@ void HDR_analysis(
 
         case 0:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,  17, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,   17, Output, FONT_BRIGHTNESS);
         } break;
         case 1:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3, 17, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3,  17, Output, FONT_BRIGHTNESS);
         } break;
         case 2:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020, 18, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020,  18, Output, FONT_BRIGHTNESS);
         } break;
         case 3:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,    14, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,     14, Output, FONT_BRIGHTNESS);
         } break;
         case 4:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,    14, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,     14, Output, FONT_BRIGHTNESS);
         } break;
         default:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_else,   15, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_invalid, 18, Output, FONT_BRIGHTNESS);
         } break;
 
 #undef CURSOR_CLL_TEXT_POS
@@ -798,21 +862,21 @@ void HDR_analysis(
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-    float precentage_AP1    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP1,    1)).r;
-    float precentage_AP0    = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP0,    1)).r;
-    float precentage_else   = tex2Dfetch(Sampler_Show_Values, int2(CSP_ELSE,   1)).r;
-    //float precentage_AP1    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r    * 100.0001f;
-    //float precentage_AP0    = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r    * 100.0001f;
-    //float precentage_else   = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_ELSE)).r   * 100.0001f;
+    float precentage_AP1     = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP1,     1)).r;
+    float precentage_AP0     = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP0,     1)).r;
+    float precentage_invalid = tex2Dfetch(Sampler_Show_Values, int2(CSP_INVALID, 1)).r;
+    //float precentage_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r     * 100.0001f;
+    //float precentage_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r     * 100.0001f;
+    //float precentage_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_INVALID)).r * 100.0001f;
 
 #endif
 
-    DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,  18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,   18, Output, FONT_BRIGHTNESS);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextString(float2(0.f, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3, 18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020, 18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3,  18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020,  18, Output, FONT_BRIGHTNESS);
 
 #endif
 
@@ -820,9 +884,9 @@ void HDR_analysis(
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextString(float2(0.f, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,    18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,    18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_else,   18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,     18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,     18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_invalid, 18, Output, FONT_BRIGHTNESS);
 
 #endif
 
@@ -837,9 +901,9 @@ void HDR_analysis(
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,    Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,    Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_else,   Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,     Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,     Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_invalid, Output, FONT_BRIGHTNESS);
 
 #endif
     }
@@ -850,7 +914,7 @@ void HDR_analysis(
 #else
 
   Output = float4(input, 1.f);
-  DrawTextString(float2(0.f, 0.f), 100.f, 1, TexCoord, text_Error, 24, Output, 1.f);
+  DrawTextString(float2(0.f, 0.f), 100.f, 1, TexCoord, text_Error, 26, Output, 1.f);
 }
 
 #endif
@@ -932,7 +996,7 @@ technique lilium__hdr_analysis
   pass test_thing
   {
     VertexShader = PostProcessVS;
-     PixelShader = testy;
+     PixelShader = Testy;
   }
 
 #endif

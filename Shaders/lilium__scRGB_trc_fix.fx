@@ -1,4 +1,3 @@
-#include "ReShade.fxh"
 #include "lilium__include\colour_space.fxh"
 
 uniform uint INPUT_TRC
