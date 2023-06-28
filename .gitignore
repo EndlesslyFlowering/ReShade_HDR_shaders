@@ -1,5 +1,11 @@
 Shaders/lilium__include/_no.fxh
 
+Shaders/lilium__include/expand_gamut.fxh
+Shaders/lilium__include/hdr_black_floor_fix.fxh
+
+Shaders/lilium__hdr_black_floor_fix.fx
+Shaders/lilium__re_sdr_black_fix.fx
+
 Shaders/ReShade.fxh
 Shaders/ReShadeUI.fxh
 
