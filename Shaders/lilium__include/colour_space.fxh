@@ -437,17 +437,25 @@ namespace CSP
     }
 
     // (OETF) takes nits as input
-    float3 ToPqFromNits(const float3 Fd)
+    float ToPqFromNits(const float Fd)
     {
-      const float3 Y = clamp(Fd / 10000.f, 0.f, 65504.f);
+      const float Y = clamp(Fd / 10000.f, 0.f, 65504.f);
 
-      const float3 Y_pow_m1 = pow(Y, PQ_m1);
+      const float Y_pow_m1 = pow(Y, PQ_m1);
 
       //E'
       return pow(
-                 (PQ_c1.xxx + PQ_c2 * Y_pow_m1) /
-                 (  1.f.xxx + PQ_c3 * Y_pow_m1)
+                 (PQ_c1 + PQ_c2 * Y_pow_m1) /
+                 (  1.f + PQ_c3 * Y_pow_m1)
              , PQ_m2);
+    }
+
+    // (OETF) takes nits as input
+    float3 ToPqFromNits(float3 Fd)
+    {
+      return float3(ToPqFromNits(Fd.r),
+                    ToPqFromNits(Fd.g),
+                    ToPqFromNits(Fd.b));
     }
 
 

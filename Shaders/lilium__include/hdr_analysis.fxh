@@ -49,7 +49,6 @@
   #define DISPATCH_Y1 BUFFER_HEIGHT / THREAD_SIZE1 + 1
 #endif
 
-
 static const uint WIDTH0 = BUFFER_WIDTH / 2;
 static const uint WIDTH1 = BUFFER_WIDTH - WIDTH0;
 
@@ -379,12 +378,14 @@ storage2D Storage_Show_Values
   Texture = Show_Values;
 };
 
+#define HEATMAP_MODE_10000 0
+#define HEATMAP_MODE_1000  1
 
 float3 Heatmap_RGB_Values(
   const float Y,
   const uint  Mode,
   const float WhitePoint,
-  const bool  SDR_Output)
+  const bool  HistogramOutput)
 {
   float3 output;
 
@@ -397,7 +398,7 @@ float3 Heatmap_RGB_Values(
 
   switch (Mode)
   {
-    case 0:
+    case HEATMAP_MODE_10000:
     {
       r0 =   100.f;
       r1 =   203.f;
@@ -407,7 +408,7 @@ float3 Heatmap_RGB_Values(
       r5 = 10000.f;
     } break;
 
-    case 1:
+    case HEATMAP_MODE_1000:
     {
       r0 =  100.f;
       r1 =  203.f;
@@ -433,7 +434,9 @@ float3 Heatmap_RGB_Values(
   else if (Y <= r0) // <= 100nits
   {
     //shades of grey
-    const float clamped = Y / r0 * 0.25f;
+    const float clamped = !HistogramOutput
+                        ? Y / r0 * 0.25f
+                        : 0.666f;
     output.r = clamped;
     output.g = clamped;
     output.b = clamped;
@@ -480,7 +483,7 @@ float3 Heatmap_RGB_Values(
     output.b = 0.f;
   }
 
-  if (SDR_Output == false)
+  if (HistogramOutput == false)
   {
     output *= WhitePoint;
 
@@ -506,12 +509,119 @@ float3 Heatmap_RGB_Values(
 #endif
 
   }
-  else
-  {
-    output = pow(output, 1.f / 2.2f);
-  }
 
   return output;
+}
+
+
+static const uint TEXTURE_AEMONY_WIDTH  = 1820;
+static const uint TEXTURE_AEMONY_HEIGHT = 1024;
+
+static const float TEXTURE_AEMONY_BUFFER_WIDTH_FACTOR  = (BUFFER_WIDTH  - 1.f) / (TEXTURE_AEMONY_WIDTH - 1.f);
+static const float TEXTURE_AEMONY_BUFFER_HEIGHT_FACTOR = (BUFFER_HEIGHT - 1.f) / (TEXTURE_AEMONY_HEIGHT - 1.f);
+
+static const uint TEXTURE_AEMONY_SCALE_X = 2067;
+static const uint TEXTURE_AEMONY_SCALE_Y = 1149;
+
+static const float TEXTURE_AEMONY_SCALE_FACTOR_X = (TEXTURE_AEMONY_SCALE_X - 1.f) / (TEXTURE_AEMONY_WIDTH  - 1.f);
+static const float TEXTURE_AEMONY_SCALE_FACTOR_Y = (TEXTURE_AEMONY_SCALE_Y - 1.f) / (TEXTURE_AEMONY_HEIGHT - 1.f);
+
+texture2D Texture_Aemony
+<
+  pooled = true;
+>
+{
+  Width     = TEXTURE_AEMONY_WIDTH;
+  Height    = TEXTURE_AEMONY_HEIGHT;
+  Format    = RGBA16;
+  MipLevels = 3;
+};
+
+sampler2D Sampler_Aemony
+{
+  Texture = Texture_Aemony;
+};
+
+storage2D Storage_Aemony
+{
+  Texture = Texture_Aemony;
+};
+
+texture2D Texture_Aemony_Scale
+<
+  source = "lilium__aemony_scale.png";
+  pooled = true;
+>
+{
+  Width  = TEXTURE_AEMONY_SCALE_X;
+  Height = TEXTURE_AEMONY_SCALE_Y;
+};
+
+sampler2D Sampler_Aemony_Scale
+{
+  Texture = Texture_Aemony_Scale;
+};
+
+texture2D Texture_Aemony_Final
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_AEMONY_SCALE_X;
+  Height = TEXTURE_AEMONY_SCALE_Y;
+  Format = RGBA16;
+};
+
+sampler2D Sampler_Aemony_Final
+{
+  Texture = Texture_Aemony_Final;
+};
+
+void ClearAemony(
+      float4 VPos     : SV_Position,
+      float2 TexCoord : TEXCOORD,
+  out float4 Aemony   : SV_TARGET)
+{
+  return;
+}
+
+void ComputeAemony(uint3 ID : SV_DispatchThreadID)
+{
+  for (uint y = 0; y < BUFFER_HEIGHT; y++)
+  {
+    const float curPixelCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, y)).x;
+
+    const int yCoord =
+     round(TEXTURE_AEMONY_HEIGHT - (CSP::TRC::ToPqFromNits(curPixelCLL) * TEXTURE_AEMONY_HEIGHT));
+
+    tex2Dstore(Storage_Aemony,
+               int2(round(ID.x / TEXTURE_AEMONY_BUFFER_WIDTH_FACTOR), yCoord),
+               float4(
+               Heatmap_RGB_Values(curPixelCLL, HEATMAP_MODE_10000, 1.f, true), 1.f));
+  }
+}
+
+void ScaleAemony(
+      float4 VPos     : SV_Position,
+      float2 TexCoord : TEXCOORD,
+  out float4 Aemony   : SV_TARGET)
+{
+  const int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_AEMONY_SCALE_X - 0.5f - 187.f),
+                                    round(TexCoord.y * TEXTURE_AEMONY_SCALE_Y - 0.5f -  64.f));
+
+  if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_AEMONY_WIDTH
+   && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_AEMONY_HEIGHT)
+  {
+    Aemony = float4(tex2D(Sampler_Aemony_Scale, TexCoord).rgb
+                  + tex2Dfetch(Sampler_Aemony, histogramCoords).rgb
+             , 1.f);
+    return;
+  }
+  else
+  {
+    Aemony = tex2D(Sampler_Aemony_Scale, TexCoord);
+    return;
+  }
 }
 
 void CalcCLL(

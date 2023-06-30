@@ -199,14 +199,6 @@ uniform float HEATMAP_WHITEPOINT
   ui_step     = 0.5f;
 > = 80.f;
 
-#ifdef _DEBUG
-uniform bool HEATMAP_SDR
-<
-  ui_category = "heatmap stuff";
-  ui_label    = "[DEBUG] Output heatmap in SDR gamma 2.2";
-> = false;
-#endif
-
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
 <
@@ -308,6 +300,25 @@ uniform float TEST_THINGY
   ui_step     = 0.001f;
 > = 0.f;
 #endif
+
+
+uniform bool AemonyBool
+<
+  ui_category = "Aemony";
+  ui_label    = "Aemony";
+  ui_tooltip  = "Aemony";
+> = false;
+
+uniform float AemonyBrightness
+<
+  ui_category = "Aemony";
+  ui_label    = "Aemony Brightness";
+  ui_tooltip  = "Aemony Brightness";
+  ui_type     = "slider";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
+> = 80.f;
 
 
 //void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
@@ -490,22 +501,10 @@ void HDR_analysis(
 
     if (SHOW_HEATMAP)
     {
-
-#ifdef _DEBUG
-
-      Output = float4(Heatmap_RGB_Values(pixelCLL,
-                                         HEATMAP_CUTOFF_POINT,
-                                         HEATMAP_WHITEPOINT,
-                                         HEATMAP_SDR), 1.f);
-
-#else
-
       Output = float4(Heatmap_RGB_Values(pixelCLL,
                                          HEATMAP_CUTOFF_POINT,
                                          HEATMAP_WHITEPOINT,
                                          false), 1.f);
-
-#endif
     }
 
     if (HIGHLIGHT_NIT_RANGE)
@@ -908,6 +907,53 @@ void HDR_analysis(
 #endif
     }
 
+
+  if (AemonyBool)
+  {
+
+    uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
+    uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
+
+    const int2 aemonyTextureDisplaySize = int2(round(TEXTURE_AEMONY_SCALE_FACTOR_X * 1280.f),
+                                               round(TEXTURE_AEMONY_SCALE_FACTOR_Y *  720.f));
+
+    // draw the histogram in the bottom right corner
+    if (current_x_coord >= (BUFFER_WIDTH  - aemonyTextureDisplaySize.x)
+     && current_y_coord >= (BUFFER_HEIGHT - aemonyTextureDisplaySize.y))
+    {
+      // get coords for the sampler
+      float2 currentSamplerCoords = float2(
+        (aemonyTextureDisplaySize.x - (BUFFER_WIDTH - current_x_coord)  + 0.5f) / aemonyTextureDisplaySize.x,
+        (current_y_coord - (BUFFER_HEIGHT - aemonyTextureDisplaySize.y) + 0.5f) / aemonyTextureDisplaySize.y);
+
+      float3 currentPixelToDisplay =
+        tex2D(Sampler_Aemony_Final, currentSamplerCoords, BUFFER_WIDTH / aemonyTextureDisplaySize.x).rgb;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+      Output = float4(
+        currentPixelToDisplay * (AemonyBrightness / 80.f), 1.f);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+
+      Output = float4(
+        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 10000.f)), 1.f);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+      Output = float4(
+        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 1000.f)), 1.f);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+      Output = float4(
+        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 100.f), 1.f);
+
+#endif
+    }
+  }
+
+
 #endif
 }
 
@@ -1088,6 +1134,27 @@ technique lilium__hdr_analysis
 
 #endif
 
+  pass ClearAemony
+  {
+    VertexShader       = PostProcessVS;
+     PixelShader       = ClearAemony;
+    RenderTarget       = Texture_Aemony;
+    ClearRenderTargets = true;
+  }
+
+  pass ComputeAemony
+  {
+    ComputeShader = ComputeAemony <THREAD_SIZE0, 1>;
+    DispatchSizeX = DISPATCH_X0;
+    DispatchSizeY = 1;
+  }
+
+  pass ScaleAemony
+  {
+    VertexShader       = PostProcessVS;
+     PixelShader       = ScaleAemony;
+    RenderTarget       = Texture_Aemony_Final;
+  }
 
   pass CopyShowValues
   {
