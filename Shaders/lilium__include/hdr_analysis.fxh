@@ -59,12 +59,12 @@ static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
 
 
-#define CSP_BT709   0
-#define CSP_DCI_P3  1
-#define CSP_BT2020  2
-#define CSP_AP1     3
-#define CSP_AP0     4
-#define CSP_INVALID 5
+#define IS_CSP_BT709   0
+#define IS_CSP_DCI_P3  1
+#define IS_CSP_BT2020  2
+#define IS_CSP_AP1     3
+#define IS_CSP_AP0     4
+#define IS_CSP_INVALID 5
 
 
 uniform float2 PINGPONG
@@ -1321,11 +1321,11 @@ float GetCSP(precise const float3 XYZ)
 {
   if (IsCSP(CSP::Mat::XYZTo::BT709(XYZ)))
   {
-    return CSP_BT709;
+    return IS_CSP_BT709;
   }
   else if (IsCSP(CSP::Mat::XYZTo::DCI_P3(XYZ)))
   {
-    return CSP_DCI_P3 / 255.f;
+    return IS_CSP_DCI_P3 / 255.f;
   }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_PQ \
@@ -1333,26 +1333,26 @@ float GetCSP(precise const float3 XYZ)
 
   else
   {
-    return CSP_BT2020 / 255.f;
+    return IS_CSP_BT2020 / 255.f;
   }
 
 #else
 
   else if (IsCSP(CSP::Mat::XYZTo::BT2020(XYZ)))
   {
-    return CSP_BT2020 / 255.f;
+    return IS_CSP_BT2020 / 255.f;
   }
   else if (IsCSP(CSP::Mat::XYZTo::AP1(XYZ)))
   {
-    return CSP_AP1 / 255.f;
+    return IS_CSP_AP1 / 255.f;
   }
   else if (IsCSP(CSP::Mat::XYZTo::AP0(XYZ)))
   {
-    return CSP_AP0 / 255.f;
+    return IS_CSP_AP0 / 255.f;
   }
   else
   {
-    return CSP_INVALID / 255.f;
+    return IS_CSP_INVALID / 255.f;
   }
 
 #endif
@@ -1377,7 +1377,7 @@ void CalcCSPs(
   }
   else
   {
-    curCSP = CSP_BT709 / 255.f;
+    curCSP = IS_CSP_BT709 / 255.f;
   }
 
 #else
@@ -1400,7 +1400,7 @@ void CalcCSPs(
   }
   else
   {
-    curCSP = CSP_BT709 / 255.f;
+    curCSP = IS_CSP_BT709 / 255.f;
   }
 
 #else
@@ -1423,7 +1423,7 @@ void CalcCSPs(
   }
   else
   {
-    curCSP = CSP_BT709 / 255.f;
+    curCSP = IS_CSP_BT709 / 255.f;
   }
 
 #else
@@ -1444,7 +1444,7 @@ void CalcCSPs(
   }
   else
   {
-    curCSP = CSP_BT709 / 255.f;
+    curCSP = IS_CSP_BT709 / 255.f;
   }
 
 #else
@@ -1455,7 +1455,7 @@ void CalcCSPs(
 
 #else
 
-  curCSP = CSP_INVALID / 255.f;
+  curCSP = IS_CSP_INVALID / 255.f;
 
 #endif
 }
@@ -1485,23 +1485,23 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
       for (int y = 0; y < BUFFER_HEIGHT; y++)
       {
         const uint curCSP = uint(tex2Dfetch(Sampler_CSPs, int2(ID.x, y)).r * 255.f);
-        if (curCSP == CSP_BT709) {
+        if (curCSP == IS_CSP_BT709) {
           counter_BT709++;
         }
-        else if (curCSP == CSP_DCI_P3) {
+        else if (curCSP == IS_CSP_DCI_P3) {
           counter_DCI_P3++;
         }
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-        else if (curCSP == CSP_BT2020) {
+        else if (curCSP == IS_CSP_BT2020) {
           counter_BT2020++;
         }
-        else if (curCSP == CSP_AP1) {
+        else if (curCSP == IS_CSP_AP1) {
           counter_AP1++;
         }
-        else if (curCSP == CSP_AP0) {
+        else if (curCSP == IS_CSP_AP0) {
           counter_AP0++;
         }
         else {
@@ -1511,16 +1511,16 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
 #endif
       }
 
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_BT709),   counter_BT709   / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_DCI_P3),  counter_DCI_P3  / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_BT709),   counter_BT709   / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_DCI_P3),  counter_DCI_P3  / 65535.f);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_BT2020),  counter_BT2020  / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_AP1),     counter_AP1     / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_AP0),     counter_AP0     / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, CSP_INVALID), counter_invalid / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_BT2020),  counter_BT2020  / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_AP1),     counter_AP1     / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_AP0),     counter_AP0     / 65535.f);
+      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_INVALID), counter_invalid / 65535.f);
 
 #endif
 
@@ -1548,30 +1548,30 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
 
   for (int x = 0; x < BUFFER_WIDTH; x++)
   {
-    counter_BT709   += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_BT709)).r   * 65535.f);
-    counter_DCI_P3  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_DCI_P3)).r  * 65535.f);
+    counter_BT709   += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_BT709)).r   * 65535.f);
+    counter_DCI_P3  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_DCI_P3)).r  * 65535.f);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-    counter_BT2020  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_BT2020)).r  * 65535.f);
-    counter_AP1     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_AP1)).r     * 65535.f);
-    counter_AP0     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_AP0)).r     * 65535.f);
-    counter_invalid += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, CSP_INVALID)).r * 65535.f);
+    counter_BT2020  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_BT2020)).r  * 65535.f);
+    counter_AP1     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_AP1)).r     * 65535.f);
+    counter_AP0     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_AP0)).r     * 65535.f);
+    counter_invalid += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_INVALID)).r * 65535.f);
 
 #endif
   }
 
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_BT709),   counter_BT709   / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_DCI_P3),  counter_DCI_P3  / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_BT709),   counter_BT709   / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3),  counter_DCI_P3  / PIXELS);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_BT2020),  counter_BT2020  / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_AP1),     counter_AP1     / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_AP0),     counter_AP0     / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, CSP_INVALID), counter_invalid / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_BT2020),  counter_BT2020  / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_AP1),     counter_AP1     / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_AP0),     counter_AP0     / PIXELS);
+  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_INVALID), counter_invalid / PIXELS);
 
 #endif
 }
@@ -1583,14 +1583,14 @@ float3 Create_CSP_Map(
 {
   float3 output;
 
-  if (CSP != CSP_BT709)
+  if (CSP != IS_CSP_BT709)
   {
     Y += 20.f;
   }
 
   switch(CSP)
   {
-    case CSP_BT709:
+    case IS_CSP_BT709:
     {
       // shades of grey
       float clamped = Y * 0.25f;
@@ -1598,28 +1598,28 @@ float3 Create_CSP_Map(
                       clamped,
                       clamped);
     } break;
-    case CSP_DCI_P3:
+    case IS_CSP_DCI_P3:
     {
       // teal
       output = float3(0.f,
                       Y,
                       Y);
     } break;
-    case CSP_BT2020:
+    case IS_CSP_BT2020:
     {
       // yellow
       output = float3(Y,
                       Y,
                       0.f);
     } break;
-    case CSP_AP1:
+    case IS_CSP_AP1:
     {
       // blue
       output = float3(0.f,
                       0.f,
                       Y);
     } break;
-    case CSP_AP0:
+    case IS_CSP_AP0:
     {
       // red
       output = float3(Y,
@@ -1679,35 +1679,35 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
       case 1:
       {
-        precise float counter_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT709)).r  * 100.0001f;
-        precise float counter_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_DCI_P3)).r * 100.0001f;
+        precise float counter_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT709)).r  * 100.0001f;
+        precise float counter_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3)).r * 100.0001f;
 
-        tex2Dstore(Storage_Show_Values, int2(CSP_BT709,  1), counter_BT709);
-        tex2Dstore(Storage_Show_Values, int2(CSP_DCI_P3, 1), counter_DCI_P3);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT709,  1), counter_BT709);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_DCI_P3, 1), counter_DCI_P3);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-        precise float counter_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT2020)).r * 100.0001f;
+        precise float counter_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT2020)).r * 100.0001f;
 
-        tex2Dstore(Storage_Show_Values, int2(CSP_BT2020, 1), counter_BT2020);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT2020, 1), counter_BT2020);
 
 #else
 
-        tex2Dstore(Storage_Show_Values, int2(CSP_BT2020, 1), 100.f - counter_DCI_P3 - counter_BT709);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT2020, 1), 100.f - counter_DCI_P3 - counter_BT709);
 
 #endif
       } break;
 
       case 2:
       {
-        precise float counter_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r  * 100.0001f;
-        precise float counter_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r  * 100.0001f;
-        precise float counter_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_INVALID)).r * 100.0001f;
+        precise float counter_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP1)).r  * 100.0001f;
+        precise float counter_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP0)).r  * 100.0001f;
+        precise float counter_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_INVALID)).r * 100.0001f;
 
-        tex2Dstore(Storage_Show_Values, int2(CSP_AP1,     1), counter_AP1);
-        tex2Dstore(Storage_Show_Values, int2(CSP_AP0,     1), counter_AP0);
-        tex2Dstore(Storage_Show_Values, int2(CSP_INVALID, 1), counter_invalid);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_AP1,     1), counter_AP1);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_AP0,     1), counter_AP0);
+        tex2Dstore(Storage_Show_Values, int2(IS_CSP_INVALID, 1), counter_invalid);
       } break;
     }
   }

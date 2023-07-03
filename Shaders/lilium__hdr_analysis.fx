@@ -857,24 +857,24 @@ void HDR_analysis(
 
 #else
 
-    float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT709,  1)).r;
-    float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, int2(CSP_DCI_P3, 1)).r;
-    float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, int2(CSP_BT2020, 1)).r;
-    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT709)).r  * 100.0001f;
-    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_DCI_P3)).r * 100.0001f;
-    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_BT2020)).r * 100.0001f;
+    float precentage_BT709  = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_BT709,  1)).r;
+    float precentage_DCI_P3 = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_DCI_P3, 1)).r;
+    float precentage_BT2020 = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_BT2020, 1)).r;
+    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT709)).r  * 100.0001f;
+    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3)).r * 100.0001f;
+    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT2020)).r * 100.0001f;
 
 #endif
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-    float precentage_AP1     = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP1,     1)).r;
-    float precentage_AP0     = tex2Dfetch(Sampler_Show_Values, int2(CSP_AP0,     1)).r;
-    float precentage_invalid = tex2Dfetch(Sampler_Show_Values, int2(CSP_INVALID, 1)).r;
-    //float precentage_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP1)).r     * 100.0001f;
-    //float precentage_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_AP0)).r     * 100.0001f;
-    //float precentage_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, CSP_INVALID)).r * 100.0001f;
+    float precentage_AP1     = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_AP1,     1)).r;
+    float precentage_AP0     = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_AP0,     1)).r;
+    float precentage_invalid = tex2Dfetch(Sampler_Show_Values, int2(IS_CSP_INVALID, 1)).r;
+    //float precentage_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP1)).r     * 100.0001f;
+    //float precentage_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP0)).r     * 100.0001f;
+    //float precentage_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_INVALID)).r * 100.0001f;
 
 #endif
 
