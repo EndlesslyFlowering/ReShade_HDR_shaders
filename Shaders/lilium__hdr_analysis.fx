@@ -63,12 +63,25 @@ uniform float2 NIT_PINGPONG2
 
 uniform float FONT_SIZE
 <
+  ui_category = "global";
   ui_label    = "font size";
   ui_type     = "slider";
   ui_min      = 30.f;
   ui_max      = 40.f;
   ui_step     = 1.f;
 > = 30;
+
+#define TEXT_POSITION_TOP_LEFT  0
+#define TEXT_POSITION_TOP_RIGHT 1
+
+uniform uint TEXT_POSITION
+<
+  ui_category = "global";
+  ui_label    = "text position";
+  ui_type     = "combo";
+  ui_items    = "top left\0"
+                "top right\0";
+> = 0;
 
 // CLL
 #if (ENABLE_CLL_FEATURES == YES)
@@ -481,6 +494,10 @@ void HDR_analysis(
 
   const float fontWidth = FONT_SIZE / 2.f;
 
+  static const float textOffset = TEXT_POSITION == TEXT_POSITION_TOP_LEFT
+                                ? 0.f
+                                : BUFFER_WIDTH - (fontWidth * 28 + 10);
+
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
    || HIGHLIGHT_NIT_RANGE)
@@ -675,13 +692,13 @@ void HDR_analysis(
       //minCLL_show += 0.005f;
     }
 
-    DrawTextString(float2(0.f, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, text_maxCLL, 26, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, text_avgCLL, 26, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, text_minCLL, 26, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, text_maxCLL, 26, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, text_avgCLL, 26, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, text_minCLL, 26, Output, FONT_BRIGHTNESS);
 
-    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(fontWidth * 14, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
   }
 
 #endif
@@ -698,15 +715,15 @@ void HDR_analysis(
     {
       float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
 
-      DrawTextString(float2(fontWidth * 8, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(fontWidth * 8, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(fontWidth * 8 + textOffset, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(fontWidth * 8 + textOffset, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
 
-      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
 
-      DrawTextString(float2(0.f, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, text_cursorCLL, 28, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f + textOffset, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, text_cursorCLL, 28, Output, FONT_BRIGHTNESS);
 
-      DrawTextDigit(float2(fontWidth * 16, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
 
       float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
 
@@ -727,13 +744,13 @@ void HDR_analysis(
 
 #endif
 
-      DrawTextString(float2(0.f, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_R, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(0.f, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_G, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(0.f, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_B, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_R, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_G, 2, Output, FONT_BRIGHTNESS);
+      DrawTextString(float2(0.f + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_B, 2, Output, FONT_BRIGHTNESS);
 
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
+      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
@@ -748,7 +765,7 @@ void HDR_analysis(
                            : cursorRGB.r < 10000.f
                            ? fontWidth * 5
                            : fontWidth * 4;
-        DrawTextString(float2(offset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+        DrawTextString(float2(offset + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
       if (cursorGIsNeg) {
         const float offset = cursorRGB.g < 10.f
@@ -760,7 +777,7 @@ void HDR_analysis(
                            : cursorRGB.g < 10000.f
                            ? fontWidth * 5
                            : fontWidth * 4;
-        DrawTextString(float2(offset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+        DrawTextString(float2(offset + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
       if (cursorBIsNeg) {
         const float offset = cursorRGB.b < 10.f
@@ -772,7 +789,7 @@ void HDR_analysis(
                            : cursorRGB.b < 10000.f
                            ? fontWidth * 5
                            : fontWidth * 4;
-        DrawTextString(float2(offset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
+        DrawTextString(float2(offset + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
 
 #endif
@@ -807,27 +824,27 @@ void HDR_analysis(
 
         case 0:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,   17, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,   17, Output, FONT_BRIGHTNESS);
         } break;
         case 1:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3,  17, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3,  17, Output, FONT_BRIGHTNESS);
         } break;
         case 2:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020,  18, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020,  18, Output, FONT_BRIGHTNESS);
         } break;
         case 3:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,     14, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,     14, Output, FONT_BRIGHTNESS);
         } break;
         case 4:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,     14, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,     14, Output, FONT_BRIGHTNESS);
         } break;
         default:
         {
-          DrawTextString(float2(0.f, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_invalid, 18, Output, FONT_BRIGHTNESS);
+          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_invalid, 18, Output, FONT_BRIGHTNESS);
         } break;
 
 #undef CURSOR_CLL_TEXT_POS
@@ -870,12 +887,12 @@ void HDR_analysis(
 
 #endif
 
-    DrawTextString(float2(0.f, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,   18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,   18, Output, FONT_BRIGHTNESS);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextString(float2(0.f, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3,  18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020,  18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3,  18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020,  18, Output, FONT_BRIGHTNESS);
 
 #endif
 
@@ -883,26 +900,26 @@ void HDR_analysis(
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextString(float2(0.f, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,     18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,     18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_invalid, 18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,     18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,     18, Output, FONT_BRIGHTNESS);
+    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_invalid, 18, Output, FONT_BRIGHTNESS);
 
 #endif
 
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, 4, precentage_BT709,  Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, 4, precentage_BT709,  Output, FONT_BRIGHTNESS);
 #if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, 4, precentage_DCI_P3, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, 4, precentage_DCI_P3, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
 #endif
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ  \
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,     Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,     Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_invalid, Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,     Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,     Output, FONT_BRIGHTNESS);
+    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_invalid, Output, FONT_BRIGHTNESS);
 
 #endif
     }
