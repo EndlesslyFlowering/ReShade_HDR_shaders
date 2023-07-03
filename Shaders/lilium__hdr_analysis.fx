@@ -141,7 +141,7 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
 #endif
 
-// CSPs
+// Texture_CSPs
 #if (ENABLE_CSP_FEATURES == YES)
 uniform bool SHOW_CSPS
 <
@@ -982,7 +982,7 @@ void HDR_analysis(
 //  {
 //    VertexShader = PostProcessVS;
 //     PixelShader = CalcCLL;
-//    RenderTarget = CLL_Values;
+//    RenderTarget = Texture_CLL_Values;
 //  }
 //
 //  pass GetMaxAvgMinCLLvalue0
@@ -1063,7 +1063,7 @@ technique lilium__hdr_analysis
   {
     VertexShader = PostProcessVS;
      PixelShader = CalcCLL;
-    RenderTarget = CLL_Values;
+    RenderTarget = Texture_CLL_Values;
   }
 
   pass GetMaxAvgMinCLL0_NEW
@@ -1127,7 +1127,7 @@ technique lilium__hdr_analysis
   {
     VertexShader = PostProcessVS;
      PixelShader = CalcCSPs;
-    RenderTarget = CSPs;
+    RenderTarget = Texture_CSPs;
   }
 
   pass CountCSPs_y

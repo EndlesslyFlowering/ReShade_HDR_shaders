@@ -77,7 +77,7 @@ uniform float2 PINGPONG
 >;
 
 
-texture2D CLL_Values
+texture2D Texture_CLL_Values
 <
   pooled = true;
 >
@@ -90,11 +90,11 @@ texture2D CLL_Values
 
 sampler2D Sampler_CLL_Values
 {
-  Texture = CLL_Values;
+  Texture = Texture_CLL_Values;
 };
 
 //  max = (0,0); max_99.99% = (1,0); avg = (2,0); min = (3,0)
-texture2D Max_Avg_Min_CLL_Values
+texture2D Texture_Max_Avg_Min_CLL_Values
 <
   pooled = true;
 >
@@ -107,15 +107,15 @@ texture2D Max_Avg_Min_CLL_Values
 
 sampler2D Sampler_Max_Avg_Min_CLL_Values
 {
-  Texture = Max_Avg_Min_CLL_Values;
+  Texture = Texture_Max_Avg_Min_CLL_Values;
 };
 
 storage2D Storage_Max_Avg_Min_CLL_Values
 {
-  Texture = Max_Avg_Min_CLL_Values;
+  Texture = Texture_Max_Avg_Min_CLL_Values;
 };
 
-texture2D Intermediate_CLL_Values
+texture2D Texture_Intermediate_CLL_Values
 <
   pooled = true;
 >
@@ -128,19 +128,19 @@ texture2D Intermediate_CLL_Values
 
 sampler2D Sampler_Intermediate_CLL_Values
 {
-  Texture = Intermediate_CLL_Values;
+  Texture = Texture_Intermediate_CLL_Values;
 };
 
 storage2D Storage_Intermediate_CLL_Values
 {
-  Texture = Intermediate_CLL_Values;
+  Texture = Texture_Intermediate_CLL_Values;
 };
 
 #if 0
 static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
 static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
 
-texture2D Max_CLL_0_Dot_01_Percent
+texture2D Texture_Max_CLL_0_Dot_01_Percent
 <
   pooled = true;
 >
@@ -153,16 +153,16 @@ texture2D Max_CLL_0_Dot_01_Percent
 
 sampler2D Sampler_Max_CLL_0_Dot_01_Percent
 {
-  Texture = Max_CLL_0_Dot_01_Percent;
+  Texture = Texture_Max_CLL_0_Dot_01_Percent;
 };
 
 storage2D Storage_Max_CLL_0_Dot_01_Percent
 {
-  Texture = Max_CLL_0_Dot_01_Percent;
+  Texture = Texture_Max_CLL_0_Dot_01_Percent;
 };
 #endif
 
-texture2D Final_4
+texture2D Texture_Final_4
 <
   pooled = true;
 >
@@ -175,12 +175,12 @@ texture2D Final_4
 
 sampler2D Sampler_Final_4
 {
-  Texture = Final_4;
+  Texture = Texture_Final_4;
 };
 
 storage2D Storage_Final_4
 {
-  Texture = Final_4;
+  Texture = Texture_Final_4;
 };
 
 #define CIE_1931 0
@@ -306,7 +306,7 @@ storage2D Storage_CIE_1976_Current
 };
 #endif
 
-texture2D CSPs
+texture2D Texture_CSPs
 <
   pooled = true;
 >
@@ -319,11 +319,11 @@ texture2D CSPs
 
 sampler2D Sampler_CSPs
 {
-  Texture    = CSPs;
+  Texture    = Texture_CSPs;
   MipLODBias = 0;
 };
 
-texture2D CSP_Counter
+texture2D Texture_CSP_Counter
 <
   pooled = true;
 >
@@ -336,16 +336,16 @@ texture2D CSP_Counter
 
 sampler2D Sampler_CSP_Counter
 {
-  Texture    = CSP_Counter;
+  Texture    = Texture_CSP_Counter;
   MipLODBias = 0;
 };
 
 storage2D Storage_CSP_Counter
 {
-  Texture  = CSP_Counter;
+  Texture  = Texture_CSP_Counter;
 };
 
-texture2D CSP_Counter_Final
+texture2D Texture_CSP_Counter_Final
 <
   pooled = true;
 >
@@ -358,18 +358,18 @@ texture2D CSP_Counter_Final
 
 sampler2D Sampler_CSP_Counter_Final
 {
-  Texture    = CSP_Counter_Final;
+  Texture    = Texture_CSP_Counter_Final;
   MipLODBias = 0;
 };
 
 storage2D Storage_CSP_Counter_Final
 {
-  Texture = CSP_Counter_Final;
+  Texture = Texture_CSP_Counter_Final;
 };
 
 //  max = (0, 0); avg = (1, 0); min = (2, 0)
-// (0, 1) to (5, 1) = CSPs
-texture2D Show_Values
+// (0, 1) to (5, 1) = Texture_CSPs
+texture2D Texture_Show_Values
 <
   pooled = true;
 >
@@ -382,12 +382,12 @@ texture2D Show_Values
 
 sampler2D Sampler_Show_Values
 {
-  Texture = Show_Values;
+  Texture = Texture_Show_Values;
 };
 
 storage2D Storage_Show_Values
 {
-  Texture = Show_Values;
+  Texture = Texture_Show_Values;
 };
 
 #define HEATMAP_MODE_10000 0

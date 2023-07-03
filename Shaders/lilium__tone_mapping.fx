@@ -275,7 +275,7 @@ uniform float DEBUG_MAX_CLL
 #endif
 
 
-texture2D Adaptive_CLL_Value0
+texture2D Texture_Adaptive_CLL_Value0
 <
   pooled = true;
 >
@@ -288,17 +288,17 @@ texture2D Adaptive_CLL_Value0
 
 sampler2D Sampler_Adaptive_CLL_Value0
 {
-  Texture = Adaptive_CLL_Value0;
+  Texture = Texture_Adaptive_CLL_Value0;
 };
 
-storage2D Storage_Target_Adaptive_CLL_Value0
+storage2D Storage_Adaptive_CLL_Value0
 {
-  Texture = Adaptive_CLL_Value0;
+  Texture = Texture_Adaptive_CLL_Value0;
 
   MipLevel = 0;
 };
 
-texture2D Adaptive_CLL_Value1
+texture2D Texture_Adaptive_CLL_Value1
 <
   pooled = true;
 >
@@ -311,17 +311,17 @@ texture2D Adaptive_CLL_Value1
 
 sampler2D Sampler_Adaptive_CLL_Value1
 {
-  Texture = Adaptive_CLL_Value1;
+  Texture = Texture_Adaptive_CLL_Value1;
 };
 
-storage2D Storage_Target_Adaptive_CLL_Value1
+storage2D Storage_Adaptive_CLL_Value1
 {
-  Texture = Adaptive_CLL_Value1;
+  Texture = Texture_Adaptive_CLL_Value1;
 };
 
 
 //static const uint numberOfAdaptiveValues = 1000;
-//texture2D Adaptive_CLL_Values
+//texture2D Texture_Adaptive_CLL_Values
 //{
 //   Width = numberOfAdaptiveValues;
 //  Height = 2;
@@ -333,14 +333,14 @@ storage2D Storage_Target_Adaptive_CLL_Value1
 //
 //sampler2D Sampler_Adaptive_CLL_Values
 //{
-//  Texture = Adaptive_CLL_Values;
+//  Texture = Texture_Adaptive_CLL_Values;
 //
 //  SRGBTexture = false;
 //};
 //
-//storage2D Storage_TargetAdaptive_CLL_Values
+//storage2D Storage_Adaptive_CLL_Values
 //{
-//  Texture = Adaptive_CLL_Values;
+//  Texture = Texture_Adaptive_CLL_Values;
 //
 //  MipLevel = 0;
 //};
@@ -552,7 +552,7 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
   const float AdaptiveCLL = currentAdaptiveCLL + adapt;
 
-  tex2Dstore(Storage_Target_Adaptive_CLL_Value1, int2(0, 0), AdaptiveCLL);
+  tex2Dstore(Storage_Adaptive_CLL_Value1, int2(0, 0), AdaptiveCLL);
 }
 
 void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
@@ -562,7 +562,7 @@ void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
                      ? currentAdaptiveCLL
                      : MAX_CLL_CAP;
 
-  tex2Dstore(Storage_Target_Adaptive_CLL_Value0, int2(0, 0), currentAdaptiveCLL);
+  tex2Dstore(Storage_Adaptive_CLL_Value0, int2(0, 0), currentAdaptiveCLL);
 }
 
 
@@ -575,7 +575,7 @@ void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 //  {
 //    VertexShader = PostProcessVS;
 //     PixelShader = CalcCLL;
-//    RenderTarget = CLL_Values;
+//    RenderTarget = Texture_CLL_Values;
 //  }
 //
 //  pass GetMaxCLL0
@@ -616,7 +616,7 @@ technique lilium__tone_mapping_adaptive_maxCLL
   {
     VertexShader = PostProcessVS;
      PixelShader = CalcCLL;
-    RenderTarget = CLL_Values;
+    RenderTarget = Texture_CLL_Values;
   }
 
   pass GetMaxCLL0_NEW
