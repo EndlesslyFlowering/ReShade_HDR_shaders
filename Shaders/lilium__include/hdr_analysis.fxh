@@ -183,12 +183,21 @@ storage2D Storage_Final_4
   Texture = Final_4;
 };
 
+#define CIE_1931 0
+#define CIE_1976 1
+
+#ifndef CIE_DIAGRAM
+  #define CIE_DIAGRAM CIE_1931
+#endif
+
 #define CIE_1931_X    735
 #define CIE_1931_Y    835
 #define CIE_1931_BG_X 835
 #define CIE_1931_BG_Y 935
 #define CIE_BG_BORDER  50
-texture2D CIE_1931
+
+#if (CIE_DIAGRAM == CIE_1931)
+texture2D Texture_CIE_1931
 <
   source = "lilium__cie_1931_linear.png";
   pooled = true;
@@ -200,12 +209,12 @@ texture2D CIE_1931
 
 sampler2D Sampler_CIE_1931
 {
-  Texture = CIE_1931;
+  Texture = Texture_CIE_1931;
 };
 
-texture2D CIE_1931_Black_BG
+texture2D Texture_CIE_1931_Black_BG
 <
-  source = "lilium__cie_1931_black_bg_Linear.png";
+  source = "lilium__cie_1931_black_bg_linear.png";
   pooled = true;
 >
 {
@@ -215,10 +224,10 @@ texture2D CIE_1931_Black_BG
 
 sampler2D Sampler_CIE_1931_Black_BG
 {
-  Texture = CIE_1931_Black_BG;
+  Texture = Texture_CIE_1931_Black_BG;
 };
 
-texture2D CIE_1931_Current
+texture2D Texture_CIE_1931_Current
 <
   pooled = true;
 >
@@ -231,19 +240,21 @@ texture2D CIE_1931_Current
 
 sampler2D Sampler_CIE_1931_Current
 {
-  Texture = CIE_1931_Current;
+  Texture = Texture_CIE_1931_Current;
 };
 
 storage2D Storage_CIE_1931_Current
 {
-  Texture  = CIE_1931_Current;
+  Texture  = Texture_CIE_1931_Current;
 };
+#endif
 
+#if (CIE_DIAGRAM == CIE_1976)
 #define CIE_1976_X    623
 #define CIE_1976_Y    587
 #define CIE_1976_BG_X 723
 #define CIE_1976_BG_Y 687
-texture2D CIE_1976
+texture2D Texture_CIE_1976
 <
   source = "lilium__cie_1976_ucs_linear.png";
   pooled = true;
@@ -255,10 +266,10 @@ texture2D CIE_1976
 
 sampler2D Sampler_CIE_1976
 {
-  Texture = CIE_1976;
+  Texture = Texture_CIE_1976;
 };
 
-texture2D CIE_1976_Black_BG
+texture2D Texture_CIE_1976_Black_BG
 <
   source = "lilium__cie_1976_ucs_black_bg_linear.png";
   pooled = true;
@@ -270,10 +281,10 @@ texture2D CIE_1976_Black_BG
 
 sampler2D Sampler_CIE_1976_Black_BG
 {
-  Texture = CIE_1976_Black_BG;
+  Texture = Texture_CIE_1976_Black_BG;
 };
 
-texture2D CIE_1976_Current
+texture2D Texture_CIE_1976_Current
 <
   pooled = true;
 >
@@ -286,13 +297,14 @@ texture2D CIE_1976_Current
 
 sampler2D Sampler_CIE_1976_Current
 {
-  Texture = CIE_1976_Current;
+  Texture = Texture_CIE_1976_Current;
 };
 
 storage2D Storage_CIE_1976_Current
 {
-  Texture  = CIE_1976_Current;
+  Texture  = Texture_CIE_1976_Current;
 };
+#endif
 
 texture2D CSPs
 <
@@ -1185,6 +1197,7 @@ void GetFinalMaxCLL_NEW(uint3 ID : SV_DispatchThreadID)
 
 
 // copy over clean bg first every time
+#if (CIE_DIAGRAM == CIE_1931)
 void Copy_CIE_1931_BG(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
@@ -1192,7 +1205,9 @@ void Copy_CIE_1931_BG(
 {
   CIE_BG = tex2D(Sampler_CIE_1931_Black_BG, TexCoord).rgba;
 }
+#endif
 
+#if (CIE_DIAGRAM == CIE_1976)
 void Copy_CIE_1976_BG(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
@@ -1200,6 +1215,7 @@ void Copy_CIE_1976_BG(
 {
   CIE_BG = tex2D(Sampler_CIE_1976_Black_BG, TexCoord).rgba;
 }
+#endif
 
 void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
 {
@@ -1249,6 +1265,7 @@ void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
+#if (CIE_DIAGRAM == CIE_1931)
     // get xy
     precise float xyz = XYZ.x + XYZ.y + XYZ.z;
     precise int2  xy  = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
@@ -1258,6 +1275,12 @@ void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
 
     precise int2 xyDiagramPos = int2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER); // adjust for the added borders
 
+    tex2Dstore(Storage_CIE_1931_Current,
+               xyDiagramPos,
+               tex2Dfetch(Sampler_CIE_1931, xy).rgba);
+#endif
+
+#if (CIE_DIAGRAM == CIE_1976)
     // get u'v'
     precise float X15Y3Z = XYZ.x
                          + 15.f * XYZ.y
@@ -1267,13 +1290,10 @@ void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
 
     precise int2 uvDiagramPos = int2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER); // adjust for the added borders
 
-    tex2Dstore(Storage_CIE_1931_Current,
-               xyDiagramPos,
-               tex2Dfetch(Sampler_CIE_1931, xy).rgba);
-
     tex2Dstore(Storage_CIE_1976_Current,
                uvDiagramPos,
                tex2Dfetch(Sampler_CIE_1976, uv).rgba);
+#endif
 
 #if (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  && !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \
  || (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  &&  defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \

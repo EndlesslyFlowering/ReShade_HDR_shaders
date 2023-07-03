@@ -116,19 +116,16 @@ uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram";
   ui_label    = "show CIE diagram";
+  ui_tooltip  = "change diagram type via the macro";
 > = true;
 
-uniform uint CIE_DIAGRAM
-<
-  ui_category = "CIE diagram";
-  ui_label    = "CIE diagram";
-  ui_type     = "combo";
-  ui_items    = "1931 xy\0"
-                "1976 u'v'\0";
-> = 0;
-
-#define CIE_1931 0
-#define CIE_1976 1
+#if (CIE_DIAGRAM == CIE_1931)
+static const uint CIE_BG_X = CIE_1931_BG_X;
+static const uint CIE_BG_Y = CIE_1931_BG_Y;
+#else
+static const uint CIE_BG_X = CIE_1976_BG_X;
+static const uint CIE_BG_Y = CIE_1976_BG_Y;
+#endif
 
 uniform float CIE_DIAGRAM_BRIGHTNESS
 <
@@ -141,7 +138,6 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
 > = 80.f;
 #else
   static const bool  SHOW_CIE               = false;
-  static const uint  CIE_DIAGRAM            = 0;
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
 #endif
 
@@ -626,13 +622,6 @@ void HDR_analysis(
 
   if (SHOW_CIE)
   {
-    uint CIE_BG_X = CIE_DIAGRAM == CIE_1931
-                  ? CIE_1931_BG_X
-                  : CIE_1976_BG_X;
-    uint CIE_BG_Y = CIE_DIAGRAM == CIE_1931
-                  ? CIE_1931_BG_Y
-                  : CIE_1976_BG_Y;
-
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
@@ -643,9 +632,11 @@ void HDR_analysis(
       int2 currentSamplerCoords = int2(current_x_coord,
                                        current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
-      float3 currentPixelToDisplay = CIE_DIAGRAM == CIE_1931
-                                   ? tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb
-                                   : tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb;
+#if (CIE_DIAGRAM == CIE_1931)
+      float3 currentPixelToDisplay = tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb;
+#else
+      float3 currentPixelToDisplay = tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb;
+#endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
@@ -1101,19 +1092,23 @@ technique lilium__hdr_analysis
 
 #if (ENABLE_CIE_FEATURES == YES)
 
+#if (CIE_DIAGRAM == CIE_1931)
   pass Copy_CIE_1931_BG
   {
     VertexShader = PostProcessVS;
      PixelShader = Copy_CIE_1931_BG;
-    RenderTarget = CIE_1931_Current;
+    RenderTarget = Texture_CIE_1931_Current;
   }
+#endif
 
+#if (CIE_DIAGRAM == CIE_1976)
   pass Copy_CIE_1976_BG
   {
     VertexShader = PostProcessVS;
      PixelShader = Copy_CIE_1976_BG;
-    RenderTarget = CIE_1976_Current;
+    RenderTarget = Texture_CIE_1976_Current;
   }
+#endif
 
   pass Generate_CIE_Diagram
   {
@@ -1168,9 +1163,9 @@ technique lilium__hdr_analysis
 
   pass RenderBrightnessHistogramToScale
   {
-    VertexShader       = PostProcessVS;
-     PixelShader       = RenderBrightnessHistogramToScale;
-    RenderTarget       = Texture_Brightness_Histogram_Final;
+    VertexShader = PostProcessVS;
+     PixelShader = RenderBrightnessHistogramToScale;
+    RenderTarget = Texture_Brightness_Histogram_Final;
   }
 
   pass CopyShowValues
