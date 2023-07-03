@@ -514,112 +514,111 @@ float3 Heatmap_RGB_Values(
 }
 
 
-static const uint TEXTURE_AEMONY_WIDTH  = 1820;
-static const uint TEXTURE_AEMONY_HEIGHT = 1024;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  = 1820;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT = 1024;
 
-static const float TEXTURE_AEMONY_BUFFER_WIDTH_FACTOR  = (BUFFER_WIDTH  - 1.f) / (TEXTURE_AEMONY_WIDTH - 1.f);
-static const float TEXTURE_AEMONY_BUFFER_HEIGHT_FACTOR = (BUFFER_HEIGHT - 1.f) / (TEXTURE_AEMONY_HEIGHT - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR  = (BUFFER_WIDTH  - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_HEIGHT_FACTOR = (BUFFER_HEIGHT - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
 
-static const uint TEXTURE_AEMONY_SCALE_X = 2067;
-static const uint TEXTURE_AEMONY_SCALE_Y = 1149;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X = 2067;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y = 1149;
 
-static const float TEXTURE_AEMONY_SCALE_FACTOR_X = (TEXTURE_AEMONY_SCALE_X - 1.f) / (TEXTURE_AEMONY_WIDTH  - 1.f);
-static const float TEXTURE_AEMONY_SCALE_FACTOR_Y = (TEXTURE_AEMONY_SCALE_Y - 1.f) / (TEXTURE_AEMONY_HEIGHT - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
 
-texture2D Texture_Aemony
+texture2D Texture_Brightness_Histogram
 <
   pooled = true;
 >
 {
-  Width     = TEXTURE_AEMONY_WIDTH;
-  Height    = TEXTURE_AEMONY_HEIGHT;
+  Width     = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
+  Height    = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
   Format    = RGBA16;
-  MipLevels = 3;
 };
 
-sampler2D Sampler_Aemony
+sampler2D Sampler_Brightness_Histogram
 {
-  Texture = Texture_Aemony;
+  Texture = Texture_Brightness_Histogram;
 };
 
-storage2D Storage_Aemony
+storage2D Storage_Brightness_Histogram
 {
-  Texture = Texture_Aemony;
+  Texture = Texture_Brightness_Histogram;
 };
 
-texture2D Texture_Aemony_Scale
+texture2D Texture_Brightness_Histogram_Scale
 <
-  source = "lilium__aemony_scale.png";
+  source = "lilium__brightness_histogram_scale.png";
   pooled = true;
 >
 {
-  Width  = TEXTURE_AEMONY_SCALE_X;
-  Height = TEXTURE_AEMONY_SCALE_Y;
+  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
+  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
 };
 
-sampler2D Sampler_Aemony_Scale
+sampler2D Sampler_Brightness_Histogram_Scale
 {
-  Texture = Texture_Aemony_Scale;
+  Texture = Texture_Brightness_Histogram_Scale;
 };
 
-texture2D Texture_Aemony_Final
+texture2D Texture_Brightness_Histogram_Final
 <
   pooled = true;
 >
 {
-  Width  = TEXTURE_AEMONY_SCALE_X;
-  Height = TEXTURE_AEMONY_SCALE_Y;
+  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
+  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
   Format = RGBA16;
 };
 
-sampler2D Sampler_Aemony_Final
+sampler2D Sampler_Brightness_Histogram_Final
 {
-  Texture = Texture_Aemony_Final;
+  Texture = Texture_Brightness_Histogram_Final;
 };
 
-void ClearAemony(
+void ClearBrightnessHistogramTexture(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
-  out float4 Aemony   : SV_TARGET)
+  out float4 Out      : SV_TARGET)
 {
   return;
 }
 
-void ComputeAemony(uint3 ID : SV_DispatchThreadID)
+void ComputeBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
 {
   for (uint y = 0; y < BUFFER_HEIGHT; y++)
   {
     const float curPixelCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, y)).x;
 
     const int yCoord =
-     round(TEXTURE_AEMONY_HEIGHT - (CSP::TRC::ToPqFromNits(curPixelCLL) * TEXTURE_AEMONY_HEIGHT));
+     round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (CSP::TRC::ToPqFromNits(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
 
-    tex2Dstore(Storage_Aemony,
-               int2(round(ID.x / TEXTURE_AEMONY_BUFFER_WIDTH_FACTOR), yCoord),
+    tex2Dstore(Storage_Brightness_Histogram,
+               int2(round(ID.x / TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR), yCoord),
                float4(
                Heatmap_RGB_Values(curPixelCLL, HEATMAP_MODE_10000, 1.f, true), 1.f));
   }
 }
 
-void ScaleAemony(
+void RenderBrightnessHistogramToScale(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
-  out float4 Aemony   : SV_TARGET)
+  out float4 Out      : SV_TARGET)
 {
-  const int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_AEMONY_SCALE_X - 0.5f - 187.f),
-                                    round(TexCoord.y * TEXTURE_AEMONY_SCALE_Y - 0.5f -  64.f));
+  const int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X - 0.5f - 187.f),
+                                    round(TexCoord.y * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y - 0.5f -  64.f));
 
-  if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_AEMONY_WIDTH
-   && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_AEMONY_HEIGHT)
+  if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH
+   && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)
   {
-    Aemony = float4(tex2D(Sampler_Aemony_Scale, TexCoord).rgb
-                  + tex2Dfetch(Sampler_Aemony, histogramCoords).rgb
+    Out = float4(tex2D(Sampler_Brightness_Histogram_Scale, TexCoord).rgb
+                  + tex2Dfetch(Sampler_Brightness_Histogram, histogramCoords).rgb
              , 1.f);
     return;
   }
   else
   {
-    Aemony = tex2D(Sampler_Aemony_Scale, TexCoord);
+    Out = tex2D(Sampler_Brightness_Histogram_Scale, TexCoord);
     return;
   }
 }

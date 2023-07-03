@@ -199,6 +199,24 @@ uniform float HEATMAP_WHITEPOINT
   ui_step     = 0.5f;
 > = 80.f;
 
+uniform bool SHOW_BRIGHTNESS_HISTOGRAM
+<
+  ui_category = "brightness histogram";
+  ui_label    = "show brightness histogram";
+  ui_tooltip  = "bightness histogram paid for by Aemony";
+> = false;
+
+uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
+<
+  ui_category = "brightness histogram";
+  ui_label    = "brightness histogram brightness";
+  ui_tooltip  = "bightness histogram paid for by Aemony";
+  ui_type     = "slider";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
+> = 80.f;
+
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
 <
@@ -272,7 +290,8 @@ uniform float BELOW_NITS_AS_BLACK
   static const bool  SHOW_HEATMAP                    = false;
   static const uint  HEATMAP_CUTOFF_POINT            = 0;
   static const float HEATMAP_WHITEPOINT              = 0.f;
-  static const bool  HEATMAP_SDR                     = false;
+  static const bool  SHOW_BRIGHTNESS_HISTOGRAM       = false;
+  static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS = 0.f;
   static const bool  HIGHLIGHT_NIT_RANGE             = false;
   static const float HIGHLIGHT_NIT_RANGE_START_POINT = 0.f;
   static const float HIGHLIGHT_NIT_RANGE_END_POINT   = 0.f;
@@ -300,25 +319,6 @@ uniform float TEST_THINGY
   ui_step     = 0.001f;
 > = 0.f;
 #endif
-
-
-uniform bool AemonyBool
-<
-  ui_category = "Aemony";
-  ui_label    = "Aemony";
-  ui_tooltip  = "Aemony";
-> = false;
-
-uniform float AemonyBrightness
-<
-  ui_category = "Aemony";
-  ui_label    = "Aemony Brightness";
-  ui_tooltip  = "Aemony Brightness";
-  ui_type     = "slider";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 0.5f;
-> = 80.f;
 
 
 //void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
@@ -908,46 +908,46 @@ void HDR_analysis(
     }
 
 
-  if (AemonyBool)
+  if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
 
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
-    const int2 aemonyTextureDisplaySize = int2(round(TEXTURE_AEMONY_SCALE_FACTOR_X * 1280.f),
-                                               round(TEXTURE_AEMONY_SCALE_FACTOR_Y *  720.f));
+    const int2 textureDisplaySize = int2(round(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X * 1280.f),
+                                         round(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y *  720.f));
 
     // draw the histogram in the bottom right corner
-    if (current_x_coord >= (BUFFER_WIDTH  - aemonyTextureDisplaySize.x)
-     && current_y_coord >= (BUFFER_HEIGHT - aemonyTextureDisplaySize.y))
+    if (current_x_coord >= (BUFFER_WIDTH  - textureDisplaySize.x)
+     && current_y_coord >= (BUFFER_HEIGHT - textureDisplaySize.y))
     {
       // get coords for the sampler
       float2 currentSamplerCoords = float2(
-        (aemonyTextureDisplaySize.x - (BUFFER_WIDTH - current_x_coord)  + 0.5f) / aemonyTextureDisplaySize.x,
-        (current_y_coord - (BUFFER_HEIGHT - aemonyTextureDisplaySize.y) + 0.5f) / aemonyTextureDisplaySize.y);
+        (textureDisplaySize.x - (BUFFER_WIDTH - current_x_coord)  + 0.5f) / textureDisplaySize.x,
+        (current_y_coord - (BUFFER_HEIGHT - textureDisplaySize.y) + 0.5f) / textureDisplaySize.y);
 
       float3 currentPixelToDisplay =
-        tex2D(Sampler_Aemony_Final, currentSamplerCoords, BUFFER_WIDTH / aemonyTextureDisplaySize.x).rgb;
+        tex2D(Sampler_Brightness_Histogram_Final, currentSamplerCoords).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
       Output = float4(
-        currentPixelToDisplay * (AemonyBrightness / 80.f), 1.f);
+        currentPixelToDisplay * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 80.f), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
 
       Output = float4(
-        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 10000.f)), 1.f);
+        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 10000.f)), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
       Output = float4(
-        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 1000.f)), 1.f);
+        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 1000.f)), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
       Output = float4(
-        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (AemonyBrightness / 100.f), 1.f);
+        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 100.f), 1.f);
 
 #endif
     }
@@ -1134,26 +1134,26 @@ technique lilium__hdr_analysis
 
 #endif
 
-  pass ClearAemony
+  pass ClearBrightnessHistogramTexture
   {
     VertexShader       = PostProcessVS;
-     PixelShader       = ClearAemony;
-    RenderTarget       = Texture_Aemony;
+     PixelShader       = ClearBrightnessHistogramTexture;
+    RenderTarget       = Texture_Brightness_Histogram;
     ClearRenderTargets = true;
   }
 
-  pass ComputeAemony
+  pass ComputeBrightnessHistogram
   {
-    ComputeShader = ComputeAemony <THREAD_SIZE0, 1>;
+    ComputeShader = ComputeBrightnessHistogram <THREAD_SIZE0, 1>;
     DispatchSizeX = DISPATCH_X0;
     DispatchSizeY = 1;
   }
 
-  pass ScaleAemony
+  pass RenderBrightnessHistogramToScale
   {
     VertexShader       = PostProcessVS;
-     PixelShader       = ScaleAemony;
-    RenderTarget       = Texture_Aemony_Final;
+     PixelShader       = RenderBrightnessHistogramToScale;
+    RenderTarget       = Texture_Brightness_Histogram_Final;
   }
 
   pass CopyShowValues
