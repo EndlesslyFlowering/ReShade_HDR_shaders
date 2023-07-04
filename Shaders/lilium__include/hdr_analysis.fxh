@@ -136,7 +136,7 @@ storage2D Storage_Max_CLL_0_Dot_01_Percent
 #if (CIE_DIAGRAM == CIE_1931)
 texture2D Texture_CIE_1931
 <
-  source = "lilium__cie_1931_linear.png";
+  source = "lilium__cie_1931.png";
   pooled = true;
 >
 {
@@ -151,7 +151,7 @@ sampler2D Sampler_CIE_1931
 
 texture2D Texture_CIE_1931_Black_BG
 <
-  source = "lilium__cie_1931_black_bg_linear.png";
+  source = "lilium__cie_1931_black_bg.png";
   pooled = true;
 >
 {
@@ -193,7 +193,7 @@ storage2D Storage_CIE_1931_Current
 #define CIE_1976_BG_Y 687
 texture2D Texture_CIE_1976
 <
-  source = "lilium__cie_1976_ucs_linear.png";
+  source = "lilium__cie_1976_ucs.png";
   pooled = true;
 >
 {
@@ -208,7 +208,7 @@ sampler2D Sampler_CIE_1976
 
 texture2D Texture_CIE_1976_Black_BG
 <
-  source = "lilium__cie_1976_ucs_black_bg_linear.png";
+  source = "lilium__cie_1976_ucs_black_bg.png";
   pooled = true;
 >
 {

@@ -633,9 +633,9 @@ void HDR_analysis(
                                        current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
 
 #if (CIE_DIAGRAM == CIE_1931)
-      float3 currentPixelToDisplay = tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb;
+      float3 currentPixelToDisplay = pow(tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb, 2.2f);
 #else
-      float3 currentPixelToDisplay = tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb;
+      float3 currentPixelToDisplay = pow(tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb, 2.2f);
 #endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
