@@ -13,6 +13,8 @@
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
 // - maxCLL adapation: fade to actual maxCLL over time (should read time to render per frame for this); make adjustable
 
+#undef CIE_DIAGRAM
+#undef IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION
 
 #ifndef SHOW_ADAPTIVE_MAXCLL
   #define SHOW_ADAPTIVE_MAXCLL NO
