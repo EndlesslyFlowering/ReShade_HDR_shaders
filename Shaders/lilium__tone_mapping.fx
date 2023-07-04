@@ -275,51 +275,6 @@ uniform float DEBUG_MAX_CLL
 #endif
 
 
-texture2D Texture_Adaptive_CLL_Value0
-<
-  pooled = true;
->
-{
-  Width  = 1;
-  Height = 1;
-
-  Format = R32F;
-};
-
-sampler2D Sampler_Adaptive_CLL_Value0
-{
-  Texture = Texture_Adaptive_CLL_Value0;
-};
-
-storage2D Storage_Adaptive_CLL_Value0
-{
-  Texture = Texture_Adaptive_CLL_Value0;
-
-  MipLevel = 0;
-};
-
-texture2D Texture_Adaptive_CLL_Value1
-<
-  pooled = true;
->
-{
-  Width  = 1;
-  Height = 1;
-
-  Format = R32F;
-};
-
-sampler2D Sampler_Adaptive_CLL_Value1
-{
-  Texture = Texture_Adaptive_CLL_Value1;
-};
-
-storage2D Storage_Adaptive_CLL_Value1
-{
-  Texture = Texture_Adaptive_CLL_Value1;
-};
-
-
 //static const uint numberOfAdaptiveValues = 1000;
 //texture2D Texture_Adaptive_CLL_Values
 //{
@@ -363,7 +318,7 @@ void ToneMapping(
     }
     break;
     case 1: {
-      maxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0, int2(0, 0)).r;
+      maxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
     }
     break;
   }
@@ -519,12 +474,10 @@ void ToneMapping(
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
-  float actualMaxCLL    = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
-  float adaptiveMaxCLL0 = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    int2(0, 0)).r;
-  float adaptiveMaxCLL1 = tex2Dfetch(Sampler_Adaptive_CLL_Value1,    int2(0, 0)).r;
-  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f),        30, 1, TexCoord, 6, actualMaxCLL,    Output, FONT_BRIGHTNESS);
-  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, 6, adaptiveMaxCLL0, Output, FONT_BRIGHTNESS);
-  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 60.f), 30, 1, TexCoord, 6, adaptiveMaxCLL1, Output, FONT_BRIGHTNESS);
+  float actualMaxCLL   = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
+  float adaptiveMaxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value,     int2(0, 0)).r;
+  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f),        30, 1, TexCoord, 6, actualMaxCLL,   Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, 6, adaptiveMaxCLL, Output, FONT_BRIGHTNESS);
   //DrawTextDigit(float2(100.f, 590.f), 30, 1, TexCoord, 0, CLL_MODE, Output, FONT_BRIGHTNESS);
 
 #endif
@@ -534,8 +487,8 @@ void ToneMapping(
 
 void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCLL      = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
-  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value0,    int2(0, 0)).r;
+  const float currentMaxCLL      = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
 
   const float absFrametime = abs(FRAMETIME);
 
@@ -552,17 +505,9 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
   const float AdaptiveCLL = currentAdaptiveCLL + adapt;
 
-  tex2Dstore(Storage_Adaptive_CLL_Value1, int2(0, 0), AdaptiveCLL);
-}
+  barrier();
 
-void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
-{
-  float currentAdaptiveCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value1, int2(0, 0)).r;
-  currentAdaptiveCLL = currentAdaptiveCLL < MAX_CLL_CAP
-                     ? currentAdaptiveCLL
-                     : MAX_CLL_CAP;
-
-  tex2Dstore(Storage_Adaptive_CLL_Value0, int2(0, 0), currentAdaptiveCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_ADAPTIVE_CLL, AdaptiveCLL);
 }
 
 
@@ -595,13 +540,6 @@ void CopyAdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 //  pass AdaptiveCLL
 //  {
 //    ComputeShader = AdaptiveCLL <1, 1>;
-//    DispatchSizeX = 1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CopyAdaptiveCLL
-//  {
-//    ComputeShader = CopyAdaptiveCLL <1, 1>;
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
@@ -643,13 +581,6 @@ technique lilium__tone_mapping_adaptive_maxCLL
   pass AdaptiveCLL
   {
     ComputeShader = AdaptiveCLL <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
-  pass CopyAdaptiveCLL
-  {
-    ComputeShader = CopyAdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }

@@ -93,49 +93,6 @@ sampler2D Sampler_CLL_Values
   Texture = Texture_CLL_Values;
 };
 
-//  max = (0,0); max_99.99% = (1,0); avg = (2,0); min = (3,0)
-texture2D Texture_Max_Avg_Min_CLL_Values
-<
-  pooled = true;
->
-{
-  Width  = 4;
-  Height = 1;
-
-  Format = R32F;
-};
-
-sampler2D Sampler_Max_Avg_Min_CLL_Values
-{
-  Texture = Texture_Max_Avg_Min_CLL_Values;
-};
-
-storage2D Storage_Max_Avg_Min_CLL_Values
-{
-  Texture = Texture_Max_Avg_Min_CLL_Values;
-};
-
-texture2D Texture_Intermediate_CLL_Values
-<
-  pooled = true;
->
-{
-  Width  = BUFFER_WIDTH;
-  Height = 6;
-
-  Format = R32F;
-};
-
-sampler2D Sampler_Intermediate_CLL_Values
-{
-  Texture = Texture_Intermediate_CLL_Values;
-};
-
-storage2D Storage_Intermediate_CLL_Values
-{
-  Texture = Texture_Intermediate_CLL_Values;
-};
-
 #if 0
 static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
 static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
@@ -162,26 +119,6 @@ storage2D Storage_Max_CLL_0_Dot_01_Percent
 };
 #endif
 
-texture2D Texture_Final_4
-<
-  pooled = true;
->
-{
-  Width  = 6;
-  Height = 2;
-
-  Format = R32F;
-};
-
-sampler2D Sampler_Final_4
-{
-  Texture = Texture_Final_4;
-};
-
-storage2D Storage_Final_4
-{
-  Texture = Texture_Final_4;
-};
 
 #define CIE_1931 0
 #define CIE_1976 1
@@ -323,72 +260,163 @@ sampler2D Sampler_CSPs
   MipLODBias = 0;
 };
 
-texture2D Texture_CSP_Counter
+
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  = 1820;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT = 1024;
+
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR  = (BUFFER_WIDTH  - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_HEIGHT_FACTOR = (BUFFER_HEIGHT - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
+
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X = 2067;
+static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y = 1149;
+
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  - 1.f);
+static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
+
+texture2D Texture_Brightness_Histogram
 <
   pooled = true;
 >
 {
-  Width  = BUFFER_WIDTH;
-  Height = 6;
-
-  Format = R16;
+  Width     = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
+  Height    = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
+  Format    = RGBA16;
 };
 
-sampler2D Sampler_CSP_Counter
+sampler2D Sampler_Brightness_Histogram
 {
-  Texture    = Texture_CSP_Counter;
-  MipLODBias = 0;
+  Texture = Texture_Brightness_Histogram;
 };
 
-storage2D Storage_CSP_Counter
+storage2D Storage_Brightness_Histogram
 {
-  Texture  = Texture_CSP_Counter;
+  Texture = Texture_Brightness_Histogram;
 };
 
-texture2D Texture_CSP_Counter_Final
+texture2D Texture_Brightness_Histogram_Scale
+<
+  source = "lilium__brightness_histogram_scale.png";
+  pooled = true;
+>
+{
+  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
+  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
+};
+
+sampler2D Sampler_Brightness_Histogram_Scale
+{
+  Texture = Texture_Brightness_Histogram_Scale;
+};
+
+texture2D Texture_Brightness_Histogram_Final
 <
   pooled = true;
 >
 {
-  Width  = 1;
-  Height = 6;
-
-  Format = R32F;
+  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
+  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
+  Format = RGBA16;
 };
 
-sampler2D Sampler_CSP_Counter_Final
+sampler2D Sampler_Brightness_Histogram_Final
 {
-  Texture    = Texture_CSP_Counter_Final;
-  MipLODBias = 0;
+  Texture = Texture_Brightness_Histogram_Final;
 };
 
-storage2D Storage_CSP_Counter_Final
-{
-  Texture = Texture_CSP_Counter_Final;
-};
 
-//  max = (0, 0); avg = (1, 0); min = (2, 0)
-// (0, 1) to (5, 1) = Texture_CSPs
-texture2D Texture_Show_Values
+// consolidated texture start
+
+#define INTERMEDIATE_CLL_VALUES_X_OFFSET 0
+#define INTERMEDIATE_CLL_VALUES_Y_OFFSET 0
+
+
+#define CSP_COUNTER_X_OFFSET 0
+#define CSP_COUNTER_Y_OFFSET 6
+
+
+// (12) 4x max, avg and min CLL
+#define FINAL_4_CLL_VALUES_X_OFFSET 0
+#define FINAL_4_CLL_VALUES_Y_OFFSET 12
+static const int2 COORDS_FINAL_4_MAXCLL_VALUE0 = int2( 0 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_AVGCLL_VALUE0 = int2( 1 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MINCLL_VALUE0 = int2( 2 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MAXCLL_VALUE1 = int2( 3 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_AVGCLL_VALUE1 = int2( 4 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MINCLL_VALUE1 = int2( 5 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MAXCLL_VALUE2 = int2( 6 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_AVGCLL_VALUE2 = int2( 7 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MINCLL_VALUE2 = int2( 8 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MAXCLL_VALUE3 = int2( 9 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_AVGCLL_VALUE3 = int2(10 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_FINAL_4_MINCLL_VALUE3 = int2(11 + FINAL_4_CLL_VALUES_X_OFFSET, FINAL_4_CLL_VALUES_Y_OFFSET);
+
+
+// (4) max, max 99.99%, avg and min CLL
+#define MAX_AVG_MIN_CLL_VALUES_X_OFFSET 12
+#define MAX_AVG_MIN_CLL_VALUES_Y_OFFSET 12
+static const int2 COORDS_MAXCLL_VALUE   = int2(0 + MAX_AVG_MIN_CLL_VALUES_X_OFFSET, MAX_AVG_MIN_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_MAXCLL99_VALUE = int2(1 + MAX_AVG_MIN_CLL_VALUES_X_OFFSET, MAX_AVG_MIN_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_AVGCLL_VALUE   = int2(2 + MAX_AVG_MIN_CLL_VALUES_X_OFFSET, MAX_AVG_MIN_CLL_VALUES_Y_OFFSET);
+static const int2 COORDS_MINCLL_VALUE   = int2(3 + MAX_AVG_MIN_CLL_VALUES_X_OFFSET, MAX_AVG_MIN_CLL_VALUES_Y_OFFSET);
+
+
+// (6) CSP counter for BT.709, DCI-P3, BT.2020, AP1, AP0 and invalid
+#define CSP_COUNTER_FINAL_X_OFFSET 16
+#define CSP_COUNTER_FINAL_Y_OFFSET 12
+static const int2 COORDS_CSP_PERCENTAGE_BT709   = int2(0 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_DCI_P3  = int2(1 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_BT2020  = int2(2 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_AP1     = int2(3 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_AP0     = int2(4 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_INVALID = int2(5 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+
+
+// (9) show values for max, avg and min CLL plus CSP % for BT.709, DCI-P3, BT.2020, AP1, AP0 and invalid
+#define SHOW_VALUES_X_OFFSET 22
+#define SHOW_VALUES_Y_OFFSET 12
+static const int2 COORDS_SHOW_MAXCLL             = int2(0 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_AVGCLL             = int2(1 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_MINCLL             = int2(2 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_BT709   = int2(3 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_DCI_P3  = int2(4 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_BT2020  = int2(5 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_AP1     = int2(6 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_AP0     = int2(7 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_INVALID = int2(8 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+
+
+// (1) adaptive CLL for tone mapping
+#define ADAPTIVE_CLL_X_OFFSET 31
+#define ADAPTIVE_CLL_Y_OFFSET 12
+static const int2 COORDS_ADAPTIVE_CLL = int2(ADAPTIVE_CLL_X_OFFSET, ADAPTIVE_CLL_Y_OFFSET);
+
+
+#define CONSOLIDATED_TEXTURE_SIZE_WIDTH  BUFFER_WIDTH
+#define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 13
+
+
+texture2D Texture_Consolidated
 <
   pooled = true;
 >
 {
-  Width  = 6;
-  Height = 2;
-
-  Format = R32F;
+  Width     = CONSOLIDATED_TEXTURE_SIZE_WIDTH;
+  Height    = CONSOLIDATED_TEXTURE_SIZE_HEIGHT;
+  Format    = R32F;
 };
 
-sampler2D Sampler_Show_Values
+sampler2D Sampler_Consolidated
 {
-  Texture = Texture_Show_Values;
+  Texture = Texture_Consolidated;
 };
 
-storage2D Storage_Show_Values
+storage2D Storage_Consolidated
 {
-  Texture = Texture_Show_Values;
+  Texture = Texture_Consolidated;
 };
+
+// consolidated texture end
+
 
 #define HEATMAP_MODE_10000 0
 #define HEATMAP_MODE_1000  1
@@ -526,68 +554,6 @@ float3 Heatmap_RGB_Values(
 }
 
 
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  = 1820;
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT = 1024;
-
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR  = (BUFFER_WIDTH  - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH - 1.f);
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_HEIGHT_FACTOR = (BUFFER_HEIGHT - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
-
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X = 2067;
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y = 1149;
-
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  - 1.f);
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y = (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
-
-texture2D Texture_Brightness_Histogram
-<
-  pooled = true;
->
-{
-  Width     = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
-  Height    = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
-  Format    = RGBA16;
-};
-
-sampler2D Sampler_Brightness_Histogram
-{
-  Texture = Texture_Brightness_Histogram;
-};
-
-storage2D Storage_Brightness_Histogram
-{
-  Texture = Texture_Brightness_Histogram;
-};
-
-texture2D Texture_Brightness_Histogram_Scale
-<
-  source = "lilium__brightness_histogram_scale.png";
-  pooled = true;
->
-{
-  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
-  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
-};
-
-sampler2D Sampler_Brightness_Histogram_Scale
-{
-  Texture = Texture_Brightness_Histogram_Scale;
-};
-
-texture2D Texture_Brightness_Histogram_Final
-<
-  pooled = true;
->
-{
-  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_X;
-  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_Y;
-  Format = RGBA16;
-};
-
-sampler2D Sampler_Brightness_Histogram_Final
-{
-  Texture = Texture_Brightness_Histogram_Final;
-};
-
 void ClearBrightnessHistogramTexture(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
@@ -635,6 +601,7 @@ void RenderBrightnessHistogramToScale(
   }
 }
 
+
 void CalcCLL(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
@@ -669,6 +636,14 @@ void CalcCLL(
          : 0.f;
 }
 
+
+#define COORDS_INTERMEDIATE_MAXCLL(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 0 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_AVGCLL(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 1 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_MINCLL(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 2 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+
 // per column first
 void GetMaxAvgMinCLL0(uint3 ID : SV_DispatchThreadID)
 {
@@ -698,9 +673,9 @@ void GetMaxAvgMinCLL0(uint3 ID : SV_DispatchThreadID)
 
     avgCLL /= BUFFER_HEIGHT;
 
-    tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 0), maxCLL);
-    tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 1), avgCLL);
-    tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 2), minCLL);
+    tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL(ID.x), maxCLL);
+    tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_AVGCLL(ID.x), avgCLL);
+    tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MINCLL(ID.x), minCLL);
 
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 
@@ -717,9 +692,9 @@ void GetMaxAvgMinCLL1(uint3 ID : SV_DispatchThreadID)
 
   for (uint x = 0; x < BUFFER_WIDTH; x++)
   {
-    const float curMaxCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
-    const float curAvgCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1)).r;
-    const float curMinCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 2)).r;
+    const float curMaxCLL = tex2Dfetch(Sampler_Consolidated, int2(COORDS_INTERMEDIATE_MAXCLL(x))).r;
+    const float curAvgCLL = tex2Dfetch(Sampler_Consolidated, int2(COORDS_INTERMEDIATE_AVGCLL(x))).r;
+    const float curMinCLL = tex2Dfetch(Sampler_Consolidated, int2(COORDS_INTERMEDIATE_MINCLL(x))).r;
 
     if (curMaxCLL > maxCLL)
       maxCLL = curMaxCLL;
@@ -732,9 +707,11 @@ void GetMaxAvgMinCLL1(uint3 ID : SV_DispatchThreadID)
 
   avgCLL /= BUFFER_WIDTH;
 
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(0, 0), maxCLL);
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(1, 0), avgCLL);
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(2, 0), minCLL);
+  barrier();
+
+  tex2Dstore(Storage_Consolidated, COORDS_MAXCLL_VALUE, maxCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_AVGCLL_VALUE, avgCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_MINCLL_VALUE, minCLL);
 }
 
 
@@ -758,7 +735,7 @@ void GetMaxCLL0(uint3 ID : SV_DispatchThreadID)
         maxCLL = curCLL;
     }
 
-    tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 0), maxCLL);
+    tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL(ID.x), maxCLL);
 
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 
@@ -773,15 +750,34 @@ void GetMaxCLL1(uint3 ID : SV_DispatchThreadID)
 
   for (uint x = 0; x < BUFFER_WIDTH; x++)
   {
-    const float curCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
+    const float curCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL(x)).r;
 
     if (curCLL > maxCLL)
       maxCLL = curCLL;
   }
 
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(0, 0), maxCLL);
+  barrier();
+
+  tex2Dstore(Storage_Consolidated, COORDS_MAXCLL_VALUE, maxCLL);
 }
 
+#undef COORDS_INTERMEDIATE_MAXCLL
+#undef COORDS_INTERMEDIATE_AVGCLL
+#undef COORDS_INTERMEDIATE_MINCLL
+
+
+#define COORDS_INTERMEDIATE_MAXCLL0(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 0 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_AVGCLL0(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 1 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_MINCLL0(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 2 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_MAXCLL1(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 3 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_AVGCLL1(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 4 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
+#define COORDS_INTERMEDIATE_MINCLL1(X) \
+  int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 5 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
 
 void GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 {
@@ -813,9 +809,9 @@ void GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= HEIGHT0;
 
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 0), maxCLL);
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 1), avgCLL);
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 2), minCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(ID.x), maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_AVGCLL0(ID.x), avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MINCLL0(ID.x), minCLL);
     }
     else
     {
@@ -838,9 +834,9 @@ void GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= HEIGHT1;
 
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 3), maxCLL);
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 4), avgCLL);
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, 5), minCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(ID.x), maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_AVGCLL1(ID.x), avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MINCLL1(ID.x), minCLL);
     }
 
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
@@ -862,9 +858,9 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curMaxCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
-        const float curAvgCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1)).r;
-        const float curMinCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 2)).r;
+        const float curMaxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
+        const float curAvgCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_AVGCLL0(x)).r;
+        const float curMinCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MINCLL0(x)).r;
 
         if (curMaxCLL > maxCLL)
           maxCLL = curMaxCLL;
@@ -877,9 +873,11 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= WIDTH0;
 
-      tex2Dstore(Storage_Final_4, int2(0, 0), maxCLL);
-      tex2Dstore(Storage_Final_4, int2(2, 0), avgCLL);
-      tex2Dstore(Storage_Final_4, int2(4, 0), minCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE0, maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE0, avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MINCLL_VALUE0, minCLL);
     }
     else
     {
@@ -889,9 +887,9 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curMaxCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 3)).r;
-        const float curAvgCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 4)).r;
-        const float curMinCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 5)).r;
+        const float curMaxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
+        const float curAvgCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_AVGCLL1(x)).r;
+        const float curMinCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MINCLL1(x)).r;
 
         if (curMaxCLL > maxCLL)
           maxCLL = curMaxCLL;
@@ -904,9 +902,11 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= WIDTH0;
 
-      tex2Dstore(Storage_Final_4, int2(0, 1), maxCLL);
-      tex2Dstore(Storage_Final_4, int2(2, 1), avgCLL);
-      tex2Dstore(Storage_Final_4, int2(4, 1), minCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE1, maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE1, avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MINCLL_VALUE1, minCLL);
     }
   }
   else
@@ -919,9 +919,9 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curMaxCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
-        const float curAvgCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1)).r;
-        const float curMinCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 2)).r;
+        const float curMaxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
+        const float curAvgCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_AVGCLL0(x)).r;
+        const float curMinCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MINCLL0(x)).r;
 
         if (curMaxCLL > maxCLL)
           maxCLL = curMaxCLL;
@@ -934,9 +934,11 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= WIDTH1;
 
-      tex2Dstore(Storage_Final_4, int2(1, 0), maxCLL);
-      tex2Dstore(Storage_Final_4, int2(3, 0), avgCLL);
-      tex2Dstore(Storage_Final_4, int2(5, 0), minCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE2, maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE2, avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MINCLL_VALUE2, minCLL);
     }
     else
     {
@@ -946,9 +948,9 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curMaxCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 3)).r;
-        const float curAvgCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 4)).r;
-        const float curMinCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 5)).r;
+        const float curMaxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
+        const float curAvgCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_AVGCLL1(x)).r;
+        const float curMinCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MINCLL1(x)).r;
 
         if (curMaxCLL > maxCLL)
           maxCLL = curMaxCLL;
@@ -961,42 +963,45 @@ void GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       avgCLL /= WIDTH1;
 
-      tex2Dstore(Storage_Final_4, int2(1, 1), maxCLL);
-      tex2Dstore(Storage_Final_4, int2(3, 1), avgCLL);
-      tex2Dstore(Storage_Final_4, int2(5, 1), minCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE3, maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE3, avgCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MINCLL_VALUE3, minCLL);
     }
   }
 }
 
 void GetFinalMaxAvgMinCLL_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  const float maxCLL0 = tex2Dfetch(Storage_Final_4, int2(0, 0)).r;
-  const float maxCLL1 = tex2Dfetch(Storage_Final_4, int2(1, 0)).r;
-  const float maxCLL2 = tex2Dfetch(Storage_Final_4, int2(0, 1)).r;
-  const float maxCLL3 = tex2Dfetch(Storage_Final_4, int2(1, 1)).r;
+  const float maxCLL0 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE0).r;
+  const float maxCLL1 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE1).r;
+  const float maxCLL2 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE2).r;
+  const float maxCLL3 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE3).r;
 
   const float maxCLL = max(max(max(maxCLL0, maxCLL1), maxCLL2), maxCLL3);
 
 
-  const float avgCLL0 = tex2Dfetch(Storage_Final_4, int2(2, 0)).r;
-  const float avgCLL1 = tex2Dfetch(Storage_Final_4, int2(3, 0)).r;
-  const float avgCLL2 = tex2Dfetch(Storage_Final_4, int2(2, 1)).r;
-  const float avgCLL3 = tex2Dfetch(Storage_Final_4, int2(3, 1)).r;
+  const float avgCLL0 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE0).r;
+  const float avgCLL1 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE1).r;
+  const float avgCLL2 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE2).r;
+  const float avgCLL3 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_AVGCLL_VALUE3).r;
 
   const float avgCLL = (avgCLL0 + avgCLL1 + avgCLL2 + avgCLL3) / 4.f;
 
 
-  const float minCLL0 = tex2Dfetch(Storage_Final_4, int2(4, 0)).r;
-  const float minCLL1 = tex2Dfetch(Storage_Final_4, int2(5, 0)).r;
-  const float minCLL2 = tex2Dfetch(Storage_Final_4, int2(4, 1)).r;
-  const float minCLL3 = tex2Dfetch(Storage_Final_4, int2(5, 1)).r;
+  const float minCLL0 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MINCLL_VALUE0).r;
+  const float minCLL1 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MINCLL_VALUE1).r;
+  const float minCLL2 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MINCLL_VALUE2).r;
+  const float minCLL3 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MINCLL_VALUE3).r;
 
   const float minCLL = min(min(min(minCLL0, minCLL1), minCLL2), minCLL3);
 
+  barrier();
 
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(0, 0), maxCLL);
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(1, 0), avgCLL);
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(2, 0), minCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_MAXCLL_VALUE, maxCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_AVGCLL_VALUE, avgCLL);
+  tex2Dstore(Storage_Consolidated, COORDS_MINCLL_VALUE, minCLL);
 }
 
 
@@ -1021,7 +1026,7 @@ void GetMaxCLL0_NEW(uint3 ID : SV_DispatchThreadID)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, ID.y), maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(ID.x), maxCLL);
     }
     else
     {
@@ -1035,7 +1040,7 @@ void GetMaxCLL0_NEW(uint3 ID : SV_DispatchThreadID)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Intermediate_CLL_Values, int2(ID.x, ID.y), maxCLL);
+      tex2Dstore(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(ID.x), maxCLL);
     }
 
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
@@ -1055,13 +1060,15 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
+        const float curCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Final_4, int2(ID.x, ID.y), maxCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE0, maxCLL);
     }
     else
     {
@@ -1069,13 +1076,15 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 3)).r;
+        const float curCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Final_4, int2(ID.x, ID.y), maxCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE1, maxCLL);
     }
   }
   else
@@ -1086,13 +1095,15 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 0)).r;
+        const float curCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Final_4, int2(ID.x, ID.y), maxCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE2, maxCLL);
     }
     else
     {
@@ -1100,28 +1111,40 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curCLL = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1)).r;
+        const float curCLL = tex2Dfetch(Sampler_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
       }
 
-      tex2Dstore(Storage_Final_4, int2(ID.x, ID.y), maxCLL);
+      barrier();
+
+      tex2Dstore(Storage_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE3, maxCLL);
     }
   }
 }
 
 void GetFinalMaxCLL_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  const float maxCLL0 = tex2Dfetch(Storage_Final_4, int2(0, 0)).r;
-  const float maxCLL1 = tex2Dfetch(Storage_Final_4, int2(1, 0)).r;
-  const float maxCLL2 = tex2Dfetch(Storage_Final_4, int2(0, 1)).r;
-  const float maxCLL3 = tex2Dfetch(Storage_Final_4, int2(1, 1)).r;
+  const float maxCLL0 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE0).r;
+  const float maxCLL1 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE1).r;
+  const float maxCLL2 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE2).r;
+  const float maxCLL3 = tex2Dfetch(Sampler_Consolidated, COORDS_FINAL_4_MAXCLL_VALUE3).r;
 
   const float maxCLL = max(max(max(maxCLL0, maxCLL1), maxCLL2), maxCLL3);
 
-  tex2Dstore(Storage_Max_Avg_Min_CLL_Values, int2(0, 0), maxCLL);
+  barrier();
+
+  tex2Dstore(Storage_Consolidated, COORDS_MAXCLL_VALUE, maxCLL);
 }
+
+
+#undef COORDS_INTERMEDIATE_MAXCLL0
+#undef COORDS_INTERMEDIATE_AVGCLL0
+#undef COORDS_INTERMEDIATE_MINCLL0
+#undef COORDS_INTERMEDIATE_MAXCLL1
+#undef COORDS_INTERMEDIATE_AVGCLL1
+#undef COORDS_INTERMEDIATE_MINCLL1
 
 
 // per column first
@@ -1460,6 +1483,21 @@ void CalcCSPs(
 #endif
 }
 
+
+#define COORDS_CSP_COUNTER_BT709(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_BT709   + CSP_COUNTER_Y_OFFSET)
+#define COORDS_CSP_COUNTER_DCI_P3(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_DCI_P3  + CSP_COUNTER_Y_OFFSET)
+#define COORDS_CSP_COUNTER_BT2020(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_BT2020  + CSP_COUNTER_Y_OFFSET)
+#define COORDS_CSP_COUNTER_AP1(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_AP1     + CSP_COUNTER_Y_OFFSET)
+#define COORDS_CSP_COUNTER_AP0(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_AP0     + CSP_COUNTER_Y_OFFSET)
+#define COORDS_CSP_COUNTER_INVALID(X) \
+  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_INVALID + CSP_COUNTER_Y_OFFSET)
+
+
 void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
 {
 #ifndef WIDTH0_DISPATCH_DOESNT_OVERFLOW
@@ -1511,16 +1549,16 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
 #endif
       }
 
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_BT709),   counter_BT709   / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_DCI_P3),  counter_DCI_P3  / 65535.f);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT709(ID.x),   counter_BT709);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_DCI_P3(ID.x),  counter_DCI_P3);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_BT2020),  counter_BT2020  / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_AP1),     counter_AP1     / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_AP0),     counter_AP0     / 65535.f);
-      tex2Dstore(Storage_CSP_Counter, int2(ID.x, IS_CSP_INVALID), counter_invalid / 65535.f);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT2020(ID.x),  counter_BT2020);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_AP1(ID.x),     counter_AP1);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_AP0(ID.x),     counter_AP0);
+      tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_INVALID(ID.x), counter_invalid);
 
 #endif
 
@@ -1548,30 +1586,32 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
 
   for (int x = 0; x < BUFFER_WIDTH; x++)
   {
-    counter_BT709   += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_BT709)).r   * 65535.f);
-    counter_DCI_P3  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_DCI_P3)).r  * 65535.f);
+    counter_BT709   += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_BT709(x)).r);
+    counter_DCI_P3  += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_DCI_P3(x)).r);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-    counter_BT2020  += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_BT2020)).r  * 65535.f);
-    counter_AP1     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_AP1)).r     * 65535.f);
-    counter_AP0     += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_AP0)).r     * 65535.f);
-    counter_invalid += uint(tex2Dfetch(Sampler_CSP_Counter, int2(x, IS_CSP_INVALID)).r * 65535.f);
+    counter_BT2020  += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_BT2020(x)).r);
+    counter_AP1     += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_AP1(x)).r);
+    counter_AP0     += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_AP0(x)).r);
+    counter_invalid += uint(tex2Dfetch(Sampler_Consolidated, COORDS_CSP_COUNTER_INVALID(x)).r);
 
 #endif
   }
 
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_BT709),   counter_BT709   / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3),  counter_DCI_P3  / PIXELS);
+  barrier();
+
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT709,   counter_BT709   / PIXELS);
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3,  counter_DCI_P3  / PIXELS);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_BT2020),  counter_BT2020  / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_AP1),     counter_AP1     / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_AP0),     counter_AP0     / PIXELS);
-  tex2Dstore(Storage_CSP_Counter_Final, int2(0, IS_CSP_INVALID), counter_invalid / PIXELS);
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT2020,  counter_BT2020  / PIXELS);
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_AP1,     counter_AP1     / PIXELS);
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_AP0,     counter_AP0     / PIXELS);
+  tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_INVALID, counter_invalid / PIXELS);
 
 #endif
 }
@@ -1668,46 +1708,64 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     {
       case 0:
       {
-        float maxCLL = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
-        float avgCLL = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r;
-        float minCLL = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r;
+        float maxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+        float avgCLL = tex2Dfetch(Sampler_Consolidated, COORDS_AVGCLL_VALUE).r;
+        float minCLL = tex2Dfetch(Sampler_Consolidated, COORDS_MINCLL_VALUE).r;
 
-        tex2Dstore(Storage_Show_Values, int2(0, 0), maxCLL);
-        tex2Dstore(Storage_Show_Values, int2(1, 0), avgCLL);
-        tex2Dstore(Storage_Show_Values, int2(2, 0), minCLL);
+        barrier();
+
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_MAXCLL, maxCLL);
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_AVGCLL, avgCLL);
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_MINCLL, minCLL);
       } break;
 
       case 1:
       {
-        precise float counter_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT709)).r  * 100.0001f;
-        precise float counter_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3)).r * 100.0001f;
+        precise float counter_BT709  = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_BT709).r
+                                     * 100.0001f;
+        precise float counter_DCI_P3 = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3).r
+                                     * 100.0001f;
 
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT709,  1), counter_BT709);
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_DCI_P3, 1), counter_DCI_P3);
+        barrier();
+
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709,  counter_BT709);
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3, counter_DCI_P3);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_PQ \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
-        precise float counter_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT2020)).r * 100.0001f;
+        barrier();
 
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT2020, 1), counter_BT2020);
+        precise float counter_BT2020 = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_BT2020).r
+                                     * 100.0001f;
+
+        barrier();
+
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020, counter_BT2020);
 
 #else
 
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_BT2020, 1), 100.f - counter_DCI_P3 - counter_BT709);
+        barrier();
+
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020, 100.f - counter_DCI_P3 - counter_BT709);
 
 #endif
       } break;
 
       case 2:
       {
-        precise float counter_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP1)).r  * 100.0001f;
-        precise float counter_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP0)).r  * 100.0001f;
-        precise float counter_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_INVALID)).r * 100.0001f;
+        precise float counter_AP1     = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_AP1).r
+                                      * 100.0001f;
+        precise float counter_AP0     = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_AP0).r
+                                      * 100.0001f;
+        precise float counter_invalid = tex2Dfetch(Sampler_Consolidated, COORDS_CSP_PERCENTAGE_INVALID).r
+                                      * 100.0001f;
 
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_AP1,     1), counter_AP1);
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_AP0,     1), counter_AP0);
-        tex2Dstore(Storage_Show_Values, int2(IS_CSP_INVALID, 1), counter_invalid);
+        barrier();
+
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1,     counter_AP1);
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0,     counter_AP0);
+        tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID, counter_invalid);
       } break;
     }
   }
