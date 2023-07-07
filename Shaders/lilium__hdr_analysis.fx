@@ -136,9 +136,20 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_max      = 250.f;
   ui_step     = 1.f;
 > = 80.f;
+
+uniform float CIE_DIAGRAM_SIZE
+<
+  ui_category = "CIE diagram";
+  ui_label    = "CIE diagram size (in %)";
+  ui_type     = "slider";
+  ui_min      = 50.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 100.f;
 #else
   static const bool  SHOW_CIE               = false;
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
+  static const float CIE_DIAGRAM_SIZE       = 0.f;
 #endif
 
 // Texture_CSPs
@@ -226,6 +237,17 @@ uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
   ui_step     = 0.5f;
 > = 80.f;
 
+uniform float BRIGHTNESS_HISTOGRAM_SIZE
+<
+  ui_category = "brightness histogram";
+  ui_label    = "brightness histogram size (in %)";
+  ui_tooltip  = "bightness histogram paid for by Aemony";
+  ui_type     = "slider";
+  ui_min      = 50.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 70.f;
+
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
 <
@@ -301,6 +323,7 @@ uniform float BELOW_NITS_AS_BLACK
   static const float HEATMAP_WHITEPOINT              = 0.f;
   static const bool  SHOW_BRIGHTNESS_HISTOGRAM       = false;
   static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS = 0.f;
+  static const float BRIGHTNESS_HISTOGRAM_SIZE       = 0.f;
   static const bool  HIGHLIGHT_NIT_RANGE             = false;
   static const float HIGHLIGHT_NIT_RANGE_START_POINT = 0.f;
   static const float HIGHLIGHT_NIT_RANGE_END_POINT   = 0.f;
@@ -625,17 +648,23 @@ void HDR_analysis(
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
+    const int2 textureDisplaySize =
+      int2(round(float(CIE_BG_X) * CIE_DIAGRAM_SIZE / 100.f),
+           round(float(CIE_BG_Y) * CIE_DIAGRAM_SIZE / 100.f));
+
     // draw the diagram in the bottom left corner
-    if (current_x_coord < CIE_BG_X && current_y_coord >= (BUFFER_HEIGHT - CIE_BG_Y))
+    if (current_x_coord <  textureDisplaySize.x
+     && current_y_coord >= (BUFFER_HEIGHT - textureDisplaySize.y))
     {
       // get coords for the sampler
-      int2 currentSamplerCoords = int2(current_x_coord,
-                                       current_y_coord - (BUFFER_HEIGHT - CIE_BG_Y));
+      float2 currentSamplerCoords = float2(
+        (current_x_coord + 0.5f) / textureDisplaySize.x,
+        (current_y_coord - (BUFFER_HEIGHT - textureDisplaySize.y) + 0.5f) / textureDisplaySize.y);
 
 #if (CIE_DIAGRAM == CIE_1931)
-      float3 currentPixelToDisplay = pow(tex2Dfetch(Sampler_CIE_1931_Current, currentSamplerCoords).rgb, 2.2f);
+      float3 currentPixelToDisplay = pow(tex2D(Sampler_CIE_1931_Current, currentSamplerCoords).rgb, 2.2f);
 #else
-      float3 currentPixelToDisplay = pow(tex2Dfetch(Sampler_CIE_1976_Current, currentSamplerCoords).rgb, 2.2f);
+      float3 currentPixelToDisplay = pow(tex2D(Sampler_CIE_1976_Current, currentSamplerCoords).rgb, 2.2f);
 #endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -922,8 +951,9 @@ void HDR_analysis(
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
-    const int2 textureDisplaySize = int2(round(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X * 1280.f),
-                                         round(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y *  720.f));
+    const int2 textureDisplaySize =
+      int2(round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH)  * BRIGHTNESS_HISTOGRAM_SIZE / 100.f),
+           round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT) * BRIGHTNESS_HISTOGRAM_SIZE / 100.f));
 
     // draw the histogram in the bottom right corner
     if (current_x_coord >= (BUFFER_WIDTH  - textureDisplaySize.x)
@@ -1171,21 +1201,7 @@ technique lilium__hdr_analysis
   pass CopyShowValues
   {
     ComputeShader = ShowValuesCopy <1, 1>;
-#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
     DispatchSizeX = 1;
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
-    || ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-    DispatchSizeX = 2;
-
-#else
-
-    DispatchSizeX = 3;
-
-#endif
-
     DispatchSizeY = 1;
   }
 
