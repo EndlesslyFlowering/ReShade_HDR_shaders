@@ -128,6 +128,9 @@ void scRGB_TRC_Fix(
 
 
 technique lilium__scRGB_trc_fix
+<
+  ui_label = "Lilium's scRGB TRC fix";
+>
 {
   pass scRGB_TRC_Fix
   {

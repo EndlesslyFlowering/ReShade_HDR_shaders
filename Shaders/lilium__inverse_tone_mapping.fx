@@ -364,6 +364,9 @@ void InverseToneMapping(
 }
 
 technique lilium__inverse_tone_mapping
+<
+  ui_label = "Lilium's inverse tone mapping";
+>
 {
   pass InverseToneMapping
   {

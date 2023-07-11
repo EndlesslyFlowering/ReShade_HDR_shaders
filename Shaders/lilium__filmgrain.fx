@@ -107,6 +107,9 @@ void filmgrain(
 }
 
 technique lilium__filmgrain
+<
+  ui_label = "Lilium's filmgrain";
+>
 {
   pass filmgrain
   {

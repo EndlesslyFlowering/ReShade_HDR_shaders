@@ -1077,6 +1077,9 @@ void HDR_analysis(
 //}
 
 technique lilium__hdr_analysis
+<
+  ui_label = "Lilium's HDR analysis";
+>
 {
 
 #ifdef _TESTY

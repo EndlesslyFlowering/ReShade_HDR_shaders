@@ -553,6 +553,7 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 
 technique lilium__tone_mapping_adaptive_maxCLL
 <
+  ui_label = "Lilium's tone mapping adaptive maxCLL (enable this to use adaptive maxCLL)";
   enabled = false;
 >
 {
@@ -593,6 +594,9 @@ technique lilium__tone_mapping_adaptive_maxCLL
 }
 
 technique lilium__tone_mapping
+<
+  ui_label = "Lilium's tone mapping";
+>
 {
   pass ToneMapping
   {

@@ -117,7 +117,10 @@ void SDR_TRC_Fix(
 }
 
 
-technique lilium__sdr_trc_Fix
+technique lilium__sdr_trc_fix
+<
+  ui_label = "Lilium's SDR TRC fix";
+>
 {
   pass SDR_TRC_Fix
   {
