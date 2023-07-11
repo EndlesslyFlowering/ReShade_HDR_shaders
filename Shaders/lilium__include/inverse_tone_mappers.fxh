@@ -1,5 +1,9 @@
 #pragma once
 
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "colour_space.fxh"
 
 //float3 gamut(
@@ -650,3 +654,5 @@ float3 DiceInverseToneMapper(
   }
 
 }
+
+#endif

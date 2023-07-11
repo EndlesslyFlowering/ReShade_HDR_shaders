@@ -1,3 +1,7 @@
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "lilium__include\inverse_tone_mappers.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 
@@ -319,7 +323,7 @@ void InverseToneMapping(
     break;
   }
 
-#if (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
 #if (ENABLE_DICE != 0)
 
@@ -367,3 +371,5 @@ technique lilium__inverse_tone_mapping
      PixelShader = InverseToneMapping;
   }
 }
+
+#endif

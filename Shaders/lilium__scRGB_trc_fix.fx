@@ -1,3 +1,7 @@
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "lilium__include\colour_space.fxh"
 
 uniform uint INPUT_TRC
@@ -131,3 +135,5 @@ technique lilium__scRGB_trc_fix
      PixelShader = scRGB_TRC_Fix;
   }
 }
+
+#endif

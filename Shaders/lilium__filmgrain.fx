@@ -57,7 +57,7 @@ void filmgrain(
 
   float3 YCbCr = CSP::YCbCr::FromRGB::AP0_D65(CSP::TRC::ToPq(CSP::Mat::BT709To::AP0_D65(input / 125.f)));
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   float3 YCbCr = CSP::YCbCr::FromRGB::BT2020(input);
@@ -88,7 +88,7 @@ void filmgrain(
 
   float3 RGB = CSP::Mat::AP0_D65To::BT709(CSP::TRC::FromPq(CSP::YCbCr::ToRGB::AP0_D65(YCbCr))) * 125.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   float3 RGB = CSP::YCbCr::ToRGB::BT2020(YCbCr);

@@ -1,3 +1,7 @@
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "lilium__include\tone_mappers.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 
@@ -330,7 +334,7 @@ void ToneMapping(
 //  if (maxCLL > TARGET_CLL)
 //  {
 
-#if (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     if ((TONE_MAPPING_METHOD != TM_METHOD_BT2390)
      || (TONE_MAPPING_METHOD == TM_METHOD_BT2390
@@ -465,7 +469,7 @@ void ToneMapping(
     }
     hdr *= 125.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     hdr = CSP::TRC::ToPq(hdr);
 
@@ -596,3 +600,5 @@ technique lilium__tone_mapping
      PixelShader = ToneMapping;
   }
 }
+
+#endif

@@ -1,5 +1,9 @@
 #pragma once
 
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "hdr_analysis.fxh"
 
 // Rep. ITU-R BT.2446-1 Table 2 & 3
@@ -479,3 +483,5 @@ float3 dice(
                 LuminanceCompress(Colour.b, MaxNits, ShoulderStart));
 #endif
 }
+
+#endif

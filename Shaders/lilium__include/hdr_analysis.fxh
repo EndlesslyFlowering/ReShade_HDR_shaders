@@ -1,5 +1,9 @@
 #pragma once
 
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "colour_space.fxh"
 
 
@@ -535,7 +539,7 @@ float3 Heatmap_RGB_Values(
 
     output /= 80.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     output = CSP::Mat::BT709To::BT2020(output);
     output = CSP::TRC::ToPqFromNits(output);
@@ -617,7 +621,7 @@ void CalcCLL(
 
   float curPixel = dot(CSP::Mat::BT709_To_XYZ[1], pixel) * 80.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   float curPixel = dot(CSP::Mat::BT2020_To_XYZ[1], CSP::TRC::FromPq(pixel)) * 10000.f;
 
@@ -1274,7 +1278,7 @@ void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
 
     precise float3 XYZ = CSP::Mat::BT709To::XYZ(pixel);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     precise float3 XYZ = CSP::Mat::BT2020To::XYZ(CSP::TRC::FromPq(pixel));
 
@@ -1355,7 +1359,7 @@ float GetCSP(precise const float3 XYZ)
     return IS_CSP_DCI_P3 / 255.f;
   }
 
-#if (ACTUAL_COLOUR_SPACE == CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   else
@@ -1413,7 +1417,7 @@ void CalcCSPs(
 
 #endif
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
@@ -1514,7 +1518,7 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
       uint counter_BT709   = 0;
       uint counter_DCI_P3  = 0;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
       uint counter_BT2020  = 0;
@@ -1534,7 +1538,7 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
           counter_DCI_P3++;
         }
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
         else if (curCSP == IS_CSP_BT2020) {
@@ -1556,7 +1560,7 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT709(ID.x),   counter_BT709);
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_DCI_P3(ID.x),  counter_DCI_P3);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT2020(ID.x),  counter_BT2020);
@@ -1578,7 +1582,7 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
   uint counter_BT709   = 0;
   uint counter_DCI_P3  = 0;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
   uint counter_BT2020  = 0;
@@ -1593,7 +1597,7 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
     counter_BT709   += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_BT709(x)).r);
     counter_DCI_P3  += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_DCI_P3(x)).r);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
     counter_BT2020  += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_BT2020(x)).r);
@@ -1609,7 +1613,7 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
   tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT709,   counter_BT709   / PIXELS);
   tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3,  counter_DCI_P3  / PIXELS);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
   tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT2020,  counter_BT2020  / PIXELS);
@@ -1683,7 +1687,7 @@ float3 Create_CSP_Map(
 
   output /= 80.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   output = CSP::TRC::ToPqFromNits(CSP::Mat::BT709To::BT2020(output));
 
@@ -1717,7 +1721,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     precise float counter_DCI_P3 = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3).r
                                  * 100.0001f;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
     precise float counter_BT2020 = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT2020).r
@@ -1763,3 +1767,5 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
   }
   return;
 }
+
+#endif

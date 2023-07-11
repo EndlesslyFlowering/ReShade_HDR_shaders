@@ -1,3 +1,7 @@
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
+
+
 #include "lilium__include\hdr_analysis.fxh"
 #include "lilium__include\draw_text_fix.fxh"
 
@@ -458,7 +462,7 @@ static const uint text_B[2] = { __B, __Colon };
 
 static const uint text_signNegative[1] = { __Minus };
 
-#if (ACTUAL_COLOUR_SPACE == CSP_PQ  \
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10  \
   || ACTUAL_COLOUR_SPACE == CSP_HLG \
   || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -503,7 +507,7 @@ void HDR_analysis(
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PQ    \
+  || ACTUAL_COLOUR_SPACE == CSP_HDR10    \
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
@@ -595,7 +599,7 @@ void HDR_analysis(
 
         out3 = out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 80.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
         out3 =  CSP::TRC::ToPqFromNits(CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
 
@@ -672,7 +676,7 @@ void HDR_analysis(
       Output = float4(
         currentPixelToDisplay * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       Output = float4(
         CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
@@ -831,7 +835,7 @@ void HDR_analysis(
 
   #define CURSOR_CLL_TEXT_POS 14
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ \
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   #define CURSOR_CLL_TEXT_POS 16
@@ -895,7 +899,7 @@ void HDR_analysis(
 
 #endif
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG)
 
     float precentage_AP1     = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
@@ -916,7 +920,7 @@ void HDR_analysis(
 
 #endif
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
@@ -933,7 +937,7 @@ void HDR_analysis(
     DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
 #endif
 
-#if (ACTUAL_COLOUR_SPACE != CSP_PQ  \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10  \
   && ACTUAL_COLOUR_SPACE != CSP_HLG \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
@@ -972,7 +976,7 @@ void HDR_analysis(
       Output = float4(
         currentPixelToDisplay * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 80.f), 1.f);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PQ)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       Output = float4(
         CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 10000.f)), 1.f);
@@ -1211,3 +1215,5 @@ technique lilium__hdr_analysis
      PixelShader = HDR_analysis;
   }
 }
+
+#endif
