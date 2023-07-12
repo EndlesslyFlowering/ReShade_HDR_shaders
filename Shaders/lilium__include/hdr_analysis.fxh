@@ -131,11 +131,12 @@ storage2D Storage_Max_CLL_0_Dot_01_Percent
   #define CIE_DIAGRAM CIE_1931
 #endif
 
+#define CIE_BG_BORDER  50
+
 #define CIE_1931_X    735
 #define CIE_1931_Y    835
 #define CIE_1931_BG_X 835
 #define CIE_1931_BG_Y 935
-#define CIE_BG_BORDER  50
 
 #if (CIE_DIAGRAM == CIE_1931)
 texture2D Texture_CIE_1931
@@ -190,11 +191,12 @@ storage2D Storage_CIE_1931_Current
 };
 #endif
 
-#if (CIE_DIAGRAM == CIE_1976)
 #define CIE_1976_X    623
 #define CIE_1976_Y    587
 #define CIE_1976_BG_X 723
 #define CIE_1976_BG_Y 687
+
+#if (CIE_DIAGRAM == CIE_1976)
 texture2D Texture_CIE_1976
 <
   source = "lilium__cie_1976_ucs.png";

@@ -65,6 +65,92 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 
+#define CSP_SRGB_TEXT  "sRGB (sRGB transfer function / gamma 2.2 + BT.709 primaries)"
+#define CSP_SCRGB_TEXT "scRGB (linear + BT.709 primaries)"
+#define CSP_HDR10_TEXT "HDR10 (PQ + BT.2020 primaries)"
+#define CSP_HLG_TEXT   "HLG (HLG + BT.2020 primaries)"
+
+#if (BUFFER_COLOR_BIT_DEPTH == 8)
+  #define BACK_BUFFER_FORMAT_TEXT "RGBA8_UNORM or BGRA8_UNORM"
+#elif (BUFFER_COLOR_BIT_DEPTH == 10)
+  // d3d11 and d3d12 only allow rgb10a2 to be used for HDR10
+  #if (__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000)
+    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM"
+  #else
+    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM or BGR10A2_UNORM"
+  #endif
+#elif (BUFFER_COLOR_BIT_DEPTH == 16)
+  #define BACK_BUFFER_FORMAT_TEXT "RGBA16_FLOAT"
+#else
+  #define BACK_BUFFER_FORMAT_TEXT "unknown"
+#endif
+
+
+#define CSP_UNSET_TEXT "colour space unset! likely "
+
+#if (BUFFER_COLOR_SPACE == CSP_SCRGB)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_HDR10)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HDR10_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_HLG)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HLG_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_SRGB \
+    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
+    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
+    && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_SRGB)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_TEXT
+#else
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT "unknown"
+#endif
+
+
+#if (CSP_OVERRIDE == CSP_SRGB)
+  #define CSP_OVERRIDE_TEXT CSP_SRGB_TEXT
+#elif (CSP_OVERRIDE == CSP_SCRGB)
+  #define CSP_OVERRIDE_TEXT CSP_SCRGB_TEXT
+#elif (CSP_OVERRIDE == CSP_HDR10)
+  #define CSP_OVERRIDE_TEXT CSP_HDR10_TEXT
+#elif (CSP_OVERRIDE == CSP_HLG)
+  #define CSP_OVERRIDE_TEXT CSP_HLG_TEXT
+#else
+  #define CSP_OVERRIDE_TEXT "unset"
+#endif
+
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+  #define ACTUAL_CSP_TEXT CSP_SRGB_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  #define ACTUAL_CSP_TEXT CSP_SCRGB_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  #define ACTUAL_CSP_TEXT CSP_HDR10_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+  #define ACTUAL_CSP_TEXT CSP_HLG_TEXT
+#else
+  #define ACTUAL_CSP_TEXT "unknown"
+#endif
+
+
+#define INFO_TEXT                                                          \
+  "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT       "\n" \
+  "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT "\n" \
+  "colour space overwritten to:       " CSP_OVERRIDE_TEXT             "\n" \
+  "colour space in use by the shader: " ACTUAL_CSP_TEXT
+
+
+uniform int GLOBAL_INFO
+<
+  ui_category = "info";
+  ui_label    = " ";
+  ui_type     = "radio";
+  ui_text     = INFO_TEXT;
+>;
+
 uniform float FONT_SIZE
 <
   ui_category = "global";
@@ -91,20 +177,20 @@ uniform uint TEXT_POSITION
 #if (ENABLE_CLL_FEATURES == YES)
 uniform bool SHOW_CLL_VALUES
 <
-  ui_category = "CLL stuff";
+  ui_category = "Content Light Level analysis";
   ui_label    = "show CLL values";
   ui_tooltip  = "shows max/avg/min Content Light Level";
 > = true;
 
 uniform bool SHOW_CLL_FROM_CURSOR
 <
-  ui_category = "CLL stuff";
+  ui_category = "Content Light Level analysis";
   ui_label    = "show CLL value from cursor position";
 > = true;
 
 uniform bool CLL_ROUNDING_WORKAROUND
 <
-  ui_category = "CLL stuff";
+  ui_category = "Content Light Level analysis";
   ui_label    = "work around rounding errors for displaying maxCLL";
   ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
 > = false;
@@ -118,37 +204,39 @@ uniform bool CLL_ROUNDING_WORKAROUND
 #if (ENABLE_CIE_FEATURES == YES)
 uniform bool SHOW_CIE
 <
-  ui_category = "CIE diagram";
+  ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
   ui_tooltip  = "change diagram type via the macro";
 > = true;
 
 #if (CIE_DIAGRAM == CIE_1931)
-static const uint CIE_BG_X = CIE_1931_BG_X;
-static const uint CIE_BG_Y = CIE_1931_BG_Y;
+  static const uint CIE_BG_X = CIE_1931_BG_X;
+  static const uint CIE_BG_Y = CIE_1931_BG_Y;
 #else
-static const uint CIE_BG_X = CIE_1976_BG_X;
-static const uint CIE_BG_Y = CIE_1976_BG_Y;
+  static const uint CIE_BG_X = CIE_1976_BG_X;
+  static const uint CIE_BG_Y = CIE_1976_BG_Y;
 #endif
 
 uniform float CIE_DIAGRAM_BRIGHTNESS
 <
-  ui_category = "CIE diagram";
-  ui_label    = "CIE diagram brightness";
-  ui_type     = "slider";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 1.f;
+  ui_category    = "CIE diagram visualisation";
+  ui_label       = "CIE diagram brightness";
+  ui_type        = "slider";
+  ui_slider_desc = " nits";
+  ui_min         = 10.f;
+  ui_max         = 250.f;
+  ui_step        = 0.5f;
 > = 80.f;
 
 uniform float CIE_DIAGRAM_SIZE
 <
-  ui_category = "CIE diagram";
-  ui_label    = "CIE diagram size (in %)";
-  ui_type     = "slider";
-  ui_min      = 50.f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
+  ui_category    = "CIE diagram visualisation";
+  ui_label       = "CIE diagram size (in %)";
+  ui_type        = "slider";
+  ui_slider_desc = "%%";
+  ui_min         = 50.f;
+  ui_max         = 100.f;
+  ui_step        = 0.1f;
 > = 100.f;
 #else
   static const bool  SHOW_CIE               = false;
@@ -160,14 +248,14 @@ uniform float CIE_DIAGRAM_SIZE
 #if (ENABLE_CSP_FEATURES == YES)
 uniform bool SHOW_CSPS
 <
-  ui_category = "colour space %";
+  ui_category = "Colour Space analysis";
   ui_label    = "show colour spaces used";
   ui_tooltip  = "in %";
 > = true;
 
 uniform bool SHOW_CSP_MAP
 <
-  ui_category = "colour space %";
+  ui_category = "Colour Space analysis";
   ui_label    = "show colour space map";
   ui_tooltip  = "        colours:\n"
                 "black and white: BT.709\n"
@@ -180,7 +268,7 @@ uniform bool SHOW_CSP_MAP
 
 uniform bool SHOW_CSP_FROM_CURSOR
 <
-  ui_category = "colour space %";
+  ui_category = "Colour Space analysis";
   ui_label    = "show colour space from cursor position";
 > = true;
 #else
@@ -193,7 +281,7 @@ uniform bool SHOW_CSP_FROM_CURSOR
 #if (ENABLE_CLL_FEATURES == YES)
 uniform bool SHOW_HEATMAP
 <
-  ui_category = "heatmap stuff";
+  ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
   ui_tooltip  = "         colours:   10000 nits:   1000 nits:\n"
                 " black and white:       0-  100       0- 100\n"
@@ -206,125 +294,132 @@ uniform bool SHOW_HEATMAP
 
 uniform uint HEATMAP_CUTOFF_POINT
 <
-  ui_category = "heatmap stuff";
+  ui_category = "Heatmap visualisation";
   ui_label    = "heatmap cutoff point";
   ui_type     = "combo";
-  ui_items    = "10000nits\0"
-                " 1000nits\0";
+  ui_items    = "10000 nits\0"
+                " 1000 nits\0";
 > = 0;
 
-uniform float HEATMAP_WHITEPOINT
+uniform float HEATMAP_BRIGHTNESS
 <
-  ui_category = "heatmap stuff";
-  ui_label    = "heatmap whitepoint (nits)";
-  ui_type     = "slider";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 0.5f;
+  ui_category    = "Heatmap visualisation";
+  ui_label       = "heatmap brightness (in nits)";
+  ui_type        = "slider";
+  ui_slider_desc = " nits";
+  ui_min         = 10.f;
+  ui_max         = 250.f;
+  ui_step        = 0.5f;
 > = 80.f;
 
 uniform bool SHOW_BRIGHTNESS_HISTOGRAM
 <
-  ui_category = "brightness histogram";
+  ui_category = "Brightness histogram";
   ui_label    = "show brightness histogram";
   ui_tooltip  = "bightness histogram paid for by Aemony";
-> = false;
+> = true;
 
 uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
 <
-  ui_category = "brightness histogram";
-  ui_label    = "brightness histogram brightness";
-  ui_tooltip  = "bightness histogram paid for by Aemony";
-  ui_type     = "slider";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 0.5f;
+  ui_category    = "Brightness histogram";
+  ui_label       = "brightness histogram brightness (in nits)";
+  ui_type        = "slider";
+  ui_slider_desc = " nits";
+  ui_min         = 10.f;
+  ui_max         = 250.f;
+  ui_step        = 0.5f;
 > = 80.f;
 
 uniform float BRIGHTNESS_HISTOGRAM_SIZE
 <
-  ui_category = "brightness histogram";
-  ui_label    = "brightness histogram size (in %)";
-  ui_tooltip  = "bightness histogram paid for by Aemony";
-  ui_type     = "slider";
-  ui_min      = 50.f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
+  ui_category    = "Brightness histogram";
+  ui_label       = "brightness histogram size (in %)";
+  ui_type        = "slider";
+  ui_slider_desc = "%%";
+  ui_min         = 50.f;
+  ui_max         = 100.f;
+  ui_step        = 0.1f;
 > = 70.f;
 
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
 <
-  ui_category = "highlight nit range stuff";
-  ui_label    = "highlight nit levels in a certain range";
+  ui_category = "Highlight brightness range visualisation";
+  ui_label    = "enable highlighting brightness levels in a certain range";
+  ui_tooltip  = "in nits";
 > = false;
 
 uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 <
-  ui_category = "highlight nit range stuff";
-  ui_label    = "nit highlight range start point";
-  ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_category  = "Highlight brightness range visualisation";
+  ui_label     = "brightness highlight range start point (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 0.f;
+  ui_max       = 10000.f;
+  ui_step      = 0.001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_END_POINT
 <
-  ui_category = "highlight nit range stuff";
-  ui_label    = "nit highlight range end point";
-  ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_category  = "Highlight brightness range visualisation";
+  ui_label     = "brightness highlight range end point (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 0.f;
+  ui_max       = 10000.f;
+  ui_step      = 0.001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
 <
-  ui_category = "highlight nit range stuff";
-  ui_label    = "nit highlight range brightness";
-  ui_type     = "slider";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 0.5f;
+  ui_category    = "Highlight brightness range visualisation";
+  ui_label       = "brightness highlight range brightness (in nits)";
+  ui_type        = "slider";
+  ui_slider_desc = " nits";
+  ui_min         = 10.f;
+  ui_max         = 250.f;
+  ui_step        = 0.5f;
 > = 80.f;
 
 // draw pixels as black depending on their nits
 uniform bool DRAW_ABOVE_NITS_AS_BLACK
 <
-  ui_category = "draw nits as black stuff";
-  ui_label    = "draw above nits as black";
+  ui_category = "Draw certain brightness levels as black";
+  ui_label    = "enable drawing above this brightness as black";
 > = false;
 
 uniform float ABOVE_NITS_AS_BLACK
 <
-  ui_category = "draw nits as black stuff";
-  ui_label    = "draw above nits as black";
-  ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_category  = "Draw certain brightness levels as black";
+  ui_label     = "draw above this brightness as black (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 0.f;
+  ui_max       = 10000.f;
+  ui_step      = 0.001f;
 > = 10000.f;
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
 <
-  ui_category = "draw nits as black stuff";
-  ui_label    = "draw below nits as black";
+  ui_category = "Draw certain brightness levels as black";
+  ui_label    = "enable drawing below this brightness as black";
 > = false;
 
 uniform float BELOW_NITS_AS_BLACK
 <
-  ui_category = "draw nits as black stuff";
-  ui_label    = "draw below nits as black";
-  ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 1.f;
+  ui_category  = "Draw certain brightness levels as black";
+  ui_label     = "draw below this brightness as black (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 0.f;
+  ui_max       = 10000.f;
+  ui_step      = 1.f;
 > = 0.f;
 #else
   static const bool  SHOW_HEATMAP                    = false;
   static const uint  HEATMAP_CUTOFF_POINT            = 0;
-  static const float HEATMAP_WHITEPOINT              = 0.f;
+  static const float HEATMAP_BRIGHTNESS              = 0.f;
   static const bool  SHOW_BRIGHTNESS_HISTOGRAM       = false;
   static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS = 0.f;
   static const float BRIGHTNESS_HISTOGRAM_SIZE       = 0.f;
@@ -543,7 +638,7 @@ void HDR_analysis(
     {
       Output = float4(Heatmap_RGB_Values(pixelCLL,
                                          HEATMAP_CUTOFF_POINT,
-                                         HEATMAP_WHITEPOINT,
+                                         HEATMAP_BRIGHTNESS,
                                          false), 1.f);
     }
 
