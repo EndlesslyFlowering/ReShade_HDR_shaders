@@ -14,6 +14,7 @@
 #define NO  0
 
 #define CSP_UNKNOWN 0
+#define CSP_UNSET   CSP_UNKNOWN
 #define CSP_SRGB    1
 #define CSP_SCRGB   2
 #define CSP_HDR10   3
@@ -22,24 +23,36 @@
 #define CSP_PS5     5
 
 #ifndef CSP_OVERRIDE
-  #define CSP_OVERRIDE CSP_UNKNOWN
+  #define CSP_OVERRIDE CSP_UNSET
 #endif
 
-#if ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNKNOWN) \
-  || (BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_SRGB)    \
-  || (BUFFER_COLOR_SPACE != CSP_SRGB && CSP_OVERRIDE == CSP_SRGB))
-  #define ACTUAL_COLOUR_SPACE CSP_SRGB
-  #define FONT_BRIGHTNESS 1
+#if (BUFFER_COLOR_BIT_DEPTH == 8 || BUFFER_COLOR_BIT_DEPTH == 10 || BUFFER_COLOR_BIT_DEPTH == 16)
+  #define IS_POSSIBLE_SRGB_BIT_DEPTH
+#endif
 
-#elif ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNKNOWN) \
-    || (BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB)   \
-    || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB))
+#if (BUFFER_COLOR_BIT_DEPTH == 16)
+  #define IS_POSSIBLE_SCRGB_BIT_DEPTH
+#endif
+
+#if (BUFFER_COLOR_BIT_DEPTH == 10)
+  #define IS_POSSIBLE_HDR10_BIT_DEPTH
+#endif
+
+#if (BUFFER_COLOR_BIT_DEPTH == 16)
+  #define IS_POSSIBLE_PS5_BIT_DEPTH
+#endif
+
+#if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB   && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB   && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_SRGB  && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
   #define ACTUAL_COLOUR_SPACE CSP_SCRGB
   #define FONT_BRIGHTNESS 2.5375f // 203.f / 80.f
 
-#elif ((BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_UNKNOWN) \
-    || (BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10)      \
-    || (BUFFER_COLOR_SPACE != CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10))
+#elif ((BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10   && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10   && defined(IS_POSSIBLE_HDR10_BIT_DEPTH)))
   #define ACTUAL_COLOUR_SPACE CSP_HDR10
   #define FONT_BRIGHTNESS 0.58068888104160783796
 
@@ -49,10 +62,16 @@
   #define ACTUAL_COLOUR_SPACE CSP_HLG
   #define FONT_BRIGHTNESS 0.69691214644230630735
 
-#elif ((BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5)  \
-    || (BUFFER_COLOR_SPACE != CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5))
+#elif ((BUFFER_COLOR_SPACE == CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5 && defined(IS_POSSIBLE_PS5_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_UNKNOWN && CSP_OVERRIDE == CSP_PS5 && defined(IS_POSSIBLE_PS5_BIT_DEPTH)))
   #define ACTUAL_COLOUR_SPACE CSP_PS5
   #define FONT_BRIGHTNESS 2.03f
+
+#elif ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_SRGB    && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_SRGB && CSP_OVERRIDE == CSP_SRGB    && defined(IS_POSSIBLE_SRGB_BIT_DEPTH)))
+  #define ACTUAL_COLOUR_SPACE CSP_SRGB
+  #define FONT_BRIGHTNESS 1
 
 #else
   #define ACTUAL_COLOUR_SPACE CSP_UNKNOWN
@@ -487,12 +506,13 @@ namespace CSP
                     FromHlg(x.b));
     }
 
-    // takes normalised to 1000 nits values as input
+    // Rec. ITU-R BT.2100-2 Table 5
+    // (inverse EOTF) takes normalised to 1000 nits values as input
     float ToHlg(const float E)
     {
       if (E <= (1.f / 12.f))
       {
-        return (3.f * E);
+        return sqrt(3.f * E);
       }
       else
       {
@@ -500,6 +520,7 @@ namespace CSP
       }
     }
 
+    // (inverse EOTF) takes normalised to 1000 nits values as input
     float3 ToHlg(const float3 E)
     {
       return float3(ToHlg(E.r),
@@ -508,14 +529,14 @@ namespace CSP
     }
 
     // Rec. ITU-R BT.2100-2 Table 5
-    // takes nits as input
+    // (OETF) takes nits as input
     float ToHlgFromNits(float E)
     {
       E = E / 1000.f;
 
       if (E <= (1.f / 12.f))
       {
-        return (3.f * E);
+        return sqrt(3.f * E);
       }
       else
       {
@@ -523,6 +544,7 @@ namespace CSP
       }
     }
 
+    // (OETF) takes nits as input
     float3 ToHlgFromNits(const float3 E)
     {
       return float3(ToHlgFromNits(E.r),
