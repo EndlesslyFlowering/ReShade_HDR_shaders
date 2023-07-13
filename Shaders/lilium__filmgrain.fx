@@ -55,20 +55,20 @@ void filmgrain(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float3 YCbCr = CSP::YCbCr::FromRGB::AP0_D65(CSP::TRC::ToPq(CSP::Mat::BT709To::AP0_D65(input / 125.f)));
+  float3 Ycbcr = Csp::Ycbcr::FromRgb::Ap0D65(Csp::Trc::ToPq(Csp::Mat::Bt709To::Ap0D65(input / 125.f)));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  float3 YCbCr = CSP::YCbCr::FromRGB::BT2020(input);
+  float3 Ycbcr = Csp::Ycbcr::FromRgb::Bt2020(input);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float3 YCbCr = CSP::YCbCr::FromRGB::AP0_D65(CSP::TRC::ToPq(CSP::Mat::BT2020To::AP0_D65(input / 100.f)));
+  float3 Ycbcr = Csp::Ycbcr::FromRgb::Ap0D65(Csp::Trc::ToPq(Csp::Mat::Bt2020To::Ap0D65(input / 100.f)));
 
 #else //ACTUAL_COLOUR_SPACE == CSP_SRGB
 
-  float3 YCbCr = CSP::YCbCr::FromRGB::BT709(input);
+  float3 Ycbcr = Csp::Ycbcr::FromRgb::Bt709(input);
 
 #endif
 
@@ -77,33 +77,33 @@ void filmgrain(
 //  static const float maxMul = min(1.25f + intensity, 2.f);
 //  static const float minMul = 2.01f - maxMul;
 //
-//  float maxY = YCbCr.x * maxMul;
-//  float minY = YCbCr.x * minMul;
+//  float maxY = Ycbcr.x * maxMul;
+//  float minY = Ycbcr.x * minMul;
 
-  YCbCr.x += (intensity * Grain);
+  Ycbcr.x += (intensity * Grain);
 
-  //YCbCr.x = clamp(YCbCr.x, minY, maxY);
+  //Ycbcr.x = clamp(Ycbcr.x, minY, maxY);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float3 RGB = CSP::Mat::AP0_D65To::BT709(CSP::TRC::FromPq(CSP::YCbCr::ToRGB::AP0_D65(YCbCr))) * 125.f;
+  float3 Rgb = Csp::Mat::Ap0D65To::Bt709(Csp::Trc::FromPq(Csp::Ycbcr::ToRgb::Ap0D65(Ycbcr))) * 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  float3 RGB = CSP::YCbCr::ToRGB::BT2020(YCbCr);
+  float3 Rgb = Csp::Ycbcr::ToRgb::Bt2020(Ycbcr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float3 RGB = CSP::Mat::AP0_D65To::BT2020(CSP::TRC::FromPq(CSP::YCbCr::ToRGB::AP0_D65(YCbCr))) * 100.f;
+  float3 Rgb = Csp::Mat::Ap0D65To::Bt2020(Csp::Trc::FromPq(Csp::Ycbcr::ToRgb::Ap0D65(Ycbcr))) * 100.f;
 
 #else //ACTUAL_COLOUR_SPACE == CSP_SRGB
 
-  float3 RGB = CSP::YCbCr::ToRGB::BT709(YCbCr);
+  float3 Rgb = Csp::Ycbcr::ToRgb::Bt709(Ycbcr);
 
 #endif
 
-  output = float4(RGB, 1.f);
+  output = float4(Rgb, 1.f);
 }
 
 technique lilium__filmgrain

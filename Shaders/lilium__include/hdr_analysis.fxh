@@ -543,18 +543,18 @@ float3 Heatmap_RGB_Values(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    output = CSP::Mat::BT709To::BT2020(output);
-    output = CSP::TRC::ToPqFromNits(output);
+    output = Csp::Mat::Bt709To::Bt2020(output);
+    output = Csp::Trc::ToPqFromNits(output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    output = CSP::Mat::BT709To::BT2020(output);
-    output = CSP::TRC::ToHlgFromNits(output);
+    output = Csp::Mat::Bt709To::Bt2020(output);
+    output = Csp::Trc::ToHlgFromNits(output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
     output /= 100.f;
-    output =  CSP::Mat::BT709To::BT2020(output);
+    output =  Csp::Mat::Bt709To::Bt2020(output);
 
 #endif
 
@@ -579,7 +579,7 @@ void ComputeBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
     const float curPixelCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, y)).x;
 
     const int yCoord =
-     round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (CSP::TRC::ToPqFromNits(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
+     round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
 
     tex2Dstore(Storage_Brightness_Histogram,
                int2(round(ID.x / TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR), yCoord),
@@ -621,19 +621,19 @@ void CalcCLL(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float curPixel = dot(CSP::Mat::BT709_To_XYZ[1], pixel) * 80.f;
+  float curPixel = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  float curPixel = dot(CSP::Mat::BT2020_To_XYZ[1], CSP::TRC::FromPq(pixel)) * 10000.f;
+  float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  float curPixel = dot(CSP::Mat::BT2020_To_XYZ[1], CSP::TRC::FromHlg(pixel)) * 1000.f;
+  float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float curPixel = dot(CSP::Mat::BT2020_To_XYZ[1], pixel) * 100.f;
+  float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
 
 #else
 
@@ -1278,19 +1278,19 @@ void Generate_CIE_Diagram(uint3 ID : SV_DispatchThreadID)
     // get XYZ
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB || ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    precise float3 XYZ = CSP::Mat::BT709To::XYZ(pixel);
+    precise float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    precise float3 XYZ = CSP::Mat::BT2020To::XYZ(CSP::TRC::FromPq(pixel));
+    precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    precise float3 XYZ = CSP::Mat::BT2020To::XYZ(CSP::TRC::FromHlg(pixel));
+    precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    precise float3 XYZ = CSP::Mat::BT2020To::XYZ(pixel);
+    precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
 
 #else
 
@@ -1352,11 +1352,11 @@ bool IsCSP(precise const float3 RGB)
 
 float GetCSP(precise const float3 XYZ)
 {
-  if (IsCSP(CSP::Mat::XYZTo::BT709(XYZ)))
+  if (IsCSP(Csp::Mat::XYZTo::Bt709(XYZ)))
   {
     return IS_CSP_BT709;
   }
-  else if (IsCSP(CSP::Mat::XYZTo::DCI_P3(XYZ)))
+  else if (IsCSP(Csp::Mat::XYZTo::DciP3(XYZ)))
   {
     return IS_CSP_DCI_P3 / 255.f;
   }
@@ -1371,15 +1371,15 @@ float GetCSP(precise const float3 XYZ)
 
 #else
 
-  else if (IsCSP(CSP::Mat::XYZTo::BT2020(XYZ)))
+  else if (IsCSP(Csp::Mat::XYZTo::Bt2020(XYZ)))
   {
     return IS_CSP_BT2020 / 255.f;
   }
-  else if (IsCSP(CSP::Mat::XYZTo::AP1(XYZ)))
+  else if (IsCSP(Csp::Mat::XYZTo::AP1(XYZ)))
   {
     return IS_CSP_AP1 / 255.f;
   }
-  else if (IsCSP(CSP::Mat::XYZTo::AP0(XYZ)))
+  else if (IsCSP(Csp::Mat::XYZTo::AP0(XYZ)))
   {
     return IS_CSP_AP0 / 255.f;
   }
@@ -1406,7 +1406,7 @@ void CalcCSPs(
      || pixel.g > -SMALLEST_FP16 && pixel.g < SMALLEST_FP16
      || pixel.b > -SMALLEST_FP16 && pixel.b < SMALLEST_FP16))
   {
-    curCSP = GetCSP(CSP::Mat::BT709To::XYZ(pixel));
+    curCSP = GetCSP(Csp::Mat::Bt709To::XYZ(pixel));
   }
   else
   {
@@ -1415,7 +1415,7 @@ void CalcCSPs(
 
 #else
 
-  curCSP = GetCSP(CSP::Mat::BT709To::XYZ(pixel));
+  curCSP = GetCSP(Csp::Mat::Bt709To::XYZ(pixel));
 
 #endif
 
@@ -1423,13 +1423,13 @@ void CalcCSPs(
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-  const float3 curPixel = CSP::TRC::FromPq(pixel);
+  const float3 curPixel = Csp::Trc::FromPq(pixel);
 
   if (!(curPixel.r < SMALLEST_UINT10
      && curPixel.g < SMALLEST_UINT10
      && curPixel.b < SMALLEST_UINT10))
   {
-    curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(curPixel));
+    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(curPixel));
   }
   else
   {
@@ -1438,7 +1438,7 @@ void CalcCSPs(
 
 #else
 
-  curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(CSP::TRC::FromPq(pixel)));
+  curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel)));
 
 #endif
 
@@ -1446,13 +1446,13 @@ void CalcCSPs(
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-  const float3 curPixel = CSP::TRC::FromPq(pixel);
+  const float3 curPixel = Csp::Trc::FromPq(pixel);
 
   if (!(curPixel.r < SMALLEST_UINT10
      && curPixel.g < SMALLEST_UINT10
      && curPixel.b < SMALLEST_UINT10))
   {
-    curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(CSP::TRC::FromHlg(curPixel)));
+    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(curPixel)));
   }
   else
   {
@@ -1461,7 +1461,7 @@ void CalcCSPs(
 
 #else
 
-  curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(CSP::TRC::FromHlg(pixel)));
+  curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel)));
 
 #endif
 
@@ -1473,7 +1473,7 @@ void CalcCSPs(
      && pixel.g > -SMALLEST_FP16 && pixel.g < SMALLEST_FP16
      && pixel.b > -SMALLEST_FP16 && pixel.b < SMALLEST_FP16))
   {
-    curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(pixel));
+    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(pixel));
   }
   else
   {
@@ -1482,7 +1482,7 @@ void CalcCSPs(
 
 #else
 
-  curCSP = GetCSP(CSP::Mat::BT2020To::XYZ(pixel));
+  curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(pixel));
 
 #endif
 
@@ -1691,15 +1691,15 @@ float3 Create_CSP_Map(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  output = CSP::TRC::ToPqFromNits(CSP::Mat::BT709To::BT2020(output));
+  output = Csp::Trc::ToPqFromNits(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  output = CSP::TRC::ToHlgFromNits(CSP::Mat::BT709To::BT2020(output));
+  output = Csp::Trc::ToHlgFromNits(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  output = CSP::Mat::BT709To::BT2020(output / 100.f);
+  output = Csp::Mat::Bt709To::Bt2020(output / 100.f);
 
 #endif
 

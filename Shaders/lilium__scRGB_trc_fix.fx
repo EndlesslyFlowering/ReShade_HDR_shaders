@@ -79,17 +79,17 @@ void scRGB_TRC_Fix(
   float3 fixedGamma = input;
 
   if (INPUT_TRC == TRC_SRGB){
-    fixedGamma = CSP::TRC::FromExtendedsRGB(fixedGamma);
+    fixedGamma = Csp::Trc::FromExtendedSrgb(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_22) {
-    fixedGamma = CSP::TRC::FromExtendedGamma22(fixedGamma);
+    fixedGamma = Csp::Trc::FromExtendedGamma22(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_24) {
-    fixedGamma = CSP::TRC::FromExtendedGamma24(fixedGamma);
+    fixedGamma = Csp::Trc::FromExtendedGamma24(fixedGamma);
   }
   else if (INPUT_TRC    == TRC_PQ
         && CSP_OVERRIDE != CSP_PS5) {
-    fixedGamma = CSP::Mat::BT2020To::BT709(CSP::TRC::FromPq(fixedGamma)) * 125.f;
+    fixedGamma = Csp::Mat::Bt2020To::Bt709(Csp::Trc::FromPq(fixedGamma)) * 125.f;
   }
 
   if (CLAMP) {
@@ -98,15 +98,15 @@ void scRGB_TRC_Fix(
 
   if (CSP_OVERRIDE == CSP_PS5
    && INPUT_TRC    != TRC_PQ) {
-    fixedGamma = CSP::Mat::BT709To::BT2020(fixedGamma);
+    fixedGamma = Csp::Mat::Bt709To::Bt2020(fixedGamma);
    }
 
 
   if (DO_GAMMA_ADJUST) {
-    fixedGamma = CSP::TRC::ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
+    fixedGamma = Csp::Trc::ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
   }
 
-//  if (dot(BT709_To_XYZ[1].rgb, fixedGamma) < 0.f)
+//  if (dot(Bt709ToXYZ[1].rgb, fixedGamma) < 0.f)
 //    fixedGamma = float3(0.f, 0.f, 0.f);
 
 #if (CSP_OVERRIDE == CSP_PS5)

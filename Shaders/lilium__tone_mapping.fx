@@ -340,7 +340,7 @@ void ToneMapping(
      || (TONE_MAPPING_METHOD == TM_METHOD_BT2390
       && (BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB || BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR)))
     {
-      hdr = CSP::TRC::FromPq(hdr);
+      hdr = Csp::Trc::FromPq(hdr);
     }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -351,15 +351,15 @@ void ToneMapping(
     if (TONE_MAPPING_METHOD == TM_METHOD_BT2446A
      || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1)
     {
-      hdr = saturate(CSP::Mat::BT709To::BT2020(hdr));
+      hdr = saturate(Csp::Mat::Bt709To::Bt2020(hdr));
     }
     else if (TONE_MAPPING_METHOD == TM_METHOD_BT2390)
     {
-      hdr = clamp(CSP::Mat::BT709To::BT2020(hdr), 0.f, 65504.f);
+      hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
     }
     else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
     {
-      hdr = clamp(CSP::Mat::BT709To::BT2020(hdr), 0.f, 65504.f);
+      hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
     }
 
 #else
@@ -380,18 +380,18 @@ void ToneMapping(
       break;
       case TM_METHOD_BT2390:
       {
-        //const float srcMinPQ = CSP::TRC::ToPq(0.f / 10000.f); // Lb in PQ
-        //const float tgtMinPQ = CSP::TRC::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
-        //const float tgtMaxPQ = CSP::TRC::ToPq(BT2390_TARGET_WHITE_POINT / 10000.f); // Lmax in PQ
+        //const float srcMinPQ = Csp::Trc::ToPq(0.f / 10000.f); // Lb in PQ
+        //const float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
+        //const float tgtMaxPQ = Csp::Trc::ToPq(BT2390_TARGET_WHITE_POINT / 10000.f); // Lmax in PQ
         //const float minLum = (tgtMinPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
         //const float maxLum = (tgtMaxPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
 
         // this assumes the source black point is always 0 nits
-        const float srcMaxPQ  = CSP::TRC::ToPq(maxCLL / 10000.f); // Lw in PQ
+        const float srcMaxPQ  = Csp::Trc::ToPq(maxCLL / 10000.f); // Lw in PQ
         const float tgtMinPQ  = BT2390_TARGET_BLACK_POINT == 0.f  // Lmin in PQ
                               ? 0.f
-                              : CSP::TRC::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f);
-        const float tgtMaxPQ  = CSP::TRC::ToPq(TARGET_CLL                / 10000.f); // Lmax in PQ
+                              : Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f);
+        const float tgtMaxPQ  = Csp::Trc::ToPq(TARGET_CLL                / 10000.f); // Lmax in PQ
         const float minLum    = tgtMinPQ / srcMaxPQ;
         const float maxLum    = tgtMaxPQ / srcMaxPQ;
         const float KneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
@@ -401,7 +401,7 @@ void ToneMapping(
         if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
          || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
         {
-          hdr = CSP::TRC::ToPq(hdr);
+          hdr = Csp::Trc::ToPq(hdr);
         }
 
 #endif
@@ -418,7 +418,7 @@ void ToneMapping(
         if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
          || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
         {
-          hdr = CSP::TRC::FromPq(hdr);
+          hdr = Csp::Trc::FromPq(hdr);
         }
 
 #endif
@@ -430,8 +430,8 @@ void ToneMapping(
         const float target_CLL_normalized = TARGET_CLL / 10000.f;
         hdr = dice(
           hdr,
-          CSP::ICtCp::NormalisedToIntensity::AP0_D65(target_CLL_normalized),
-          CSP::ICtCp::NormalisedToIntensity::AP0_D65(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
+          Csp::Ictcp::NormalisedToIntensity::Ap0D65(target_CLL_normalized),
+          Csp::Ictcp::NormalisedToIntensity::Ap0D65(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
           DICE_PROCESSING_MODE,
           DICE_WORKING_COLOR_SPACE);
         //hdr = saturate(hdr);
@@ -461,17 +461,17 @@ void ToneMapping(
      || TONE_MAPPING_METHOD == TM_METHOD_BT2446A_MOD1
      || TONE_MAPPING_METHOD == TM_METHOD_BT2390)
     {
-      hdr = CSP::Mat::BT2020To::BT709(hdr);
+      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
     }
     else if (TONE_MAPPING_METHOD == TM_METHOD_DICE)
     {
-      hdr = CSP::Mat::AP0_D65To::BT709(hdr);
+      hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
     }
     hdr *= 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    hdr = CSP::TRC::ToPq(hdr);
+    hdr = Csp::Trc::ToPq(hdr);
 
 #endif
 //  }

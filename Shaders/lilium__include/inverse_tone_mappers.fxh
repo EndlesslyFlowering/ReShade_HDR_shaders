@@ -16,7 +16,7 @@
 //  switch (gamutExpansionType)
 //  {
 //    case 0:
-//      sdr = mul(BT709_To_BT2020, sdr);
+//      sdr = mul(Bt709ToBt2020, sdr);
 //      break;
 //    case 1:
 //      sdr = mul(myExp_BT709_To_BT2020, sdr);
@@ -54,11 +54,11 @@ float3 BT2446A_InverseToneMapping(
 
   // Rec. ITU-R BT.2020-2 Table 4
   //Y'C'bC'r,tmo
-  const float3 YCbCr_tmo = CSP::YCbCr::FromRGB::BT2020(sdr);
+  const float3 YcbcrTmo = Csp::Ycbcr::FromRgb::Bt2020(sdr);
 
   // adjusted luma component (inverse)
   // get Y'sdr
-  const float Y_sdr = YCbCr_tmo.x + max(0.1f * YCbCr_tmo.z, 0.f);
+  const float Y_sdr = YcbcrTmo.x + max(0.1f * YcbcrTmo.z, 0.f);
 
   // Tone mapping step 3 (inverse)
   // get Y'c
@@ -143,10 +143,10 @@ float3 BT2446A_InverseToneMapping(
 //          K_BT2020.g;
 
 //  produces the same results
-  const float C_b_hdr = YCbCr_tmo.y / colourScale;
-  const float C_r_hdr = YCbCr_tmo.z / colourScale;
+  const float C_b_hdr = YcbcrTmo.y / colourScale;
+  const float C_r_hdr = YcbcrTmo.z / colourScale;
 
-  float3 hdr = CSP::YCbCr::ToRGB::BT2020(float3(Y_hdr, C_b_hdr, C_r_hdr));
+  float3 hdr = Csp::Ycbcr::ToRgb::Bt2020(float3(Y_hdr, C_b_hdr, C_r_hdr));
 
   hdr = saturate(hdr); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
@@ -212,7 +212,7 @@ float3 Map_SDR_Into_HDR(
 //
 //  //6.1.5 (inverse)
 //  //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-//  sdr = mul(BT2020_To_XYZ, sdr);
+//  sdr = mul(Bt2020ToXYZ, sdr);
 //  const float Y_sdr = sdr.y;
 //  const float xyz   = sdr.x + sdr.y + sdr.z;
 //  const float x_sdr = sdr.x /
@@ -374,7 +374,7 @@ float3 Map_SDR_Into_HDR(
 //
 //    hdr = float3(X_hdr_cor, Y_hdr, Z_hdr_cor);
 //  }
-//  hdr = mul(XYZ_To_BT2020, hdr);
+//  hdr = mul(XYZToBt2020, hdr);
 //
 //  //6.1.2 (inverse)
 //  //inverse crosstalk matrix from 6.1.6
@@ -423,7 +423,7 @@ float3 BT2446C_InverseToneMapping(
 
   //6.1.5 (inverse)
   //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-  sdr = CSP::Mat::BT2020To::XYZ(sdr);
+  sdr = Csp::Mat::Bt2020To::XYZ(sdr);
   const float Y_sdr = sdr.y;
   const float xyz   = sdr.x + sdr.y + sdr.z;
   const float x_sdr = sdr.x /
@@ -587,7 +587,7 @@ float3 BT2446C_InverseToneMapping(
 //
 //    hdr = float3(X_hdr_cor, Y_hdr, Z_hdr_cor);
 //  }
-  hdr = CSP::Mat::XYZTo::BT2020(hdr);
+  hdr = Csp::Mat::XYZTo::Bt2020(hdr);
 
   //6.1.2 (inverse)
   //inverse crosstalk matrix from 6.1.6
@@ -618,17 +618,17 @@ float3 DiceInverseToneMapper(
         float  ShoulderStart)
 {
 
-  float3x3 RGB_To_LMS = CSP::ICtCp::Mat::AP0_D65_To_LMS;
-  float3x3 LMS_To_RGB = CSP::ICtCp::Mat::LMS_To_AP0_D65;
-  float3   K_factors  = CSP::K_Helpers::AP0_D65::K;
-  float    KR_helper  = CSP::K_Helpers::AP0_D65::KR;
-  float    KB_helper  = CSP::K_Helpers::AP0_D65::KB;
-  float2   KG_helper  = CSP::K_Helpers::AP0_D65::KG;
+  float3x3 RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
+  float3x3 LmsToRgb = Csp::Ictcp::Mat::LmsToAp0D65;
+  float3   K_factors  = Csp::KHelpers::Ap0D65::K;
+  float    KR_helper  = Csp::KHelpers::Ap0D65::Kr;
+  float    KB_helper  = Csp::KHelpers::Ap0D65::Kb;
+  float2   KG_helper  = Csp::KHelpers::Ap0D65::Kg;
 
 
-  float3 LMS = mul(RGB_To_LMS, Input);
+  float3 LMS = mul(RgbToLms, Input);
 
-  LMS = CSP::TRC::ToPq(LMS);
+  LMS = Csp::Trc::ToPq(LMS);
 
   const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
@@ -638,19 +638,19 @@ float3 DiceInverseToneMapper(
   }
   else
   {
-    const float Ct1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[1]);
-    const float Cp1 = dot(LMS, CSP::ICtCp::Mat::PQ_LMS_To_ICtCp[2]);
+    const float Ct1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
+    const float Cp1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
 
     const float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 
     const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
     //to L'M'S'
-    LMS = CSP::ICtCp::Mat::ICtCpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
+    LMS = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
     //to LMS
-    LMS = CSP::TRC::FromPq(LMS);
+    LMS = Csp::Trc::FromPq(LMS);
     //to RGB
-    return clamp(mul(LMS_To_RGB, LMS), 0.f, 65504.f);
+    return clamp(mul(LmsToRgb, LMS), 0.f, 65504.f);
   }
 
 }

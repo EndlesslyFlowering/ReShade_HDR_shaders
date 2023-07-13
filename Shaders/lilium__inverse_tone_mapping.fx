@@ -235,17 +235,17 @@ void InverseToneMapping(
     break;
     case CONTENT_TRC_SRGB:
     {
-      hdr = CSP::TRC::FromExtendedsRGB(input);
+      hdr = Csp::Trc::FromExtendedSrgb(input);
     }
     break;
     case CONTENT_TRC_GAMMA_22:
     {
-      hdr = CSP::TRC::FromExtendedGamma22(input);
+      hdr = Csp::Trc::FromExtendedGamma22(input);
     }
     break;
     case CONTENT_TRC_GAMMA_24:
     {
-      hdr = CSP::TRC::FromExtendedGamma24(input);
+      hdr = Csp::Trc::FromExtendedGamma24(input);
     }
     break;
   }
@@ -258,12 +258,12 @@ void InverseToneMapping(
 
   if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = CSP::Mat::BT709To::BT2020(hdr);
+    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
   }
 #if (ENABLE_DICE != 0)
   else
   {
-    hdr = clamp(CSP::Mat::BT709To::AP0_D65(hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
+    hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
   }
 #endif
 
@@ -308,8 +308,8 @@ void InverseToneMapping(
       const float target_CLL_normalised = TARGET_PEAK_NITS / 10000.f;
       hdr = DiceInverseToneMapper(
         hdr,
-        CSP::ICtCp::AP0_D65::NitsToIntensity(DICE_REFERENCE_WHITE),
-        CSP::ICtCp::AP0_D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
+        Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_REFERENCE_WHITE),
+        Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
     }
     break;
 
@@ -329,25 +329,25 @@ void InverseToneMapping(
 
   if (INVERSE_TONE_MAPPING_METHOD == ITM_METHOD_DICE_INVERSE)
   {
-    hdr = CSP::Mat::AP0_D65To::BT2020(hdr);
+    hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
   }
 
 #endif
 
-  hdr = CSP::TRC::ToPq(hdr);
+  hdr = Csp::Trc::ToPq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
   if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = CSP::Mat::BT2020To::BT709(hdr);
+    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
   }
 
 #if (ENABLE_DICE != 0)
 
   else
   {
-    hdr = CSP::Mat::AP0_D65To::BT709(hdr);
+    hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
   }
 
 #endif

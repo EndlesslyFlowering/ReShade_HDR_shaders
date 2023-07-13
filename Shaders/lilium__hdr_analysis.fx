@@ -557,8 +557,8 @@ static const uint text_B[2] = { __B, __Colon };
 
 static const uint text_signNegative[1] = { __Minus };
 
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10  \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG \
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG   \
   || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
 static const uint RGB_Text_Offset = 4;
@@ -602,7 +602,7 @@ void HDR_analysis(
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_HDR10    \
+  || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
@@ -688,23 +688,23 @@ void HDR_analysis(
           out3 = float3(1.f, 0.f, NIT_PINGPONG2.x);
         }
 
-        out3 *= breathing;
+        out3 *= breathing * HIGHLIGHT_NIT_RANGE_BRIGHTNESS;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        out3 = out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 80.f;
+        out3 = Csp::Map::Bt709Into::Scrgb(out3);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-        out3 =  CSP::TRC::ToPqFromNits(CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+        out3 = Csp::Map::Bt709Into::Hdr10(out3);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-        out3 = CSP::TRC::ToHlgFromNits(CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS));
+        out3 = Csp::Map::Bt709Into::Hlg(out3);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-        out3 = CSP::Mat::BT709To::BT2020(out3 * HIGHLIGHT_NIT_RANGE_BRIGHTNESS / 100.f);
+        out3 = Csp::Map::Bt709Into::Ps5(out3);
 
 #endif
 
@@ -768,23 +768,19 @@ void HDR_analysis(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      Output = float4(
-        currentPixelToDisplay * (CIE_DIAGRAM_BRIGHTNESS / 80.f), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Scrgb(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      Output = float4(
-        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 10000.f)), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Hdr10(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      Output = float4(
-        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 1000.f)), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Hlg(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      Output = float4(
-        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (CIE_DIAGRAM_BRIGHTNESS / 100.f), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Ps5(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
 
 #endif
     }
@@ -1032,8 +1028,8 @@ void HDR_analysis(
     DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
 #endif
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10  \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG \
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG   \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
     DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,     Output, FONT_BRIGHTNESS);
@@ -1068,23 +1064,19 @@ void HDR_analysis(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      Output = float4(
-        currentPixelToDisplay * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 80.f), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Scrgb(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      Output = float4(
-        CSP::TRC::ToPq(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 10000.f)), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Hdr10(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      Output = float4(
-        CSP::TRC::ToHlg(CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 1000.f)), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Hlg(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      Output = float4(
-        CSP::Mat::BT709To::BT2020(currentPixelToDisplay) * (BRIGHTNESS_HISTOGRAM_BRIGHTNESS / 100.f), 1.f);
+      Output = float4(Csp::Map::Bt709Into::Ps5(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
 
 #endif
     }
