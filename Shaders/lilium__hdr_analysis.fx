@@ -135,12 +135,18 @@ uniform float2 NIT_PINGPONG2
   #define ACTUAL_CSP_TEXT "unknown"
 #endif
 
-
-#define INFO_TEXT                                                          \
+#define INFO_TEXT \
   "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT       "\n" \
   "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT "\n" \
   "colour space overwritten to:       " CSP_OVERRIDE_TEXT             "\n" \
-  "colour space in use by the shader: " ACTUAL_CSP_TEXT
+  "colour space in use by the shader: " ACTUAL_CSP_TEXT               "\n" \
+                                                                      "\n" \
+  "Use the \"Preprocessor definition\" CSP_OVERRIDE below to override "    \
+  "the colour space in case the auto detection doesn't work."         "\n" \
+  "Possible values are:"                                              "\n" \
+  "- CSP_HDR10"                                                       "\n" \
+  "- CSP_SCRGB"                                                       "\n" \
+  "Hit ENTER to apply."
 
 
 uniform int GLOBAL_INFO
