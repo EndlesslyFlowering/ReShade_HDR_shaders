@@ -7,7 +7,7 @@
 
 #define ENABLE_DICE 0
 
-uniform uint INVERSE_TONE_MAPPING_METHOD
+uniform uint ITM_METHOD
 <
   ui_category = "global";
   ui_label    = "inverse tone mapping method";
@@ -54,37 +54,43 @@ uniform uint CONTENT_TRC
 #define CONTENT_TRC_GAMMA_24 2
 #define CONTENT_TRC_LINEAR   3
 
-uniform float TARGET_PEAK_NITS
+uniform float TARGET_BRIGHTNESS
 <
-  ui_category = "global";
-  ui_label    = "target peak luminance (nits)";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 10000.f;
-  ui_step     = 10.f;
+  ui_category  = "global";
+  ui_label     = "target brightness (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 1.f;
+  ui_max       = 10000.f;
+  ui_step      = 10.f;
 > = 1000.f;
 
-uniform float BT2446A_REF_WHITE_NITS
+uniform float BT2446A_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method A";
-  ui_label    = "reference white luminance (nits)";
-  ui_tooltip  = "can't be higher than \"target peak luminance\"";
+  ui_label    = "input brightness (in nits)";
+  ui_tooltip  = "sets the brightness to this values for the inverse tone mapping process\n"
+                "controls the average brightness\n"
+                "can't be higher than \"target brightness\"";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1200.f;
   ui_step     = 0.1f;
 > = 100.f;
 
-uniform float BT2446A_MAX_INPUT_NITS
+uniform float BT2446A_MAX_INPUT_BRIGHTNESS
 <
-  ui_category = "BT.2446 Method A";
-  ui_label    = "max input luminance (nits)";
-  ui_tooltip  = "can't be lower than \"reference white luminance\"\n"
-                "can't be higher than \"target peak luminance\"";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 1200.f;
-  ui_step     = 0.1f;
+  ui_category  = "BT.2446 Method A";
+  ui_label     = "max input brightness (in nits)";
+  ui_tooltip   = "controls how much of the \"overbright\" brightness will be processed\n"
+                 "analyse a good value with the HDR analysis shader\n"
+                 "can't be lower than \"input brightness\"\n"
+                 "can't be higher than \"target brightness\"";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 1.f;
+  ui_max       = 1200.f;
+  ui_step      = 0.1f;
 > = 100.f;
 
 //uniform bool BT2446A_AUTO_REF_WHITE
@@ -109,7 +115,7 @@ uniform float BT2446A_GAMUT_EXPANSION
 uniform float BT2446A_GAMMA_IN
 <
   ui_category = "BT.2446 Method A";
-  ui_label    = "gamma in";
+  ui_label    = "gamma adjustment before inverse tone mapping";
   ui_type     = "drag";
   ui_min      = -0.4f;
   ui_max      =  0.6f;
@@ -119,21 +125,22 @@ uniform float BT2446A_GAMMA_IN
 uniform float BT2446A_GAMMA_OUT
 <
   ui_category = "BT.2446 Method A";
-     ui_label = "gamma out";
+     ui_label = "gamma adjustment after inverse tone mapping";
       ui_type = "drag";
        ui_min = -1.f;
        ui_max =  1.f;
       ui_step =  0.005f;
 > = 0.f;
 
-uniform float BT2446C_REF_WHITE_NITS
+uniform float BT2446C_INPUT_BRIGHTNESS
 <
-  ui_category = "BT.2446 Method C";
-  ui_label    = "reference white luminance (nits)";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 1200.f;
-  ui_step     = 0.01f;
+  ui_category  = "BT.2446 Method C";
+  ui_label     = "input brightness (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 1.f;
+  ui_max       = 1200.f;
+  ui_step      = 0.01f;
 > = 100.f;
 
 uniform float BT2446C_ALPHA
@@ -183,11 +190,11 @@ uniform float BT2446C_ALPHA
 //> = 0.5f;
 
 #if (ENABLE_DICE != 0)
-uniform float DICE_REFERENCE_WHITE
+uniform float DICE_INPUT_BRIGHTNESS
 <
   ui_category = "Dice";
-  ui_label    = "reference white luminance (nits)";
-  ui_tooltip  = "can't be higher than \"target peak luminance\"";
+  ui_label    = "input brightness (in nits)";
+  ui_tooltip  = "can't be higher than \"target brightness\"";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 400.f;
@@ -196,24 +203,26 @@ uniform float DICE_REFERENCE_WHITE
 
 uniform float DICE_SHOULDER_START
 <
-  ui_category = "Dice";
-  ui_label    = "shoulder start (in %)";
-  ui_tooltip  = "set this to where the luminance expansion starts";
-  ui_type     = "drag";
-  ui_min      = 0.1f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
+  ui_category  = "Dice";
+  ui_label     = "shoulder start (in %)";
+  ui_tooltip   = "set this to where the brightness expansion starts";
+  ui_type      = "drag";
+  ui_drag_desc = "%%";
+  ui_min       = 0.1f;
+  ui_max       = 100.f;
+  ui_step      = 0.1f;
 > = 50.f;
 #endif
 
 uniform float MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS
 <
-  ui_category = "map SDR into HDR";
-  ui_label    = "target brightness (nits)";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 1000.f;
-  ui_step     = 0.1f;
+  ui_category  = "map SDR into HDR";
+  ui_label     = "target brightness (in nits)";
+  ui_type      = "drag";
+  ui_drag_desc = " nits";
+  ui_min       = 1.f;
+  ui_max       = 1000.f;
+  ui_step      = 0.1f;
 > = 203.f;
 
 
@@ -253,10 +262,10 @@ void InverseToneMapping(
   //hdr = gamut(hdr, EXPAND_GAMUT);
 
 #if (ENABLE_DICE != 0)
-  const float diceReferenceWhite = (DICE_REFERENCE_WHITE / 80.f);
+  const float diceReferenceWhite = (DICE_INPUT_BRIGHTNESS / 80.f);
 #endif
 
-  if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
+  if (ITM_METHOD != ITM_METHOD_DICE_INVERSE)
   {
     hdr = Csp::Mat::Bt709To::Bt2020(hdr);
   }
@@ -267,37 +276,37 @@ void InverseToneMapping(
   }
 #endif
 
-  switch (INVERSE_TONE_MAPPING_METHOD)
+  switch (ITM_METHOD)
   {
     case ITM_METHOD_BT2446A:
     {
-      const float inputNitsFactor = BT2446A_MAX_INPUT_NITS > BT2446A_REF_WHITE_NITS
-                                  ? BT2446A_MAX_INPUT_NITS / BT2446A_REF_WHITE_NITS
+      const float inputNitsFactor = BT2446A_MAX_INPUT_BRIGHTNESS > BT2446A_INPUT_BRIGHTNESS
+                                  ? BT2446A_MAX_INPUT_BRIGHTNESS / BT2446A_INPUT_BRIGHTNESS
                                   : 1.f;
 
-      float referenceWhiteNits = BT2446A_REF_WHITE_NITS * inputNitsFactor;
-            referenceWhiteNits = referenceWhiteNits < TARGET_PEAK_NITS
+      float referenceWhiteNits = BT2446A_INPUT_BRIGHTNESS * inputNitsFactor;
+            referenceWhiteNits = referenceWhiteNits < TARGET_BRIGHTNESS
                                ? referenceWhiteNits
-                               : TARGET_PEAK_NITS;
+                               : TARGET_BRIGHTNESS;
 
-      hdr = BT2446A_InverseToneMapping(hdr,
-                                       TARGET_PEAK_NITS,
-                                       referenceWhiteNits,
-                                       inputNitsFactor,
-                                       BT2446A_GAMUT_EXPANSION,
-                                       BT2446A_GAMMA_IN,
-                                       BT2446A_GAMMA_OUT);
+      hdr = InverseToneMapping::Bt2446a(hdr,
+                                        TARGET_BRIGHTNESS,
+                                        referenceWhiteNits,
+                                        inputNitsFactor,
+                                        BT2446A_GAMUT_EXPANSION,
+                                        BT2446A_GAMMA_IN,
+                                        BT2446A_GAMMA_OUT);
     }
     break;
     case ITM_METHOD_BT2446C:
     {
-      hdr = BT2446C_InverseToneMapping(hdr,
-                                       BT2446C_REF_WHITE_NITS > 153.9f
-                                     ? 1.539f
-                                     : BT2446C_REF_WHITE_NITS / 100.f,
-                                       0.33f - BT2446C_ALPHA);
-                                       //BT2446C_USE_ACHROMATIC_CORRECTION,
-                                       //BT2446C_SIGMA);
+      hdr = InverseToneMapping::Bt2446c(hdr,
+                                        BT2446C_INPUT_BRIGHTNESS > 153.9f
+                                      ? 1.539f
+                                      : BT2446C_INPUT_BRIGHTNESS / 100.f,
+                                        0.33f - BT2446C_ALPHA);
+                                        //BT2446C_USE_ACHROMATIC_CORRECTION,
+                                        //BT2446C_SIGMA);
     }
     break;
 
@@ -305,11 +314,11 @@ void InverseToneMapping(
 
     case ITM_METHOD_DICE_INVERSE:
     {
-      const float target_CLL_normalised = TARGET_PEAK_NITS / 10000.f;
-      hdr = DiceInverseToneMapper(
-        hdr,
-        Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_REFERENCE_WHITE),
-        Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_REFERENCE_WHITE));
+      const float target_CLL_normalised = TARGET_BRIGHTNESS / 10000.f;
+      hdr = InverseToneMapping::Dice::InverseToneMapper(
+              hdr,
+              Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_INPUT_BRIGHTNESS),
+              Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_INPUT_BRIGHTNESS));
     }
     break;
 
@@ -317,8 +326,8 @@ void InverseToneMapping(
 
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
-      hdr = Map_SDR_Into_HDR(hdr,
-                             MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS);
+      hdr = InverseToneMapping::MapSdrIntoHdr(hdr,
+                                              MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS);
     }
     break;
   }
@@ -327,7 +336,7 @@ void InverseToneMapping(
 
 #if (ENABLE_DICE != 0)
 
-  if (INVERSE_TONE_MAPPING_METHOD == ITM_METHOD_DICE_INVERSE)
+  if (ITM_METHOD == ITM_METHOD_DICE_INVERSE)
   {
     hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
   }
@@ -338,7 +347,7 @@ void InverseToneMapping(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  if (INVERSE_TONE_MAPPING_METHOD != ITM_METHOD_DICE_INVERSE)
+  if (ITM_METHOD != ITM_METHOD_DICE_INVERSE)
   {
     hdr = Csp::Mat::Bt2020To::Bt709(hdr);
   }
