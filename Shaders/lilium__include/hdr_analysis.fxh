@@ -484,9 +484,8 @@ float3 Heatmap_RGB_Values(
   else if (Y <= r0) // <= 100nits
   {
     //shades of grey
-    const float clamped = !HistogramOutput
-                        ? Y / r0 * 0.25f
-                        : 0.666f;
+    const float clamped = !HistogramOutput ? Y / r0 * 0.25f
+                                           : 0.666f;
     output.r = clamped;
     output.g = clamped;
     output.b = clamped;
@@ -641,9 +640,8 @@ void CalcCLL(
 
 #endif
 
-  CurCLL = curPixel >= 0.f
-         ? curPixel
-         : 0.f;
+  CurCLL = curPixel >= 0.f ? curPixel
+                           : 0.f;
 }
 
 

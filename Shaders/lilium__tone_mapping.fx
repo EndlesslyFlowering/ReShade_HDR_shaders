@@ -388,7 +388,7 @@ void ToneMapping(
         const float tgtMinPQ  = BT2390_TARGET_BLACK_POINT == 0.f  // Lmin in PQ
                               ? 0.f
                               : Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f);
-        const float tgtMaxPQ  = Csp::Trc::ToPq(TARGET_BRIGHTNESS                / 10000.f); // Lmax in PQ
+        const float tgtMaxPQ  = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // Lmax in PQ
         const float minLum    = tgtMinPQ / srcMaxPQ;
         const float maxLum    = tgtMaxPQ / srcMaxPQ;
         const float kneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
@@ -425,11 +425,11 @@ void ToneMapping(
       break;
       case TM_METHOD_DICE:
       {
-        const float target_CLL_normalized = TARGET_BRIGHTNESS / 10000.f;
+        const float targetCllnormalised = TARGET_BRIGHTNESS / 10000.f;
         hdr = ToneMapping::Dice::ToneMapper(
           hdr,
-          Csp::Ictcp::NormalisedToIntensity::Ap0D65(target_CLL_normalized),
-          Csp::Ictcp::NormalisedToIntensity::Ap0D65(DICE_SHOULDER_START / 100.f * target_CLL_normalized),
+          Csp::Ictcp::NormalisedToIntensity::Ap0D65(targetCllnormalised),
+          Csp::Ictcp::NormalisedToIntensity::Ap0D65(DICE_SHOULDER_START / 100.f * targetCllnormalised),
           DICE_PROCESSING_MODE,
           DICE_WORKING_COLOUR_SPACE);
         //hdr = saturate(hdr);
@@ -440,7 +440,7 @@ void ToneMapping(
 
       case TM_METHOD_BT2446A_MOD1:
       {
-        const float testH = clamp(TEST_H + maxCLL,     0.f, 10000.f);
+        const float testH = clamp(TEST_H + maxCLL,            0.f, 10000.f);
         const float testS = clamp(TEST_S + TARGET_BRIGHTNESS, 0.f, 10000.f);
         hdr = ToneMapping::Bt2446a_MOD1(hdr,
                                         TARGET_BRIGHTNESS,
@@ -501,9 +501,8 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   if (abs(curDiff) < FINAL_ADAPT_START)
   {
     const float actualFinalAdapt = absFrametime * FINAL_ADAPT * (FINAL_ADAPT_SPEED / 1000.f);
-    adapt = adapt > 0.f
-          ? actualFinalAdapt
-          : -actualFinalAdapt;
+    adapt = adapt > 0.f ?  actualFinalAdapt
+                        : -actualFinalAdapt;
   }
   //else
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;

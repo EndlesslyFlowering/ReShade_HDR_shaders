@@ -618,8 +618,7 @@ void HDR_analysis(
 
   const float fontWidth = FONT_SIZE / 2.f;
 
-  static const float textOffset = TEXT_POSITION == TEXT_POSITION_TOP_LEFT
-                                ? 0.f
+  static const float textOffset = TEXT_POSITION == TEXT_POSITION_TOP_LEFT ? 0.f
                                 : BUFFER_WIDTH - (fontWidth * 28 + 10);
 
   if (SHOW_CSP_MAP
@@ -651,9 +650,8 @@ void HDR_analysis(
     if (HIGHLIGHT_NIT_RANGE)
     {
       float pingpong0 = NIT_PINGPONG0.x + 0.25f;
-      float pingpong1 = NIT_PINGPONG1.y == 1
-                      ? NIT_PINGPONG1.x
-                      : 6.f - NIT_PINGPONG1.x;
+      float pingpong1 = NIT_PINGPONG1.y == 1 ? NIT_PINGPONG1.x
+                                             : 6.f - NIT_PINGPONG1.x;
 
       if (pixelCLL >= HIGHLIGHT_NIT_RANGE_START_POINT
        && pixelCLL <= HIGHLIGHT_NIT_RANGE_END_POINT
@@ -851,15 +849,12 @@ void HDR_analysis(
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      const bool cursorRIsNeg = cursorRGB.r >= 0.f
-                              ? false
-                              : true;
-      const bool cursorGIsNeg = cursorRGB.g >= 0.f
-                              ? false
-                              : true;
-      const bool cursorBIsNeg = cursorRGB.b >= 0.f
-                              ? false
-                              : true;
+      const bool cursorRIsNeg = cursorRGB.r >= 0.f ? false
+                                                   : true;
+      const bool cursorGIsNeg = cursorRGB.g >= 0.f ? false
+                                                   : true;
+      const bool cursorBIsNeg = cursorRGB.b >= 0.f ? false
+                                                   : true;
 
       cursorRGB = abs(cursorRGB);
 
@@ -877,39 +872,27 @@ void HDR_analysis(
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
       if (cursorRIsNeg) {
-        const float offset = cursorRGB.r < 10.f
-                           ? fontWidth * 8
-                           : cursorRGB.r < 100.f
-                           ? fontWidth * 7
-                           : cursorRGB.r < 1000.f
-                           ? fontWidth * 6
-                           : cursorRGB.r < 10000.f
-                           ? fontWidth * 5
-                           : fontWidth * 4;
+        const float offset = cursorRGB.r <    10.f ? fontWidth * 8
+                           : cursorRGB.r <   100.f ? fontWidth * 7
+                           : cursorRGB.r <  1000.f ? fontWidth * 6
+                           : cursorRGB.r < 10000.f ? fontWidth * 5
+                                                   : fontWidth * 4;
         DrawTextString(float2(offset + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
       if (cursorGIsNeg) {
-        const float offset = cursorRGB.g < 10.f
-                           ? fontWidth * 8
-                           : cursorRGB.g < 100.f
-                           ? fontWidth * 7
-                           : cursorRGB.g < 1000.f
-                           ? fontWidth * 6
-                           : cursorRGB.g < 10000.f
-                           ? fontWidth * 5
-                           : fontWidth * 4;
+        const float offset = cursorRGB.g <    10.f ? fontWidth * 8
+                           : cursorRGB.g <   100.f ? fontWidth * 7
+                           : cursorRGB.g <  1000.f ? fontWidth * 6
+                           : cursorRGB.g < 10000.f ? fontWidth * 5
+                                                   : fontWidth * 4;
         DrawTextString(float2(offset + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
       if (cursorBIsNeg) {
-        const float offset = cursorRGB.b < 10.f
-                           ? fontWidth * 8
-                           : cursorRGB.b < 100.f
-                           ? fontWidth * 7
-                           : cursorRGB.b < 1000.f
-                           ? fontWidth * 6
-                           : cursorRGB.b < 10000.f
-                           ? fontWidth * 5
-                           : fontWidth * 4;
+        const float offset = cursorRGB.b <    10.f ? fontWidth * 8
+                           : cursorRGB.b <   100.f ? fontWidth * 7
+                           : cursorRGB.b <  1000.f ? fontWidth * 6
+                           : cursorRGB.b < 10000.f ? fontWidth * 5
+                                                   : fontWidth * 4;
         DrawTextString(float2(offset + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
       }
 

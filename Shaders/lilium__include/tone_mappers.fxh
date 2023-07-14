@@ -23,9 +23,8 @@ namespace ToneMapping
   {
     float3 hdrIn = Input;
 
-    const float maxCll = MaxCllIn > TargetCll
-                       ? MaxCllIn
-                       : TargetCll;
+    const float maxCll = MaxCllIn > TargetCll ? MaxCllIn
+                                              : TargetCll;
 
     // adjust the max of 1 according to maxCll
     hdrIn *= (10000.f / maxCll);
@@ -100,9 +99,8 @@ namespace ToneMapping
   {
     float3 hdrIn = Input;
 
-    const float maxCll = MaxCllIn > TargetCll
-                       ? MaxCllIn
-                       : TargetCll;
+    const float maxCll = MaxCllIn > TargetCll ? MaxCllIn
+                                              : TargetCll;
 
     // adjust the max of 1 according to maxCll
     hdrIn *= (10000.f / maxCll);
