@@ -604,4 +604,14 @@ technique lilium__tone_mapping
   }
 }
 
+#else
+
+uniform int GLOBAL_INFO
+<
+  ui_category = "info";
+  ui_label    = " ";
+  ui_type     = "radio";
+  ui_text     = "Only DirectX 11, 12 and Vulkan are supported!";
+>;
+
 #endif
