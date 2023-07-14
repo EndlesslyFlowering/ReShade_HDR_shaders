@@ -59,7 +59,7 @@ uniform float TARGET_BRIGHTNESS
   ui_category  = "global";
   ui_label     = "target brightness (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 1.f;
   ui_max       = 10000.f;
   ui_step      = 10.f;
@@ -87,7 +87,7 @@ uniform float BT2446A_MAX_INPUT_BRIGHTNESS
                  "can't be lower than \"input brightness\"\n"
                  "can't be higher than \"target brightness\"";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 1.f;
   ui_max       = 1200.f;
   ui_step      = 0.1f;
@@ -137,7 +137,7 @@ uniform float BT2446C_INPUT_BRIGHTNESS
   ui_category  = "BT.2446 Method C";
   ui_label     = "input brightness (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 1.f;
   ui_max       = 1200.f;
   ui_step      = 0.01f;
@@ -207,7 +207,7 @@ uniform float DICE_SHOULDER_START
   ui_label     = "shoulder start (in %)";
   ui_tooltip   = "set this to where the brightness expansion starts";
   ui_type      = "drag";
-  ui_drag_desc = "%%";
+  ui_units = "%%";
   ui_min       = 0.1f;
   ui_max       = 100.f;
   ui_step      = 0.1f;
@@ -219,7 +219,7 @@ uniform float MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS
   ui_category  = "map SDR into HDR";
   ui_label     = "target brightness (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 1.f;
   ui_max       = 1000.f;
   ui_step      = 0.1f;

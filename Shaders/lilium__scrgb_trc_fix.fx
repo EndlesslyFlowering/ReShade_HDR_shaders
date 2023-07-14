@@ -26,7 +26,7 @@ uniform float SDR_WHITEPOINT_NITS
 <
   ui_label     = "SDR whitepoint (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits"
+  ui_units = " nits"
   ui_min       = 1.f;
   ui_max       = 300.f;
   ui_step      = 1.f;

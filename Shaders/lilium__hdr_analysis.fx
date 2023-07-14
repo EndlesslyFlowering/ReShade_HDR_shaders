@@ -228,7 +228,7 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_category    = "CIE diagram visualisation";
   ui_label       = "CIE diagram brightness";
   ui_type        = "slider";
-  ui_slider_desc = " nits";
+  ui_units = " nits";
   ui_min         = 10.f;
   ui_max         = 250.f;
   ui_step        = 0.5f;
@@ -239,7 +239,7 @@ uniform float CIE_DIAGRAM_SIZE
   ui_category    = "CIE diagram visualisation";
   ui_label       = "CIE diagram size (in %)";
   ui_type        = "slider";
-  ui_slider_desc = "%%";
+  ui_units = "%%";
   ui_min         = 50.f;
   ui_max         = 100.f;
   ui_step        = 0.1f;
@@ -312,7 +312,7 @@ uniform float HEATMAP_BRIGHTNESS
   ui_category    = "Heatmap visualisation";
   ui_label       = "heatmap brightness (in nits)";
   ui_type        = "slider";
-  ui_slider_desc = " nits";
+  ui_units = " nits";
   ui_min         = 10.f;
   ui_max         = 250.f;
   ui_step        = 0.5f;
@@ -330,7 +330,7 @@ uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
   ui_category    = "Brightness histogram";
   ui_label       = "brightness histogram brightness (in nits)";
   ui_type        = "slider";
-  ui_slider_desc = " nits";
+  ui_units = " nits";
   ui_min         = 10.f;
   ui_max         = 250.f;
   ui_step        = 0.5f;
@@ -341,7 +341,7 @@ uniform float BRIGHTNESS_HISTOGRAM_SIZE
   ui_category    = "Brightness histogram";
   ui_label       = "brightness histogram size (in %)";
   ui_type        = "slider";
-  ui_slider_desc = "%%";
+  ui_units = "%%";
   ui_min         = 50.f;
   ui_max         = 100.f;
   ui_step        = 0.1f;
@@ -360,7 +360,7 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
   ui_category  = "Highlight brightness range visualisation";
   ui_label     = "brightness highlight range start point (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 0.001f;
@@ -371,7 +371,7 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_category  = "Highlight brightness range visualisation";
   ui_label     = "brightness highlight range end point (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 0.001f;
@@ -382,7 +382,7 @@ uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   ui_category    = "Highlight brightness range visualisation";
   ui_label       = "brightness highlight range brightness (in nits)";
   ui_type        = "slider";
-  ui_slider_desc = " nits";
+  ui_units = " nits";
   ui_min         = 10.f;
   ui_max         = 250.f;
   ui_step        = 0.5f;
@@ -400,7 +400,7 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_category  = "Draw certain brightness levels as black";
   ui_label     = "draw above this brightness as black (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 0.001f;
@@ -417,7 +417,7 @@ uniform float BELOW_NITS_AS_BLACK
   ui_category  = "Draw certain brightness levels as black";
   ui_label     = "draw below this brightness as black (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 1.f;

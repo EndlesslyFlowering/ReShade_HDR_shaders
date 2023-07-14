@@ -91,7 +91,7 @@ uniform float TARGET_BRIGHTNESS
   ui_category  = "global";
   ui_label     = "target brightness (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 5.f;
@@ -104,7 +104,7 @@ uniform float MAX_CLL
   ui_label     = "maximum brightness that will be tone mapped (in nits)";
   ui_tooltip   = "everything above this will be clipped!";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 5.f;
@@ -144,7 +144,7 @@ uniform float BT2390_SRC_BLACK_POINT
   ui_label     = "source black point (in nits)";
   ui_tooltip   = "";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 1.f;
   ui_step      = 0.001f;
@@ -155,7 +155,7 @@ uniform float BT2390_TARGET_BLACK_POINT
   ui_category  = "BT.2390 EETF";
   ui_label     = "target black point (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 1.f;
   ui_step      = 0.001f;
@@ -191,7 +191,7 @@ uniform float DICE_SHOULDER_START
                  "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\".\n"
                  "The brightness compression will start at 500 nits.";
   ui_type      = "drag";
-  ui_drag_desc = "%%";
+  ui_units = "%%";
   ui_min       = 0.1f;
   ui_max       = 100.f;
   ui_step      = 0.1f;
@@ -224,7 +224,7 @@ uniform float MAX_CLL_CAP
   ui_category  = "adaptive tone mapping";
   ui_label     = "cap maximum brightness (in nits)";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.f;
   ui_max       = 10000.f;
   ui_step      = 10.f;
@@ -236,7 +236,7 @@ uniform float TIME_TO_ADAPT
   ui_label     = "adaption to maximum brightness (in seconds)";
   ui_tooltip   = "time it takes to adapt to the current maximum brightness";
   ui_type      = "drag";
-  ui_drag_desc = " seconds";
+  ui_units = " seconds";
   ui_min       = 3.f;
   ui_max       = 30.f;
   ui_step      = 0.1f;
@@ -250,7 +250,7 @@ uniform float FINAL_ADAPT_START
                  "and the \"adaptive maximum brightness\" is smaller than this\n"
                  "use the \"final adaption steps\".";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 10.f;
   ui_max       = 100.f;
   ui_step      = 1.f;
@@ -262,7 +262,7 @@ uniform float FINAL_ADAPT
   ui_label     = "final adaption steps (in nits)";
   ui_tooltip   = "";
   ui_type      = "drag";
-  ui_drag_desc = " nits";
+  ui_units = " nits";
   ui_min       = 0.01f;
   ui_max       = 0.1f;
   ui_step      = 0.01f;
