@@ -37,13 +37,13 @@ static const float b0 =  0.132089632343748;
 static const float b1 = -0.7607324991323768;
 
 void filmgrain(
-      float4 vpos     : SV_Position,
-      float2 texcoord : TEXCOORD,
-  out float4 output   : SV_TARGET)
+      float4 Vpos     : SV_Position,
+      float2 Texcoord : TEXCOORD,
+  out float4 Output   : SV_TARGET)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
+  const float3 input = tex2D(ReShade::BackBuffer, Texcoord).rgb;
 
-  float3 m     = float3(texcoord, RANDOM / 100000.f) + 1.f.xxx;
+  float3 m     = float3(Texcoord, RANDOM / 100000.f) + 1.f;
   float  state = Permute(Permute(m.x) + m.y) + m.z;
 
   float p = 0.95f * Rand(state) + 0.025f;
@@ -103,7 +103,7 @@ void filmgrain(
 
 #endif
 
-  output = float4(Rgb, 1.f);
+  Output = float4(Rgb, 1.f);
 }
 
 technique lilium__filmgrain

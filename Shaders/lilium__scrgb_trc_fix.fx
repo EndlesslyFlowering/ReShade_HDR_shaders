@@ -1,6 +1,5 @@
-#if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
-   || __RENDERER__ >= 0x20000)                           \
-  && BUFFER_COLOR_SPACE == CSP_SCRGB)
+#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+  || __RENDERER__ >= 0x20000)
 
 
 #include "lilium__include\colour_space.fxh"
@@ -24,12 +23,12 @@ uniform uint INPUT_TRC
 
 uniform float SDR_WHITEPOINT_NITS
 <
-  ui_label     = "SDR whitepoint (in nits)";
-  ui_type      = "drag";
-  ui_units = " nits"
-  ui_min       = 1.f;
-  ui_max       = 300.f;
-  ui_step      = 1.f;
+  ui_label = "SDR whitepoint (in nits)";
+  ui_type  = "drag";
+  ui_units = " nits";
+  ui_min   = 1.f;
+  ui_max   = 300.f;
+  ui_step  = 1.f;
 > = 80.f;
 
 uniform bool ENABLE_GAMMA_ADJUST

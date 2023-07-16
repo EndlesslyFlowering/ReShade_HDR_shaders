@@ -88,26 +88,26 @@ uniform uint TM_MODE
 
 uniform float TARGET_BRIGHTNESS
 <
-  ui_category  = "global";
-  ui_label     = "target brightness (in nits)";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.f;
-  ui_max       = 10000.f;
-  ui_step      = 5.f;
+  ui_category = "global";
+  ui_label    = "target brightness (in nits)";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 5.f;
 > = 1000.f;
 
 //static tone mapping
 uniform float MAX_CLL
 <
-  ui_category  = "static tone mapping";
-  ui_label     = "maximum brightness that will be tone mapped (in nits)";
-  ui_tooltip   = "everything above this will be clipped!";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.f;
-  ui_max       = 10000.f;
-  ui_step      = 5.f;
+  ui_category = "static tone mapping";
+  ui_label    = "maximum brightness that will be tone mapped (in nits)";
+  ui_tooltip  = "everything above this will be clipped!";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 5.f;
 > = 10000.f;
 
 uniform float BT2446A_GAMUT_COMPRESSION
@@ -140,25 +140,25 @@ uniform uint BT2390_PROCESSING_MODE
 
 uniform float BT2390_SRC_BLACK_POINT
 <
-  ui_category  = "BT.2390 EETF";
-  ui_label     = "source black point (in nits)";
-  ui_tooltip   = "";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.f;
-  ui_max       = 1.f;
-  ui_step      = 0.001f;
+  ui_category = "BT.2390 EETF";
+  ui_label    = "source black point (in nits)";
+  ui_tooltip  = "";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.f;
+  ui_max      = 1.f;
+  ui_step     = 0.001f;
 > = 0.f;
 
 uniform float BT2390_TARGET_BLACK_POINT
 <
-  ui_category  = "BT.2390 EETF";
-  ui_label     = "target black point (in nits)";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.f;
-  ui_max       = 1.f;
-  ui_step      = 0.001f;
+  ui_category = "BT.2390 EETF";
+  ui_label    = "target black point (in nits)";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.f;
+  ui_max      = 1.f;
+  ui_step     = 0.001f;
 > = 0.f;
 
 uniform float BT2390_KNEE_FACTOR
@@ -183,18 +183,18 @@ uniform float BT2390_KNEE_MINUS
 
 uniform float DICE_SHOULDER_START
 <
-  ui_category  = "Dice";
-  ui_label     = "shoulder start (in %)";
-  ui_tooltip   = "Set this to where the brightness compression starts.\n"
-                 "In % of the maximum brightness.\n"
-                 "example:\n"
-                 "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\".\n"
-                 "The brightness compression will start at 500 nits.";
-  ui_type      = "drag";
-  ui_units = "%%";
-  ui_min       = 0.1f;
-  ui_max       = 100.f;
-  ui_step      = 0.1f;
+  ui_category = "Dice";
+  ui_label    = "shoulder start (in %)";
+  ui_tooltip  = "Set this to where the brightness compression starts.\n"
+                "In % of the maximum brightness.\n"
+                "example:\n"
+                "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\".\n"
+                "The brightness compression will start at 500 nits.";
+  ui_type     = "drag";
+  ui_units    = "%%";
+  ui_min      = 0.1f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
 > = 50.f;
 
 uniform uint DICE_PROCESSING_MODE
@@ -221,51 +221,51 @@ uniform uint DICE_WORKING_COLOUR_SPACE
 //adaptive tone mapping
 uniform float MAX_CLL_CAP
 <
-  ui_category  = "adaptive tone mapping";
-  ui_label     = "cap maximum brightness (in nits)";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.f;
-  ui_max       = 10000.f;
-  ui_step      = 10.f;
+  ui_category = "adaptive tone mapping";
+  ui_label    = "cap maximum brightness (in nits)";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.f;
+  ui_max      = 10000.f;
+  ui_step     = 10.f;
 > = 10000.f;
 
 uniform float TIME_TO_ADAPT
 <
-  ui_category  = "adaptive tone mapping";
-  ui_label     = "adaption to maximum brightness (in seconds)";
-  ui_tooltip   = "time it takes to adapt to the current maximum brightness";
-  ui_type      = "drag";
-  ui_units = " seconds";
-  ui_min       = 3.f;
-  ui_max       = 30.f;
-  ui_step      = 0.1f;
+  ui_category = "adaptive tone mapping";
+  ui_label    = "adaption to maximum brightness (in seconds)";
+  ui_tooltip  = "time it takes to adapt to the current maximum brightness";
+  ui_type     = "drag";
+  ui_units    = " seconds";
+  ui_min      = 3.f;
+  ui_max      = 30.f;
+  ui_step     = 0.1f;
 > = 2.2f;
 
 uniform float FINAL_ADAPT_START
 <
-  ui_category  = "adaptive tone mapping";
-  ui_label     = "final adaption starting point (in nits)";
-  ui_tooltip   = "If the difference between actual \"maximum brightness\"\n"
-                 "and the \"adaptive maximum brightness\" is smaller than this\n"
-                 "use the \"final adaption steps\".";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 10.f;
-  ui_max       = 100.f;
-  ui_step      = 1.f;
+  ui_category = "adaptive tone mapping";
+  ui_label    = "final adaption starting point (in nits)";
+  ui_tooltip  = "If the difference between actual \"maximum brightness\"\n"
+                "and the \"adaptive maximum brightness\" is smaller than this\n"
+                "use the \"final adaption steps\".";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+  ui_step     = 1.f;
 > = 50.f;
 
 uniform float FINAL_ADAPT
 <
-  ui_category  = "adaptive tone mapping";
-  ui_label     = "final adaption steps (in nits)";
-  ui_tooltip   = "";
-  ui_type      = "drag";
-  ui_units = " nits";
-  ui_min       = 0.01f;
-  ui_max       = 0.1f;
-  ui_step      = 0.01f;
+  ui_category = "adaptive tone mapping";
+  ui_label    = "final adaption steps (in nits)";
+  ui_tooltip  = "";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 0.01f;
+  ui_max      = 0.1f;
+  ui_step     = 0.01f;
 > = 0.05f;
 
 uniform float FINAL_ADAPT_SPEED
