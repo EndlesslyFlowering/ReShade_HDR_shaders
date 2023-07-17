@@ -8,8 +8,8 @@ uniform uint INPUT_TRC
 <
   ui_label    = "input TRC";
   ui_type     = "combo";
-  ui_tooltip  = "TRC = tone reproduction curve\n"
-                "also wrongly known as \"gamma\"";
+  ui_tooltip  = "TRC = tone reproduction curve"
+           "\n" "also wrongly known as \"gamma\"";
   ui_items    = "sRGB\0"
                 "gamma 2.2\0"
                 "gamma 2.4\0"
