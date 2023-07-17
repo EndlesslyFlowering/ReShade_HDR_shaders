@@ -11,6 +11,17 @@ uniform uint ITM_METHOD
 <
   ui_category = "global";
   ui_label    = "inverse tone mapping method";
+  ui_tooltip  = "BT.2446 Method A:"
+           "\n" "  Expands the whole range of the image according to the input and target brightness."
+           "\n" "  It is designed for tone mapping 100 nits to 1000 nits originally"
+           "\n" "  and therefore can't handle expanding the brightness too much."
+           "\n" "BT.2446 Methoc C:"
+           "\n" "  Maps the brightness level directly rather than using a curve to do the expansion."
+           "\n" "  The input brightness alone dictactes the target brightness."
+           "\n" "Dice inverse:"
+           "\n" "  Not yet finished..."
+           "\n" "map SDR into HDR:"
+           "\n" "  Straight up map the SDR image into the HDR container according to the target brightness set.";
   ui_type     = "combo";
   ui_items    = "BT.2446 Method A\0"
                 "BT.2446 Methoc C\0"
@@ -40,8 +51,8 @@ uniform uint CONTENT_TRC
 <
   ui_category = "global";
   ui_label    = "content TRC";
-  ui_tooltip  = "TRC = tone reproduction curve\n"
-                "also wrongly known as \"gamma\"";
+  ui_tooltip  = "TRC = tone reproduction curve"
+           "\n" "also wrongly known as \"gamma\"";
   ui_type     = "combo";
   ui_items    = "sRGB\0"
                 "2.2\0"
@@ -69,9 +80,9 @@ uniform float BT2446A_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method A";
   ui_label    = "input brightness (in nits)";
-  ui_tooltip  = "sets the brightness to this values for the inverse tone mapping process\n"
-                "controls the average brightness\n"
-                "can't be higher than \"target brightness\"";
+  ui_tooltip  = "Sets the brightness to this value for the inverse tone mapping process."
+           "\n" "Controls the average brightness."
+           "\n" "Can't be higher than \"target brightness\"!";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1200.f;
@@ -82,10 +93,10 @@ uniform float BT2446A_MAX_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method A";
   ui_label    = "max input brightness (in nits)";
-  ui_tooltip  = "controls how much of the \"overbright\" brightness will be processed\n"
-                "analyse a good value with the HDR analysis shader\n"
-                "can't be lower than \"input brightness\"\n"
-                "can't be higher than \"target brightness\"";
+  ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed."
+           "\n" "Analyse a good value with the HDR analysis shader."
+           "\n" "Can't be lower than \"input brightness\"."
+           "\n" "Can't be higher than \"target brightness\"!";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 1.f;
@@ -103,9 +114,9 @@ uniform float BT2446A_GAMUT_EXPANSION
 <
   ui_category = "BT.2446 Method A";
   ui_label    = "gamut expansion";
-  ui_tooltip  = "1.10 is the default of the spec\n"
-                "1.05 about matches the input colour space\n"
-                "1.00 slightly reduces the colour space";
+  ui_tooltip  = "1.10 is the default of the spec"
+           "\n" "1.05 about matches the input colour space"
+           "\n" "1.00 slightly reduces the colour space";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1.2f;
@@ -136,6 +147,14 @@ uniform float BT2446C_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method C";
   ui_label    = "input brightness (in nits)";
+  ui_tooltip  = "Also controls the output brightness:"
+           "\n" "103.2 nits ->  400 nits"
+           "\n" "107.1 nits ->  500 nits"
+           "\n" "110.1 nits ->  600 nits"
+           "\n" "112.6 nits ->  700 nits"
+           "\n" "114.8 nits ->  800 nits"
+           "\n" "116.7 nits ->  900 nits"
+           "\n" "118.4 nits -> 1000 nits";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 1.f;
@@ -146,11 +165,12 @@ uniform float BT2446C_INPUT_BRIGHTNESS
 uniform float BT2446C_ALPHA
 <
   ui_category = "BT.2446 Method C";
-     ui_label = "alpha";
-      ui_type = "drag";
-       ui_min = 0.f;
-       ui_max = 0.33f;
-      ui_step = 0.001f;
+  ui_label    = "alpha";
+  ui_tooltip  = "Better preserves achromatic (= without colour) brightness levels.";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = 0.33f;
+  ui_step     = 0.001f;
 > = 0.33f;
 
 //uniform float BT2446C_K1
@@ -194,7 +214,7 @@ uniform float DICE_INPUT_BRIGHTNESS
 <
   ui_category = "Dice";
   ui_label    = "input brightness (in nits)";
-  ui_tooltip  = "can't be higher than \"target brightness\"";
+  ui_tooltip  = "Can't be higher than \"target brightness\"";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 400.f;
@@ -205,7 +225,7 @@ uniform float DICE_SHOULDER_START
 <
   ui_category = "Dice";
   ui_label    = "shoulder start (in %)";
-  ui_tooltip  = "set this to where the brightness expansion starts";
+  ui_tooltip  = "Set this to where the brightness expansion starts";
   ui_type     = "drag";
   ui_units    = "%%";
   ui_min      = 0.1f;

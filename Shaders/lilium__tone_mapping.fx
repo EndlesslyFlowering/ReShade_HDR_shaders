@@ -56,9 +56,22 @@ uniform uint TM_METHOD
 <
   ui_category = "global";
   ui_label    = "tone mapping method";
+  ui_tooltip  = "BT.2390 EETF:"
+           "\n" "  Is a highlight compressor."
+           "\n" "  It only compresses the highlights according to the \"knee factor\" and \"knee minus\"."
+           "\n" "  Which dictate where the highlight compression start."
+           "\n" "BT.2446 Method A:"
+           "\n" "  Compared to other tone mappers this one tries to compress the whole brightness range"
+           "\n" "  the image has rather than just compressing the highlights."
+           "\n" "  It is designed for tone mapping 1000 nits to 100 nits originally"
+           "\n" "  and therefore can't handle compressing brightness differences that are too high."
+           "\n" "  Like 10000 nits to 800 nits. As its trying to compress the whole brightness range."
+           "\n" "Dice:"
+           "\n" "  Is similar to how BT.2390 works but you can only adjust the shoulder starting point."
+           "\n" "  The compression curve is slightly different and it's a bit faster.";
   ui_type     = "combo";
-  ui_items    = "BT.2446 Method A\0"
-                "BT.2390 EETF\0"
+  ui_items    = "BT.2390 EETF\0"
+                "BT.2446 Method A\0"
                 "Dice\0"
 #ifdef _DEBUG
                 "BT.2446A mod1\0"
@@ -68,8 +81,8 @@ uniform uint TM_METHOD
 //                "BT.2446A mod1+mod2\0";
 > = 0;
 
-#define TM_METHOD_BT2446A      0
-#define TM_METHOD_BT2390       1
+#define TM_METHOD_BT2390       0
+#define TM_METHOD_BT2446A      1
 #define TM_METHOD_DICE         2
 #define TM_METHOD_BT2446A_MOD1 3
 
@@ -78,9 +91,9 @@ uniform uint TM_MODE
 <
   ui_category = "global";
   ui_label    = "tone mapping mode";
-  ui_tooltip  = "  static: tone map only according to the specified maximum brightness\n"
-                "adaptive: the maximum brightness will adapat to the actual maximum brightness over time\n"
-                "          DON'T FORGET TO TURN ON THE \"adaptive mode\" TECHNIQUE!";
+  ui_tooltip  = "  static: tone map only according to the specified maximum brightness"
+           "\n" "adaptive: the maximum brightness will adapat to the actual maximum brightness over time"
+           "\n" "          DON'T FORGET TO TURN ON THE \"adaptive mode\" TECHNIQUE!";
   ui_type     = "combo";
   ui_items    = "static\0"
                 "adaptive\0";
@@ -101,8 +114,8 @@ uniform float TARGET_BRIGHTNESS
 uniform float MAX_CLL
 <
   ui_category = "static tone mapping";
-  ui_label    = "maximum brightness that will be tone mapped (in nits)";
-  ui_tooltip  = "everything above this will be clipped!";
+  ui_label    = "maximum tone mapping brightness (in nits)";
+  ui_tooltip  = "Everything above this will be clipped!";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -114,9 +127,9 @@ uniform float BT2446A_GAMUT_COMPRESSION
 <
   ui_category = "BT.2446 Method A";
   ui_label    = "gamut compression";
-  ui_tooltip  = "1.10 is the default of the spec\n"
-                "1.05 about matches the input colour space\n"
-                "1.00 slightly expands the colour space";
+  ui_tooltip  = "1.10 is the default of the BT.2446 specification"
+           "\n" "1.05 about matches the input colour space"
+           "\n" "1.00 slightly expands the colour space";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 2.f;
@@ -127,10 +140,10 @@ uniform uint BT2390_PROCESSING_MODE
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "processing mode";
-  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)\n"
-                "YCbCr: process in YCbCr space\n"
-                "YRGB:  process RGB according to brightness\n"
-                "RGB:   process each channel individually";
+  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
+           "\n" "YCbCr: process in YCbCr space"
+           "\n" "YRGB:  process RGB according to brightness"
+           "\n" "RGB:   process each channel individually";
   ui_type     = "combo";
   ui_items    = "ICtCp\0"
                 "YCbCr\0"
@@ -164,6 +177,9 @@ uniform float BT2390_KNEE_FACTOR
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "knee factor";
+  ui_tooltip  = "The formula roughly is:"
+           "\n" "knee_factor * maximum brightness - knee_minus."
+           "\n" "The result of that is where the highlight compression starts.";
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 3.f;
@@ -174,6 +190,9 @@ uniform float BT2390_KNEE_MINUS
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "knee minus";
+  ui_tooltip  = "The formula roughly is:"
+           "\n" "knee_factor * maximum brightness - knee_minus."
+           "\n" "The result of that is where the highlight compression starts.";
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 3.f;
@@ -184,11 +203,11 @@ uniform float DICE_SHOULDER_START
 <
   ui_category = "Dice";
   ui_label    = "shoulder start (in %)";
-  ui_tooltip  = "Set this to where the brightness compression starts.\n"
-                "In % of the maximum brightness.\n"
-                "example:\n"
-                "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\".\n"
-                "The brightness compression will start at 500 nits.";
+  ui_tooltip  = "Set this to where the brightness compression starts."
+           "\n" "In % of the maximum brightness."
+           "\n" "example:"
+           "\n" "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
+           "\n" "The brightness compression will start at 500 nits.";
   ui_type     = "drag";
   ui_units    = "%%";
   ui_min      = 0.1f;
@@ -200,8 +219,8 @@ uniform uint DICE_PROCESSING_MODE
 <
   ui_category = "Dice";
   ui_label    = "processing mode";
-  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)\n"
-                "YCbCr: process in YCbCr space";
+  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
+           "\n" "YCbCr: process in YCbCr space";
   ui_type     = "combo";
   ui_items    = "ICtCp\0"
                 "YCbCr\0";
@@ -211,7 +230,10 @@ uniform uint DICE_WORKING_COLOUR_SPACE
 <
   ui_category = "Dice";
   ui_label    = "processing colour space";
-  ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point";
+  ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point"
+           "\n" "AP0_D65 technically covers every humanly perceivable colour."
+           "\n" "It's meant for future use if we ever move past the BT.2020 colour space."
+           "\n" "Just use BT.2020 for now.";
   ui_type     = "combo";
   ui_items    = "BT.2020\0"
                 "AP0_D65\0";
@@ -222,6 +244,8 @@ uniform float MAX_CLL_CAP
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "cap maximum brightness (in nits)";
+  ui_tooltip  = "Caps maximum brightness that the adaptive maximum brightness can reach."
+           "\n" "Everything above this value will be clipped!";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -233,7 +257,7 @@ uniform float TIME_TO_ADAPT
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "adaption to maximum brightness";
-  ui_tooltip  = "time it takes to adapt to the current maximum brightness";
+  ui_tooltip  = "Time it takes to adapt to the current maximum brightness";
   ui_type     = "drag";
   ui_min      = 0.5f;
   ui_max      = 3.f;
@@ -244,10 +268,10 @@ uniform float FINAL_ADAPT_START
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "final adaption starting point (in %)";
-  ui_tooltip  = "If the difference between the \"maximum brightness\"\n"
-                "and the \"adaptive maximum brightness\" is smaller than this percentage\n"
-                "use the \"final adaption steps\".\n"
-                "for flickery games use 90% or lower";
+  ui_tooltip  = "If the difference between the \"maximum brightness\""
+           "\n" "and the \"adaptive maximum brightness\" is smaller than this percentage"
+           "\n" "use the \"final adaption steps\"."
+           "\n" "For flickery games use 90% or lower.";
   ui_type     = "drag";
   ui_units    = "%%";
   ui_min      = 80.f;
@@ -259,7 +283,7 @@ uniform float FINAL_ADAPT
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "final adaption steps";
-  ui_tooltip  = "for flickery games use 7.00 or lower";
+  ui_tooltip  = "For flickery games use 7.00 or lower.";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 10.f;
@@ -270,7 +294,7 @@ uniform float FINAL_ADAPT_SPEED
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "final adaption speed";
-  ui_tooltip  = "for flickery games use 5.00 or lower";
+  ui_tooltip  = "For flickery games use 5.00 or lower.";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 10.f;

@@ -136,17 +136,17 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 #define INFO_TEXT \
-  "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT       "\n" \
-  "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT "\n" \
-  "colour space overwritten to:       " CSP_OVERRIDE_TEXT             "\n" \
-  "colour space in use by the shader: " ACTUAL_CSP_TEXT               "\n" \
-                                                                      "\n" \
-  "Use the \"Preprocessor definition\" CSP_OVERRIDE below to override "    \
-  "the colour space in case the auto detection doesn't work."         "\n" \
-  "Possible values are:"                                              "\n" \
-  "- CSP_HDR10"                                                       "\n" \
-  "- CSP_SCRGB"                                                       "\n" \
-  "Hit ENTER to apply."
+       "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
+  "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
+  "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
+  "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT                   \
+  "\n"                                                                         \
+  "\n" "Use the \"Preprocessor definition\" 'CSP_OVERRIDE' below to override " \
+  "\n" "the colour space in case the auto detection doesn't work."             \
+  "\n" "Possible values are:"                                                  \
+  "\n" "- 'CSP_HDR10'"                                                         \
+  "\n" "- 'CSP_SCRGB'"                                                         \
+  "\n" "Hit ENTER to apply."
 
 
 uniform int GLOBAL_INFO
@@ -185,7 +185,7 @@ uniform bool SHOW_CLL_VALUES
 <
   ui_category = "Content Light Level analysis";
   ui_label    = "show CLL values";
-  ui_tooltip  = "shows max/avg/min Content Light Level";
+  ui_tooltip  = "Shows max/avg/min Content Light Levels.";
 > = true;
 
 uniform bool SHOW_CLL_FROM_CURSOR
@@ -198,7 +198,7 @@ uniform bool CLL_ROUNDING_WORKAROUND
 <
   ui_category = "Content Light Level analysis";
   ui_label    = "work around rounding errors for displaying maxCLL";
-  ui_tooltip  = "a value of 0.005 is added to the maxCLL value";
+  ui_tooltip  = "A value of 0.005 is added to the maxCLL value.";
 > = false;
 #else
   static const bool SHOW_CLL_VALUES         = false;
@@ -212,7 +212,10 @@ uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
-  ui_tooltip  = "change diagram type via the macro";
+  ui_tooltip  = "Change diagram type via the \"Preprocessor definition\" 'CIE_DIAGRAM' below."
+           "\n" "Possible values are:"
+           "\n" "- 'CIE_1931' for the CIE 1931 xy diagram"
+           "\n" "- 'CIE_1976' for the CIE 1976 UCS u'v' diagram";
 > = true;
 
 #if (CIE_DIAGRAM == CIE_1931)
@@ -263,13 +266,13 @@ uniform bool SHOW_CSP_MAP
 <
   ui_category = "Colour Space analysis";
   ui_label    = "show colour space map";
-  ui_tooltip  = "        colours:\n"
-                "black and white: BT.709\n"
-                "           teal: DCI-P3\n"
-                "         yellow: BT.2020\n"
-                "           blue: AP1\n"
-                "            red: AP0\n"
-                "           pink: invalid";
+  ui_tooltip  = "        colours:"
+           "\n" "black and white: BT.709"
+           "\n" "           teal: DCI-P3"
+           "\n" "         yellow: BT.2020"
+           "\n" "           blue: AP1"
+           "\n" "            red: AP0"
+           "\n" "           pink: invalid";
 > = false;
 
 uniform bool SHOW_CSP_FROM_CURSOR
@@ -289,13 +292,13 @@ uniform bool SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
-  ui_tooltip  = "         colours:   10000 nits:   1000 nits:\n"
-                " black and white:       0-  100       0- 100\n"
-                "  teal to green:      100-  203     100- 203\n"
-                " green to yellow:     203-  400     203- 400\n"
-                "yellow to red:        400- 1000     400- 600\n"
-                "   red to pink:      1000- 4000     600- 800\n"
-                "  pink to blue:      4000-10000     800-1000";
+  ui_tooltip  = "         colours:   10000 nits:   1000 nits:"
+           "\n" " black and white:       0-  100       0- 100"
+           "\n" "  teal to green:      100-  203     100- 203"
+           "\n" " green to yellow:     203-  400     203- 400"
+           "\n" "yellow to red:        400- 1000     400- 600"
+           "\n" "   red to pink:      1000- 4000     600- 800"
+           "\n" "  pink to blue:      4000-10000     800-1000";
 > = false;
 
 uniform uint HEATMAP_CUTOFF_POINT
@@ -322,7 +325,7 @@ uniform bool SHOW_BRIGHTNESS_HISTOGRAM
 <
   ui_category = "Brightness histogram";
   ui_label    = "show brightness histogram";
-  ui_tooltip  = "bightness histogram paid for by Aemony";
+  ui_tooltip  = "Brightness histogram paid for by Aemony.";
 > = true;
 
 uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
@@ -358,7 +361,7 @@ uniform bool HIGHLIGHT_NIT_RANGE
 uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 <
   ui_category = "Highlight brightness range visualisation";
-  ui_label    = "brightness highlight range start point (in nits)";
+  ui_label    = "range starting point (in nits)";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -369,7 +372,7 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 uniform float HIGHLIGHT_NIT_RANGE_END_POINT
 <
   ui_category = "Highlight brightness range visualisation";
-  ui_label    = "brightness highlight range end point (in nits)";
+  ui_label    = "range end point (in nits)";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -380,7 +383,7 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
 uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
 <
   ui_category = "Highlight brightness range visualisation";
-  ui_label    = "brightness highlight range brightness (in nits)";
+  ui_label    = "range brightness (in nits)";
   ui_type     = "slider";
   ui_units    = " nits";
   ui_min      = 10.f;
