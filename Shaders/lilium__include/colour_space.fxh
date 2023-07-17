@@ -398,6 +398,7 @@ namespace Csp
 
     // Rec. ITU-R BT.2100-2 Table 4
     // (EOTF) takes PQ values as input
+    // outputs as 1 = 10000 nits
     float FromPq(float E_)
     {
       E_ = clamp(E_, 0.f, 65504.f);
@@ -412,6 +413,7 @@ namespace Csp
     }
 
     // (EOTF) takes PQ values as input
+    // outputs as 1 = 10000 nits
     float2 FromPq(float2 E_)
     {
       return float2(FromPq(E_.x),
@@ -419,11 +421,33 @@ namespace Csp
     }
 
     // (EOTF) takes PQ values as input
+    // outputs as 1 = 10000 nits
     float3 FromPq(float3 E_)
     {
       return float3(FromPq(E_.r),
                     FromPq(E_.g),
                     FromPq(E_.b));
+    }
+
+    // (EOTF) takes PQ values as input
+    // outputs nits
+    float FromPqToNits(float E_)
+    {
+      return FromPq(E_) * 10000.f;
+    }
+
+    // (EOTF) takes PQ values as input
+    // outputs nits
+    float FromPqToNits(float2 E_)
+    {
+      return FromPq(E_) * 10000.f;
+    }
+
+    // (EOTF) takes PQ values as input
+    // outputs nits
+    float FromPqToNits(float3 E_)
+    {
+      return FromPq(E_) * 10000.f;
     }
 
     // Rec. ITU-R BT.2100-2 Table 4 (end)
