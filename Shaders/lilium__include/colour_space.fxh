@@ -438,14 +438,14 @@ namespace Csp
 
     // (EOTF) takes PQ values as input
     // outputs nits
-    float FromPqToNits(float2 E_)
+    float2 FromPqToNits(float2 E_)
     {
       return FromPq(E_) * 10000.f;
     }
 
     // (EOTF) takes PQ values as input
     // outputs nits
-    float FromPqToNits(float3 E_)
+    float3 FromPqToNits(float3 E_)
     {
       return FromPq(E_) * 10000.f;
     }
