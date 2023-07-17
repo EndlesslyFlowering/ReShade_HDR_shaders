@@ -142,7 +142,6 @@ uniform float BT2390_SRC_BLACK_POINT
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "source black point (in nits)";
-  ui_tooltip  = "";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -233,51 +232,50 @@ uniform float MAX_CLL_CAP
 uniform float TIME_TO_ADAPT
 <
   ui_category = "adaptive tone mapping";
-  ui_label    = "adaption to maximum brightness (in seconds)";
+  ui_label    = "adaption to maximum brightness";
   ui_tooltip  = "time it takes to adapt to the current maximum brightness";
   ui_type     = "drag";
-  ui_units    = " seconds";
-  ui_min      = 3.f;
-  ui_max      = 30.f;
+  ui_min      = 0.5f;
+  ui_max      = 3.f;
   ui_step     = 0.1f;
-> = 2.2f;
+> = 1.0f;
 
 uniform float FINAL_ADAPT_START
 <
   ui_category = "adaptive tone mapping";
-  ui_label    = "final adaption starting point (in nits)";
-  ui_tooltip  = "If the difference between actual \"maximum brightness\"\n"
-                "and the \"adaptive maximum brightness\" is smaller than this\n"
-                "use the \"final adaption steps\".";
+  ui_label    = "final adaption starting point (in %)";
+  ui_tooltip  = "If the difference between the \"maximum brightness\"\n"
+                "and the \"adaptive maximum brightness\" is smaller than this percentage\n"
+                "use the \"final adaption steps\".\n"
+                "for flickery games use 90% or lower";
   ui_type     = "drag";
-  ui_units    = " nits";
-  ui_min      = 10.f;
-  ui_max      = 100.f;
-  ui_step     = 1.f;
-> = 50.f;
+  ui_units    = "%%";
+  ui_min      = 80.f;
+  ui_max      = 99.f;
+  ui_step     = 0.1f;
+> = 95.f;
 
 uniform float FINAL_ADAPT
 <
   ui_category = "adaptive tone mapping";
-  ui_label    = "final adaption steps (in nits)";
-  ui_tooltip  = "";
+  ui_label    = "final adaption steps";
+  ui_tooltip  = "for flickery games use 7.00 or lower";
   ui_type     = "drag";
-  ui_units    = " nits";
-  ui_min      = 0.01f;
-  ui_max      = 0.1f;
-  ui_step     = 0.01f;
-> = 0.05f;
+  ui_min      = 1.f;
+  ui_max      = 10.f;
+  ui_step     = 0.05f;
+> = 7.5f;
 
 uniform float FINAL_ADAPT_SPEED
 <
   ui_category = "adaptive tone mapping";
   ui_label    = "final adaption speed";
-  ui_tooltip  = "";
+  ui_tooltip  = "for flickery games use 5.00 or lower";
   ui_type     = "drag";
-  ui_min      = 10.f;
-  ui_max      = 100.f;
-  ui_step     = 1.f;
-> = 50.f;
+  ui_min      = 1.f;
+  ui_max      = 10.f;
+  ui_step     = 0.05f;
+> = 7.5f;
 
 
 //static const uint numberOfAdaptiveValues = 1000;
@@ -379,18 +377,15 @@ void ToneMapping(
       break;
       case TM_METHOD_BT2390:
       {
-        //const float minLum = (tgtMinPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
-        //const float maxLum = (tgtMaxPQ - srcMinPQ) / (srcMaxPQ - srcMinPQ);
+        const float srcMinPQ = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // Lb in PQ
+        const float srcMaxPQ = Csp::Trc::ToPq(maxCLL                 / 10000.f); // Lw in PQ
+        const float scrMaxPqMinusSrcMinPq = srcMaxPQ - srcMinPQ;
 
-        // this assumes the source black point is always 0 nits
-        const float srcMinPQ  = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // Lb in PQ
-        const float srcMaxPQ  = Csp::Trc::ToPq(maxCLL / 10000.f); // Lw in PQ
-        const float tgtMinPQ  = BT2390_TARGET_BLACK_POINT == 0.f  // Lmin in PQ
-                              ? 0.f
-                              : Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f);
-        const float tgtMaxPQ  = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // Lmax in PQ
-        const float minLum    = tgtMinPQ / srcMaxPQ;
-        const float maxLum    = tgtMaxPQ / srcMaxPQ;
+        const float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
+        const float tgtMaxPQ = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // Lmax in PQ
+
+        const float minLum = (tgtMinPQ - srcMinPQ) / scrMaxPqMinusSrcMinPq;
+        const float maxLum = (tgtMaxPQ - srcMinPQ) / scrMaxPqMinusSrcMinPq;
         const float kneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -407,6 +402,7 @@ void ToneMapping(
                                         BT2390_PROCESSING_MODE,
                                         srcMinPQ,
                                         srcMaxPQ,
+                                        scrMaxPqMinusSrcMinPq,
                                         minLum,
                                         maxLum,
                                         kneeStart);
@@ -476,13 +472,41 @@ void ToneMapping(
 
   Output = float4(hdr, 1.f);
 
+#define FINAL_ADAPT_STOP 0.9979f
+
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
-  float actualMaxCLL   = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
-  float adaptiveMaxCLL = tex2Dfetch(Sampler_Adaptive_CLL_Value,     int2(0, 0)).r;
-  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f),        30, 1, TexCoord, 6, actualMaxCLL,   Output, FONT_BRIGHTNESS);
-  DrawTextDigit(float2(30.f * 4.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, 6, adaptiveMaxCLL, Output, FONT_BRIGHTNESS);
-  //DrawTextDigit(float2(100.f, 590.f), 30, 1, TexCoord, 0, TM_MODE, Output, FONT_BRIGHTNESS);
+  static const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  static const uint text_avgdCLL[35] = { __a, __v, __e, __r, __a, __g, __e, __d, __Space,
+                                         __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  static const uint text_adaptiveMaxCLL[35] = { __a, __d, __a, __p, __t, __i, __v, __e, __Space,
+                                                __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  static const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
+
+  static const float actualMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+
+  static const float avgMaxCllInPq = tex2Dfetch(Sampler_Consolidated, COORDS_AVERAGED_MAXCLL).r;
+  static const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
+
+  static const float adaptiveMaxCll     = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+  static const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
+
+  static const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
+
+  static const float finalAdaptMode = 
+    absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))          ? 2.f
+  : absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_START / 100.f * avgMaxCllInPq)) ? 1.f
+  :                                                                              0.f;
+
+  DrawTextString(float2(10.f * 15.f, 20.f * 40.f),        30, 1, TexCoord, text_maxCLL,         26, Output, FONT_BRIGHTNESS);
+  DrawTextString(float2(       15.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, text_avgdCLL,        35, Output, FONT_BRIGHTNESS);
+  DrawTextString(float2(       15.f, 20.f * 40.f + 60.f), 30, 1, TexCoord, text_adaptiveMaxCLL, 35, Output, FONT_BRIGHTNESS);
+  DrawTextString(float2(        0.f, 20.f * 40.f + 90.f), 30, 1, TexCoord, text_finalAdaptMode, 17, Output, FONT_BRIGHTNESS);
+
+  DrawTextDigit(float2(24.f * 15.f, 20.f * 40.f),        30, 1, TexCoord,  6, actualMaxCll,   Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(24.f * 15.f, 20.f * 40.f + 30.f), 30, 1, TexCoord,  6, avgMaxCll,      Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(24.f * 15.f, 20.f * 40.f + 60.f), 30, 1, TexCoord,  6, adaptiveMaxCll, Output, FONT_BRIGHTNESS);
+  DrawTextDigit(float2(19.f * 15.f, 20.f * 40.f + 90.f), 30, 1, TexCoord, -1, finalAdaptMode, Output, FONT_BRIGHTNESS);
 
 #endif
 
@@ -491,26 +515,81 @@ void ToneMapping(
 
 void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCLL      = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
-  const float currentAdaptiveCLL = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+  const float currentMaxCllinPqAveraged = (tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL0).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL1).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL2).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL3).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL4).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL5).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL6).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL7).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL8).r
+                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL9).r) / 10.f;
+
+#if (SHOW_ADAPTIVE_MAXCLL == YES)
+
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGED_MAXCLL, currentMaxCllinPqAveraged);
+
+#endif
+
+  const float currentMaxCllInPQ =
+    Csp::Trc::ToPqFromNits(tex2Dfetch(Storage_Consolidated, COORDS_MAXCLL_VALUE).r);
+  const float currentAdaptiveMaxCllInPQ =
+    Csp::Trc::ToPqFromNits(tex2Dfetch(Storage_Consolidated, COORDS_ADAPTIVE_CLL).r);
+
+  const int curSlot = tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR).r;
+  const int newSlot = curSlot > 10
+                    ? 1
+                    : curSlot + 1;
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR
+                                 + int2(newSlot, 0), currentMaxCllInPQ);
 
   const float absFrametime = abs(FRAMETIME);
 
-  const float curDiff = currentMaxCLL - currentAdaptiveCLL;
-  float adapt = curDiff * (absFrametime / (TIME_TO_ADAPT * 1000.f));
-  if (abs(curDiff) < FINAL_ADAPT_START)
+  const float curDiff = currentMaxCllinPqAveraged * 1.0005f - currentAdaptiveMaxCllInPQ;
+  const float absCurDiff = abs(curDiff);
+  const float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged - FINAL_ADAPT_START / 100.f * currentMaxCllinPqAveraged);
+  const float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
+  float adapt = 0.f;
+  if (absCurDiff < stopAdaptPointInPq)
   {
-    const float actualFinalAdapt = absFrametime * FINAL_ADAPT * (FINAL_ADAPT_SPEED / 1000.f);
-    adapt = adapt > 0.f ?  actualFinalAdapt
-                        : -actualFinalAdapt;
+    adapt = 0.000015f;
+  }
+  else if (absCurDiff < finalAdaptPointInPq)
+  {
+    const float actualFinalAdapt = absFrametime * (FINAL_ADAPT / 10000.f) * (FINAL_ADAPT_SPEED / 1000.f);
+    adapt = curDiff > 0.f ?  actualFinalAdapt
+                          : -actualFinalAdapt;
+  }
+  else
+  {
+    adapt = curDiff * (absFrametime / (TIME_TO_ADAPT * 1000.f));
   }
   //else
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
-  const float AdaptiveCLL = currentAdaptiveCLL + adapt;
 
   barrier();
 
-  tex2Dstore(Storage_Consolidated, COORDS_ADAPTIVE_CLL, AdaptiveCLL);
+  tex2Dstore(Storage_Consolidated,
+             COORDS_ADAPTIVE_CLL,
+             min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt), MAX_CLL_CAP));
+
+}
+
+
+void ResetAveragedMaxCll(uint3 ID : SV_DispatchThreadID)
+{
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL0, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL1, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL2, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL3, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL4, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL5, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL6, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL7, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL8, 10000.f);
+  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL9, 10000.f);
 }
 
 
@@ -547,6 +626,21 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 //    DispatchSizeY = 1;
 //  }
 //}
+
+technique lilium__reset_averaged_max_cll_values
+<
+  enabled = true;
+  hidden  = true;
+  timeout = 1;
+>
+{
+  pass ResetAveragedMaxCll
+  {
+    ComputeShader = ResetAveragedMaxCll <1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+}
 
 technique lilium__tone_mapping_adaptive_maximum_brightness
 <

@@ -199,6 +199,7 @@ namespace ToneMapping
       const uint   ProcessingMode,
       const float  SrcMinPq, // Lb in PQ
       const float  SrcMaxPq, // Lw in PQ
+      const float  ScrMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
       const float  MinLum,   // minLum
       const float  MaxLum,   // maxLum
       const float  KneeStart // KS
@@ -211,113 +212,116 @@ namespace ToneMapping
 
         const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
         //E1
-        float i2 = (i1 - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+        float i2 = max((i1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
         //float i2 = i1 / SrcMaxPq;
 
         //E2
+        if (i2 < KneeStart)
+        {
+          i2 = i1;
+        }
         if (i2 >= KneeStart)
         {
-          const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
-          const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
-
           i2 = HermiteSpline(i2, KneeStart, MaxLum);
-
-          //E3
-          i2 = i2 + MinLum * pow((1.f - i2), 4.f);
-
-          //E4
-          i2 = i2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
-          //i2 = i2 * SrcMaxPq;
-
-          const float minI = min((i1 / i2), (i2 / i1));
-
-          //const float3 ct2cp2 = cross(float3(ct1, cp1, 0.f), minI);
-
-          //to L'M'S'
-          //Lms = mul(ICtCp_To_Lms, float3(i2, ct2cp2.x, ct2cp2.y));
-          Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2, minI * ct1, minI * cp1));
-          //to LMS
-          Lms = Csp::Trc::FromPq(Lms);
-          //to RGB
-          return clamp(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f, 65504.f);
         }
-        else
-        {
-          return E_;
-        }
+
+        const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
+        const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
+
+        //E3
+        i2 = i2 + MinLum * pow((1.f - i2), 4.f);
+
+        //E4
+        i2 = i2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
+        //i2 = i2 * SrcMaxPq;
+
+        const float minI = min((i1 / i2), (i2 / i1));
+
+        //const float3 ct2cp2 = cross(float3(ct1, cp1, 0.f), minI);
+
+        //to L'M'S'
+        //Lms = mul(ICtCp_To_Lms, float3(i2, ct2cp2.x, ct2cp2.y));
+        Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2, minI * ct1, minI * cp1));
+        //to LMS
+        Lms = Csp::Trc::FromPq(Lms);
+        //to RGB
+        return clamp(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f, 65504.f);
+
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
       {
         const float y1 = dot(E_, Csp::KHelpers::Bt2020::K);
         //E1
-        float y2 = (y1 - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+        float y2 = max((y1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
         //float y2 = y1 / SrcMaxPq;
 
         //E2
-        if (y2 >= KneeStart)
+        if (y2 < KneeStart)
         {
-          const float cb1 = (E_.b - y1) /
-                            Csp::KHelpers::Bt2020::Kb;
-          const float cr1 = (E_.r - y1) /
-                            Csp::KHelpers::Bt2020::Kr;
-
-          y2 = HermiteSpline(y2, KneeStart, MaxLum);
-
-          //E3
-          y2 = y2 + MinLum * pow((1.f - y2), 4.f);
-
-          //E4
-          y2 = y2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
-          //y2 = y2 * SrcMaxPq;
-
-          const float minY = min((y1 / y2), (y2 / y1));
-
-          //const float3 cb2cr2 = cross(float3(cb1, cr1, 0.f), minY);
-          //const float  cb2 = cb2cr2.x;
-          //const float  cr2 = cb2cr2.y;
-
-          const float cb2 = minY * cb1;
-          const float cr2 = minY * cr1;
-
-          return clamp(Csp::Ycbcr::ToRgb::Bt2020(float3(y2, cb2, cr2)), 0.f, 65504.f);
+          y2 = y1;
         }
         else
         {
-          return E_;
+          y2 = HermiteSpline(y2, KneeStart, MaxLum);
         }
+
+        const float cb1 = (E_.b - y1) /
+                          Csp::KHelpers::Bt2020::Kb;
+        const float cr1 = (E_.r - y1) /
+                          Csp::KHelpers::Bt2020::Kr;
+
+        //E3
+        y2 = y2 + MinLum * pow((1.f - y2), 4.f);
+
+        //E4
+        y2 = y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
+        //y2 = y2 * SrcMaxPq;
+
+        const float minY = min((y1 / y2), (y2 / y1));
+
+        //const float3 cb2cr2 = cross(float3(cb1, cr1, 0.f), minY);
+        //const float  cb2 = cb2cr2.x;
+        //const float  cr2 = cb2cr2.y;
+
+        const float cb2 = minY * cb1;
+        const float cr2 = minY * cr1;
+
+        return clamp(Csp::Ycbcr::ToRgb::Bt2020(float3(y2, cb2, cr2)), 0.f, 65504.f);
+
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
         const float y1 = dot(E_, Csp::Mat::Bt2020ToXYZ[1].rgb);
         //E1 relative luminance
-        float y2 = (Csp::Trc::ToPq(y1) - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+        float y2 = max((Csp::Trc::ToPq(y1) - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
         //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
 
         //E2
-        if (y2 >= KneeStart)
+        if (y2 < KneeStart)
         {
-          y2 = HermiteSpline(y2, KneeStart, MaxLum);
-
-          //E3
-          y2 = y2 + MinLum * pow((1.f - y2), 4.f);
-
-          //E4
-          y2 = y2 * (SrcMaxPq - SrcMinPq) + SrcMinPq;
-          //y2 = y2 * SrcMaxPq;
-
-          y2 = Csp::Trc::FromPq(y2);
-
-          return clamp(y2 / y1 * E_, 0.f, 65504.f);
+          y2 = y1;
         }
         else
         {
-          return E_;
+          y2 = HermiteSpline(y2, KneeStart, MaxLum);
         }
+
+        //E3
+        y2 = y2 + MinLum * pow((1.f - y2), 4.f);
+
+        //E4
+        y2 = y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
+        //y2 = y2 * SrcMaxPq;
+
+        y2 = Csp::Trc::FromPq(y2);
+
+        return clamp(y2 / y1 * E_, 0.f, 65504.f);
+
       }
       else if (ProcessingMode == BT2390_PRO_MODE_RGB)
       {
         //E1
-        float3 Rgb = (E_ - SrcMinPq) / (SrcMaxPq - SrcMinPq);
+        float3 Rgb = max((E_ - SrcMinPq) / ScrMaxPqMinusSrcMinPq, float3(0.f, 0.f, 0.f));
         //float3 Rgb = E_ / SrcMaxPq;
 
         //E2
@@ -335,11 +339,13 @@ namespace ToneMapping
         Rgb = Rgb + MinLum * pow((1.f - Rgb), 4.f);
 
         //E4
-        return Rgb * (SrcMaxPq - SrcMinPq) + SrcMinPq;
+        return Rgb * ScrMaxPqMinusSrcMinPq + SrcMinPq;
         //return Rgb * SrcMaxPq;
       }
       else
+      {
         return float3(0.f, 0.f, 0.f);
+      }
     }
   }
 

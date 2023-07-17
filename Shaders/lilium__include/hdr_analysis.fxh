@@ -400,6 +400,22 @@ static const int2 COORDS_SHOW_PERCENTAGE_INVALID = int2(8 + SHOW_VALUES_X_OFFSET
 #define ADAPTIVE_CLL_Y_OFFSET 12
 static const int2 COORDS_ADAPTIVE_CLL = int2(ADAPTIVE_CLL_X_OFFSET, ADAPTIVE_CLL_Y_OFFSET);
 
+#define AVERAGE_MAXCLL_X_OFFSET 32
+#define AVERAGE_MAXCLL_Y_OFFSET 12
+static const int2 COORDS_AVERAGE_MAXCLL_CUR  = int2(     AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL0 = int2( 1 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL1 = int2( 2 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL2 = int2( 3 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL3 = int2( 4 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL4 = int2( 5 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL5 = int2( 6 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL6 = int2( 7 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL7 = int2( 8 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL8 = int2( 9 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGE_MAXCLL_CLL9 = int2(10 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+static const int2 COORDS_AVERAGED_MAXCLL     = int2(11 + AVERAGE_MAXCLL_X_OFFSET, AVERAGE_MAXCLL_Y_OFFSET);
+
+
 
 #define CONSOLIDATED_TEXTURE_SIZE_WIDTH  BUFFER_WIDTH
 #define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 13
@@ -1028,7 +1044,7 @@ void GetMaxCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 
       for (uint y = 0; y < HEIGHT0; y++)
       {
-        const float curCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, 0)).r;
+        const float curCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, y)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
@@ -1042,7 +1058,7 @@ void GetMaxCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 
       for (uint y = HEIGHT0; y < BUFFER_HEIGHT; y++)
       {
-        const float curCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, 3)).r;
+        const float curCLL = tex2Dfetch(Sampler_CLL_Values, int2(ID.x, y)).r;
 
         if (curCLL > maxCLL)
           maxCLL = curCLL;
@@ -1068,10 +1084,10 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
+        const float curMaxCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
 
-        if (curCLL > maxCLL)
-          maxCLL = curCLL;
+        if (curMaxCLL > maxCLL)
+          maxCLL = curMaxCLL;
       }
 
       barrier();
@@ -1084,10 +1100,10 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = 0; x < WIDTH0; x++)
       {
-        const float curCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
+        const float curMaxCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
 
-        if (curCLL > maxCLL)
-          maxCLL = curCLL;
+        if (curMaxCLL > maxCLL)
+          maxCLL = curMaxCLL;
       }
 
       barrier();
@@ -1103,10 +1119,10 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
+        const float curMaxCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL0(x)).r;
 
-        if (curCLL > maxCLL)
-          maxCLL = curCLL;
+        if (curMaxCLL > maxCLL)
+          maxCLL = curMaxCLL;
       }
 
       barrier();
@@ -1119,10 +1135,10 @@ void GetMaxCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
       for(uint x = WIDTH0; x < BUFFER_WIDTH; x++)
       {
-        const float curCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
+        const float curMaxCLL = tex2Dfetch(Storage_Consolidated, COORDS_INTERMEDIATE_MAXCLL1(x)).r;
 
-        if (curCLL > maxCLL)
-          maxCLL = curCLL;
+        if (curMaxCLL > maxCLL)
+          maxCLL = curMaxCLL;
       }
 
       barrier();
