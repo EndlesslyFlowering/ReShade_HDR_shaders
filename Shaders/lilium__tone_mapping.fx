@@ -357,9 +357,28 @@ void ToneMapping(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    if ((TM_METHOD != TM_METHOD_BT2390)
-     || (TM_METHOD == TM_METHOD_BT2390
-      && (BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB || BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR)))
+    if (TM_METHOD == TM_METHOD_DICE)
+    {
+      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65
+       || DICE_PROCESSING_MODE == DICE_PRO_MODE_ICTCP)
+      {
+        hdr = Csp::Trc::FromPq(hdr);
+      }
+
+      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+      {
+        hdr = clamp(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f, 65504.f);
+
+        if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+        {
+          hdr = Csp::Trc::ToPq(hdr);
+        }
+      }
+    }
+    else if(TM_METHOD != TM_METHOD_BT2390
+         || (TM_METHOD == TM_METHOD_BT2390
+          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB
+          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR))
     {
       hdr = Csp::Trc::FromPq(hdr);
     }
@@ -377,10 +396,28 @@ void ToneMapping(
     else if (TM_METHOD == TM_METHOD_BT2390)
     {
       hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
+
+      if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
+       || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
+      {
+        hdr = Csp::Trc::ToPq(hdr);
+      }
     }
     else if (TM_METHOD == TM_METHOD_DICE)
     {
-      hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
+      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_BT2020)
+      {
+        hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
+      }
+      else
+      {
+        hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f, 65504.f);
+      }
+
+      if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+      {
+        hdr = Csp::Trc::ToPq(hdr);
+      }
     }
 
 #else
@@ -412,16 +449,6 @@ void ToneMapping(
         const float maxLum = (tgtMaxPQ - srcMinPQ) / scrMaxPqMinusSrcMinPq;
         const float kneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-        if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
-         || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
-        {
-          hdr = Csp::Trc::ToPq(hdr);
-        }
-
-#endif
-
         hdr = ToneMapping::Bt2390::Eetf(hdr,
                                         BT2390_PROCESSING_MODE,
                                         srcMinPQ,
@@ -430,28 +457,16 @@ void ToneMapping(
                                         minLum,
                                         maxLum,
                                         kneeStart);
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-        if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
-         || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
-        {
-          hdr = Csp::Trc::FromPq(hdr);
-        }
-
-#endif
-
       }
       break;
       case TM_METHOD_DICE:
       {
         const float targetCllnormalised = TARGET_BRIGHTNESS / 10000.f;
-        hdr = ToneMapping::Dice::ToneMapper(
-          hdr,
-          Csp::Ictcp::NormalisedToIntensity::Ap0D65(targetCllnormalised),
-          Csp::Ictcp::NormalisedToIntensity::Ap0D65(DICE_SHOULDER_START / 100.f * targetCllnormalised),
-          DICE_PROCESSING_MODE,
-          DICE_WORKING_COLOUR_SPACE);
+        hdr = ToneMapping::Dice::ToneMapper(hdr,
+                                            targetCllnormalised,
+                                            DICE_SHOULDER_START / 100.f * targetCllnormalised,
+                                            DICE_PROCESSING_MODE,
+                                            DICE_WORKING_COLOUR_SPACE);
         //hdr = saturate(hdr);
       }
       break;
@@ -473,23 +488,68 @@ void ToneMapping(
 #endif
     }
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    if (TM_METHOD == TM_METHOD_DICE)
+    {
+      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+      {
+        if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+        {
+          hdr = Csp::Trc::FromPq(hdr);
+          hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
+        }
+        else
+        {
+          hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
+        }
+        hdr = Csp::Trc::ToPq(hdr);
+      }
+      else if (DICE_PROCESSING_MODE == DICE_PRO_MODE_ICTCP)
+      {
+        hdr = Csp::Trc::ToPq(hdr);
+      }
+    }
+    else if(TM_METHOD != TM_METHOD_BT2390
+         || (TM_METHOD == TM_METHOD_BT2390
+          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB
+          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR))
+    {
+      hdr = Csp::Trc::ToPq(hdr);
+    }
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
     if (TM_METHOD == TM_METHOD_BT2446A
      || TM_METHOD == TM_METHOD_BT2446A_MOD1
      || TM_METHOD == TM_METHOD_BT2390)
     {
       hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+
+      if (TM_METHOD == TM_METHOD_BT2390
+       && (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
+        || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR))
+      {
+        hdr = Csp::Trc::FromPq(hdr);
+      }
     }
     else if (TM_METHOD == TM_METHOD_DICE)
     {
-      hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
+      if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+      {
+        hdr = Csp::Trc::FromPq(hdr);
+      }
+
+      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_BT2020)
+      {
+        hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+      }
+      else
+      {
+        hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
+      }
     }
     hdr *= 125.f;
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-    hdr = Csp::Trc::ToPq(hdr);
 
 #endif
 //  }

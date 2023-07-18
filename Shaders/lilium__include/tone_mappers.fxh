@@ -291,15 +291,16 @@ namespace ToneMapping
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        const float y1 = dot(E_, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        const float y1     = dot(E_, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        const float y1InPq = Csp::Trc::ToPq(y1);
         //E1 relative luminance
-        float y2 = max((Csp::Trc::ToPq(y1) - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
+        float y2 = max((y1InPq - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
         //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
 
         //E2
         if (y2 < KneeStart)
         {
-          y2 = y1;
+          y2 = y1InPq;
         }
         else
         {
@@ -355,8 +356,8 @@ namespace ToneMapping
 #define DICE_PRO_MODE_ICTCP 0
 #define DICE_PRO_MODE_YCBCR 1
 
-#define DICE_USE_BT2020  0
-#define DICE_USE_AP0_D65 1
+#define DICE_WORKING_COLOUR_SPACE_BT2020  0
+#define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
 
     // Applies exponential "Photographic" luminance compression
     float RangeCompress(float x)
@@ -366,72 +367,94 @@ namespace ToneMapping
 
     float LuminanceCompress(
       const float Colour,
-      const float MaxNits,
+      const float TargetCll,
       const float ShoulderStart)
     {
 #if 1
       return ShoulderStart
-           + (MaxNits - ShoulderStart)
-           * RangeCompress((Colour  - ShoulderStart) /
-                           (MaxNits - ShoulderStart));
+           + (TargetCll - ShoulderStart)
+           * RangeCompress((Colour    - ShoulderStart) /
+                           (TargetCll - ShoulderStart));
 #else
       return Colour < ShoulderStart
            ? Colour
            : ShoulderStart
-           + (MaxNits - ShoulderStart)
-           * RangeCompress((Colour  - ShoulderStart) /
-                           (MaxNits - ShoulderStart));
+           + (TargetCll - ShoulderStart)
+           * RangeCompress((Colour    - ShoulderStart) /
+                           (TargetCll - ShoulderStart));
 #endif
     }
 
     // remap from infinite
     // ShoulderStart denotes the point where we change from linear to shoulder
     float3 ToneMapper(
-            float3 Input,
-      const float  MaxNits,
-      const float  ShoulderStart,
+      const float3 Input,
+      const float  TargetCllNormalised,
+      const float  ShoulderStartNormalised,
       const uint   ProcessingMode,
       const uint   WorkingColourSpace)
     {
     
     // why does this not work?!
-    //  float3x3 RgbToLms = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float3x3 RgbToLms = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                    ? RGB_AP0_D65_To_LMS
     //                    : RGB_BT2020_To_LMS;
     //
-    //  float3x3 LmsToRgb = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float3x3 LmsToRgb = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                    ? LmsToRgb_AP0_D65
     //                    : LmsToRgb_BT2020;
     //
-    //  float3 KFactors = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float3 KFactors = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                  ? K_AP0_D65
     //                  : K_BT2020;
     //
-    //  float  KbHelper = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float  KbHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                  ? KB_AP0_D65_HELPER
     //                  : KB_BT2020_HELPER;
-    //  float  KrHelper = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float  KrHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                  ? KR_AP0_D65_HELPER
     //                  : KR_BT2020_HELPER;
-    //  float2 KgHelper = WorkingColourSpace == DICE_USE_AP0_D65
+    //  float2 KgHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                  ? KG_AP0_D65_HELPER
     //                  : KG_BT2020_HELPER;
 
-      float3x3 RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
-      float3x3 LmsToRgb = Csp::Ictcp::Mat::LmsToAp0D65;
-      float3   KFactors = Csp::KHelpers::Ap0D65::K;
-      float    KrHelper = Csp::KHelpers::Ap0D65::Kr;
-      float    KbHelper = Csp::KHelpers::Ap0D65::Kb;
-      float2   KgHelper = Csp::KHelpers::Ap0D65::Kg;
+      float3x3 RgbToLms = Csp::Ictcp::Mat::Bt2020ToLms;
+      float3x3 LmsToRgb = Csp::Ictcp::Mat::LmsToBt2020;
+      float3   KFactors = Csp::KHelpers::Bt2020::K;
+      float    KbHelper = Csp::KHelpers::Bt2020::Kb;
+      float    KrHelper = Csp::KHelpers::Bt2020::Kr;
+      float2   KgHelper = Csp::KHelpers::Bt2020::Kg;
 
-      if (WorkingColourSpace == DICE_USE_BT2020)
+      if (WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
       {
-        RgbToLms = Csp::Ictcp::Mat::Bt2020ToLms;
-        LmsToRgb = Csp::Ictcp::Mat::LmsToBt2020;
-        KFactors = Csp::KHelpers::Bt2020::K;
-        KrHelper = Csp::KHelpers::Bt2020::Kr;
-        KbHelper = Csp::KHelpers::Bt2020::Kb;
-        KgHelper = Csp::KHelpers::Bt2020::Kg;
+        RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
+        LmsToRgb = Csp::Ictcp::Mat::LmsToAp0D65;
+        KFactors = Csp::KHelpers::Ap0D65::K;
+        KbHelper = Csp::KHelpers::Ap0D65::Kb;
+        KrHelper = Csp::KHelpers::Ap0D65::Kr;
+        KgHelper = Csp::KHelpers::Ap0D65::Kg;
+      }
+
+      float targetCll,
+            shoulderStart;
+
+      if (ProcessingMode == DICE_PRO_MODE_ICTCP)
+      {
+        if (WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
+        {
+          targetCll     = Csp::Ictcp::NormalisedToIntensity::Bt2020(TargetCllNormalised);
+          shoulderStart = Csp::Ictcp::NormalisedToIntensity::Bt2020(ShoulderStartNormalised);
+        }
+        else
+        {
+          targetCll     = Csp::Ictcp::NormalisedToIntensity::Ap0D65(TargetCllNormalised);
+          shoulderStart = Csp::Ictcp::NormalisedToIntensity::Ap0D65(ShoulderStartNormalised);
+        }
+      }
+      else
+      {
+        targetCll     = Csp::Trc::ToPq(TargetCllNormalised);
+        shoulderStart = Csp::Trc::ToPq(ShoulderStartNormalised);
       }
 
       //YCbCr method copied from BT.2390
@@ -443,14 +466,16 @@ namespace ToneMapping
 
         const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
 
-        if (i1 < ShoulderStart)
+        if (i1 < shoulderStart)
+        {
           return Input;
+        }
         else
         {
           const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
           const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
 
-          const float i2 = LuminanceCompress(i1, MaxNits, ShoulderStart);
+          const float i2 = LuminanceCompress(i1, targetCll, shoulderStart);
 
           const float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
 
@@ -464,37 +489,37 @@ namespace ToneMapping
       }
       else
       {
-        float3 Colour = Csp::Trc::ToPq(Input);
+        const float y1 = dot(Input, KFactors);
 
-        const float y1 = dot(Colour, KFactors);
-
-        if (y1 < ShoulderStart)
+        if (y1 < shoulderStart)
+        {
           return Input;
+        }
         else
         {
-          const float y2 = LuminanceCompress(y1, MaxNits, ShoulderStart);
+          const float y2 = LuminanceCompress(y1, targetCll, shoulderStart);
 
           const float minY = min(min((y1 / y2), (y2 / y1)) * 1.1f, 1.f);
 
-          const float cb2 = minY * (Colour.b - y1) /
-                                     KbHelper;
-          const float cr2 = minY * (Colour.r - y1) /
-                                     KrHelper;
+          const float cb2 = minY * (Input.b - y1) /
+                                   KbHelper;
+          const float cr2 = minY * (Input.r - y1) /
+                                   KrHelper;
 
           //return saturate(float3(y2 + KrHelper * cr2,
           //                       y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
           //                       y2 + KbHelper * cb2));
 
-          return clamp(Csp::Trc::FromPq(float3(y2 + KrHelper    * cr2,
-                                               y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
-                                               y2 + KbHelper    * cb2)), 0, 65504.f);
+          return clamp(float3(y2 + KrHelper    * cr2,
+                              y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
+                              y2 + KbHelper    * cb2), 0, 65504.f);
         }
       }
 
 #if 0
-      return float3(LuminanceCompress(Colour.r, MaxNits, ShoulderStart),
-                    LuminanceCompress(Colour.g, MaxNits, ShoulderStart),
-                    LuminanceCompress(Colour.b, MaxNits, ShoulderStart));
+      return float3(LuminanceCompress(Input.r, targetCll, shoulderStart),
+                    LuminanceCompress(Input.g, targetCll, shoulderStart),
+                    LuminanceCompress(Input.b, targetCll, shoulderStart));
 #endif
     }
   }
