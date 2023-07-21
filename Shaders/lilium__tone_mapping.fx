@@ -159,7 +159,7 @@ uniform float BT2390_SRC_BLACK_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 1.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000001f;
 > = 0.f;
 
 uniform float BT2390_TARGET_BLACK_POINT
@@ -170,7 +170,7 @@ uniform float BT2390_TARGET_BLACK_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 1.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000001f;
 > = 0.f;
 
 uniform float BT2390_KNEE_FACTOR

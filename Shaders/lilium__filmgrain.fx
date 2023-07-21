@@ -4,12 +4,12 @@
 
 uniform float INTENSITY
 <
-  ui_label = "grain intensity";
+  ui_label = "grain INTENSITY";
   ui_type  = "drag";
   ui_min   = 0.f;
-  ui_max   = 1.0f;
-  ui_step  = 0.001f;
-> = 0.25f;
+  ui_max   = 0.1f;
+  ui_step  = 0.0001f;
+> = 0.025f;
 
 uniform int RANDOM
 <
@@ -72,15 +72,13 @@ void filmgrain(
 
 #endif
 
-  static const float intensity = INTENSITY / 10.f;
-
-//  static const float maxMul = min(1.25f + intensity, 2.f);
+//  static const float maxMul = min(1.25f + INTENSITY, 2.f);
 //  static const float minMul = 2.01f - maxMul;
 //
 //  float maxY = Ycbcr.x * maxMul;
 //  float minY = Ycbcr.x * minMul;
 
-  Ycbcr.x += (intensity * Grain);
+  Ycbcr.x += (INTENSITY * Grain);
 
   //Ycbcr.x = clamp(Ycbcr.x, minY, maxY);
 

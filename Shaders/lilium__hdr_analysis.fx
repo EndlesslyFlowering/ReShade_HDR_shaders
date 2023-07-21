@@ -366,7 +366,7 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_END_POINT
@@ -377,7 +377,7 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
@@ -406,7 +406,7 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000001f;
 > = 10000.f;
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
