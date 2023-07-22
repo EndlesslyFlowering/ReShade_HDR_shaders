@@ -600,6 +600,25 @@ static const uint text_Error[26] = { __C, __O, __L, __O, __U, __R, __Space, __S,
                                      __S, __U, __P, __P, __O, __R, __T, __E, __D};
 
 
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  #define MAP_INTO_CSP Scrgb
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  #define MAP_INTO_CSP Hdr10
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  #define MAP_INTO_CSP Hlg
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  #define MAP_INTO_CSP Ps5
+
+#endif
+
+
 void HDR_analysis(
       float4 VPos     : SV_Position,
       float2 TexCoord : TEXCOORD,
@@ -697,23 +716,7 @@ void HDR_analysis(
 
         out3 *= breathing * HIGHLIGHT_NIT_RANGE_BRIGHTNESS;
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-        out3 = Csp::Map::Bt709Into::Scrgb(out3);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-        out3 = Csp::Map::Bt709Into::Hdr10(out3);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-        out3 = Csp::Map::Bt709Into::Hlg(out3);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-        out3 = Csp::Map::Bt709Into::Ps5(out3);
-
-#endif
+        out3 = Csp::Map::Bt709Into::MAP_INTO_CSP(out3);
 
         if (breathing > 0.f)
         {
@@ -768,28 +771,18 @@ void HDR_analysis(
         (current_y_coord - (BUFFER_HEIGHT - textureDisplaySize.y) + 0.5f) / textureDisplaySize.y);
 
 #if (CIE_DIAGRAM == CIE_1931)
-      float3 currentPixelToDisplay = pow(tex2D(Sampler_CIE_1931_Current, currentSamplerCoords).rgb, 2.2f);
+  #define CIE_SAMPLER Sampler_CIE_1931_Current
 #else
-      float3 currentPixelToDisplay = pow(tex2D(Sampler_CIE_1976_Current, currentSamplerCoords).rgb, 2.2f);
+  #define CIE_SAMPLER Sampler_CIE_1976_Current
 #endif
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      float3 currentPixelToDisplay =
+        pow(tex2D(CIE_SAMPLER, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
 
-      Output = float4(Csp::Map::Bt709Into::Scrgb(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
+#undef CIE_SAMPLER
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay), 1.f);
 
-      Output = float4(Csp::Map::Bt709Into::Hdr10(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-      Output = float4(Csp::Map::Bt709Into::Hlg(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-      Output = float4(Csp::Map::Bt709Into::Ps5(currentPixelToDisplay * CIE_DIAGRAM_BRIGHTNESS), 1.f);
-
-#endif
     }
   }
 
@@ -1054,23 +1047,8 @@ void HDR_analysis(
       float3 currentPixelToDisplay =
         tex2D(Sampler_Brightness_Histogram_Final, currentSamplerCoords).rgb;
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
 
-      Output = float4(Csp::Map::Bt709Into::Scrgb(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-      Output = float4(Csp::Map::Bt709Into::Hdr10(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-      Output = float4(Csp::Map::Bt709Into::Hlg(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-      Output = float4(Csp::Map::Bt709Into::Ps5(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS), 1.f);
-
-#endif
     }
   }
 
