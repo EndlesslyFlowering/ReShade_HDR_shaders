@@ -18,16 +18,13 @@ namespace ToneMapping
   float3 Bt2446a(
     const float3 Input,
     const float  TargetCll,
-    const float  MaxCllIn,
+    const float  MaxCll,
     const float  GamutCompression)
   {
     float3 hdrIn = Input;
 
-    const float maxCll = MaxCllIn > TargetCll ? MaxCllIn
-                                              : TargetCll;
-
-    // adjust the max of 1 according to maxCll
-    hdrIn *= (10000.f / maxCll);
+    // adjust the max of 1 according to maxCLL
+    hdrIn *= (10000.f / MaxCll);
 
     // non-linear transfer function RGB->R'G'B'
     hdrIn = pow(hdrIn, gamma);
@@ -37,7 +34,7 @@ namespace ToneMapping
 
     // tone mapping step 1
     const float pHdr = 1.f + 32.f * pow(
-                                        maxCll /
+                                        MaxCll /
                                         10000.f
                                     , gamma);
 
@@ -92,18 +89,15 @@ namespace ToneMapping
   float3 Bt2446a_MOD1(
     const float3 Input,
     const float  TargetCll,
-    const float  MaxCllIn,
+    const float  MaxCll,
     const float  GamutCompression,
     const float  TestH,
     const float  TestS)
   {
     float3 hdrIn = Input;
 
-    const float maxCll = MaxCllIn > TargetCll ? MaxCllIn
-                                              : TargetCll;
-
-    // adjust the max of 1 according to maxCll
-    hdrIn *= (10000.f / maxCll);
+    // adjust the max of 1 according to maxCLL
+    hdrIn *= (10000.f / MaxCll);
 
     // non-linear transfer function RGB->R'G'B'
     hdrIn = pow(hdrIn, gamma);

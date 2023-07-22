@@ -99,6 +99,9 @@ uniform uint TM_MODE
                 "adaptive\0";
 > = 0;
 
+#define TM_MODE_STATIC   0
+#define TM_MODE_ADAPTIVE 1
+
 uniform float TARGET_BRIGHTNESS
 <
   ui_category = "global";
@@ -328,31 +331,95 @@ uniform float FINAL_ADAPT_SPEED
 //};
 
 
+// Vertex shader generating a triangle covering the entire screen.
+// Calculate values only "once" (3 times because it's 3 vertices)
+// for the pixel shader.
+void PrepareToneMapperParameters(
+  in  uint   Id            : SV_VertexID,
+  out float4 VPos          : SV_Position,
+  out float2 TexCoord      : TEXCOORD0,
+  out float4 TmParameters0 : TmParameters0,
+  out float4 TmParameters1 : TmParameters1,
+  out float2 MaxCllValues  : MaxCllValues)
+{
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+
+#define MaxCll           MaxCllValues.x
+#define MaxCllforBt2446a MaxCllValues.y
+
+  if (TM_MODE == TM_MODE_STATIC)
+  {
+    MaxCll = MAX_CLL;
+  }
+  else
+  {
+    MaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+  }
+
+  if (TM_METHOD == TM_METHOD_BT2446A)
+  {
+    MaxCllforBt2446a = MaxCll > TARGET_BRIGHTNESS ? MaxCll
+                                                  : TARGET_BRIGHTNESS;
+  }
+  else if (TM_METHOD == TM_METHOD_BT2390)
+  {
+
+#define bt2390ScrMinPq              TmParameters0.x
+#define bt2390ScrMaxPq              TmParameters0.y
+#define bt2390ScrMaxPqMinusSrcMinPq TmParameters0.z
+#define bt2390MinLum                TmParameters0.w
+#define bt2390MaxLum                TmParameters1.x
+#define bt2390KneeStart             TmParameters1.y
+
+    bt2390ScrMinPq = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // source min brightness (Lb) in PQ
+    bt2390ScrMaxPq = Csp::Trc::ToPq(MaxCll                 / 10000.f); // source max brightness (Lw) in PQ
+
+    float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // target min brightness (Lmin) in PQ
+    float tgtMaxPQ = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // target max brightness (Lmin) in PQ
+
+
+    // this is needed often so precalculate it
+    bt2390ScrMaxPqMinusSrcMinPq = TmParameters0.y - TmParameters0.x;
+
+    bt2390MinLum = (tgtMinPQ - TmParameters0.x) / TmParameters0.z;
+    bt2390MaxLum = (tgtMaxPQ - TmParameters0.x) / TmParameters0.z;
+
+    // knee start (KS)
+    bt2390KneeStart = BT2390_KNEE_FACTOR * TmParameters1.x - BT2390_KNEE_MINUS;
+
+  }
+  else if (TM_METHOD == TM_METHOD_DICE)
+  {
+
+#define diceTargetCllnormalised TmParameters1.z
+#define diceShoulderStart    TmParameters1.w
+
+    diceTargetCllnormalised = TARGET_BRIGHTNESS / 10000.f;
+    diceShoulderStart    = DICE_SHOULDER_START / 100.f * diceTargetCllnormalised;
+  }
+
+}
+
+
 void ToneMapping(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 Output   : SV_Target0)
+      float4 VPos          : SV_Position,
+      float2 TexCoord      : TEXCOORD0,
+  out float4 Output        : SV_Target0,
+  in  float4 TmParameters0 : TmParameters0,
+  in  float4 TmParameters1 : TmParameters1,
+  in  float2 MaxCllValues  : MaxCllValues)
 {
   const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
   //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
 
-  float maxCLL;
-  switch (TM_MODE)
-  {
-    case 0: {
-      maxCLL = MAX_CLL;
-    }
-    break;
-    case 1: {
-      maxCLL = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
-    }
-    break;
-  }
-
   float3 hdr = input.rgb;
 
-//  if (maxCLL > TARGET_BRIGHTNESS)
+//  if (MaxCll > TARGET_BRIGHTNESS)
 //  {
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
@@ -432,39 +499,28 @@ void ToneMapping(
       {
         hdr = ToneMapping::Bt2446a(hdr,
                                    TARGET_BRIGHTNESS,
-                                   maxCLL,
+                                   MaxCllforBt2446a,
                                    BT2446A_GAMUT_COMPRESSION);
       }
       break;
       case TM_METHOD_BT2390:
       {
-        const float srcMinPQ = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // Lb in PQ
-        const float srcMaxPQ = Csp::Trc::ToPq(maxCLL                 / 10000.f); // Lw in PQ
-        const float scrMaxPqMinusSrcMinPq = srcMaxPQ - srcMinPQ;
-
-        const float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // Lmin in PQ
-        const float tgtMaxPQ = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // Lmax in PQ
-
-        const float minLum = (tgtMinPQ - srcMinPQ) / scrMaxPqMinusSrcMinPq;
-        const float maxLum = (tgtMaxPQ - srcMinPQ) / scrMaxPqMinusSrcMinPq;
-        const float kneeStart = BT2390_KNEE_FACTOR * maxLum - BT2390_KNEE_MINUS;
 
         hdr = ToneMapping::Bt2390::Eetf(hdr,
                                         BT2390_PROCESSING_MODE,
-                                        srcMinPQ,
-                                        srcMaxPQ,
-                                        scrMaxPqMinusSrcMinPq,
-                                        minLum,
-                                        maxLum,
-                                        kneeStart);
+                                        bt2390ScrMinPq,  // source min brightness (Lb) in PQ
+                                        bt2390ScrMaxPq,  // source max brightness (Lw) in PQ
+                                        bt2390ScrMaxPqMinusSrcMinPq,
+                                        bt2390MinLum,
+                                        bt2390MaxLum,
+                                        bt2390KneeStart);
       }
       break;
       case TM_METHOD_DICE:
       {
-        const float targetCllnormalised = TARGET_BRIGHTNESS / 10000.f;
         hdr = ToneMapping::Dice::ToneMapper(hdr,
-                                            targetCllnormalised,
-                                            DICE_SHOULDER_START / 100.f * targetCllnormalised,
+                                            diceTargetCllnormalised,
+                                            diceShoulderStart,
                                             DICE_PROCESSING_MODE,
                                             DICE_WORKING_COLOUR_SPACE);
         //hdr = saturate(hdr);
@@ -475,11 +531,11 @@ void ToneMapping(
 
       case TM_METHOD_BT2446A_MOD1:
       {
-        const float testH = clamp(TEST_H + maxCLL,            0.f, 10000.f);
+        const float testH = clamp(TEST_H + MaxCll,            0.f, 10000.f);
         const float testS = clamp(TEST_S + TARGET_BRIGHTNESS, 0.f, 10000.f);
         hdr = ToneMapping::Bt2446a_MOD1(hdr,
                                         TARGET_BRIGHTNESS,
-                                        maxCLL,
+                                        MaxCllforBt2446a,
                                         BT2446A_GAMUT_COMPRESSION,
                                         testH,
                                         testS);
@@ -776,7 +832,7 @@ technique lilium__tone_mapping
 {
   pass ToneMapping
   {
-    VertexShader = PostProcessVS;
+    VertexShader = PrepareToneMapperParameters;
      PixelShader = ToneMapping;
   }
 }
