@@ -58,16 +58,16 @@ uniform uint TM_METHOD
   ui_label    = "tone mapping method";
   ui_tooltip  = "BT.2390 EETF:"
            "\n" "  Is a highlight compressor."
-           "\n" "  It only compresses the highlights according to the \"knee factor\" and \"knee minus\"."
-           "\n" "  Which dictate where the highlight compression start."
+           "\n" "  It only compresses the highlights according to \"knee start\"."
+           "\n" "  Which dictate where the highlight compression starts."
            "\n" "BT.2446 Method A:"
            "\n" "  Compared to other tone mappers this one tries to compress the whole brightness range"
            "\n" "  the image has rather than just compressing the highlights."
            "\n" "  It is designed for tone mapping 1000 nits to 100 nits originally"
            "\n" "  and therefore can't handle compressing brightness differences that are too high."
-           "\n" "  Like 10000 nits to 800 nits. As its trying to compress the whole brightness range."
+           "\n" "  Like 10000 nits to 800 nits. As it's trying to compress the whole brightness range."
            "\n" "Dice:"
-           "\n" "  Is similar to how BT.2390 works but you can only adjust the shoulder starting point."
+           "\n" "  Works similarly to BT.2390."
            "\n" "  The compression curve is slightly different and it's a bit faster.";
   ui_type     = "combo";
   ui_items    = "BT.2390 EETF\0"
@@ -176,40 +176,30 @@ uniform float BT2390_TARGET_BLACK_POINT
   ui_step     = 0.000001f;
 > = 0.f;
 
-uniform float BT2390_KNEE_FACTOR
+uniform float BT2390_KNEE_START
 <
   ui_category = "BT.2390 EETF";
-  ui_label    = "knee factor";
-  ui_tooltip  = "The formula roughly is:"
-           "\n" "knee_factor * maximum brightness - knee_minus."
-           "\n" "The result of that is where the highlight compression starts.";
+  ui_label    = "knee start (in %)";
+  ui_tooltip  = "Set this to where the brightness compression curve starts."
+           "\n" "In % of the target brightness."
+           "\n" "example:"
+           "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
+           "\n" "The brightness compression will start at 500 nits.";
   ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 3.f;
-  ui_step     = 0.01f;
-> = 1.5f;
-
-uniform float BT2390_KNEE_MINUS
-<
-  ui_category = "BT.2390 EETF";
-  ui_label    = "knee minus";
-  ui_tooltip  = "The formula roughly is:"
-           "\n" "knee_factor * maximum brightness - knee_minus."
-           "\n" "The result of that is where the highlight compression starts.";
-  ui_type     = "drag";
-  ui_min      = 0.f;
-  ui_max      = 3.f;
-  ui_step     = 0.01f;
-> = 0.5f;
+  ui_units    = "%%";
+  ui_min      = 0.1f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 50.f;
 
 uniform float DICE_SHOULDER_START
 <
   ui_category = "Dice";
   ui_label    = "shoulder start (in %)";
-  ui_tooltip  = "Set this to where the brightness compression starts."
-           "\n" "In % of the maximum brightness."
+  ui_tooltip  = "Set this to where the brightness compression curve starts."
+           "\n" "In % of the target brightness."
            "\n" "example:"
-           "\n" "With \"maximum brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
+           "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
            "\n" "The brightness compression will start at 500 nits.";
   ui_type     = "drag";
   ui_units    = "%%";
@@ -368,28 +358,28 @@ void PrepareToneMapperParameters(
   else if (TM_METHOD == TM_METHOD_BT2390)
   {
 
-#define bt2390ScrMinPq              TmParameters0.x
-#define bt2390ScrMaxPq              TmParameters0.y
-#define bt2390ScrMaxPqMinusSrcMinPq TmParameters0.z
+#define bt2390SrcMinPq              TmParameters0.x
+#define bt2390SrcMaxPq              TmParameters0.y
+#define bt2390SrcMaxPqMinusSrcMinPq TmParameters0.z
 #define bt2390MinLum                TmParameters0.w
 #define bt2390MaxLum                TmParameters1.x
 #define bt2390KneeStart             TmParameters1.y
 
-    bt2390ScrMinPq = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // source min brightness (Lb) in PQ
-    bt2390ScrMaxPq = Csp::Trc::ToPq(MaxCll                 / 10000.f); // source max brightness (Lw) in PQ
+    bt2390SrcMinPq = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // source min brightness (Lb) in PQ
+    bt2390SrcMaxPq = Csp::Trc::ToPq(MaxCll                 / 10000.f); // source max brightness (Lw) in PQ
 
     float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // target min brightness (Lmin) in PQ
     float tgtMaxPQ = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // target max brightness (Lmin) in PQ
 
 
     // this is needed often so precalculate it
-    bt2390ScrMaxPqMinusSrcMinPq = TmParameters0.y - TmParameters0.x;
+    bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
 
-    bt2390MinLum = (tgtMinPQ - TmParameters0.x) / TmParameters0.z;
-    bt2390MaxLum = (tgtMaxPQ - TmParameters0.x) / TmParameters0.z;
+    bt2390MinLum = (tgtMinPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
+    bt2390MaxLum = (tgtMaxPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
 
     // knee start (KS)
-    bt2390KneeStart = BT2390_KNEE_FACTOR * TmParameters1.x - BT2390_KNEE_MINUS;
+    bt2390KneeStart = Csp::Trc::ToPq(BT2390_KNEE_START * TARGET_BRIGHTNESS);
 
   }
   else if (TM_METHOD == TM_METHOD_DICE)
@@ -508,9 +498,9 @@ void ToneMapping(
 
         hdr = ToneMapping::Bt2390::Eetf(hdr,
                                         BT2390_PROCESSING_MODE,
-                                        bt2390ScrMinPq,  // source min brightness (Lb) in PQ
-                                        bt2390ScrMaxPq,  // source max brightness (Lw) in PQ
-                                        bt2390ScrMaxPqMinusSrcMinPq,
+                                        bt2390SrcMinPq,  // source min brightness (Lb) in PQ
+                                        bt2390SrcMaxPq,  // source max brightness (Lw) in PQ
+                                        bt2390SrcMaxPqMinusSrcMinPq,
                                         bt2390MinLum,
                                         bt2390MaxLum,
                                         bt2390KneeStart);
