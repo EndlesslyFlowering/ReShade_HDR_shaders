@@ -195,7 +195,7 @@ namespace ToneMapping
 
     // works in PQ
     float3 Eetf(
-      const float3 E_,
+      const float3 Input,
       const uint   ProcessingMode,
       const float  SrcMinPq, // Lb in PQ
       const float  SrcMaxPq, // Lw in PQ
@@ -207,7 +207,7 @@ namespace ToneMapping
     {
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
-        float3 Lms = Csp::Ictcp::Mat::Bt2020To::Lms(E_);
+        float3 Lms = Csp::Ictcp::Mat::Bt2020To::Lms(Input);
         Lms = Csp::Trc::ToPq(Lms);
 
         const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
@@ -218,9 +218,13 @@ namespace ToneMapping
         //E2
         if (i2 < KneeStart)
         {
+          if (MinLum == 0.f)
+          {
+            return Input;
+          }
           i2 = i1;
         }
-        if (i2 >= KneeStart)
+        else
         {
           i2 = HermiteSpline(i2, KneeStart, MaxLum);
         }
@@ -250,7 +254,7 @@ namespace ToneMapping
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
       {
-        const float y1 = dot(E_, Csp::KHelpers::Bt2020::K);
+        const float y1 = dot(Input, Csp::KHelpers::Bt2020::K);
         //E1
         float y2 = max((y1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
         //float y2 = y1 / SrcMaxPq;
@@ -258,6 +262,10 @@ namespace ToneMapping
         //E2
         if (y2 < KneeStart)
         {
+          if (MinLum == 0.f)
+          {
+            return Input;
+          }
           y2 = y1;
         }
         else
@@ -265,9 +273,9 @@ namespace ToneMapping
           y2 = HermiteSpline(y2, KneeStart, MaxLum);
         }
 
-        const float cb1 = (E_.b - y1) /
+        const float cb1 = (Input.b - y1) /
                           Csp::KHelpers::Bt2020::Kb;
-        const float cr1 = (E_.r - y1) /
+        const float cr1 = (Input.r - y1) /
                           Csp::KHelpers::Bt2020::Kr;
 
         //E3
@@ -291,7 +299,7 @@ namespace ToneMapping
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        const float y1     = dot(E_, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        const float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
         const float y1InPq = Csp::Trc::ToPq(y1);
         //E1 relative luminance
         float y2 = max((y1InPq - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
@@ -300,6 +308,10 @@ namespace ToneMapping
         //E2
         if (y2 < KneeStart)
         {
+          if (MinLum == 0.f)
+          {
+            return Input;
+          }
           y2 = y1InPq;
         }
         else
@@ -316,23 +328,26 @@ namespace ToneMapping
 
         y2 = Csp::Trc::FromPq(y2);
 
-        return clamp(y2 / y1 * E_, 0.f, 65504.f);
+        return clamp(y2 / y1 * Input, 0.f, 65504.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_RGB)
       {
         //E1
-        float3 Rgb = max((E_ - SrcMinPq) / ScrMaxPqMinusSrcMinPq, float3(0.f, 0.f, 0.f));
-        //float3 Rgb = E_ / SrcMaxPq;
+        float3 Rgb = max((Input - SrcMinPq) / ScrMaxPqMinusSrcMinPq, float3(0.f, 0.f, 0.f));
+        //float3 Rgb = Input / SrcMaxPq;
 
         //E2
-        if (Rgb.r >= KneeStart) {
+        if (Rgb.r >= KneeStart)
+        {
           Rgb.r = HermiteSpline(Rgb.r, KneeStart, MaxLum);
         }
-        if (Rgb.g >= KneeStart) {
+        if (Rgb.g >= KneeStart)
+        {
           Rgb.g = HermiteSpline(Rgb.g, KneeStart, MaxLum);
         }
-        if (Rgb.b >= KneeStart) {
+        if (Rgb.b >= KneeStart)
+        {
           Rgb.b = HermiteSpline(Rgb.b, KneeStart, MaxLum);
         }
 
