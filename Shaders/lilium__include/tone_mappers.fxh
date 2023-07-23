@@ -201,33 +201,25 @@ namespace ToneMapping
     {
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
-        float3 Lms = Csp::Ictcp::Mat::Bt2020To::Lms(Input);
-        Lms = Csp::Trc::ToPq(Lms);
+        float3 Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Input));
 
         const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
         //E1
-        float i2 = max((i1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
+        float i2 = (i1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float i2 = i1 / SrcMaxPq;
 
         //E2
-        if (i2 < KneeStart)
-        {
-          if (MinLum == 0.f)
-          {
-            return Input;
-          }
-          i2 = i1;
-        }
-        else
+        if (i2 >= KneeStart)
         {
           i2 = HermiteSpline(i2, KneeStart, MaxLum);
         }
-
-        const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
-        const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
+        else if (MinLum == 0.f)
+        {
+          return Input;
+        }
 
         //E3
-        i2 = i2 + MinLum * pow((1.f - i2), 4.f);
+        i2 += MinLum * pow((1.f - i2), 4.f);
 
         //E4
         i2 = i2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
@@ -235,11 +227,12 @@ namespace ToneMapping
 
         const float minI = min((i1 / i2), (i2 / i1));
 
-        //const float3 ct2cp2 = cross(float3(ct1, cp1, 0.f), minI);
-
         //to L'M'S'
-        //Lms = mul(ICtCp_To_Lms, float3(i2, ct2cp2.x, ct2cp2.y));
-        Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2, minI * ct1, minI * cp1));
+        Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(
+                i2,
+                dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]) * minI,
+                dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]) * minI));
+
         //to LMS
         Lms = Csp::Trc::FromPq(Lms);
         //to RGB
@@ -250,71 +243,53 @@ namespace ToneMapping
       {
         const float y1 = dot(Input, Csp::KHelpers::Bt2020::K);
         //E1
-        float y2 = max((y1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
+        float y2 = (y1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float y2 = y1 / SrcMaxPq;
 
         //E2
-        if (y2 < KneeStart)
-        {
-          if (MinLum == 0.f)
-          {
-            return Input;
-          }
-          y2 = y1;
-        }
-        else
+        if (y2 >= KneeStart)
         {
           y2 = HermiteSpline(y2, KneeStart, MaxLum);
         }
-
-        const float cb1 = (Input.b - y1) /
-                          Csp::KHelpers::Bt2020::Kb;
-        const float cr1 = (Input.r - y1) /
-                          Csp::KHelpers::Bt2020::Kr;
+        else if (MinLum == 0.f)
+        {
+          return Input;
+        }
 
         //E3
-        y2 = y2 + MinLum * pow((1.f - y2), 4.f);
+        y2 += MinLum * pow((1.f - y2), 4.f);
 
         //E4
-        y2 = y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
+        y2 = clamp(y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f, 65504.f);
         //y2 = y2 * SrcMaxPq;
 
         const float minY = min((y1 / y2), (y2 / y1));
 
-        //const float3 cb2cr2 = cross(float3(cb1, cr1, 0.f), minY);
-        //const float  cb2 = cb2cr2.x;
-        //const float  cr2 = cb2cr2.y;
-
-        const float cb2 = minY * cb1;
-        const float cr2 = minY * cr1;
-
-        return clamp(Csp::Ycbcr::ToRgb::Bt2020(float3(y2, cb2, cr2)), 0.f, 65504.f);
+        return clamp(Csp::Ycbcr::ToRgb::Bt2020(float3(
+                 y2,
+                 (Input.b - y1) / Csp::KHelpers::Bt2020::Kb * minY,
+                 (Input.r - y1) / Csp::KHelpers::Bt2020::Kr * minY)), 0.f, 65504.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        const float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
-        const float y1InPq = Csp::Trc::ToPq(y1);
-        //E1 relative luminance
-        float y2 = max((y1InPq - SrcMinPq) / ScrMaxPqMinusSrcMinPq, 0.f);
+        const float y1 = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        //E1
+        float y2 = (Csp::Trc::ToPq(y1) - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
 
         //E2
-        if (y2 < KneeStart)
-        {
-          if (MinLum == 0.f)
-          {
-            return Input;
-          }
-          y2 = y1InPq;
-        }
-        else
+        if (y2 >= KneeStart)
         {
           y2 = HermiteSpline(y2, KneeStart, MaxLum);
         }
+        else if (MinLum == 0.f)
+        {
+          return Input;
+        }
 
         //E3
-        y2 = y2 + MinLum * pow((1.f - y2), 4.f);
+        y2 += MinLum * pow((1.f - y2), 4.f);
 
         //E4
         y2 = y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
@@ -328,29 +303,29 @@ namespace ToneMapping
       else if (ProcessingMode == BT2390_PRO_MODE_RGB)
       {
         //E1
-        float3 Rgb = max((Input - SrcMinPq) / ScrMaxPqMinusSrcMinPq, float3(0.f, 0.f, 0.f));
+        float3 rgb = (Input - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float3 Rgb = Input / SrcMaxPq;
 
         //E2
-        if (Rgb.r >= KneeStart)
+        if (rgb.r >= KneeStart)
         {
-          Rgb.r = HermiteSpline(Rgb.r, KneeStart, MaxLum);
+          rgb.r = HermiteSpline(rgb.r, KneeStart, MaxLum);
         }
-        if (Rgb.g >= KneeStart)
+        if (rgb.g >= KneeStart)
         {
-          Rgb.g = HermiteSpline(Rgb.g, KneeStart, MaxLum);
+          rgb.g = HermiteSpline(rgb.g, KneeStart, MaxLum);
         }
-        if (Rgb.b >= KneeStart)
+        if (rgb.b >= KneeStart)
         {
-          Rgb.b = HermiteSpline(Rgb.b, KneeStart, MaxLum);
+          rgb.b = HermiteSpline(rgb.b, KneeStart, MaxLum);
         }
 
         //E3
-        Rgb = Rgb + MinLum * pow((1.f - Rgb), 4.f);
+        rgb += MinLum * pow((1.f - rgb), 4.f);
 
         //E4
-        return Rgb * ScrMaxPqMinusSrcMinPq + SrcMinPq;
-        //return Rgb * SrcMaxPq;
+        return clamp(rgb * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f, 65504.f);
+        //return rgb * SrcMaxPq;
       }
       else
       {
@@ -444,6 +419,7 @@ namespace ToneMapping
         KgHelper = Csp::KHelpers::Ap0D65::Kg;
       }
 
+      // TODO pull this out into the vertex shader
       float targetCll,
             shoulderStart;
 

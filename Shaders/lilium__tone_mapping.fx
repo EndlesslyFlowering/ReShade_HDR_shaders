@@ -12,6 +12,8 @@
 
 //#define _DEBUG
 
+// TODO
+// - add black point adaption for every tone mapper
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
@@ -158,22 +160,22 @@ uniform float BT2390_SRC_BLACK_POINT
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "source black point (in nits)";
-  ui_type     = "drag";
+  ui_type     = "slider";
   ui_units    = " nits";
   ui_min      = 0.f;
-  ui_max      = 1.f;
-  ui_step     = 0.000001f;
+  ui_max      = 2.f;
+  ui_step     = 0.0000001f;
 > = 0.f;
 
 uniform float BT2390_TARGET_BLACK_POINT
 <
   ui_category = "BT.2390 EETF";
   ui_label    = "target black point (in nits)";
-  ui_type     = "drag";
+  ui_type     = "slider";
   ui_units    = " nits";
   ui_min      = 0.f;
-  ui_max      = 1.f;
-  ui_step     = 0.000001f;
+  ui_max      = 2.f;
+  ui_step     = 0.0000001f;
 > = 0.f;
 
 uniform float BT2390_KNEE_START
@@ -365,11 +367,11 @@ void PrepareToneMapperParameters(
 #define bt2390MaxLum                TmParameters1.x
 #define bt2390KneeStart             TmParameters1.y
 
-    bt2390SrcMinPq = Csp::Trc::ToPq(BT2390_SRC_BLACK_POINT / 10000.f); // source min brightness (Lb) in PQ
-    bt2390SrcMaxPq = Csp::Trc::ToPq(MaxCll                 / 10000.f); // source max brightness (Lw) in PQ
+    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(BT2390_SRC_BLACK_POINT); // source min brightness (Lb) in PQ
+    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(MaxCll);                 // source max brightness (Lw) in PQ
 
-    float tgtMinPQ = Csp::Trc::ToPq(BT2390_TARGET_BLACK_POINT / 10000.f); // target min brightness (Lmin) in PQ
-    float tgtMaxPQ = Csp::Trc::ToPq(TARGET_BRIGHTNESS         / 10000.f); // target max brightness (Lmin) in PQ
+    float tgtMinPQ = Csp::Trc::ToPqFromNits(BT2390_TARGET_BLACK_POINT); // target min brightness (Lmin) in PQ
+    float tgtMaxPQ = Csp::Trc::ToPqFromNits(TARGET_BRIGHTNESS);         // target max brightness (Lmin) in PQ
 
 
     // this is needed often so precalculate it
@@ -379,7 +381,7 @@ void PrepareToneMapperParameters(
     bt2390MaxLum = (tgtMaxPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
 
     // knee start (KS)
-    bt2390KneeStart = Csp::Trc::ToPq(BT2390_KNEE_START * TARGET_BRIGHTNESS);
+    bt2390KneeStart = Csp::Trc::ToPqFromNits(BT2390_KNEE_START / 100.f * TARGET_BRIGHTNESS);
 
   }
   else if (TM_METHOD == TM_METHOD_DICE)
