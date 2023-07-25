@@ -337,8 +337,8 @@ void InverseToneMapping(
       const float target_CLL_normalised = TARGET_BRIGHTNESS / 10000.f;
       hdr = InverseToneMapping::Dice::InverseToneMapper(
               hdr,
-              Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_INPUT_BRIGHTNESS),
-              Csp::Ictcp::Ap0D65::NitsToIntensity(DICE_SHOULDER_START / 100.f * DICE_INPUT_BRIGHTNESS));
+              Csp::Trc::ToPqFromNits(DICE_INPUT_BRIGHTNESS),
+              Csp::Trc::ToPqFromNits(DICE_SHOULDER_START / 100.f * DICE_INPUT_BRIGHTNESS));
     }
     break;
 

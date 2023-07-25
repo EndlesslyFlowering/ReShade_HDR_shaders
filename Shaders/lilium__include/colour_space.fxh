@@ -934,51 +934,6 @@ namespace Csp
 
     } //Mat
 
-
-    namespace NormalisedToIntensity
-    {
-
-      float Bt2020(const float Normalised)
-      {
-        float3 normalised3 = float3(Normalised, Normalised, Normalised);
-
-        float2 LmNormalised = float2(dot(normalised3, Mat::Bt2020ToLms[0]),
-                                     dot(normalised3, Mat::Bt2020ToLms[1]));
-
-        float2 LmPq = Trc::ToPq(LmNormalised);
-
-        return 0.5f * LmPq.x + 0.5f * LmPq.y;
-      }
-
-      float Ap0D65(const float Normalised)
-      {
-        float3 normalised3 = float3(Normalised, Normalised, Normalised);
-
-        float2 LmNormalised = float2(dot(normalised3, Mat::Ap0D65ToLms[0]),
-                                     dot(normalised3, Mat::Ap0D65ToLms[1]));
-
-        float2 LmPq = Trc::ToPq(LmNormalised);
-
-        return 0.5f * LmPq.x + 0.5f * LmPq.y;
-      }
-
-    } //NormalisedToIntensity
-
-    namespace NitsToIntensity
-    {
-
-      float Bt2020(const float Nits)
-      {
-        return NormalisedToIntensity::Bt2020(Nits / 10000.f);
-      }
-      
-      float Ap0D65(const float Nits)
-      {
-        return NormalisedToIntensity::Ap0D65(Nits / 10000.f);
-      }
-
-    } //NitsToIntensity
-
   } //ICtCp
 
 

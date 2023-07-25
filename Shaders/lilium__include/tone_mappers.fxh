@@ -420,29 +420,10 @@ namespace ToneMapping
       }
 
       // TODO pull this out into the vertex shader
-      float targetCll,
-            shoulderStart;
+      const float targetCll     = Csp::Trc::ToPq(TargetCllNormalised);
+      const float shoulderStart = Csp::Trc::ToPq(ShoulderStartNormalised);
 
-      if (ProcessingMode == DICE_PRO_MODE_ICTCP)
-      {
-        if (WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
-        {
-          targetCll     = Csp::Ictcp::NormalisedToIntensity::Bt2020(TargetCllNormalised);
-          shoulderStart = Csp::Ictcp::NormalisedToIntensity::Bt2020(ShoulderStartNormalised);
-        }
-        else
-        {
-          targetCll     = Csp::Ictcp::NormalisedToIntensity::Ap0D65(TargetCllNormalised);
-          shoulderStart = Csp::Ictcp::NormalisedToIntensity::Ap0D65(ShoulderStartNormalised);
-        }
-      }
-      else
-      {
-        targetCll     = Csp::Trc::ToPq(TargetCllNormalised);
-        shoulderStart = Csp::Trc::ToPq(ShoulderStartNormalised);
-      }
-
-      //YCbCr method copied from BT.2390
+      // ICtCp and YCbCr method copied from BT.2390
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
         float3 Lms = mul(RgbToLms, Input);
