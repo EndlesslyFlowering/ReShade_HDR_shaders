@@ -27,10 +27,277 @@
 #endif
 
 
-uniform float FRAMETIME
-<
-  source = "frametime";
->;
+namespace RuntimeValues
+{
+  uniform float Frametime
+  <
+    source = "frametime";
+  >;
+}
+
+namespace Ui
+{
+  namespace ToneMapping
+  {
+    namespace Global
+    {
+      uniform uint Method
+      <
+        ui_category = "global";
+        ui_label    = "tone mapping method";
+        ui_tooltip  = "BT.2390 EETF:"
+                 "\n" "  Is a highlight compressor."
+                 "\n" "  It only compresses the highlights according to \"knee start\"."
+                 "\n" "  Which dictate where the highlight compression starts."
+                 "\n" "BT.2446 Method A:"
+                 "\n" "  Compared to other tone mappers this one tries to compress the whole brightness range"
+                 "\n" "  the image has rather than just compressing the highlights."
+                 "\n" "  It is designed for tone mapping 1000 nits to 100 nits originally"
+                 "\n" "  and therefore can't handle compressing brightness differences that are too high."
+                 "\n" "  Like 10000 nits to 800 nits. As it's trying to compress the whole brightness range."
+                 "\n" "Dice:"
+                 "\n" "  Works similarly to BT.2390."
+                 "\n" "  The compression curve is slightly different and it's a bit faster.";
+        ui_type     = "combo";
+        ui_items    = "BT.2390 EETF\0"
+                      "BT.2446 Method A\0"
+                      "Dice\0"
+      #ifdef _DEBUG
+                      "BT.2446A mod1\0"
+      #endif
+                      ;
+      //                "BT.2446A mod2\0"
+      //                "BT.2446A mod1+mod2\0";
+      > = 0;
+
+#define TM_METHOD_BT2390       0
+#define TM_METHOD_BT2446A      1
+#define TM_METHOD_DICE         2
+#define TM_METHOD_BT2446A_MOD1 3
+
+      uniform uint Mode
+      <
+        ui_category = "global";
+        ui_label    = "tone mapping mode";
+        ui_tooltip  = "  static: tone map only according to the specified maximum brightness"
+                 "\n" "adaptive: the maximum brightness will adapat to the actual maximum brightness over time"
+                 "\n" "          DON'T FORGET TO TURN ON THE \"adaptive mode\" TECHNIQUE!";
+        ui_type     = "combo";
+        ui_items    = "static\0"
+                      "adaptive\0";
+      > = 0;
+
+#define TM_MODE_STATIC   0
+#define TM_MODE_ADAPTIVE 1
+
+      uniform float TargetBrightness
+      <
+        ui_category = "global";
+        ui_label    = "target brightness";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 0.f;
+        ui_max      = 10000.f;
+        ui_step     = 5.f;
+      > = 1000.f;
+    } //Global
+
+    namespace StaticMode
+    {
+      uniform float MaxCll
+      <
+        ui_category = "static tone mapping";
+        ui_label    = "maximum tone mapping brightness";
+        ui_tooltip  = "Everything above this will be clipped!";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 0.f;
+        ui_max      = 10000.f;
+        ui_step     = 5.f;
+      > = 10000.f;
+    } //StaticMode
+
+    namespace Bt2446A
+    {
+      uniform float GamutCompression
+      <
+        ui_category = "BT.2446 Method A";
+        ui_label    = "gamut compression";
+        ui_tooltip  = "1.10 is the default of the BT.2446 specification"
+                 "\n" "1.05 about matches the input colour space"
+                 "\n" "1.00 slightly expands the colour space";
+        ui_type     = "drag";
+        ui_min      = 1.f;
+        ui_max      = 2.f;
+        ui_step     = 0.005f;
+      > = 1.1f;
+    } //Bt2446A
+
+    namespace Bt2390
+    {
+      uniform uint ProcessingModeBt2390
+      <
+        ui_category = "BT.2390 EETF";
+        ui_label    = "processing mode";
+        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
+                 "\n" "YCbCr: process in YCbCr space"
+                 "\n" "YRGB:  process RGB according to brightness"
+                 "\n" "RGB:   process each channel individually";
+        ui_type     = "combo";
+        ui_items    = "ICtCp\0"
+                      "YCbCr\0"
+                      "YRGB\0"
+                      "RGB\0";
+      > = 0;
+
+      uniform float SourceBlackPoint
+      <
+        ui_category = "BT.2390 EETF";
+        ui_label    = "source black point";
+        ui_type     = "slider";
+        ui_units    = " nits";
+        ui_min      = 0.f;
+        ui_max      = 0.5f;
+        ui_step     = 0.0000001f;
+      > = 0.f;
+
+      uniform float TargetBlackPoint
+      <
+        ui_category = "BT.2390 EETF";
+        ui_label    = "target black point";
+        ui_type     = "slider";
+        ui_units    = " nits";
+        ui_min      = 0.f;
+        ui_max      = 0.5f;
+        ui_step     = 0.0000001f;
+      > = 0.f;
+
+      uniform float KneeStart
+      <
+        ui_category = "BT.2390 EETF";
+        ui_label    = "knee start";
+        ui_tooltip  = "Set this to where the brightness compression curve starts."
+                 "\n" "In % of the target brightness."
+                 "\n" "example:"
+                 "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
+                 "\n" "The brightness compression will start at 500 nits.";
+        ui_type     = "drag";
+        ui_units    = "%%";
+        ui_min      = 0.1f;
+        ui_max      = 100.f;
+        ui_step     = 0.1f;
+      > = 50.f;
+    } //Bt2390
+
+    namespace Dice
+    {
+      uniform float ShoulderStart
+      <
+        ui_category = "Dice";
+        ui_label    = "shoulder start";
+        ui_tooltip  = "Set this to where the brightness compression curve starts."
+                 "\n" "In % of the target brightness."
+                 "\n" "example:"
+                 "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
+                 "\n" "The brightness compression will start at 500 nits.";
+        ui_type     = "drag";
+        ui_units    = "%%";
+        ui_min      = 0.1f;
+        ui_max      = 100.f;
+        ui_step     = 0.1f;
+      > = 50.f;
+
+      uniform uint ProcessingModeDice
+      <
+        ui_category = "Dice";
+        ui_label    = "processing mode";
+        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
+                 "\n" "YCbCr: process in YCbCr space";
+        ui_type     = "combo";
+        ui_items    = "ICtCp\0"
+                      "YCbCr\0";
+      > = 0;
+
+      uniform uint WorkingColourSpace
+      <
+        ui_category = "Dice";
+        ui_label    = "processing colour space";
+        ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point"
+                 "\n" "AP0_D65 technically covers every humanly perceivable colour."
+                 "\n" "It's meant for future use if we ever move past the BT.2020 colour space."
+                 "\n" "Just use BT.2020 for now.";
+        ui_type     = "combo";
+        ui_items    = "BT.2020\0"
+                      "AP0_D65\0";
+      > = 0;
+    } //Dice
+
+    namespace AdaptiveMode
+    {
+      uniform float MaxCllCap
+      <
+        ui_category = "adaptive tone mapping";
+        ui_label    = "cap maximum brightness";
+        ui_tooltip  = "Caps maximum brightness that the adaptive maximum brightness can reach."
+                 "\n" "Everything above this value will be clipped!";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 0.f;
+        ui_max      = 10000.f;
+        ui_step     = 10.f;
+      > = 10000.f;
+
+      uniform float TimeToAdapt
+      <
+        ui_category = "adaptive tone mapping";
+        ui_label    = "adaption to maximum brightness";
+        ui_tooltip  = "Time it takes to adapt to the current maximum brightness";
+        ui_type     = "drag";
+        ui_min      = 0.5f;
+        ui_max      = 3.f;
+        ui_step     = 0.1f;
+      > = 1.0f;
+
+      uniform float FinalAdaptStart
+      <
+        ui_category = "adaptive tone mapping";
+        ui_label    = "final adaption starting point";
+        ui_tooltip  = "If the difference between the \"maximum brightness\""
+                 "\n" "and the \"adaptive maximum brightness\" is smaller than this percentage"
+                 "\n" "use the \"final adaption steps\"."
+                 "\n" "For flickery games use 90% or lower.";
+        ui_type     = "drag";
+        ui_units    = "%%";
+        ui_min      = 80.f;
+        ui_max      = 99.f;
+        ui_step     = 0.1f;
+      > = 95.f;
+
+      uniform float FinalAdaptSteps
+      <
+        ui_category = "adaptive tone mapping";
+        ui_label    = "final adaption steps";
+        ui_tooltip  = "For flickery games use 7.00 or lower.";
+        ui_type     = "drag";
+        ui_min      = 1.f;
+        ui_max      = 10.f;
+        ui_step     = 0.05f;
+      > = 7.5f;
+
+      uniform float FinalAdaptSpeed
+      <
+        ui_category = "adaptive tone mapping";
+        ui_label    = "final adaption speed";
+        ui_tooltip  = "For flickery games use 5.00 or lower.";
+        ui_type     = "drag";
+        ui_min      = 1.f;
+        ui_max      = 10.f;
+        ui_step     = 0.05f;
+      > = 7.5f;
+    } //AdaptiveMode
+  }
+}
+
 
 #ifdef _DEBUG
 uniform float TEST_H
@@ -53,248 +320,6 @@ uniform float TEST_S
   ui_step     =  10.f;
 > = 0.f;
 #endif
-
-uniform uint TM_METHOD
-<
-  ui_category = "global";
-  ui_label    = "tone mapping method";
-  ui_tooltip  = "BT.2390 EETF:"
-           "\n" "  Is a highlight compressor."
-           "\n" "  It only compresses the highlights according to \"knee start\"."
-           "\n" "  Which dictate where the highlight compression starts."
-           "\n" "BT.2446 Method A:"
-           "\n" "  Compared to other tone mappers this one tries to compress the whole brightness range"
-           "\n" "  the image has rather than just compressing the highlights."
-           "\n" "  It is designed for tone mapping 1000 nits to 100 nits originally"
-           "\n" "  and therefore can't handle compressing brightness differences that are too high."
-           "\n" "  Like 10000 nits to 800 nits. As it's trying to compress the whole brightness range."
-           "\n" "Dice:"
-           "\n" "  Works similarly to BT.2390."
-           "\n" "  The compression curve is slightly different and it's a bit faster.";
-  ui_type     = "combo";
-  ui_items    = "BT.2390 EETF\0"
-                "BT.2446 Method A\0"
-                "Dice\0"
-#ifdef _DEBUG
-                "BT.2446A mod1\0"
-#endif
-                ;
-//                "BT.2446A mod2\0"
-//                "BT.2446A mod1+mod2\0";
-> = 0;
-
-#define TM_METHOD_BT2390       0
-#define TM_METHOD_BT2446A      1
-#define TM_METHOD_DICE         2
-#define TM_METHOD_BT2446A_MOD1 3
-
-//global
-uniform uint TM_MODE
-<
-  ui_category = "global";
-  ui_label    = "tone mapping mode";
-  ui_tooltip  = "  static: tone map only according to the specified maximum brightness"
-           "\n" "adaptive: the maximum brightness will adapat to the actual maximum brightness over time"
-           "\n" "          DON'T FORGET TO TURN ON THE \"adaptive mode\" TECHNIQUE!";
-  ui_type     = "combo";
-  ui_items    = "static\0"
-                "adaptive\0";
-> = 0;
-
-#define TM_MODE_STATIC   0
-#define TM_MODE_ADAPTIVE 1
-
-uniform float TARGET_BRIGHTNESS
-<
-  ui_category = "global";
-  ui_label    = "target brightness (in nits)";
-  ui_type     = "drag";
-  ui_units    = " nits";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 5.f;
-> = 1000.f;
-
-//static tone mapping
-uniform float MAX_CLL
-<
-  ui_category = "static tone mapping";
-  ui_label    = "maximum tone mapping brightness (in nits)";
-  ui_tooltip  = "Everything above this will be clipped!";
-  ui_type     = "drag";
-  ui_units    = " nits";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 5.f;
-> = 10000.f;
-
-uniform float BT2446A_GAMUT_COMPRESSION
-<
-  ui_category = "BT.2446 Method A";
-  ui_label    = "gamut compression";
-  ui_tooltip  = "1.10 is the default of the BT.2446 specification"
-           "\n" "1.05 about matches the input colour space"
-           "\n" "1.00 slightly expands the colour space";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 2.f;
-  ui_step     = 0.005f;
-> = 1.1f;
-
-uniform uint BT2390_PROCESSING_MODE
-<
-  ui_category = "BT.2390 EETF";
-  ui_label    = "processing mode";
-  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-           "\n" "YCbCr: process in YCbCr space"
-           "\n" "YRGB:  process RGB according to brightness"
-           "\n" "RGB:   process each channel individually";
-  ui_type     = "combo";
-  ui_items    = "ICtCp\0"
-                "YCbCr\0"
-                "YRGB\0"
-                "RGB\0";
-> = 0;
-
-uniform float BT2390_SRC_BLACK_POINT
-<
-  ui_category = "BT.2390 EETF";
-  ui_label    = "source black point (in nits)";
-  ui_type     = "slider";
-  ui_units    = " nits";
-  ui_min      = 0.f;
-  ui_max      = 2.f;
-  ui_step     = 0.0000001f;
-> = 0.f;
-
-uniform float BT2390_TARGET_BLACK_POINT
-<
-  ui_category = "BT.2390 EETF";
-  ui_label    = "target black point (in nits)";
-  ui_type     = "slider";
-  ui_units    = " nits";
-  ui_min      = 0.f;
-  ui_max      = 2.f;
-  ui_step     = 0.0000001f;
-> = 0.f;
-
-uniform float BT2390_KNEE_START
-<
-  ui_category = "BT.2390 EETF";
-  ui_label    = "knee start (in %)";
-  ui_tooltip  = "Set this to where the brightness compression curve starts."
-           "\n" "In % of the target brightness."
-           "\n" "example:"
-           "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
-           "\n" "The brightness compression will start at 500 nits.";
-  ui_type     = "drag";
-  ui_units    = "%%";
-  ui_min      = 0.1f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
-> = 50.f;
-
-uniform float DICE_SHOULDER_START
-<
-  ui_category = "Dice";
-  ui_label    = "shoulder start (in %)";
-  ui_tooltip  = "Set this to where the brightness compression curve starts."
-           "\n" "In % of the target brightness."
-           "\n" "example:"
-           "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
-           "\n" "The brightness compression will start at 500 nits.";
-  ui_type     = "drag";
-  ui_units    = "%%";
-  ui_min      = 0.1f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
-> = 50.f;
-
-uniform uint DICE_PROCESSING_MODE
-<
-  ui_category = "Dice";
-  ui_label    = "processing mode";
-  ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-           "\n" "YCbCr: process in YCbCr space";
-  ui_type     = "combo";
-  ui_items    = "ICtCp\0"
-                "YCbCr\0";
-> = 0;
-
-uniform uint DICE_WORKING_COLOUR_SPACE
-<
-  ui_category = "Dice";
-  ui_label    = "processing colour space";
-  ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point"
-           "\n" "AP0_D65 technically covers every humanly perceivable colour."
-           "\n" "It's meant for future use if we ever move past the BT.2020 colour space."
-           "\n" "Just use BT.2020 for now.";
-  ui_type     = "combo";
-  ui_items    = "BT.2020\0"
-                "AP0_D65\0";
-> = 0;
-
-//adaptive tone mapping
-uniform float MAX_CLL_CAP
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "cap maximum brightness (in nits)";
-  ui_tooltip  = "Caps maximum brightness that the adaptive maximum brightness can reach."
-           "\n" "Everything above this value will be clipped!";
-  ui_type     = "drag";
-  ui_units    = " nits";
-  ui_min      = 0.f;
-  ui_max      = 10000.f;
-  ui_step     = 10.f;
-> = 10000.f;
-
-uniform float TIME_TO_ADAPT
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "adaption to maximum brightness";
-  ui_tooltip  = "Time it takes to adapt to the current maximum brightness";
-  ui_type     = "drag";
-  ui_min      = 0.5f;
-  ui_max      = 3.f;
-  ui_step     = 0.1f;
-> = 1.0f;
-
-uniform float FINAL_ADAPT_START
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "final adaption starting point (in %)";
-  ui_tooltip  = "If the difference between the \"maximum brightness\""
-           "\n" "and the \"adaptive maximum brightness\" is smaller than this percentage"
-           "\n" "use the \"final adaption steps\"."
-           "\n" "For flickery games use 90% or lower.";
-  ui_type     = "drag";
-  ui_units    = "%%";
-  ui_min      = 80.f;
-  ui_max      = 99.f;
-  ui_step     = 0.1f;
-> = 95.f;
-
-uniform float FINAL_ADAPT
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "final adaption steps";
-  ui_tooltip  = "For flickery games use 7.00 or lower.";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 10.f;
-  ui_step     = 0.05f;
-> = 7.5f;
-
-uniform float FINAL_ADAPT_SPEED
-<
-  ui_category = "adaptive tone mapping";
-  ui_label    = "final adaption speed";
-  ui_tooltip  = "For flickery games use 5.00 or lower.";
-  ui_type     = "drag";
-  ui_min      = 1.f;
-  ui_max      = 10.f;
-  ui_step     = 0.05f;
-> = 7.5f;
 
 
 //static const uint numberOfAdaptiveValues = 1000;
@@ -331,8 +356,7 @@ void PrepareToneMapperParameters(
   out float4 VPos          : SV_Position,
   out float2 TexCoord      : TEXCOORD0,
   out float4 TmParameters0 : TmParameters0,
-  out float4 TmParameters1 : TmParameters1,
-  out float2 MaxCllValues  : MaxCllValues)
+  out float3 TmParameters1 : TmParameters1)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -340,24 +364,22 @@ void PrepareToneMapperParameters(
                          : 0.f;
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-#define MaxCll           MaxCllValues.x
-#define MaxCllforBt2446a MaxCllValues.y
+#define usedMaxCll TmParameters1.z
 
-  if (TM_MODE == TM_MODE_STATIC)
+  if (Ui::ToneMapping::Global::Mode == TM_MODE_STATIC)
   {
-    MaxCll = MAX_CLL;
+    usedMaxCll = Ui::ToneMapping::StaticMode::MaxCll;
   }
   else
   {
-    MaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+    usedMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
   }
 
-  if (TM_METHOD == TM_METHOD_BT2446A)
-  {
-    MaxCllforBt2446a = MaxCll > TARGET_BRIGHTNESS ? MaxCll
-                                                  : TARGET_BRIGHTNESS;
-  }
-  else if (TM_METHOD == TM_METHOD_BT2390)
+  usedMaxCll = usedMaxCll > Ui::ToneMapping::Global::TargetBrightness
+             ? usedMaxCll
+             : Ui::ToneMapping::Global::TargetBrightness;
+
+  if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
   {
 
 #define bt2390SrcMinPq              TmParameters0.x
@@ -367,12 +389,11 @@ void PrepareToneMapperParameters(
 #define bt2390MaxLum                TmParameters1.x
 #define bt2390KneeStart             TmParameters1.y
 
-    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(BT2390_SRC_BLACK_POINT); // source min brightness (Lb) in PQ
-    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(MaxCll);                 // source max brightness (Lw) in PQ
+    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::SourceBlackPoint); // source min brightness (Lb) in PQ
+    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(usedMaxCll);                                // source max brightness (Lw) in PQ
 
-    float tgtMinPQ = Csp::Trc::ToPqFromNits(BT2390_TARGET_BLACK_POINT); // target min brightness (Lmin) in PQ
-    float tgtMaxPQ = Csp::Trc::ToPqFromNits(TARGET_BRIGHTNESS);         // target max brightness (Lmin) in PQ
-
+    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::TargetBlackPoint); // target min brightness (Lmin) in PQ
+    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness); // target max brightness (Lmin) in PQ
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -381,17 +402,21 @@ void PrepareToneMapperParameters(
     bt2390MaxLum = (tgtMaxPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
 
     // knee start (KS)
-    bt2390KneeStart = Csp::Trc::ToPqFromNits(BT2390_KNEE_START / 100.f * TARGET_BRIGHTNESS);
+    bt2390KneeStart =
+      Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::KneeStart / 100.f
+                           * Ui::ToneMapping::Global::TargetBrightness);
 
   }
-  else if (TM_METHOD == TM_METHOD_DICE)
+  else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
   {
 
-#define diceTargetCllnormalised TmParameters1.z
-#define diceShoulderStart    TmParameters1.w
+#define diceTargetCllInPq     TmParameters0.x
+#define diceShoulderStartInPq TmParameters0.y
 
-    diceTargetCllnormalised = TARGET_BRIGHTNESS / 10000.f;
-    diceShoulderStart    = DICE_SHOULDER_START / 100.f * diceTargetCllnormalised;
+    diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
+    diceShoulderStartInPq =
+      Csp::Trc::ToPqFromNits(Ui::ToneMapping::Dice::ShoulderStart / 100.f
+                           * Ui::ToneMapping::Global::TargetBrightness);
   }
 
 }
@@ -402,69 +427,64 @@ void ToneMapping(
       float2 TexCoord      : TEXCOORD0,
   out float4 Output        : SV_Target0,
   in  float4 TmParameters0 : TmParameters0,
-  in  float4 TmParameters1 : TmParameters1,
-  in  float2 MaxCllValues  : MaxCllValues)
+  in  float3 TmParameters1 : TmParameters1)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-  //float maxCLL = tex2Dfetch(sampler_max_avg_min_CLL_values, int2(0, 0)).r;
-
-  float3 hdr = input.rgb;
-
-//  if (MaxCll > TARGET_BRIGHTNESS)
+//  if (usedMaxCll > Ui::ToneMapping::Global::TargetBrightness)
 //  {
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    if (TM_METHOD == TM_METHOD_DICE)
+    if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
     {
-      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65
-       || DICE_PROCESSING_MODE == DICE_PRO_MODE_ICTCP)
+      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
+       || Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_ICTCP)
       {
         hdr = Csp::Trc::FromPq(hdr);
       }
 
-      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
       {
         hdr = clamp(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f, 65504.f);
 
-        if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+        if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
         {
           hdr = Csp::Trc::ToPq(hdr);
         }
       }
     }
-    else if(TM_METHOD != TM_METHOD_BT2390
-         || (TM_METHOD == TM_METHOD_BT2390
-          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB
-          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR))
+    else if(Ui::ToneMapping::Global::Method != TM_METHOD_BT2390
+         || (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
+          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
     {
       hdr = Csp::Trc::FromPq(hdr);
     }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    //if (TM_METHOD != TM_METHOD_DICE)
+    //if (Ui::ToneMapping::Global::Method != TM_METHOD_DICE)
     hdr /= 125.f;
 
-    if (TM_METHOD == TM_METHOD_BT2446A
-     || TM_METHOD == TM_METHOD_BT2446A_MOD1)
+    if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A
+     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A_MOD1)
     {
       hdr = saturate(Csp::Mat::Bt709To::Bt2020(hdr));
     }
-    else if (TM_METHOD == TM_METHOD_BT2390)
+    else if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
     {
       hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
 
-      if (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
-       || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR)
+      if (Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+       || Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
       {
         hdr = Csp::Trc::ToPq(hdr);
       }
     }
-    else if (TM_METHOD == TM_METHOD_DICE)
+    else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
     {
-      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_BT2020)
+      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
       {
         hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
       }
@@ -473,7 +493,7 @@ void ToneMapping(
         hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f, 65504.f);
       }
 
-      if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+      if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
       {
         hdr = Csp::Trc::ToPq(hdr);
       }
@@ -485,21 +505,21 @@ void ToneMapping(
 
 #endif
 
-    switch (TM_METHOD)
+    switch (Ui::ToneMapping::Global::Method)
     {
       case TM_METHOD_BT2446A:
       {
-        hdr = ToneMapping::Bt2446a(hdr,
-                                   TARGET_BRIGHTNESS,
-                                   MaxCllforBt2446a,
-                                   BT2446A_GAMUT_COMPRESSION);
+        hdr = ToneMappers::Bt2446A(hdr,
+                                   Ui::ToneMapping::Global::TargetBrightness,
+                                   usedMaxCll,
+                                   Ui::ToneMapping::Bt2446A::GamutCompression);
       }
       break;
       case TM_METHOD_BT2390:
       {
 
-        hdr = ToneMapping::Bt2390::Eetf(hdr,
-                                        BT2390_PROCESSING_MODE,
+        hdr = ToneMappers::Bt2390::Eetf(hdr,
+                                        Ui::ToneMapping::Bt2390::ProcessingModeBt2390,
                                         bt2390SrcMinPq,  // source min brightness (Lb) in PQ
                                         bt2390SrcMaxPq,  // source max brightness (Lw) in PQ
                                         bt2390SrcMaxPqMinusSrcMinPq,
@@ -510,11 +530,11 @@ void ToneMapping(
       break;
       case TM_METHOD_DICE:
       {
-        hdr = ToneMapping::Dice::ToneMapper(hdr,
-                                            diceTargetCllnormalised,
-                                            diceShoulderStart,
-                                            DICE_PROCESSING_MODE,
-                                            DICE_WORKING_COLOUR_SPACE);
+        hdr = ToneMappers::Dice::ToneMapper(hdr,
+                                            diceTargetCllInPq,
+                                            diceShoulderStartInPq,
+                                            Ui::ToneMapping::Dice::ProcessingModeDice,
+                                            Ui::ToneMapping::Dice::WorkingColourSpace);
         //hdr = saturate(hdr);
       }
       break;
@@ -523,12 +543,12 @@ void ToneMapping(
 
       case TM_METHOD_BT2446A_MOD1:
       {
-        const float testH = clamp(TEST_H + MaxCll,            0.f, 10000.f);
-        const float testS = clamp(TEST_S + TARGET_BRIGHTNESS, 0.f, 10000.f);
-        hdr = ToneMapping::Bt2446a_MOD1(hdr,
-                                        TARGET_BRIGHTNESS,
-                                        MaxCllforBt2446a,
-                                        BT2446A_GAMUT_COMPRESSION,
+        const float testH = clamp(TEST_H + usedMaxCll,                                0.f, 10000.f);
+        const float testS = clamp(TEST_S + Ui::ToneMapping::Global::TargetBrightness, 0.f, 10000.f);
+        hdr = ToneMappers::Bt2446A_MOD1(hdr,
+                                        Ui::ToneMapping::Global::TargetBrightness,
+                                        usedMaxCll,
+                                        Ui::ToneMapping::Bt2446A::GamutCompression,
                                         testH,
                                         testS);
       } break;
@@ -538,11 +558,11 @@ void ToneMapping(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    if (TM_METHOD == TM_METHOD_DICE)
+    if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
     {
-      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
       {
-        if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+        if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
         {
           hdr = Csp::Trc::FromPq(hdr);
           hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
@@ -553,42 +573,42 @@ void ToneMapping(
         }
         hdr = Csp::Trc::ToPq(hdr);
       }
-      else if (DICE_PROCESSING_MODE == DICE_PRO_MODE_ICTCP)
+      else if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_ICTCP)
       {
         hdr = Csp::Trc::ToPq(hdr);
       }
     }
-    else if(TM_METHOD != TM_METHOD_BT2390
-         || (TM_METHOD == TM_METHOD_BT2390
-          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_RGB
-          && BT2390_PROCESSING_MODE != BT2390_PRO_MODE_YCBCR))
+    else if(Ui::ToneMapping::Global::Method != TM_METHOD_BT2390
+         || (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
+          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
     {
       hdr = Csp::Trc::ToPq(hdr);
     }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    if (TM_METHOD == TM_METHOD_BT2446A
-     || TM_METHOD == TM_METHOD_BT2446A_MOD1
-     || TM_METHOD == TM_METHOD_BT2390)
+    if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A
+     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A_MOD1
+     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
     {
       hdr = Csp::Mat::Bt2020To::Bt709(hdr);
 
-      if (TM_METHOD == TM_METHOD_BT2390
-       && (BT2390_PROCESSING_MODE == BT2390_PRO_MODE_RGB
-        || BT2390_PROCESSING_MODE == BT2390_PRO_MODE_YCBCR))
+      if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
+       && (Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+        || Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR))
       {
         hdr = Csp::Trc::FromPq(hdr);
       }
     }
-    else if (TM_METHOD == TM_METHOD_DICE)
+    else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
     {
-      if (DICE_PROCESSING_MODE == DICE_PRO_MODE_YCBCR)
+      if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
       {
         hdr = Csp::Trc::FromPq(hdr);
       }
 
-      if (DICE_WORKING_COLOUR_SPACE == DICE_WORKING_COLOUR_SPACE_BT2020)
+      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
       {
         hdr = Csp::Mat::Bt2020To::Bt709(hdr);
       }
@@ -626,9 +646,11 @@ void ToneMapping(
   static const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
 
   static const float finalAdaptMode = 
-    absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))          ? 2.f
-  : absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_START / 100.f * avgMaxCllInPq)) ? 1.f
-  :                                                                              0.f;
+    absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))
+  ? 2.f
+  : absDiff < abs((avgMaxCllInPq - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
+  ? 1.f
+  : 0.f;
 
   DrawTextString(float2(10.f * 15.f, 20.f * 40.f),        30, 1, TexCoord, text_maxCLL,         26, Output, FONT_BRIGHTNESS);
   DrawTextString(float2(       15.f, 20.f * 40.f + 30.f), 30, 1, TexCoord, text_avgdCLL,        35, Output, FONT_BRIGHTNESS);
@@ -670,33 +692,37 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
     Csp::Trc::ToPqFromNits(tex2Dfetch(Storage_Consolidated, COORDS_ADAPTIVE_CLL).r);
 
   const int curSlot = tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR).r;
-  const int newSlot = curSlot > 10
-                    ? 1
-                    : curSlot + 1;
+  const int newSlot = curSlot > 10 ? 1
+                                   : curSlot + 1;
   tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
   tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR
                                  + int2(newSlot, 0), currentMaxCllInPQ);
 
-  const float absFrametime = abs(FRAMETIME);
+  const float absFrametime = abs(RuntimeValues::Frametime);
 
   const float curDiff = currentMaxCllinPqAveraged * 1.0005f - currentAdaptiveMaxCllInPQ;
   const float absCurDiff = abs(curDiff);
-  const float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged - FINAL_ADAPT_START / 100.f * currentMaxCllinPqAveraged);
-  const float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
+  const float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged
+                                      - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxCllinPqAveraged);
+  const float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged
+                                      - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
   float adapt = 0.f;
+
   if (absCurDiff < stopAdaptPointInPq)
   {
     adapt = 0.000015f;
   }
   else if (absCurDiff < finalAdaptPointInPq)
   {
-    const float actualFinalAdapt = absFrametime * (FINAL_ADAPT / 10000.f) * (FINAL_ADAPT_SPEED / 1000.f);
+    const float actualFinalAdapt = absFrametime
+                                 * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSteps / 10000.f)
+                                 * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSpeed / 1000.f);
     adapt = curDiff > 0.f ?  actualFinalAdapt
                           : -actualFinalAdapt;
   }
   else
   {
-    adapt = curDiff * (absFrametime / (TIME_TO_ADAPT * 1000.f));
+    adapt = curDiff * (absFrametime / (Ui::ToneMapping::AdaptiveMode::TimeToAdapt * 1000.f));
   }
   //else
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
@@ -705,7 +731,8 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 
   tex2Dstore(Storage_Consolidated,
              COORDS_ADAPTIVE_CLL,
-             min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt), MAX_CLL_CAP));
+             min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt),
+                 Ui::ToneMapping::AdaptiveMode::MaxCllCap));
 
 }
 

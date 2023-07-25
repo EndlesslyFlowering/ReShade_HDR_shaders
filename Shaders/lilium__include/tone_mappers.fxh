@@ -7,7 +7,7 @@
 #include "hdr_analysis.fxh"
 
 
-namespace ToneMapping
+namespace ToneMappers
 {
 
   // gamma
@@ -15,7 +15,7 @@ namespace ToneMapping
   static const float gamma        = 1.f / inverseGamma;
 
   // Rep. ITU-R BT.2446-1 Table 2 & 3
-  float3 Bt2446a(
+  float3 Bt2446A(
     const float3 Input,
     const float  TargetCll,
     const float  MaxCll,
@@ -86,7 +86,7 @@ namespace ToneMapping
     return hdrOut;
   }
 
-  float3 Bt2446a_MOD1(
+  float3 Bt2446A_MOD1(
     const float3 Input,
     const float  TargetCll,
     const float  MaxCll,
@@ -225,7 +225,7 @@ namespace ToneMapping
         i2 = i2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
         //i2 = i2 * SrcMaxPq;
 
-        const float minI = min((i1 / i2), (i2 / i1));
+        const float minI = clamp(min((i1 / i2), (i2 / i1)), 0.f, 65504.f); // prevent colour corruption
 
         //to L'M'S'
         Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(
@@ -373,8 +373,8 @@ namespace ToneMapping
     // ShoulderStart denotes the point where we change from linear to shoulder
     float3 ToneMapper(
       const float3 Input,
-      const float  TargetCllNormalised,
-      const float  ShoulderStartNormalised,
+      const float  TargetCllInPq,
+      const float  ShoulderStartInPq,
       const uint   ProcessingMode,
       const uint   WorkingColourSpace)
     {
@@ -419,10 +419,6 @@ namespace ToneMapping
         KgHelper = Csp::KHelpers::Ap0D65::Kg;
       }
 
-      // TODO pull this out into the vertex shader
-      const float targetCll     = Csp::Trc::ToPq(TargetCllNormalised);
-      const float shoulderStart = Csp::Trc::ToPq(ShoulderStartNormalised);
-
       // ICtCp and YCbCr method copied from BT.2390
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
@@ -432,7 +428,7 @@ namespace ToneMapping
 
         const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
 
-        if (i1 < shoulderStart)
+        if (i1 < ShoulderStartInPq)
         {
           return Input;
         }
@@ -441,7 +437,7 @@ namespace ToneMapping
           const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
           const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
 
-          const float i2 = LuminanceCompress(i1, targetCll, shoulderStart);
+          const float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
           const float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
 
@@ -457,13 +453,13 @@ namespace ToneMapping
       {
         const float y1 = dot(Input, KFactors);
 
-        if (y1 < shoulderStart)
+        if (y1 < ShoulderStartInPq)
         {
           return Input;
         }
         else
         {
-          const float y2 = LuminanceCompress(y1, targetCll, shoulderStart);
+          const float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
 
           const float minY = min(min((y1 / y2), (y2 / y1)) * 1.1f, 1.f);
 
@@ -483,9 +479,9 @@ namespace ToneMapping
       }
 
 #if 0
-      return float3(LuminanceCompress(Input.r, targetCll, shoulderStart),
-                    LuminanceCompress(Input.g, targetCll, shoulderStart),
-                    LuminanceCompress(Input.b, targetCll, shoulderStart));
+      return float3(LuminanceCompress(Input.r, TargetCllInPq, ShoulderStartInPq),
+                    LuminanceCompress(Input.g, TargetCllInPq, ShoulderStartInPq),
+                    LuminanceCompress(Input.b, TargetCllInPq, ShoulderStartInPq));
 #endif
     }
   }
