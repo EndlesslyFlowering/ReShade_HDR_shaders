@@ -8,12 +8,11 @@
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void PrepareFuncParameters(
-  in  uint   Id              : SV_VertexID,
-  out float4 VPos            : SV_Position,
-  out float2 TexCoord        : TEXCOORD0,
-  out float4 FuncParameters0 : FuncParameters0,
-  out float  FuncParameters1 : FuncParameters1)
+void VS_PrepareHdrBlackFloorFix(
+  in  uint   Id           : SV_VertexID,
+  out float4 VPos         : SV_Position,
+  out float2 TexCoord     : TEXCOORD0,
+  out float  FuncParms[5] : FuncParms)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -22,13 +21,13 @@ void PrepareFuncParameters(
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 // black flower lowering
-#define rollOffStoppingPoint      FuncParameters0.x
-#define oldBlackPoint             FuncParameters0.y
-#define rollOffMinusOldBlackPoint FuncParameters0.z
-#define minLum                    FuncParameters0.w
+#define rollOffStoppingPoint      FuncParms[0]
+#define oldBlackPoint             FuncParms[1]
+#define rollOffMinusOldBlackPoint FuncParms[2]
+#define minLum                    FuncParms[3]
 
 // gamma 2.2 emulation
-#define whitePointNormalised FuncParameters1
+#define whitePointNormalised FuncParms[4]
 
 
   // black floor lowering
@@ -37,18 +36,18 @@ void PrepareFuncParameters(
   if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode != PRO_MODE_RGB)
   {
     rollOffStoppingPoint = Csp::Trc::ToPqFromNits(Ui::HdrBlackFloorFix::Lowering::RollOffStoppingPoint);
-    oldBlackPoint        = Csp::Trc::ToPqFromNits(Ui::HdrBlackFloorFix::Lowering::SourceBlackPoint);
+    oldBlackPoint        = Csp::Trc::ToPqFromNits(Ui::HdrBlackFloorFix::Lowering::OldBlackPoint);
 
-    newBlackPoint = Ui::HdrBlackFloorFix::Lowering::TargetBlackPoint < 0.f
-                  ? -Csp::Trc::ToPqFromNits(abs(Ui::HdrBlackFloorFix::Lowering::TargetBlackPoint))
-                  :  Csp::Trc::ToPqFromNits(    Ui::HdrBlackFloorFix::Lowering::TargetBlackPoint);
+    newBlackPoint = Ui::HdrBlackFloorFix::Lowering::NewBlackPoint < 0.f
+                  ? -Csp::Trc::ToPqFromNits(abs(Ui::HdrBlackFloorFix::Lowering::NewBlackPoint))
+                  :  Csp::Trc::ToPqFromNits(    Ui::HdrBlackFloorFix::Lowering::NewBlackPoint);
   }
   else
   {
     rollOffStoppingPoint = Ui::HdrBlackFloorFix::Lowering::RollOffStoppingPoint / 10000.f;
-    oldBlackPoint        = Ui::HdrBlackFloorFix::Lowering::SourceBlackPoint        / 10000.f;
+    oldBlackPoint        = Ui::HdrBlackFloorFix::Lowering::OldBlackPoint        / 10000.f;
 
-    newBlackPoint = Ui::HdrBlackFloorFix::Lowering::TargetBlackPoint / 10000.f;
+    newBlackPoint = Ui::HdrBlackFloorFix::Lowering::NewBlackPoint / 10000.f;
   }
 
   rollOffMinusOldBlackPoint = rollOffStoppingPoint - oldBlackPoint;
@@ -62,12 +61,11 @@ void PrepareFuncParameters(
 }
 
 
-void HdrBlackFloorFix(
-      float4 VPos            : SV_Position,
-      float2 TexCoord        : TEXCOORD0,
-  out float4 Output          : SV_Target0,
-  in  float4 FuncParameters0 : FuncParameters0,
-  in  float  FuncParameters1 : FuncParameters1)
+void PS_HdrBlackFloorFix(
+      float4 VPos         : SV_Position,
+      float2 TexCoord     : TEXCOORD0,
+  out float4 Output       : SV_Target0,
+  in  float  FuncParms[5] : FuncParms)
 {
   float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
@@ -128,8 +126,8 @@ technique lilium__hdr_black_floor_fix
 {
   pass HdrBlackFloorFix
   {
-    VertexShader = PrepareFuncParameters;
-     PixelShader = HdrBlackFloorFix;
+    VertexShader = VS_PrepareHdrBlackFloorFix;
+     PixelShader = PS_HdrBlackFloorFix;
   }
 }
 

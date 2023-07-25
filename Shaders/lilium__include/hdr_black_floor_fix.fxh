@@ -7,6 +7,10 @@
 #include "colour_space.fxh"
 
 
+// TODO:
+// add as post adjustment in tone mapping and inverse tone mapping
+
+
 namespace Ui
 {
   namespace HdrBlackFloorFix
@@ -57,7 +61,7 @@ namespace Ui
 #define PRO_MODE_RGB_IN_PQ 3
 #define PRO_MODE_RGB       4
 
-      uniform float SourceBlackPoint
+      uniform float OldBlackPoint
       <
         ui_category  = "black floor lowering";
         ui_label     = "old black point";
@@ -79,7 +83,7 @@ namespace Ui
         ui_step      = 0.01f;
       > = 10.f;
 
-      uniform float TargetBlackPoint
+      uniform float NewBlackPoint
       <
         ui_category  = "black floor lowering";
         ui_label     = "new black point";
@@ -107,7 +111,7 @@ void Gamma22Emulation(
 float3 LowerBlackFloor(
   const float3 Input,
   const float  RollOffStoppingPoint,
-  const float  SourceBlackPoint,
+  const float  OldBlackPoint,
   const float  RollOffMinusOldBlackPoint,
   const float  MinLum)
 {
@@ -122,13 +126,13 @@ float3 LowerBlackFloor(
     if (i1 <= RollOffStoppingPoint)
     {
       //E1
-      float i2 = (i1 - SourceBlackPoint) / RollOffMinusOldBlackPoint;
+      float i2 = (i1 - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       i2 += MinLum * pow((1.f - i2), 4.f);
 
       //E4
-      i2 = i2 * RollOffMinusOldBlackPoint + SourceBlackPoint;
+      i2 = i2 * RollOffMinusOldBlackPoint + OldBlackPoint;
 
       //to L'M'S'
       Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2,
@@ -154,13 +158,13 @@ float3 LowerBlackFloor(
     if (y1 <= RollOffStoppingPoint)
     {  
       //E1
-      float y2 = (y1 - SourceBlackPoint) / RollOffMinusOldBlackPoint;
+      float y2 = (y1 - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       y2 += MinLum * pow((1.f - y2), 4.f);
   
       //E4
-      y2 = y2 * RollOffMinusOldBlackPoint + SourceBlackPoint;
+      y2 = y2 * RollOffMinusOldBlackPoint + OldBlackPoint;
   
       return Csp::Trc::FromPq(
         clamp(
@@ -184,13 +188,13 @@ float3 LowerBlackFloor(
     if (y1InPq <= RollOffStoppingPoint)
     {
       //E1
-      float y2 = (y1InPq - SourceBlackPoint) / RollOffMinusOldBlackPoint;
+      float y2 = (y1InPq - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       y2 += MinLum * pow((1.f - y2), 4.f);
 
       //E4
-      y2 = y2 * RollOffMinusOldBlackPoint + SourceBlackPoint;
+      y2 = y2 * RollOffMinusOldBlackPoint + OldBlackPoint;
 
       y2 = Csp::Trc::FromPq(y2);
 
@@ -209,13 +213,13 @@ float3 LowerBlackFloor(
       const float3 InputInPq = Csp::Trc::ToPq(Input);
 
       //E1
-      float3 rgb = (InputInPq - SourceBlackPoint) / RollOffMinusOldBlackPoint;
+      float3 rgb = (InputInPq - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       rgb += MinLum * pow((1.f - rgb), 4.f);
 
       //E4
-      rgb = rgb * RollOffMinusOldBlackPoint + SourceBlackPoint;
+      rgb = rgb * RollOffMinusOldBlackPoint + OldBlackPoint;
 
       return Csp::Trc::FromPq(clamp(rgb, 0.f, 65504.f));
     }
@@ -230,13 +234,13 @@ float3 LowerBlackFloor(
     if (dot(Input, Csp::Mat::Bt2020ToXYZ[1]) <= RollOffStoppingPoint)
     {
       //E1
-      float3 rgb = (Input - SourceBlackPoint) / RollOffMinusOldBlackPoint;
+      float3 rgb = (Input - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       rgb += MinLum * pow((1.f - rgb), 4.f);
 
       //E4
-      rgb = rgb * RollOffMinusOldBlackPoint + SourceBlackPoint;
+      rgb = rgb * RollOffMinusOldBlackPoint + OldBlackPoint;
 
       return clamp(rgb, 0.f, 65504.f);
     }
