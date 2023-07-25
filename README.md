@@ -1,6 +1,6 @@
 # Democratisation of HDR analysis and other HDR things
 
-## [Download](https://github.com/EndlesslyFlowering/ReShade_HDR_shaders/archive/refs/heads/master.zip)
+## [Download](https://github.com/EndlesslyFlowering/ReShade_HDR_shaders/releases/latest)
 
 ## The HDR analysis shader and other specific HDR shaders will only work in DirectX 11, 12 or the Vulkan API!
 
