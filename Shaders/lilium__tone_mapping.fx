@@ -150,10 +150,10 @@ namespace Ui
                       "RGB\0";
       > = 0;
 
-      uniform float SourceBlackPoint
+      uniform float OldBlackPoint
       <
         ui_category = "BT.2390 EETF";
-        ui_label    = "source black point";
+        ui_label    = "old black point";
         ui_type     = "slider";
         ui_units    = " nits";
         ui_min      = 0.f;
@@ -161,14 +161,14 @@ namespace Ui
         ui_step     = 0.0000001f;
       > = 0.f;
 
-      uniform float TargetBlackPoint
+      uniform float NewBlackPoint
       <
         ui_category = "BT.2390 EETF";
-        ui_label    = "target black point";
+        ui_label    = "new black point";
         ui_type     = "slider";
         ui_units    = " nits";
-        ui_min      = 0.f;
-        ui_max      = 0.5f;
+        ui_min      = -0.1f;
+        ui_max      = 0.1f;
         ui_step     = 0.0000001f;
       > = 0.f;
 
@@ -351,12 +351,11 @@ uniform float TEST_S
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void PrepareToneMapperParameters(
-  in  uint   Id            : SV_VertexID,
-  out float4 VPos          : SV_Position,
-  out float2 TexCoord      : TEXCOORD0,
-  out float4 TmParameters0 : TmParameters0,
-  out float3 TmParameters1 : TmParameters1)
+void VS_PrepareToneMapping(
+  in  uint   Id         : SV_VertexID,
+  out float4 VPos       : SV_Position,
+  out float2 TexCoord   : TEXCOORD0,
+  out float  TmParms[7] : TmParms)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -364,7 +363,7 @@ void PrepareToneMapperParameters(
                          : 0.f;
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-#define usedMaxCll TmParameters1.z
+#define usedMaxCll TmParms[0]
 
   if (Ui::ToneMapping::Global::Mode == TM_MODE_STATIC)
   {
@@ -382,18 +381,22 @@ void PrepareToneMapperParameters(
   if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
   {
 
-#define bt2390SrcMinPq              TmParameters0.x
-#define bt2390SrcMaxPq              TmParameters0.y
-#define bt2390SrcMaxPqMinusSrcMinPq TmParameters0.z
-#define bt2390MinLum                TmParameters0.w
-#define bt2390MaxLum                TmParameters1.x
-#define bt2390KneeStart             TmParameters1.y
+#define bt2390SrcMinPq              TmParms[1]
+#define bt2390SrcMaxPq              TmParms[2]
+#define bt2390SrcMaxPqMinusSrcMinPq TmParms[3]
+#define bt2390MinLum                TmParms[4]
+#define bt2390MaxLum                TmParms[5]
+#define bt2390KneeStart             TmParms[6]
 
-    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::SourceBlackPoint); // source min brightness (Lb) in PQ
-    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(usedMaxCll);                                // source max brightness (Lw) in PQ
+    // source min brightness (Lb) in PQ
+    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::OldBlackPoint);
+    // source max brightness (Lw) in PQ
+    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(usedMaxCll);
 
-    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::TargetBlackPoint); // target min brightness (Lmin) in PQ
-    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness); // target max brightness (Lmin) in PQ
+    // target min brightness (Lmin) in PQ
+    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::NewBlackPoint);
+    // target max brightness (Lmin) in PQ
+    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -410,8 +413,8 @@ void PrepareToneMapperParameters(
   else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
   {
 
-#define diceTargetCllInPq     TmParameters0.x
-#define diceShoulderStartInPq TmParameters0.y
+#define diceTargetCllInPq     TmParms[1]
+#define diceShoulderStartInPq TmParms[2]
 
     diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
     diceShoulderStartInPq =
@@ -422,12 +425,11 @@ void PrepareToneMapperParameters(
 }
 
 
-void ToneMapping(
-      float4 VPos          : SV_Position,
-      float2 TexCoord      : TEXCOORD0,
-  out float4 Output        : SV_Target0,
-  in  float4 TmParameters0 : TmParameters0,
-  in  float3 TmParameters1 : TmParameters1)
+void PS_ToneMapping(
+  in  float4 VPos       : SV_Position,
+  in  float2 TexCoord   : TEXCOORD0,
+  in  float  TmParms[7] : TmParms,
+  out float4 Output     : SV_Target0)
 {
   float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
@@ -628,24 +630,24 @@ void ToneMapping(
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
-  static const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  static const uint text_avgdCLL[35] = { __a, __v, __e, __r, __a, __g, __e, __d, __Space,
+  const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  const uint text_avgdCLL[35] = { __a, __v, __e, __r, __a, __g, __e, __d, __Space,
+                                  __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  const uint text_adaptiveMaxCLL[35] = { __a, __d, __a, __p, __t, __i, __v, __e, __Space,
                                          __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  static const uint text_adaptiveMaxCLL[35] = { __a, __d, __a, __p, __t, __i, __v, __e, __Space,
-                                                __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  static const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
+  const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
 
-  static const float actualMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+  const float actualMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
 
-  static const float avgMaxCllInPq = tex2Dfetch(Sampler_Consolidated, COORDS_AVERAGED_MAXCLL).r;
-  static const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
+  const float avgMaxCllInPq = tex2Dfetch(Sampler_Consolidated, COORDS_AVERAGED_MAXCLL).r;
+  const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
 
-  static const float adaptiveMaxCll     = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
-  static const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
+  const float adaptiveMaxCll     = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+  const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
 
-  static const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
+  const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
 
-  static const float finalAdaptMode = 
+  const float finalAdaptMode = 
     absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))
   ? 2.f
   : absDiff < abs((avgMaxCllInPq - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
@@ -851,8 +853,8 @@ technique lilium__tone_mapping
 {
   pass ToneMapping
   {
-    VertexShader = PrepareToneMapperParameters;
-     PixelShader = ToneMapping;
+    VertexShader = VS_PrepareToneMapping;
+     PixelShader = PS_ToneMapping;
   }
 }
 

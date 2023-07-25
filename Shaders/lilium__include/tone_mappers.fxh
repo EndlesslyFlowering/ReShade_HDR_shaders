@@ -434,15 +434,14 @@ namespace ToneMappers
         }
         else
         {
-          const float ct1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
-          const float cp1 = dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
-
           const float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
           const float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
 
           //to L'M'S'
-          Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2, minI * ct1, minI * cp1));
+          Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2,
+                                                       dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]) * minI,
+                                                       dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2]) * minI));
           //to LMS
           Lms = Csp::Trc::FromPq(Lms);
           //to RGB

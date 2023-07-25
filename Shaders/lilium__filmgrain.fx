@@ -72,8 +72,8 @@ void filmgrain(
 
 #endif
 
-//  static const float maxMul = min(1.25f + INTENSITY, 2.f);
-//  static const float minMul = 2.01f - maxMul;
+//  const float maxMul = min(1.25f + INTENSITY, 2.f);
+//  const float minMul = 2.01f - maxMul;
 //
 //  float maxY = Ycbcr.x * maxMul;
 //  float minY = Ycbcr.x * minMul;
