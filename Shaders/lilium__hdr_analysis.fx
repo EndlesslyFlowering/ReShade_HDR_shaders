@@ -2,8 +2,15 @@
   || __RENDERER__ >= 0x20000)
 
 
+// TODO:
+// - add macros for the new text drawing
+
+
 #include "lilium__include\hdr_analysis.fxh"
+#include "lilium__include\draw_font.fxh"
 #include "lilium__include\draw_text_fix.fxh"
+
+#undef FONT_BRIGHTNESS
 
 //#define _DEBUG
 //#define _TESTY
@@ -55,7 +62,7 @@ uniform float2 NIT_PINGPONG2
   source    = "pingpong";
   min       = 0.f;
   max       = 1.f;
-  step      = 1.f;
+  step      = 3.f;
   smoothing = 0.f;
 >;
 #else
@@ -157,15 +164,42 @@ uniform int GLOBAL_INFO
   ui_text     = INFO_TEXT;
 >;
 
-uniform float FONT_SIZE
+//uniform float FONT_SIZE
+//<
+//  ui_category = "global";
+//  ui_label    = "font size";
+//  ui_type     = "slider";
+//  ui_min      = 30.f;
+//  ui_max      = 40.f;
+//  ui_step     = 1.f;
+//> = 30;
+
+uniform uint FONT_SIZE
 <
   ui_category = "global";
   ui_label    = "font size";
+  ui_type     = "combo";
+  ui_items    = "32\0"
+                "34\0"
+                "36\0"
+                "38\0"
+                "40\0"
+                "42\0"
+                "44\0"
+                "46\0"
+                "48\0";
+> = 0;
+
+uniform float FONT_BRIGHTNESS
+<
+  ui_category = "global";
+  ui_label    = "font brightness";
   ui_type     = "slider";
-  ui_min      = 30.f;
-  ui_max      = 40.f;
-  ui_step     = 1.f;
-> = 30;
+  ui_units    = " nits";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
+> = 140.f;
 
 #define TEXT_POSITION_TOP_LEFT  0
 #define TEXT_POSITION_TOP_RIGHT 1
@@ -366,7 +400,7 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.000001f;
+  ui_step     = 0.0000001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_END_POINT
@@ -377,7 +411,7 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.000001f;
+  ui_step     = 0.0000001f;
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
@@ -406,7 +440,7 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
-  ui_step     = 0.000001f;
+  ui_step     = 0.0000001f;
 > = 10000.f;
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
@@ -456,7 +490,7 @@ uniform float TEST_THINGY
   ui_type     = "drag";
   ui_min      = -125.f;
   ui_max      = 125.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.000000001f;
 > = 0.f;
 #endif
 
@@ -537,7 +571,7 @@ void Testy(
      && TexCoord.x < xxe / BUFFER_WIDTH
      && TexCoord.y > yyy / BUFFER_HEIGHT
      && TexCoord.y < yye / BUFFER_HEIGHT)
-      Output = float4(0.f, xTest, 0.f, 1.f);
+      Output = float4(xTest, xTest, xTest, 1.f);
     else
       Output = float4(0.f, 0.f, 0.f, 0.f);
   }
@@ -548,56 +582,2936 @@ void Testy(
 
 ///text stuff
 
-// max/avg/min CLL
-static const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-static const uint text_avgCLL[26] = { __a, __v, __g, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-static const uint text_minCLL[26] = { __m, __i, __n, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-
-// CLL from cursor position
-static const uint text_cursorCLL[28] = { __c, __u, __r, __s, __o, __r, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-
-static const uint text_X[2] = { __x, __Colon };
-static const uint text_Y[2] = { __y, __Colon };
-
-// RGB value from cursor position
-static const uint text_R[2] = { __R, __Colon };
-static const uint text_G[2] = { __G, __Colon };
-static const uint text_B[2] = { __B, __Colon };
-
-static const uint text_signNegative[1] = { __Minus };
-
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG   \
-  || ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-static const uint RGB_Text_Offset = 4;
-
-#else
-
-static const uint RGB_Text_Offset = 10;
-
-#endif
-
-// colour space percentages
-static const uint text_BT709[18]   = { __B, __T, __Dot, __7,     __0,     __9,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_DCI_P3[18]  = { __D, __C, __I,   __Minus, __P,     __3,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_BT2020[18]  = { __B, __T, __Dot, __2,     __0,     __2,     __0,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_AP1[18]     = { __A, __P, __1,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_AP0[18]     = { __A, __P, __0,   __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-static const uint text_invalid[18] = { __i, __n, __v,   __a,     __l,     __i,     __d,     __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Percent };
-
-// colour space from cursor position
-static const uint text_cursor_BT709[17]   = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __7,     __0, __9 };
-static const uint text_cursor_DCI_P3[17]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __D, __C, __I,   __Minus, __P, __3 };
-static const uint text_cursor_BT2020[18]  = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __B, __T, __Dot, __2,     __0, __2, __0 };
-static const uint text_cursor_AP1[14]     = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __1 };
-static const uint text_cursor_AP0[14]     = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __A, __P, __0 };
-static const uint text_cursor_invalid[18] = { __c, __u, __r, __s, __o, __r, __C, __S, __P, __Colon, __Space, __i, __n, __v,   __a,     __l, __i, __d };
-
 // colour space not supported
 static const uint text_Error[26] = { __C, __O, __L, __O, __U, __R, __Space, __S, __P, __A, __C, __E, __Space,
                                      __N, __O, __T, __Space,
                                      __S, __U, __P, __P, __O, __R, __T, __E, __D};
+
+
+uint2 GetCharSize()
+{
+  switch(FONT_SIZE)
+  {
+    case 8:
+    {
+      return FONT_ATLAS_SIZE_48_CHAR_DIM;
+    }
+    case 7:
+    {
+      return FONT_ATLAS_SIZE_46_CHAR_DIM;
+    }
+    case 6:
+    {
+      return FONT_ATLAS_SIZE_44_CHAR_DIM;
+    }
+    case 5:
+    {
+      return FONT_ATLAS_SIZE_42_CHAR_DIM;
+    }
+    case 4:
+    {
+      return FONT_ATLAS_SIZE_40_CHAR_DIM;
+    }
+    case 3:
+    {
+      return FONT_ATLAS_SIZE_38_CHAR_DIM;
+    }
+    case 2:
+    {
+      return FONT_ATLAS_SIZE_36_CHAR_DIM;
+    }
+    case 1:
+    {
+      return FONT_ATLAS_SIZE_34_CHAR_DIM;
+    }
+    default:
+    {
+      return FONT_ATLAS_SIZE_32_CHAR_DIM;
+    }
+  }
+}
+
+
+static const int ShowCllValuesLineCount     = 3;
+static const int ShowCllFromCursorLineCount = 6;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  static const int ShowCspsLineCount = 3;
+
+#else
+
+  static const int ShowCspsLineCount = 6;
+
+#endif
+
+
+void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
+{
+  float drawCllLast        = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW0).r;
+  float drawcursorCllLast  = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW1).r;
+  float drawCspsLast       = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW2).r;
+  float drawcursorCspLast  = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW3).r;
+  uint  fontSizeLast       = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW4).r;
+
+  float floatShowCllValues     = SHOW_CLL_VALUES;
+  float floatShowCllFromCrusor = SHOW_CLL_FROM_CURSOR;
+  float floatShowCsps          = SHOW_CSPS;
+  float floatShowCspFromCursor = SHOW_CSP_FROM_CURSOR;
+
+  if (floatShowCllValues     != drawCllLast
+   || floatShowCllFromCrusor != drawcursorCllLast
+   || floatShowCsps          != drawCspsLast
+   || floatShowCspFromCursor != drawcursorCspLast
+   || FONT_SIZE              != fontSizeLast)
+  {
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW,  1);
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW0, floatShowCllValues);
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW1, floatShowCllFromCrusor);
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW2, floatShowCsps);
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW3, floatShowCspFromCursor);
+    tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW4, FONT_SIZE);
+
+    tex2Dstore(Storage_Consolidated,
+               COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL,
+               !SHOW_CLL_VALUES
+             ? -ShowCllValuesLineCount
+             : 0);
+
+    tex2Dstore(Storage_Consolidated,
+               COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS,
+               (!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR)
+             ? -(ShowCllValuesLineCount)
+
+             : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR)
+             ? -(ShowCllFromCursorLineCount)
+
+             : (!SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR)
+             ? -(ShowCllValuesLineCount
+               + ShowCllFromCursorLineCount)
+
+             : 0);
+
+    tex2Dstore(Storage_Consolidated,
+               COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,
+               ((!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR  && SHOW_CSPS)
+              ? -(ShowCllValuesLineCount)
+
+              : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR && SHOW_CSPS)
+              ? -(ShowCllFromCursorLineCount)
+
+              : (SHOW_CLL_VALUES  && SHOW_CLL_FROM_CURSOR  && !SHOW_CSPS)
+              ? -(ShowCspsLineCount)
+
+              : (!SHOW_CLL_VALUES && !SHOW_CLL_FROM_CURSOR && SHOW_CSPS)
+              ? -(ShowCllValuesLineCount
+                + ShowCllFromCursorLineCount)
+
+              : (!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR  && !SHOW_CSPS)
+              ? -(ShowCllValuesLineCount
+                + ShowCspsLineCount)
+
+              : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR && !SHOW_CSPS)
+              ? -(ShowCllFromCursorLineCount
+                + ShowCspsLineCount)
+
+              : (!SHOW_CLL_VALUES && !SHOW_CLL_FROM_CURSOR && !SHOW_CSPS)
+              ? -(ShowCllValuesLineCount
+                + ShowCllFromCursorLineCount
+                + ShowCspsLineCount)
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+              : 0) - 3);
+#else
+              : 0));
+#endif
+
+    for (int y = 0; y < BUFFER_HEIGHT; y++)
+    {
+      for (int x = 0; x < BUFFER_WIDTH; x++)
+      {
+        tex2Dstore(StorageTextOverlay, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
+      }
+    }
+  }
+
+#ifdef _DEBUG
+
+  else
+  {
+    uint2 currentActiveOverlayArea = GetCharSize() * uint2(30, 16);
+    for (uint x = currentActiveOverlayArea.x - 20; x < currentActiveOverlayArea.x; x++)
+    {
+      for (uint y = currentActiveOverlayArea.y - 20; y < currentActiveOverlayArea.y; y++)
+      {
+        tex2Dstore(StorageTextOverlay, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
+      }
+    }
+  }
+
+#endif
+}
+
+
+#define FetchAndStoreSinglePixelOfChar(CurrentOffset, DrawOffset)                           \
+  float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + CurrentOffset).rgba; \
+  tex2Dstore(StorageTextOverlay, (int2(ID.x, ID.y) + DrawOffset) * charSize + CurrentOffset, pixel)
+
+#define DrawChar(Char, DrawOffset)                             \
+  uint2 charSize   = GetCharSize();                            \
+  uint2 charOffset = Char * charSize + atlasXY;                \
+  for (int y = 0; y < charSize.y; y++)                         \
+  {                                                            \
+    for (int x = 0; x < charSize.x; x++)                       \
+    {                                                          \
+      FetchAndStoreSinglePixelOfChar(uint2(x, y), DrawOffset); \
+    }                                                          \
+  }                                                            \
+
+void DrawOverlay(uint3 ID : SV_DispatchThreadID)
+{
+
+  if (tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW).r)
+  {
+
+#ifdef _DEBUG
+
+    if(ID.x == 0 && ID.y == 0 && ID.z == 0)
+    {
+      uint2 currentActiveOverlayArea = GetCharSize() * uint2(30, 16);
+      for (uint x = currentActiveOverlayArea.x - 20; x < currentActiveOverlayArea.x; x++)
+      {
+        for (uint y = currentActiveOverlayArea.y - 20; y < currentActiveOverlayArea.y; y++)
+        {
+          if ((x < (currentActiveOverlayArea.x - 15) || x > (currentActiveOverlayArea.x - 6))
+           || (y < (currentActiveOverlayArea.y - 15) || y > (currentActiveOverlayArea.y - 6)))
+          {
+            tex2Dstore(StorageTextOverlay, int2(x, y), float4(0.f, 0.f, 0.f, 1.f));
+          }
+          else
+          {
+            tex2Dstore(StorageTextOverlay, int2(x, y), float4(1.f, 1.f, 1.f, 1.f));
+          }
+        }
+      }
+    }
+
+#endif
+
+
+#define cursorCllOffset int2(0, tex2Dfetch(Storage_Consolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL).r)
+#define cspsOffset      int2(0, tex2Dfetch(Storage_Consolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS).r)
+#define cursorCspOffset int2(0, tex2Dfetch(Storage_Consolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP).r)
+
+
+    const uint  fontSize = 8 - FONT_SIZE;
+    const uint2 atlasXY  = uint2(fontSize % 3, fontSize / 3) * FONT_ATLAS_OFFSET;
+
+    switch(ID.y)
+    {
+      // max/avg/min CLL
+      // maxCLL:
+      case 0:
+      {
+        if (SHOW_CLL_VALUES)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_m, uint2(0, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_a, uint2(0, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_x, uint2(0, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_C, uint2(0, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_colon, uint2(0, 0))
+              return;
+            }
+            case 7:
+            {
+              DrawChar(_space, uint2(0, 0))
+              return;
+            }
+            case 8:
+            {
+              DrawChar(_dot, uint2(6, 0)) // six figure number
+              return;
+            }
+            case 9:
+            {
+              DrawChar(_space, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 10:
+            {
+              DrawChar(_n, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 11:
+            {
+              DrawChar(_i, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 12:
+            {
+              DrawChar(_t, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 13:
+            {
+              DrawChar(_s, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 14:
+            {
+              break; // break here for the storage of the redraw
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        else
+        {
+          switch(ID.x)
+          {
+            case 14:
+            {
+              break; // break here for the storage of the redraw
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+      } break;
+      // avgCLL:
+      case 1:
+      {
+        if (SHOW_CLL_VALUES)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_a, uint2(0, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_v, uint2(0, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_g, uint2(0, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_C, uint2(0, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_colon, uint2(0, 0))
+              return;
+            }
+            case 7:
+            {
+              DrawChar(_space, uint2(0, 0))
+              return;
+            }
+            case 8:
+            {
+              DrawChar(_dot, uint2(6, 0)) // six figure number
+              return;
+            }
+            case 9:
+            {
+              DrawChar(_space, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 10:
+            {
+              DrawChar(_n, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 11:
+            {
+              DrawChar(_i, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 12:
+            {
+              DrawChar(_t, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            case 13:
+            {
+              DrawChar(_s, uint2(6 + 2, 0)) // 2 decimal places
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // minCLL:
+      case 2:
+      {
+        if (SHOW_CLL_VALUES)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_m, uint2(0, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_i, uint2(0, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_n, uint2(0, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_C, uint2(0, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_L, uint2(0, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_colon, uint2(0, 0))
+              return;
+            }
+            case 7:
+            {
+              DrawChar(_space, uint2(0, 0))
+              return;
+            }
+            case 8:
+            {
+              DrawChar(_dot, uint2(6, 0)) // six figure number
+              return;
+            }
+            case 9:
+            {
+              DrawChar(_space, uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 10:
+            {
+              DrawChar(_n, uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 11:
+            {
+              DrawChar(_i, uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 12:
+            {
+              DrawChar(_t, uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 13:
+            {
+              DrawChar(_s, uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+      // cursorCLL
+      // x:
+      case 3:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_x, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // y:
+      case 4:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_y, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // cursorCLL:
+      case 5:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_c, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_u, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_r, cursorCllOffset)
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_s, cursorCllOffset)
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_o, cursorCllOffset)
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_r, cursorCllOffset)
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_C, cursorCllOffset)
+              return;
+            }
+            case 7:
+            {
+              DrawChar(_L, cursorCllOffset)
+              return;
+            }
+            case 8:
+            {
+              DrawChar(_L, cursorCllOffset)
+              return;
+            }
+            case 9:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 10:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+            case 11:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(6, 0)) // six figure number
+              return;
+            }
+            case 12:
+            {
+              DrawChar(_space, cursorCllOffset + uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 13:
+            {
+              DrawChar(_n, cursorCllOffset + uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 14:
+            {
+              DrawChar(_i, cursorCllOffset + uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 15:
+            {
+              DrawChar(_t, cursorCllOffset + uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            case 16:
+            {
+              DrawChar(_s, cursorCllOffset + uint2(6 + 7, 0)) // 7 decimal places
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // R:
+      case 6:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_R, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(1, 0))
+              return;
+            }
+
+#else
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(4, 0))
+              return;
+            }
+
+#endif
+
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // G:
+      case 7:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_G, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(1, 0))
+              return;
+            }
+
+#else
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(4, 0))
+              return;
+            }
+
+#endif
+
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // B:
+      case 8:
+      {
+        if (SHOW_CLL_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_B, cursorCllOffset)
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_colon, cursorCllOffset)
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_space, cursorCllOffset)
+              return;
+            }
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(1, 0))
+              return;
+            }
+
+#else
+
+            case 3:
+            {
+              DrawChar(_dot, cursorCllOffset + uint2(4, 0))
+              return;
+            }
+
+#endif
+
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+      // CSPs
+      // BT.709:
+      case 9:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_B, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_T, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_dot, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_7, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_0, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_9, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // DCI-P3:
+      case 10:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_D, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_C, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_I, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_minus, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_P, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_3, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // BT.2020:
+      case 11:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_B, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_T, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_dot, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_2, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_0, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_2, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_0, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+      // AP1:
+      case 12:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_A, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_P, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_1, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // AP0:
+      case 13:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_A, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_P, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_0, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+      // invalid:
+      case 14:
+      {
+        if (SHOW_CSPS)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_i, cspsOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_n, cspsOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_v, cspsOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_a, cspsOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_l, cspsOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_i, cspsOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_d, cspsOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_colon, cspsOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_space, cspsOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_dot, cspsOffset + uint2(3, 0))
+            } break;
+            case 10:
+            {
+              DrawChar(_percent, cspsOffset + uint2(5, 0))
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+#endif
+
+      // cursorCSP
+      case 15:
+      {
+        if (SHOW_CSP_FROM_CURSOR)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_c, cursorCspOffset)
+            } break;
+            case 1:
+            {
+              DrawChar(_u, cursorCspOffset)
+            } break;
+            case 2:
+            {
+              DrawChar(_r, cursorCspOffset)
+            } break;
+            case 3:
+            {
+              DrawChar(_s, cursorCspOffset)
+            } break;
+            case 4:
+            {
+              DrawChar(_o, cursorCspOffset)
+            } break;
+            case 5:
+            {
+              DrawChar(_r, cursorCspOffset)
+            } break;
+            case 6:
+            {
+              DrawChar(_C, cursorCspOffset)
+            } break;
+            case 7:
+            {
+              DrawChar(_S, cursorCspOffset)
+            } break;
+            case 8:
+            {
+              DrawChar(_P, cursorCspOffset)
+            } break;
+            case 9:
+            {
+              DrawChar(_colon, cursorCspOffset)
+            } break;
+            case 10:
+            {
+              DrawChar(_space, cursorCspOffset)
+            } break;
+            default:
+            {
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+      default:
+      {
+        return;
+      }
+    }
+
+    if (ID.x == 14 && ID.y == 0 && ID.z == 0)
+    {
+      tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW, 0);
+      return;
+    }
+  }
+
+  return;
+}
+
+
+#define _6th(Val) Val / 100000.f
+#define _5th(Val) Val / 10000.f
+#define _4th(Val) Val / 1000.f
+#define _3rd(Val) Val / 100.f
+#define _2nd(Val) Val / 10.f
+#define _1st(Val) Val % 10.f
+#define d1st(Val) Val % 1.f *     10.f
+#define d2nd(Val) Val % 1.f *    100.f % 10.f
+#define d3rd(Val) Val % 1.f *   1000.f % 10.f
+#define d4th(Val) Val % 1.f *  10000.f % 10.f
+#define d5th(Val) Val % 1.f * 100000.f % 10.f
+#define d6th(Val) Val % 1.f * 100000.f % 1.f  * 10.f
+#define d7th(Val) Val % 1.f * 100000.f % 0.1f * 100.f
+
+#define DrawNumberAboveZero(Offset)            \
+  if (curNumber > 0)                           \
+  {                                            \
+    DrawChar(uint2(curNumber % 10, 0), Offset) \
+  }                                            \
+  else                                         \
+  {                                            \
+    DrawChar(_space, Offset)                   \
+  }
+
+
+void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
+{
+
+  const uint  fontSize = 8 - FONT_SIZE;
+  const uint2 atlasXY  = uint2(fontSize % 3, fontSize / 3) * FONT_ATLAS_OFFSET;
+
+  switch(ID.y)
+  {
+    // max/avg/min CLL
+    // maxCLL:
+    case 0:
+    {
+      if (SHOW_CLL_VALUES)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _6th(maxCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+#else
+            DrawChar(_space, uint2(8, 0))
+#endif
+            return;
+          }
+          case 1:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _5th(maxCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _4th(maxCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _3rd(maxCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _2nd(maxCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = _1st(maxCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(8, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = d1st(maxCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+            precise uint  curNumber  = d2nd(maxCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+//          case 8:
+//          {
+//            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+//            precise uint  curNumber  = d3rd(maxCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 9:
+//          {
+//            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+//            precise uint  curNumber  = d4th(maxCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 10:
+//          {
+//            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+//            precise uint  curNumber  = d5th(maxCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 11:
+//          {
+//            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+//            precise uint  curNumber  = d6th(maxCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 12:
+//          {
+//            precise float maxCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MAXCLL).r;
+//            precise uint  curNumber  = d7th(maxCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // avgCLL:
+    case 1:
+    {
+      if (SHOW_CLL_VALUES)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _6th(avgCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+#else
+            DrawChar(_space, uint2(8, 0))
+#endif
+            return;
+          }
+          case 1:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _5th(avgCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _4th(avgCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _3rd(avgCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _2nd(avgCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = _1st(avgCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(8, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = d1st(avgCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+            precise uint  curNumber  = d2nd(avgCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+//          case 8:
+//          {
+//            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+//            precise uint  curNumber  = d3rd(avgCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 9:
+//          {
+//            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+//            precise uint  curNumber  = d4th(avgCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 10:
+//          {
+//            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+//            precise uint  curNumber  = d5th(avgCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 11:
+//          {
+//            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+//            precise uint  curNumber  = d6th(avgCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+//          case 12:
+//          {
+//            precise float avgCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_AVGCLL).r;
+//            precise uint  curNumber  = d7th(avgCllShow);
+//            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // minCLL:
+    case 2:
+    {
+      if (SHOW_CLL_VALUES)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _6th(minCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+#else
+            DrawChar(_space, uint2(8, 0))
+#endif
+            return;
+          }
+          case 1:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _5th(minCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _4th(minCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _3rd(minCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _2nd(minCllShow);
+            DrawNumberAboveZero(uint2(8, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = _1st(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(8, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d1st(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d2nd(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 8:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d3rd(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 9:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d4th(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 10:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d5th(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 11:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d6th(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          case 12:
+          {
+            precise float minCllShow = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_MINCLL).r;
+            precise uint  curNumber  = d7th(minCllShow);
+            DrawChar(uint2(curNumber, 0), uint2(9, 0))
+            return;
+          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+
+    // cursorCLL
+    // x:
+    case 3:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+        switch(ID.x)
+        {
+
+#define mPosX clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH - 1)
+
+          case 0:
+          {
+            precise uint curNumber = _4th(mPosX);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise uint curNumber = _3rd(mPosX);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 2:
+          {
+            precise uint curNumber = _2nd(mPosX);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 3:
+          {
+            precise uint curNumber = _1st(mPosX);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // y:
+    case 4:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+
+#define mPosY clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1)
+
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise uint curNumber = _4th(mPosY);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise uint curNumber = _3rd(mPosY);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 2:
+          {
+            precise uint curNumber = _2nd(mPosY);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 3:
+          {
+            precise uint curNumber = _1st(mPosY);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // cursorCLL:
+    case 5:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+
+#define mPos int2(clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1), \
+                  clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1))
+
+        switch(ID.x)
+        {
+          case 0:
+          {
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _6th(cursorCll);
+            DrawNumberAboveZero(cursorCllOffset + uint2(11, 0))
+#else
+            DrawChar(_space, cursorCllOffset + uint2(11, 0))
+#endif
+            return;
+          }
+          case 1:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _5th(cursorCll);
+            DrawNumberAboveZero(cursorCllOffset + uint2(11, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _4th(cursorCll);
+            DrawNumberAboveZero(cursorCllOffset + uint2(11, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _3rd(cursorCll);
+            DrawNumberAboveZero(cursorCllOffset + uint2(11, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _2nd(cursorCll);
+            DrawNumberAboveZero(cursorCllOffset + uint2(11, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = _1st(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(11, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d1st(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d2nd(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 8:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d3rd(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 9:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d4th(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 10:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d5th(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 11:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d6th(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          case 12:
+          {
+            precise float cursorCll = tex2Dfetch(Sampler_CLL_Values, mPos).r;
+            precise uint  curNumber = d7th(cursorCll);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(12, 0))
+            return;
+          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // R:
+    case 6:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+        switch(ID.x)
+        {
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+          case 0:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#else
+
+          case 0:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _4th(cursorR);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _3rd(cursorR);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _2nd(cursorR);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 8:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d5th(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 9:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d6th(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 10:
+          {
+            precise float cursorR   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d7th(cursorR);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#endif
+
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // G:
+    case 7:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+        switch(ID.x)
+        {
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+          case 0:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#else
+
+          case 0:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _4th(cursorG);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _3rd(cursorG);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _2nd(cursorG);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 8:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d5th(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 9:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d6th(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 10:
+          {
+            precise float cursorG   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d7th(cursorG);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#endif
+
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // B:
+    case 8:
+    {
+      if (SHOW_CLL_FROM_CURSOR)
+      {
+        switch(ID.x)
+        {
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+          case 0:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#else
+
+          case 0:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _4th(cursorB);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _3rd(cursorB);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _2nd(cursorB);
+            DrawNumberAboveZero(cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = _1st(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(3, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d1st(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 5:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d2nd(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 6:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d3rd(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 7:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d4th(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 8:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d5th(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 9:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d6th(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+          case 10:
+          {
+            precise float cursorB   = tex2Dfetch(ReShade::BackBuffer, mPos).r;
+            precise uint  curNumber = d7th(cursorB);
+            DrawChar(uint2(curNumber, 0), cursorCllOffset + uint2(4, 0))
+            return;
+          }
+
+#endif
+
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+
+    // show CSPs
+    // BT.709:
+    case 9:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+            precise uint  curNumber       = _3rd(precentageBt709);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+            precise uint  curNumber       = _2nd(precentageBt709);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+            precise uint  curNumber       = _1st(precentageBt709);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+            precise uint  curNumber       = d1st(precentageBt709);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+            precise uint  curNumber       = d2nd(precentageBt709);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+//            precise uint  curNumber       = d3rd(precentageBt709);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageBt709 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
+//            precise uint  curNumber       = d4th(precentageBt709);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // DCI-P3:
+    case 10:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+            precise uint  curNumber       = _3rd(precentageDciP3);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+            precise uint  curNumber       = _2nd(precentageDciP3);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+            precise uint  curNumber       = _1st(precentageDciP3);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+            precise uint  curNumber       = d1st(precentageDciP3);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+            precise uint  curNumber       = d2nd(precentageDciP3);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+//            precise uint  curNumber       = d3rd(precentageDciP3);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageDciP3 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
+//            precise uint  curNumber       = d4th(precentageDciP3);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // BT.2020:
+    case 11:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+            precise uint  curNumber        = _3rd(precentageBt2020);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+            precise uint  curNumber        = _2nd(precentageBt2020);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+            precise uint  curNumber        = _1st(precentageBt2020);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+            precise uint  curNumber        = d1st(precentageBt2020);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+            precise uint  curNumber        = d2nd(precentageBt2020);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+//            precise uint  curNumber        = d3rd(precentageBt2020);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageBt2020 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
+//            precise uint  curNumber        = d4th(precentageBt2020);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+    // AP1:
+    case 12:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+            precise uint  curNumber     = _3rd(precentageAp1);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+            precise uint  curNumber     = _2nd(precentageAp1);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+            precise uint  curNumber     = _1st(precentageAp1);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+            precise uint  curNumber     = d1st(precentageAp1);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+            precise uint  curNumber     = d2nd(precentageAp1);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+//            precise uint  curNumber     = d3rd(precentageAp1);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageAp1 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
+//            precise uint  curNumber     = d4th(precentageAp1);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // AP0:
+    case 13:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+            precise uint  curNumber     = _3rd(precentageAp0);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+            precise uint  curNumber     = _2nd(precentageAp0);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+            precise uint  curNumber     = _1st(precentageAp0);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+            precise uint  curNumber     = d1st(precentageAp0);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+            precise uint  curNumber     = d2nd(precentageAp0);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+//            precise uint  curNumber     = d3rd(precentageAp0);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageAp0 = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
+//            precise uint  curNumber     = d4th(precentageAp0);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+    // invalid:
+    case 14:
+    {
+      if (SHOW_CSPS)
+      {
+        switch(ID.x)
+        {
+          case 0:
+          {
+            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+            precise uint  curNumber         = _3rd(precentageInvalid);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 1:
+          {
+            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+            precise uint  curNumber         = _2nd(precentageInvalid);
+            DrawNumberAboveZero(cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 2:
+          {
+            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+            precise uint  curNumber         = _1st(precentageInvalid);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(9, 0))
+            return;
+          }
+          case 3:
+          {
+            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+            precise uint  curNumber         = d1st(precentageInvalid);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+          case 4:
+          {
+            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+            precise uint  curNumber         = d2nd(precentageInvalid);
+            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+            return;
+          }
+//          case 5:
+//          {
+//            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+//            precise uint  curNumber         = d3rd(precentageInvalid);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+//          case 6:
+//          {
+//            precise float precentageInvalid = tex2Dfetch(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
+//            precise uint  curNumber         = d4th(precentageInvalid);
+//            DrawChar(uint2(curNumber, 0), cspsOffset + uint2(10, 0))
+//            return;
+//          }
+          default:
+          {
+            return;
+          }
+        }
+      }
+      return;
+    }
+
+#endif
+
+    // cursorCSP:
+    case 15:
+    {
+      if (SHOW_CSP_FROM_CURSOR)
+      {
+        const uint cursorCSP = tex2Dfetch(Sampler_CSPs, mPos).r * 255.f;
+
+        if (cursorCSP == IS_CSP_BT709)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_B, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_T, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_dot, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_7, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_0, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_9, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+        else if (cursorCSP == IS_CSP_DCI_P3)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_D, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_C, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_I, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_minus, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_P, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_3, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+        else if (cursorCSP == IS_CSP_BT2020)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_B, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_T, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_dot, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_2, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_0, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_2, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_0, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+
+        else if (cursorCSP == IS_CSP_AP1)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_A, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_P, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_1, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+        else if (cursorCSP == IS_CSP_AP0)
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_A, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_P, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_0, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+        else
+        {
+          switch(ID.x)
+          {
+            case 0:
+            {
+              DrawChar(_i, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 1:
+            {
+              DrawChar(_n, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 2:
+            {
+              DrawChar(_v, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_a, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_l, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_i, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_d, cursorCspOffset + uint2(11, 0))
+              return;
+            }
+            default:
+            {
+              return;
+            }
+          }
+          return;
+        }
+
+#endif
+
+      }
+      return;
+    }
+
+    default:
+    {
+      return;
+    }
+  }
+}
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -637,11 +3551,6 @@ void HDR_analysis(
   //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
   //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
   //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r*10000.f+0.5)/100)/100.f;
-
-  const float fontWidth = FONT_SIZE / 2.f;
-
-  static const float textOffset = TEXT_POSITION == TEXT_POSITION_TOP_LEFT ? 0.f
-                                : BUFFER_WIDTH - (fontWidth * 28 + 10);
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -788,243 +3697,6 @@ void HDR_analysis(
 
 #endif
 
-#if (ENABLE_CLL_FEATURES == YES)
-
-  if (SHOW_CLL_VALUES)
-  {
-    float maxCLL_show = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_MAXCLL).r;
-    float avgCLL_show = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_AVGCLL).r;
-    float minCLL_show = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_MINCLL).r;
-
-    //float maxCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r;
-    //float avgCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r;
-    //float minCLL_show = tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r;
-
-    if (CLL_ROUNDING_WORKAROUND)
-    {
-      maxCLL_show += 0.005f;
-      //avgCLL_show += 0.005f;
-      //minCLL_show += 0.005f;
-    }
-
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, text_maxCLL, 26, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, text_avgCLL, 26, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, text_minCLL, 26, Output, FONT_BRIGHTNESS);
-
-    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 0), FONT_SIZE, 1, TexCoord, 6, maxCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 1), FONT_SIZE, 1, TexCoord, 6, avgCLL_show, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(fontWidth * 14 + textOffset, FONT_SIZE * 2), FONT_SIZE, 1, TexCoord, 6, minCLL_show, Output, FONT_BRIGHTNESS);
-  }
-
-#endif
-
-  if (SHOW_CLL_FROM_CURSOR || SHOW_CSP_FROM_CURSOR)
-  {
-    float mousePositionX = clamp(MOUSE_POSITION.x, 0.f, BUFFER_WIDTH  - 1);
-    float mousePositionY = clamp(MOUSE_POSITION.y, 0.f, BUFFER_HEIGHT - 1);
-    int2  mouseXY        = int2(mousePositionX, mousePositionY);
-
-#if (ENABLE_CLL_FEATURES == YES)
-
-    if (SHOW_CLL_FROM_CURSOR)
-    {
-      float cursorCLL = tex2Dfetch(Sampler_CLL_Values, mouseXY).r;
-
-      DrawTextString(float2(fontWidth * 8 + textOffset, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, text_X, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(fontWidth * 8 + textOffset, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, text_Y, 2, Output, FONT_BRIGHTNESS);
-
-      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 4), FONT_SIZE, 1, TexCoord, -1, mousePositionX, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 5), FONT_SIZE, 1, TexCoord, -1, mousePositionY, Output, FONT_BRIGHTNESS);
-
-      DrawTextString(float2(0.f + textOffset, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, text_cursorCLL, 28, Output, FONT_BRIGHTNESS);
-
-      DrawTextDigit(float2(fontWidth * 16 + textOffset, FONT_SIZE * 6), FONT_SIZE, 1, TexCoord, 6, cursorCLL, Output, FONT_BRIGHTNESS);
-
-      float3 cursorRGB = tex2Dfetch(ReShade::BackBuffer, mouseXY).rgb;
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-      const bool cursorRIsNeg = cursorRGB.r >= 0.f ? false
-                                                   : true;
-      const bool cursorGIsNeg = cursorRGB.g >= 0.f ? false
-                                                   : true;
-      const bool cursorBIsNeg = cursorRGB.b >= 0.f ? false
-                                                   : true;
-
-      cursorRGB = abs(cursorRGB);
-
-#endif
-
-      DrawTextString(float2(0.f + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_R, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(0.f + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_G, 2, Output, FONT_BRIGHTNESS);
-      DrawTextString(float2(0.f + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_B, 2, Output, FONT_BRIGHTNESS);
-
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, 8, cursorRGB.r, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, 8, cursorRGB.g, Output, FONT_BRIGHTNESS);
-      DrawTextDigit(float2(fontWidth * RGB_Text_Offset + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, 8, cursorRGB.b, Output, FONT_BRIGHTNESS);
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-      if (cursorRIsNeg) {
-        const float offset = cursorRGB.r <    10.f ? fontWidth * 8
-                           : cursorRGB.r <   100.f ? fontWidth * 7
-                           : cursorRGB.r <  1000.f ? fontWidth * 6
-                           : cursorRGB.r < 10000.f ? fontWidth * 5
-                                                   : fontWidth * 4;
-        DrawTextString(float2(offset + textOffset, FONT_SIZE *  8), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
-      }
-      if (cursorGIsNeg) {
-        const float offset = cursorRGB.g <    10.f ? fontWidth * 8
-                           : cursorRGB.g <   100.f ? fontWidth * 7
-                           : cursorRGB.g <  1000.f ? fontWidth * 6
-                           : cursorRGB.g < 10000.f ? fontWidth * 5
-                                                   : fontWidth * 4;
-        DrawTextString(float2(offset + textOffset, FONT_SIZE *  9), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
-      }
-      if (cursorBIsNeg) {
-        const float offset = cursorRGB.b <    10.f ? fontWidth * 8
-                           : cursorRGB.b <   100.f ? fontWidth * 7
-                           : cursorRGB.b <  1000.f ? fontWidth * 6
-                           : cursorRGB.b < 10000.f ? fontWidth * 5
-                                                   : fontWidth * 4;
-        DrawTextString(float2(offset + textOffset, FONT_SIZE * 10), FONT_SIZE, 1, TexCoord, text_signNegative, 1, Output, FONT_BRIGHTNESS);
-      }
-
-#endif
-
-    }
-
-#endif
-
-#if (ENABLE_CSP_FEATURES == YES)
-
-    if (SHOW_CSP_FROM_CURSOR)
-    {
-      uint cursorCSP = tex2Dfetch(Sampler_CSPs, mouseXY).r * 255.f;
-
-      switch(cursorCSP)
-      {
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-  #define CURSOR_CLL_TEXT_POS 14
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-    || ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  #define CURSOR_CLL_TEXT_POS 16
-
-#else
-
-  #define CURSOR_CLL_TEXT_POS 19
-
-#endif
-
-        case 0:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT709,   17, Output, FONT_BRIGHTNESS);
-        } break;
-        case 1:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_DCI_P3,  17, Output, FONT_BRIGHTNESS);
-        } break;
-        case 2:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_BT2020,  18, Output, FONT_BRIGHTNESS);
-        } break;
-        case 3:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP1,     14, Output, FONT_BRIGHTNESS);
-        } break;
-        case 4:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_AP0,     14, Output, FONT_BRIGHTNESS);
-        } break;
-        default:
-        {
-          DrawTextString(float2(0.f + textOffset, FONT_SIZE * CURSOR_CLL_TEXT_POS), FONT_SIZE, 1, TexCoord, text_cursor_invalid, 18, Output, FONT_BRIGHTNESS);
-        } break;
-
-#undef CURSOR_CLL_TEXT_POS
-
-      }
-    }
-
-#endif
-  }
-
-#if (ENABLE_CSP_FEATURES == YES)
-
-  if (SHOW_CSPS)
-  {
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-    float precentage_BT709  = 100.f;
-
-#else
-
-    float precentage_BT709  = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_BT709).r;
-    float precentage_DCI_P3 = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3).r;
-    float precentage_BT2020 = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020).r;
-    //float precentage_BT709  = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT709)).r  * 100.0001f;
-    //float precentage_DCI_P3 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_DCI_P3)).r * 100.0001f;
-    //float precentage_BT2020 = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_BT2020)).r * 100.0001f;
-
-#endif
-
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
-
-    float precentage_AP1     = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_AP1).r;
-    float precentage_AP0     = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_AP0).r;
-    float precentage_invalid = tex2Dfetch(Sampler_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID).r;
-    //float precentage_AP1     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP1)).r     * 100.0001f;
-    //float precentage_AP0     = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_AP0)).r     * 100.0001f;
-    //float precentage_invalid = tex2Dfetch(Sampler_CSP_Counter_Final, int2(0, IS_CSP_INVALID)).r * 100.0001f;
-
-#endif
-
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, text_BT709,   18, Output, FONT_BRIGHTNESS);
-
-#if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
-
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, text_DCI_P3,  18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, text_BT2020,  18, Output, FONT_BRIGHTNESS);
-
-#endif
-
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG \
-  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
-
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, text_AP1,     18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, text_AP0,     18, Output, FONT_BRIGHTNESS);
-    DrawTextString(float2(0.f + textOffset, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, text_invalid, 18, Output, FONT_BRIGHTNESS);
-
-#endif
-
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 12), FONT_SIZE, 1, TexCoord, 4, precentage_BT709,  Output, FONT_BRIGHTNESS);
-#if (ACTUAL_COLOUR_SPACE != CSP_SRGB)
-
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 13), FONT_SIZE, 1, TexCoord, 4, precentage_DCI_P3, Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 14), FONT_SIZE, 1, TexCoord, 4, precentage_BT2020, Output, FONT_BRIGHTNESS);
-#endif
-
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG   \
-  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
-
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 15), FONT_SIZE, 1, TexCoord, 4, precentage_AP0,     Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 16), FONT_SIZE, 1, TexCoord, 4, precentage_AP1,     Output, FONT_BRIGHTNESS);
-    DrawTextDigit(float2(FONT_SIZE * 6 + textOffset, FONT_SIZE * 17), FONT_SIZE, 1, TexCoord, 4, precentage_invalid, Output, FONT_BRIGHTNESS);
-
-#endif
-    }
-
-
   if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
 
@@ -1052,8 +3724,36 @@ void HDR_analysis(
     }
   }
 
+  uint2 currentActiveOverlayArea = GetCharSize() * uint2(30, 16);
+  if ((TexCoord.x * BUFFER_WIDTH)  <= currentActiveOverlayArea.x
+   && (TexCoord.x * BUFFER_HEIGHT) <= currentActiveOverlayArea.y)
+  {
+
+    float4 overlay = tex2D(SamplerTextOverlay, TexCoord).rgba;
+    overlay = pow(overlay, 2.2f);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+    overlay = float4(Csp::Map::Bt709Into::Scrgb(overlay.rgb * FONT_BRIGHTNESS), pow(overlay.a, 1.f / 2.6f));
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    overlay = float4(Csp::Map::Bt709Into::Hdr10(overlay.rgb * FONT_BRIGHTNESS), overlay.a);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+    overlay = float4(Csp::Map::Bt709Into::Hlg(overlay.rgb * FONT_BRIGHTNESS), overlay.a);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+    overlay = float4(Csp::Map::Bt709Into::Ps5(overlay.rgb * FONT_BRIGHTNESS), pow(overlay.a, 1.f / 2.6f));
 
 #endif
+
+    Output = float4(lerp(Output.rgb, overlay.rgb, overlay.a), 1.f);
+
+  }
+
 }
 
 #else
@@ -1133,6 +3833,7 @@ void HDR_analysis(
 //  }
 //}
 
+
 technique lilium__hdr_analysis
 <
   ui_label = "Lilium's HDR analysis";
@@ -1181,9 +3882,31 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
+  pass ClearBrightnessHistogramTexture
+  {
+    VertexShader       = PostProcessVS;
+     PixelShader       = ClearBrightnessHistogramTexture;
+    RenderTarget       = Texture_Brightness_Histogram;
+    ClearRenderTargets = true;
+  }
+
+  pass ComputeBrightnessHistogram
+  {
+    ComputeShader = ComputeBrightnessHistogram <THREAD_SIZE0, 1>;
+    DispatchSizeX = DISPATCH_X0;
+    DispatchSizeY = 1;
+  }
+
+  pass RenderBrightnessHistogramToScale
+  {
+    VertexShader = PostProcessVS;
+     PixelShader = RenderBrightnessHistogramToScale;
+    RenderTarget = Texture_Brightness_Histogram_Final;
+  }
 #endif
 
 
+//CIE
 #if (ENABLE_CIE_FEATURES == YES)
 
 #if (CIE_DIAGRAM == CIE_1931)
@@ -1214,6 +3937,7 @@ technique lilium__hdr_analysis
 #endif
 
 
+//CSP
 #if (ENABLE_CSP_FEATURES == YES \
   && ACTUAL_COLOUR_SPACE != CSP_SRGB)
 
@@ -1240,34 +3964,43 @@ technique lilium__hdr_analysis
 
 #endif
 
-  pass ClearBrightnessHistogramTexture
-  {
-    VertexShader       = PostProcessVS;
-     PixelShader       = ClearBrightnessHistogramTexture;
-    RenderTarget       = Texture_Brightness_Histogram;
-    ClearRenderTargets = true;
-  }
-
-  pass ComputeBrightnessHistogram
-  {
-    ComputeShader = ComputeBrightnessHistogram <THREAD_SIZE0, 1>;
-    DispatchSizeX = DISPATCH_X0;
-    DispatchSizeY = 1;
-  }
-
-  pass RenderBrightnessHistogramToScale
-  {
-    VertexShader = PostProcessVS;
-     PixelShader = RenderBrightnessHistogramToScale;
-    RenderTarget = Texture_Brightness_Histogram_Final;
-  }
-
   pass CopyShowValues
   {
     ComputeShader = ShowValuesCopy <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+
+
+  pass PrepareOverlay
+  {
+    ComputeShader = PrepareOverlay <1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+
+  pass DrawOverlay
+  {
+    ComputeShader = DrawOverlay <1, 1>;
+    DispatchSizeX = 17;
+    DispatchSizeY = 16;
+  }
+
+  pass DrawNumbersToOverlay
+  {
+    ComputeShader = DrawNumbersToOverlay <1, 1>;
+    DispatchSizeX = 15;
+    DispatchSizeY = 16;
+  }
+
+//  pass DrawToOverlay
+//  {
+//    VertexShader = VS_PrepareDrawToOverlay;
+//     PixelShader = PS_DrawToOverlay;
+//    RenderTarget = TextureTextOverlay;
+//    ClearRenderTargets = false;
+//  }
+
 
   pass HDR_analysis
   {
