@@ -3533,24 +3533,133 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
 #endif
 
 
-void HDR_analysis(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 Output   : SV_Target0)
+// Vertex shader generating a triangle covering the entire screen.
+// Calculate values only "once" (3 times because it's 3 vertices)
+// for the pixel shader.
+void VS_PrepareHdrAnalysis(
+  in                  uint   Id                                    : SV_VertexID,
+  out                 float4 VPos                                  : SV_Position,
+  out                 float2 TexCoord                              : TEXCOORD0,
+  out                 bool   PingPongChecks[2]                     : PingPongChecks,
+  out                 float4 HighlightNitRange                     : HighlightNitRange,
+  out nointerpolation uint2  BrightnessHistogramTextureDisplaySize : BrightnessHistogramTextureDisplaySize,
+  out nointerpolation uint2  CieDiagramTextureDisplaySize          : CieDiagramTextureDisplaySize,
+  out                 float2 CurrentActiveOverlayArea              : CurrentActiveOverlayArea)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-  Output = float4(input, 1.f);
+
+#define pingpong0Above1   PingPongChecks[0]
+#define breathingIsActive PingPongChecks[1]
+
+#define highlightNitRangeOut HighlightNitRange.rgb
+#define breathing            HighlightNitRange.w
+
+
+#if (ENABLE_CLL_FEATURES == YES)
+
+  if (HIGHLIGHT_NIT_RANGE)
+  {
+    float pingpong0 = NIT_PINGPONG0.x + 0.25f;
+
+    pingpong0Above1 = pingpong0 >= 1.f;
+
+    if (pingpong0Above1)
+    {
+      breathing = saturate(pingpong0 - 1.f);
+      //breathing = 1.f;
+
+      breathingIsActive = breathing > 0.f;
+
+      float pingpong1 = NIT_PINGPONG1.y == 1 ? NIT_PINGPONG1.x
+                                             : 6.f - NIT_PINGPONG1.x;
+
+      if (pingpong1 >= 0.f
+       && pingpong1 <= 1.f)
+      {
+        highlightNitRangeOut = float3(1.f, NIT_PINGPONG2.x, 0.f);
+      }
+      else if (pingpong1 > 1.f
+            && pingpong1 <= 2.f)
+      {
+        highlightNitRangeOut = float3(NIT_PINGPONG2.x, 1.f, 0.f);
+      }
+      else if (pingpong1 > 2.f
+            && pingpong1 <= 3.f)
+      {
+        highlightNitRangeOut = float3(0.f, 1.f, NIT_PINGPONG2.x);
+      }
+      else if (pingpong1 > 3.f
+            && pingpong1 <= 4.f)
+      {
+        highlightNitRangeOut = float3(0.f, NIT_PINGPONG2.x, 1.f);
+      }
+      else if (pingpong1 > 4.f
+            && pingpong1 <= 5.f)
+      {
+        highlightNitRangeOut = float3(NIT_PINGPONG2.x, 0.f, 1.f);
+      }
+//      else if (pingpong1 > 5.f
+//            && pingpong1 <= 6.f)
+      else
+      {
+        highlightNitRangeOut = float3(1.f, 0.f, NIT_PINGPONG2.x);
+      }
+
+      highlightNitRangeOut *= breathing * HIGHLIGHT_NIT_RANGE_BRIGHTNESS;
+
+      highlightNitRangeOut = Csp::Map::Bt709Into::MAP_INTO_CSP(highlightNitRangeOut);
+    }
+  }
+
+  if (SHOW_BRIGHTNESS_HISTOGRAM)
+  {
+    BrightnessHistogramTextureDisplaySize =
+      uint2(round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH)  * BRIGHTNESS_HISTOGRAM_SIZE / 100.f),
+            round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT) * BRIGHTNESS_HISTOGRAM_SIZE / 100.f));
+  }
+
+#endif
+
+#if (ENABLE_CIE_FEATURES == YES)
+
+  if (SHOW_CIE)
+  {
+    CieDiagramTextureDisplaySize = 
+      uint2(round(float(CIE_BG_X) * CIE_DIAGRAM_SIZE / 100.f),
+            round(float(CIE_BG_Y) * CIE_DIAGRAM_SIZE / 100.f));
+  }
+
+#endif
+
+  CurrentActiveOverlayArea = (GetCharSize()
+                            * uint2(30, 16)
+                            + 0.5f) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+}
+
+
+void PS_HdrAnalysis(
+  in                  float4 VPos                                  : SV_Position,
+  in                  float2 TexCoord                              : TEXCOORD,
+  out                 float4 Output                                : SV_Target0,
+  in                  bool   PingPongChecks[2]                     : PingPongChecks,
+  in                  float4 HighlightNitRange                     : HighlightNitRange,
+  in  nointerpolation uint2  BrightnessHistogramTextureDisplaySize : BrightnessHistogramTextureDisplaySize,
+  in  nointerpolation uint2  CieDiagramTextureDisplaySize          : CieDiagramTextureDisplaySize,
+  in                  float2 CurrentActiveOverlayArea              : CurrentActiveOverlayArea)
+{
+  Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-  //float maxCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(0, 0)).r*10000.f+0.5)/100)/100.f;
-  //float avgCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(1, 0)).r*10000.f+0.5)/100)/100.f;
-  //float minCLL = float(uint(tex2Dfetch(Sampler_Max_Avg_Min_CLL_Values, int2(2, 0)).r*10000.f+0.5)/100)/100.f;
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -3578,61 +3687,14 @@ void HDR_analysis(
                                          false), 1.f);
     }
 
-    if (HIGHLIGHT_NIT_RANGE)
+    if (HIGHLIGHT_NIT_RANGE
+     && pixelCLL >= HIGHLIGHT_NIT_RANGE_START_POINT
+     && pixelCLL <= HIGHLIGHT_NIT_RANGE_END_POINT
+     && pingpong0Above1
+     && breathingIsActive)
     {
-      float pingpong0 = NIT_PINGPONG0.x + 0.25f;
-      float pingpong1 = NIT_PINGPONG1.y == 1 ? NIT_PINGPONG1.x
-                                             : 6.f - NIT_PINGPONG1.x;
-
-      if (pixelCLL >= HIGHLIGHT_NIT_RANGE_START_POINT
-       && pixelCLL <= HIGHLIGHT_NIT_RANGE_END_POINT
-       && pingpong0 >= 1.f)
-      {
-        float3 out3;
-        float breathing = saturate(pingpong0 - 1.f);
-        //float breathing = 1.f;
-
-        if (pingpong1 >= 0.f
-         && pingpong1 <= 1.f)
-        {
-          out3 = float3(1.f, NIT_PINGPONG2.x, 0.f);
-        }
-        else if (pingpong1 > 1.f
-              && pingpong1 <= 2.f)
-        {
-          out3 = float3(NIT_PINGPONG2.x, 1.f, 0.f);
-        }
-        else if (pingpong1 > 2.f
-              && pingpong1 <= 3.f)
-        {
-          out3 = float3(0.f, 1.f, NIT_PINGPONG2.x);
-        }
-        else if (pingpong1 > 3.f
-              && pingpong1 <= 4.f)
-        {
-          out3 = float3(0.f, NIT_PINGPONG2.x, 1.f);
-        }
-        else if (pingpong1 > 4.f
-              && pingpong1 <= 5.f)
-        {
-          out3 = float3(NIT_PINGPONG2.x, 0.f, 1.f);
-        }
-        else if (pingpong1 > 5.f
-              && pingpong1 <= 6.f)
-        {
-          out3 = float3(1.f, 0.f, NIT_PINGPONG2.x);
-        }
-
-        out3 *= breathing * HIGHLIGHT_NIT_RANGE_BRIGHTNESS;
-
-        out3 = Csp::Map::Bt709Into::MAP_INTO_CSP(out3);
-
-        if (breathing > 0.f)
-        {
-          //Output = float4(out3, 1.f);
-          Output = float4(lerp(Output.rgb, out3, breathing), 1.f);
-        }
-      }
+      //Output = float4(HighlightNitRangeOut, 1.f);
+      Output = float4(lerp(Output.rgb, highlightNitRangeOut, breathing), 1.f);
     }
 
 #endif
@@ -3666,18 +3728,14 @@ void HDR_analysis(
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
-    const int2 textureDisplaySize =
-      int2(round(float(CIE_BG_X) * CIE_DIAGRAM_SIZE / 100.f),
-           round(float(CIE_BG_Y) * CIE_DIAGRAM_SIZE / 100.f));
-
     // draw the diagram in the bottom left corner
-    if (current_x_coord <  textureDisplaySize.x
-     && current_y_coord >= (BUFFER_HEIGHT - textureDisplaySize.y))
+    if (current_x_coord <  CieDiagramTextureDisplaySize.x
+     && current_y_coord >= (BUFFER_HEIGHT - CieDiagramTextureDisplaySize.y))
     {
       // get coords for the sampler
       float2 currentSamplerCoords = float2(
-        (current_x_coord + 0.5f) / textureDisplaySize.x,
-        (current_y_coord - (BUFFER_HEIGHT - textureDisplaySize.y) + 0.5f) / textureDisplaySize.y);
+        (current_x_coord + 0.5f) / CieDiagramTextureDisplaySize.x,
+        (current_y_coord - (BUFFER_HEIGHT - CieDiagramTextureDisplaySize.y) + 0.5f) / CieDiagramTextureDisplaySize.y);
 
 #if (CIE_DIAGRAM == CIE_1931)
   #define CIE_SAMPLER Sampler_CIE_1931_Current
@@ -3697,24 +3755,22 @@ void HDR_analysis(
 
 #endif
 
+#if (ENABLE_CLL_FEATURES == YES)
+
   if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
 
     uint current_x_coord = TexCoord.x * BUFFER_WIDTH;  // expand to actual pixel values
     uint current_y_coord = TexCoord.y * BUFFER_HEIGHT; // ^
 
-    const int2 textureDisplaySize =
-      int2(round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH)  * BRIGHTNESS_HISTOGRAM_SIZE / 100.f),
-           round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT) * BRIGHTNESS_HISTOGRAM_SIZE / 100.f));
-
     // draw the histogram in the bottom right corner
-    if (current_x_coord >= (BUFFER_WIDTH  - textureDisplaySize.x)
-     && current_y_coord >= (BUFFER_HEIGHT - textureDisplaySize.y))
+    if (current_x_coord >= (BUFFER_WIDTH  - BrightnessHistogramTextureDisplaySize.x)
+     && current_y_coord >= (BUFFER_HEIGHT - BrightnessHistogramTextureDisplaySize.y))
     {
       // get coords for the sampler
       float2 currentSamplerCoords = float2(
-        (textureDisplaySize.x - (BUFFER_WIDTH - current_x_coord)  + 0.5f) / textureDisplaySize.x,
-        (current_y_coord - (BUFFER_HEIGHT - textureDisplaySize.y) + 0.5f) / textureDisplaySize.y);
+        (BrightnessHistogramTextureDisplaySize.x - (BUFFER_WIDTH - current_x_coord)  + 0.5f) / BrightnessHistogramTextureDisplaySize.x,
+        (current_y_coord - (BUFFER_HEIGHT - BrightnessHistogramTextureDisplaySize.y) + 0.5f) / BrightnessHistogramTextureDisplaySize.y);
 
       float3 currentPixelToDisplay =
         tex2D(Sampler_Brightness_Histogram_Final, currentSamplerCoords).rgb;
@@ -3724,9 +3780,10 @@ void HDR_analysis(
     }
   }
 
-  uint2 currentActiveOverlayArea = GetCharSize() * uint2(30, 16);
-  if ((TexCoord.x * BUFFER_WIDTH)  <= currentActiveOverlayArea.x
-   && (TexCoord.x * BUFFER_HEIGHT) <= currentActiveOverlayArea.y)
+#endif
+
+  if (TexCoord.x <= CurrentActiveOverlayArea.x
+   && TexCoord.y <= CurrentActiveOverlayArea.y)
   {
 
     float4 overlay = tex2D(SamplerTextOverlay, TexCoord).rgba;
@@ -4002,10 +4059,10 @@ technique lilium__hdr_analysis
 //  }
 
 
-  pass HDR_analysis
+  pass PS_HdrAnalysis
   {
-    VertexShader = PostProcessVS;
-     PixelShader = HDR_analysis;
+    VertexShader = VS_PrepareHdrAnalysis;
+     PixelShader = PS_HdrAnalysis;
   }
 }
 
