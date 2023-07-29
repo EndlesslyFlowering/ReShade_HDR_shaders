@@ -5,10 +5,13 @@
 
 
 #include "colour_space.fxh"
+#include "lilium__include\draw_font.fxh"
 
 // TODO:
 // - do 100.0001 multiplactions only on AMD
 // - use precise for CLL calculations
+// - rework "DISPATCH_DOESNT_OVERFLOW"
+// - fix CIE diagram texture offset
 
 #define SMALLEST_FP16   0.00000009
 #define SMALLEST_UINT10 0.00013
@@ -83,6 +86,34 @@ uniform float2 PINGPONG
   smoothing = 0.0;
 >;
 
+
+#define TEXTURE_OVERLAY_WIDTH FONT_ATLAS_SIZE_48_CHAR_DIM.x * 29
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
+  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+  #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 16
+#else
+  #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 13
+#endif
+
+texture2D TextureTextOverlay
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_OVERLAY_WIDTH;
+  Height = TEXTURE_OVERLAY_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerTextOverlay
+{
+  Texture = TextureTextOverlay;
+};
+
+storage2D StorageTextOverlay
+{
+  Texture = TextureTextOverlay;
+};
 
 texture2D Texture_CLL_Values
 <
