@@ -172,7 +172,7 @@ namespace Ui
         ui_units    = " nits";
         ui_min      = -0.1f;
         ui_max      = 0.1f;
-        ui_step     = 0.0000001f;
+        ui_step     = 0.0001f;
       > = 0.f;
 
       uniform float KneeStart
