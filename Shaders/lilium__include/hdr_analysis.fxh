@@ -1,11 +1,15 @@
 #pragma once
 
-#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
-  || __RENDERER__ >= 0x20000)
-
-
 #include "colour_space.fxh"
-#include "lilium__include\draw_font.fxh"
+
+
+#if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+   || __RENDERER__ >= 0x20000)                           \
+  && defined(IS_POSSIBLE_HDR_CSP))
+
+
+#include "draw_font.fxh"
+
 
 // TODO:
 // - do 100.0001 multiplactions only on AMD
@@ -17,9 +21,9 @@
 #define SMALLEST_UINT10 0.00013
 
 
-#ifndef IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION
+//#ifndef IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION
   #define IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION YES
-#endif
+//#endif
 
 //max is 32
 //#ifndef THREAD_SIZE0
@@ -31,28 +35,32 @@
   #define THREAD_SIZE1 8
 //#endif
 
-#if (BUFFER_WIDTH % THREAD_SIZE0 == 0)
+//#if (BUFFER_WIDTH % THREAD_SIZE0 == 0)
+#if (BUFFER_WIDTH % 8 == 0)
   #define DISPATCH_X0 BUFFER_WIDTH / THREAD_SIZE0
   #define WIDTH0_DISPATCH_DOESNT_OVERFLOW
 #else
   #define DISPATCH_X0 BUFFER_WIDTH / THREAD_SIZE0 + 1
 #endif
 
-#if (BUFFER_HEIGHT % THREAD_SIZE0 == 0)
+//#if (BUFFER_HEIGHT % THREAD_SIZE0 == 0)
+#if (BUFFER_HEIGHT % 8 == 0)
   #define DISPATCH_Y0 BUFFER_HEIGHT / THREAD_SIZE0
   #define HEIGHT0_DISPATCH_DOESNT_OVERFLOW
 #else
   #define DISPATCH_Y0 BUFFER_HEIGHT / THREAD_SIZE0 + 1
 #endif
 
-#if (BUFFER_WIDTH % THREAD_SIZE1 == 0)
+//#if (BUFFER_WIDTH % THREAD_SIZE1 == 0)
+#if (BUFFER_WIDTH % 8 == 0)
   #define DISPATCH_X1 BUFFER_WIDTH / THREAD_SIZE1
   #define WIDTH1_DISPATCH_DOESNT_OVERFLOW
 #else
   #define DISPATCH_X1 BUFFER_WIDTH / THREAD_SIZE1 + 1
 #endif
 
-#if (BUFFER_HEIGHT % THREAD_SIZE1 == 0)
+//#if (BUFFER_HEIGHT % THREAD_SIZE1 == 0)
+#if (BUFFER_HEIGHT % 8 == 0)
   #define DISPATCH_Y1 BUFFER_HEIGHT / THREAD_SIZE1
   #define HEIGHT1_DISPATCH_DOESNT_OVERFLOW
 #else

@@ -1,5 +1,9 @@
-#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
-  || __RENDERER__ >= 0x20000)
+#include "lilium__include\hdr_analysis.fxh"
+
+
+#if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+   || __RENDERER__ >= 0x20000)                           \
+  && defined(IS_POSSIBLE_HDR_CSP))
 
 
 // TODO:
@@ -7,24 +11,8 @@
 // - rename all shaders to either VS/PS/CS
 // - make "GLOBAL_INFO" about API support a macro in colour_space
 // - bring overlay alpha "in line" with single trigger technique for HDR10 output
-// - add macro for "IS_UNORM_HDR" and "IS_FLOAT_HDR"
 
 
-#include "lilium__include\hdr_analysis.fxh"
-
-#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB \
-  && ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG   \
-  && ACTUAL_COLOUR_SPACE != CSP_PS5)
-
-  #include "lilium__include\draw_text_fix.fxh"
-
-  // colour space not supported
-  static const uint text_Error[26] = { __C, __O, __L, __O, __U, __R, __Space, __S, __P, __A, __C, __E, __Space,
-                                       __N, __O, __T, __Space,
-                                       __S, __U, __P, __P, __O, __R, __T, __E, __D};
-
-#endif
 
 #undef TEXT_BRIGHTNESS
 
@@ -102,98 +90,6 @@ uniform float2 NIT_PINGPONG2
   static const float2 NIT_PINGPONG2 = float2(0.f, 0.f);
 #endif
 
-
-#define CSP_SRGB_TEXT  "sRGB (sRGB transfer function / gamma 2.2 + BT.709 primaries)"
-#define CSP_SCRGB_TEXT "scRGB (linear + BT.709 primaries)"
-#define CSP_HDR10_TEXT "HDR10 (PQ + BT.2020 primaries)"
-#define CSP_HLG_TEXT   "HLG (HLG + BT.2020 primaries)"
-
-#if (BUFFER_COLOR_BIT_DEPTH == 8)
-  #define BACK_BUFFER_FORMAT_TEXT "RGBA8_UNORM or BGRA8_UNORM"
-#elif (BUFFER_COLOR_BIT_DEPTH == 10)
-  // d3d11 and d3d12 only allow rgb10a2 to be used for HDR10
-  #if (__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000)
-    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM"
-  #else
-    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM or BGR10A2_UNORM"
-  #endif
-#elif (BUFFER_COLOR_BIT_DEPTH == 16)
-  #define BACK_BUFFER_FORMAT_TEXT "RGBA16_FLOAT"
-#else
-  #define BACK_BUFFER_FORMAT_TEXT "unknown"
-#endif
-
-
-#define CSP_UNSET_TEXT "colour space unset! likely "
-
-#if (BUFFER_COLOR_SPACE == CSP_SCRGB)
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SCRGB_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_HDR10)
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HDR10_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_HLG)
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HLG_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_SRGB \
-    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
-    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
-    && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_SRGB)
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_TEXT
-#else
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT "unknown"
-#endif
-
-
-#if (CSP_OVERRIDE == CSP_SRGB)
-  #define CSP_OVERRIDE_TEXT CSP_SRGB_TEXT
-#elif (CSP_OVERRIDE == CSP_SCRGB)
-  #define CSP_OVERRIDE_TEXT CSP_SCRGB_TEXT
-#elif (CSP_OVERRIDE == CSP_HDR10)
-  #define CSP_OVERRIDE_TEXT CSP_HDR10_TEXT
-#elif (CSP_OVERRIDE == CSP_HLG)
-  #define CSP_OVERRIDE_TEXT CSP_HLG_TEXT
-#else
-  #define CSP_OVERRIDE_TEXT "unset"
-#endif
-
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-  #define ACTUAL_CSP_TEXT CSP_SRGB_TEXT
-#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  #define ACTUAL_CSP_TEXT CSP_SCRGB_TEXT
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  #define ACTUAL_CSP_TEXT CSP_HDR10_TEXT
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-  #define ACTUAL_CSP_TEXT CSP_HLG_TEXT
-#else
-  #define ACTUAL_CSP_TEXT "unknown"
-#endif
-
-#define INFO_TEXT \
-       "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
-  "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
-  "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
-  "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT                   \
-  "\n"                                                                         \
-  "\n" "Use the \"Preprocessor definition\" 'CSP_OVERRIDE' below to override " \
-  "\n" "the colour space in case the auto detection doesn't work."             \
-  "\n" "Possible values are:"                                                  \
-  "\n" "- 'CSP_HDR10'"                                                         \
-  "\n" "- 'CSP_SCRGB'"                                                         \
-  "\n" "Hit ENTER to apply."
-
-
-uniform int GLOBAL_INFO
-<
-  ui_category = "info";
-  ui_label    = " ";
-  ui_type     = "radio";
-  ui_text     = INFO_TEXT;
->;
 
 uniform uint TEXT_SIZE
 <
@@ -3557,11 +3453,6 @@ void PS_HdrAnalysis(
   Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
 
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG   \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
    || HIGHLIGHT_NIT_RANGE)
@@ -3729,13 +3620,6 @@ void PS_HdrAnalysis(
   Output = float4(lerp(Output.rgb, overlay.rgb, overlay.a), 1.f);
 
 }
-
-#else
-
-  DrawTextString(float2(0.f, 0.f), 100.f, 1, TexCoord, text_Error, 26, Output, 1.f);
-}
-
-#endif
 
 //technique lilium__HDR_analysis_CLL_OLD
 //<
@@ -3977,12 +3861,19 @@ technique lilium__hdr_analysis
 
 #else
 
-uniform int GLOBAL_INFO
+ERROR_STUFF
+
+technique lilium__hdr_analysis
 <
-  ui_category = "info";
-  ui_label    = " ";
-  ui_type     = "radio";
-  ui_text     = "Only DirectX 11, 12 and Vulkan are supported!";
->;
+  ui_label = "Lilium's HDR analysis (ERROR)";
+>
+{
+  pass CS_Error
+  {
+    ComputeShader = CS_Error<1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+}
 
 #endif

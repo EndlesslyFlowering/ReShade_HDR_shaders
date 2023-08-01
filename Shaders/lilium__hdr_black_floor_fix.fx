@@ -1,8 +1,9 @@
-#if ((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
-  || __RENDERER__ >= 0x20000)
-
-
 #include "lilium__include\hdr_black_floor_fix.fxh"
+
+
+#if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
+   || __RENDERER__ >= 0x20000)                           \
+  && defined(IS_POSSIBLE_HDR_CSP))
 
 
 // Vertex shader generating a triangle covering the entire screen.
@@ -133,12 +134,19 @@ technique lilium__hdr_black_floor_fix
 
 #else
 
-uniform int GLOBAL_INFO
+ERROR_STUFF
+
+technique lilium__hdr_black_floor_fix
 <
-  ui_category = "info";
-  ui_label    = " ";
-  ui_type     = "radio";
-  ui_text     = "Only DirectX 11, 12 and Vulkan are supported!";
->;
+  ui_label = "Lilium's HDR black floor fix (ERROR)";
+>
+{
+  pass CS_Error
+  {
+    ComputeShader = CS_Error<1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+}
 
 #endif

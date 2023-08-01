@@ -18,7 +18,6 @@
 #define CSP_SRGB    1
 #define CSP_SCRGB   2
 #define CSP_HDR10   3
-#define CSP_PQ      CSP_HDR10 //remove this at the end of September
 #define CSP_HLG     4
 #define CSP_PS5     5
 
@@ -42,24 +41,24 @@
   #define IS_POSSIBLE_PS5_BIT_DEPTH
 #endif
 
-#if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB   && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB   && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE == CSP_SRGB  && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
+#if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+  || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+  || (BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+  || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
+  || (BUFFER_COLOR_SPACE == CSP_SRGB  && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_SCRGB
   #define FONT_BRIGHTNESS 2.5375f // 203.f / 80.f
 
-#elif ((BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
-    || (BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10   && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
-    || (BUFFER_COLOR_SPACE != CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10   && defined(IS_POSSIBLE_HDR10_BIT_DEPTH)))
+#elif ((BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10 && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_HDR10 && CSP_OVERRIDE == CSP_HDR10 && defined(IS_POSSIBLE_HDR10_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_HDR10
   #define FONT_BRIGHTNESS 0.58068888104160783796
 
-#elif ((BUFFER_COLOR_SPACE == CSP_HLG && CSP_OVERRIDE == CSP_UNKNOWN) \
-    || (BUFFER_COLOR_SPACE == CSP_HLG && CSP_OVERRIDE == CSP_HLG)     \
+#elif ((BUFFER_COLOR_SPACE == CSP_HLG && CSP_OVERRIDE == CSP_UNSET) \
+    || (BUFFER_COLOR_SPACE == CSP_HLG && CSP_OVERRIDE == CSP_HLG)   \
     || (BUFFER_COLOR_SPACE != CSP_HLG && CSP_OVERRIDE == CSP_HLG))
 
   #define ACTUAL_COLOUR_SPACE CSP_HLG
@@ -71,9 +70,9 @@
   #define ACTUAL_COLOUR_SPACE CSP_PS5
   #define FONT_BRIGHTNESS 2.03f
 
-#elif ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNKNOWN && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
-    || (BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_SRGB    && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
-    || (BUFFER_COLOR_SPACE != CSP_SRGB && CSP_OVERRIDE == CSP_SRGB    && defined(IS_POSSIBLE_SRGB_BIT_DEPTH)))
+#elif ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_SRGB  && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
+    || (BUFFER_COLOR_SPACE != CSP_SRGB && CSP_OVERRIDE == CSP_SRGB  && defined(IS_POSSIBLE_SRGB_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_SRGB
   #define FONT_BRIGHTNESS 1.f
@@ -86,22 +85,153 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+  || ACTUAL_COLOUR_SPACE == CSP_PS5   \
+  || defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
 
-  #define IS_HDR_CSP YES
+  #define IS_POSSIBLE_HDR_CSP
 #endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  #define IS_FLOAT_HDR_CSP YES
+  #define IS_FLOAT_HDR_CSP
 #endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  #define IS_UNORM_HDR_CSP YES
+  #define IS_UNORM_HDR_CSP
 #endif
+
+
+#define CSP_SRGB_TEXT  "sRGB (sRGB transfer function / gamma 2.2 + BT.709 primaries)"
+#define CSP_SCRGB_TEXT "scRGB (linear + BT.709 primaries)"
+#define CSP_HDR10_TEXT "HDR10 (PQ + BT.2020 primaries)"
+#define CSP_HLG_TEXT   "HLG (HLG + BT.2020 primaries)"
+
+#if (BUFFER_COLOR_BIT_DEPTH == 8)
+  #define BACK_BUFFER_FORMAT_TEXT "RGBA8_UNORM or BGRA8_UNORM"
+#elif (BUFFER_COLOR_BIT_DEPTH == 10)
+  // d3d11 and d3d12 only allow rgb10a2 to be used for HDR10
+  #if (__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000)
+    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM"
+  #else
+    #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM or BGR10A2_UNORM"
+  #endif
+#elif (BUFFER_COLOR_BIT_DEPTH == 16)
+  #define BACK_BUFFER_FORMAT_TEXT "RGBA16_FLOAT"
+#else
+  #define BACK_BUFFER_FORMAT_TEXT "unknown"
+#endif
+
+
+#define CSP_UNSET_TEXT "colour space unset! likely "
+
+#if (BUFFER_COLOR_SPACE == CSP_SCRGB)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_HDR10)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HDR10_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_HLG)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HLG_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_SRGB \
+    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
+    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
+    && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_SRGB)
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_TEXT
+#else
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT "unknown"
+#endif
+
+
+#if (CSP_OVERRIDE == CSP_SRGB)
+  #define CSP_OVERRIDE_TEXT CSP_SRGB_TEXT
+#elif (CSP_OVERRIDE == CSP_SCRGB)
+  #define CSP_OVERRIDE_TEXT CSP_SCRGB_TEXT
+#elif (CSP_OVERRIDE == CSP_HDR10)
+  #define CSP_OVERRIDE_TEXT CSP_HDR10_TEXT
+#elif (CSP_OVERRIDE == CSP_HLG)
+  #define CSP_OVERRIDE_TEXT CSP_HLG_TEXT
+#else
+  #define CSP_OVERRIDE_TEXT "unset"
+#endif
+
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+  #define ACTUAL_CSP_TEXT CSP_SRGB_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  #define ACTUAL_CSP_TEXT CSP_SCRGB_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  #define ACTUAL_CSP_TEXT CSP_HDR10_TEXT
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+  #define ACTUAL_CSP_TEXT CSP_HLG_TEXT
+#else
+  #define ACTUAL_CSP_TEXT "unknown"
+#endif
+
+#ifndef HIDE_CSP_OVERRIDE_EXPLANATION
+  #define HIDE_CSP_OVERRIDE_EXPLANATION NO
+#endif
+
+
+#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES)
+  #define INFO_TEXT \
+         "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
+    "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
+    "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
+    "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT
+#else
+  #define INFO_TEXT \
+         "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
+    "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
+    "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
+    "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT                   \
+    "\n"                                                                         \
+    "\n" "Use the \"Preprocessor definition\" 'CSP_OVERRIDE' below to override " \
+         "the colour space in case the auto detection doesn't work."             \
+    "\n" "Only overrides that make sense are allowed."                           \
+    "\n" "Possible values are:"                                                  \
+    "\n" "- 'CSP_HDR10'"                                                         \
+    "\n" "- 'CSP_SCRGB'"                                                         \
+    "\n" "Hit ENTER to apply."
+#endif
+
+
+uniform int GLOBAL_INFO
+<
+  ui_category = "info";
+  ui_label    = " ";
+  ui_type     = "radio";
+  ui_text     = INFO_TEXT;
+>;
+
+
+#if (__RENDERER__ & 0x10000 \
+  || __RENDERER__ < 0xB000)
+  #define ERROR_TEXT "Only DirectX 11, 12 and Vulkan are supported!"
+#else
+  #define ERROR_TEXT "Only HDR colour spaces are supported!"
+#endif
+
+#define ERROR_STUFF             \
+  uniform int ERROR_MESSAGE     \
+    <                           \
+      ui_category = "ERROR";    \
+      ui_label    = " ";        \
+      ui_type     = "radio";    \
+      ui_text     = ERROR_TEXT; \
+    >;                          \
+                                \
+    void CS_Error()             \
+    {                           \
+      return;                   \
+    }
+
 
 namespace Csp
 {
