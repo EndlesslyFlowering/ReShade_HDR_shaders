@@ -7,6 +7,6 @@ Shaders/lilium__re_sdr_black_fix.fx
 Shaders/ReShade.fxh
 Shaders/ReShadeUI.fxh
 
-Textures/convert_to_linear.vpy
+Textures/_temp
 
 shadertoolsconfig.json
