@@ -20,13 +20,14 @@ namespace Ui
     {
       uniform bool EnableGamma22Emu
       <
-        ui_category = "black floor gamma 2.2 emulation";
-        ui_label    = "enable gamma 2.2 black floor emulation";
+        ui_category = "SDR black floor emulation";
+        ui_label    = "enable SDR black floor emulation";
+        ui_tooltip  = "This emulates how the black floor looks on an SDR display using gamma 2.2.";
       > = false;
 
       uniform float WhitePoint
       <
-        ui_category = "black floor gamma 2.2 emulation";
+        ui_category  = "SDR black floor emulation";
         ui_label     = "white point";
         ui_type      = "drag";
         ui_drag_desc = " nits";
@@ -49,6 +50,11 @@ namespace Ui
         ui_category = "black floor lowering";
         ui_label    = "black floor lowering processing mode";
         ui_type     = "combo";
+        ui_tooltip  = "ICtCp:     process in ICtCp space (best quality)"
+                 "\n" "YCbCr:     process in YCbCr space"
+                 "\n" "YRGB:      process RGB according to brightness"
+                 "\n" "RGB in PQ: process RGB encoded in PQ according to brightness"
+                 "\n" "RGB:       process RGB according to brightness (different approach)";
         ui_items    = "ICtCp\0"
                       "YCbCr\0"
                       "YRGB\0"
@@ -77,6 +83,8 @@ namespace Ui
       <
         ui_category  = "black floor lowering";
         ui_label     = "roll off stopping point";
+        ui_tooltip   = "How much of the lower image range is used"
+                  "\n" "to roll off from the new blackpoint.";
         ui_type      = "drag";
         ui_units     = " nits";
         ui_min       = 1.f;
@@ -88,6 +96,8 @@ namespace Ui
       <
         ui_category  = "black floor lowering";
         ui_label     = "new black point";
+        ui_tooltip   = "Can be negative for the sake of having a true 0 black point."
+                  "\n" "Because some processing modes can't reach true 0 in every case.";
         ui_type      = "drag";
         ui_units     = " nits";
         ui_min       = -0.1f;
