@@ -376,14 +376,34 @@ uniform bool ENABLE_TEST_THINGY
   ui_label    = "enable test thingy";
 > = false;
 
-uniform float TEST_THINGY
+uniform float TEST_THINGY_R
 <
   ui_category = "TESTY";
-  ui_label    = "test thingy";
+  ui_label    = "R";
   ui_type     = "drag";
   ui_min      = -125.f;
   ui_max      = 125.f;
-  ui_step     = 0.000000001f;
+  ui_step     = 0.00000001f;
+> = 0.f;
+
+uniform float TEST_THINGY_G
+<
+  ui_category = "TESTY";
+  ui_label    = "G";
+  ui_type     = "drag";
+  ui_min      = -125.f;
+  ui_max      = 125.f;
+  ui_step     = 0.00000001f;
+> = 0.f;
+
+uniform float TEST_THINGY_B
+<
+  ui_category = "TESTY";
+  ui_label    = "B";
+  ui_type     = "drag";
+  ui_min      = -125.f;
+  ui_max      = 125.f;
+  ui_step     = 0.00000001f;
 > = 0.f;
 #endif
 
@@ -455,7 +475,6 @@ void Testy(
 {
   if(ENABLE_TEST_THINGY == true)
   {
-    const float xTest = TEST_THINGY;
     const float xxx = BUFFER_WIDTH  / 2.f - 100.f;
     const float xxe = (BUFFER_WIDTH  - xxx);
     const float yyy = BUFFER_HEIGHT / 2.f - 100.f;
@@ -464,7 +483,7 @@ void Testy(
      && TexCoord.x < xxe / BUFFER_WIDTH
      && TexCoord.y > yyy / BUFFER_HEIGHT
      && TexCoord.y < yye / BUFFER_HEIGHT)
-      Output = float4(xTest, xTest, xTest, 1.f);
+      Output = float4(TEST_THINGY_R, TEST_THINGY_G, TEST_THINGY_B, 1.f);
     else
       Output = float4(0.f, 0.f, 0.f, 0.f);
   }
@@ -2170,6 +2189,11 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
               DrawChar(_9, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
               return;
             }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
             default:
               return;
           }
@@ -2207,6 +2231,11 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
             case 5:
             {
               DrawChar(_3, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
               return;
             }
             default:
@@ -2281,6 +2310,26 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
               DrawChar(_1, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
               return;
             }
+            case 3:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
             default:
               return;
           }
@@ -2303,6 +2352,26 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
             case 2:
             {
               DrawChar(_0, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 3:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 4:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 5:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
+              return;
+            }
+            case 6:
+            {
+              DrawChar(_space, cursorCspOffset + float2(11, 4), float2(ID.x, ID.y));
               return;
             }
             default:
