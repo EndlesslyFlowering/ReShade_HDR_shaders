@@ -45,7 +45,7 @@ uniform bool USE_BT1886
 uniform float BT1886_TARGET_WHITEPOINT
 <
   ui_category = "BT.1886";
-  ui_label    = "target whitepoint (in nits)";
+  ui_label    = "target whitepoint";
   ui_type     = "drag";
   ui_min      = 1.f;
   ui_max      = 1000.f;
@@ -55,7 +55,7 @@ uniform float BT1886_TARGET_WHITEPOINT
 uniform float BT1886_TARGET_BLACKPOINT
 <
   ui_category = "BT.1886";
-  ui_label    = "target blackpoint (in nits)";
+  ui_label    = "target blackpoint";
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 1.f;

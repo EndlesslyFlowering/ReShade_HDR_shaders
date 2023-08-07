@@ -71,7 +71,7 @@ uniform uint CONTENT_TRC
 uniform float TARGET_BRIGHTNESS
 <
   ui_category = "global";
-  ui_label    = "target brightness (in nits)";
+  ui_label    = "target brightness";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 1.f;
@@ -82,7 +82,7 @@ uniform float TARGET_BRIGHTNESS
 uniform float BT2446A_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method A";
-  ui_label    = "input brightness (in nits)";
+  ui_label    = "input brightness";
   ui_tooltip  = "Sets the brightness to this value for the inverse tone mapping process."
            "\n" "Controls the average brightness."
            "\n" "Can't be higher than \"target brightness\"!";
@@ -95,7 +95,7 @@ uniform float BT2446A_INPUT_BRIGHTNESS
 uniform float BT2446A_MAX_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method A";
-  ui_label    = "max input brightness (in nits)";
+  ui_label    = "max input brightness";
   ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed."
            "\n" "Analyse a good value with the HDR analysis shader."
            "\n" "Can't be lower than \"input brightness\"."
@@ -149,7 +149,7 @@ uniform float BT2446A_GAMMA_OUT
 uniform float BT2446C_INPUT_BRIGHTNESS
 <
   ui_category = "BT.2446 Method C";
-  ui_label    = "input brightness (in nits)";
+  ui_label    = "input brightness";
   ui_tooltip  = "Also controls the output brightness:"
            "\n" "103.2 nits ->  400 nits"
            "\n" "107.1 nits ->  500 nits"
@@ -216,7 +216,7 @@ uniform float BT2446C_ALPHA
 uniform float DICE_INPUT_BRIGHTNESS
 <
   ui_category = "Dice";
-  ui_label    = "input brightness (in nits)";
+  ui_label    = "input brightness";
   ui_tooltip  = "Can't be higher than \"target brightness\"";
   ui_type     = "drag";
   ui_min      = 1.f;
@@ -227,7 +227,7 @@ uniform float DICE_INPUT_BRIGHTNESS
 uniform float DICE_SHOULDER_START
 <
   ui_category = "Dice";
-  ui_label    = "shoulder start (in %)";
+  ui_label    = "shoulder start";
   ui_tooltip  = "Set this to where the brightness expansion starts";
   ui_type     = "drag";
   ui_units    = "%%";
@@ -240,7 +240,7 @@ uniform float DICE_SHOULDER_START
 uniform float MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS
 <
   ui_category = "map SDR into HDR";
-  ui_label    = "target brightness (in nits)";
+  ui_label    = "target brightness";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 1.f;

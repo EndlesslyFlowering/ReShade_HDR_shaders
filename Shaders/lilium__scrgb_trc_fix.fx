@@ -25,7 +25,7 @@ uniform uint INPUT_TRC
 
 uniform float SDR_WHITEPOINT_NITS
 <
-  ui_label = "SDR whitepoint (in nits)";
+  ui_label = "SDR whitepoint";
   ui_type  = "drag";
   ui_units = " nits";
   ui_min   = 1.f;
