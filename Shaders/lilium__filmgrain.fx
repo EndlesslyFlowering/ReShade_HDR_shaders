@@ -57,8 +57,7 @@ void filmgrain(
 
   float3 Ycbcr = Csp::Ycbcr::FromRgb::Ap0D65(Csp::Trc::ToPq(Csp::Mat::Bt709To::Ap0D65(input / 125.f)));
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-    || ACTUAL_COLOUR_SPACE == CSP_HLG)
+#elif defined(IS_UNORM_HDR_CSP)
 
   float3 Ycbcr = Csp::Ycbcr::FromRgb::Bt2020(input);
 
@@ -70,7 +69,7 @@ void filmgrain(
 
   float3 Ycbcr = Csp::Ycbcr::FromRgb::Bt709(input);
 
-#endif
+#endif //ACTUAL_COLOUR_SPACE ==
 
 //  const float maxMul = min(1.25f + INTENSITY, 2.f);
 //  const float minMul = 2.01f - maxMul;
@@ -86,8 +85,7 @@ void filmgrain(
 
   float3 Rgb = Csp::Mat::Ap0D65To::Bt709(Csp::Trc::FromPq(Csp::Ycbcr::ToRgb::Ap0D65(Ycbcr))) * 125.f;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-    || ACTUAL_COLOUR_SPACE == CSP_HLG)
+#elif defined(IS_UNORM_HDR_CSP)
 
   float3 Rgb = Csp::Ycbcr::ToRgb::Bt2020(Ycbcr);
 
@@ -99,7 +97,7 @@ void filmgrain(
 
   float3 Rgb = Csp::Ycbcr::ToRgb::Bt709(Ycbcr);
 
-#endif
+#endif //ACTUAL_COLOUR_SPACE ==
 
   Output = float4(Rgb, 1.f);
 }

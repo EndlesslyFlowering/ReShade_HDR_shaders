@@ -267,4 +267,4 @@ float3 LowerBlackFloor(
 
 }
 
-#endif
+#endif //is hdr API and hdr colour space

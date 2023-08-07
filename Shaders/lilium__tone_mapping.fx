@@ -861,7 +861,7 @@ technique lilium__tone_mapping
   }
 }
 
-#else
+#else //is hdr API and hdr colour space
 
 ERROR_STUFF
 
@@ -878,4 +878,4 @@ technique lilium__tone_mapping
   }
 }
 
-#endif
+#endif //is hdr API and hdr colour space

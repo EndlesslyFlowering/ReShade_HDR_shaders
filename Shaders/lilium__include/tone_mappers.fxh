@@ -488,4 +488,4 @@ namespace ToneMappers
 
 }
 
-#endif
+#endif //is hdr API and hdr colour space

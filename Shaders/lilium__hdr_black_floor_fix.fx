@@ -82,7 +82,7 @@ void PS_HdrBlackFloorFix(
 
   hdr = Csp::Trc::FromHlg(hdr);
 
-#else
+#else //ACTUAL_COLOUR_SPACE ==
 
   hdr = float3(0.f, 0.f, 0.f);
 
@@ -114,7 +114,7 @@ void PS_HdrBlackFloorFix(
 
   hdr = Csp::Trc::ToHlg(hdr);
 
-#endif
+#endif //ACTUAL_COLOUR_SPACE ==
 
   Output = float4(hdr, 1.f);
 }
@@ -132,7 +132,7 @@ technique lilium__hdr_black_floor_fix
   }
 }
 
-#else
+#else //is hdr API and hdr colour space
 
 ERROR_STUFF
 
@@ -149,4 +149,4 @@ technique lilium__hdr_black_floor_fix
   }
 }
 
-#endif
+#endif //is hdr API and hdr colour space

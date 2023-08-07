@@ -99,12 +99,11 @@ uniform float2 PINGPONG
 
 
 #define TEXTURE_OVERLAY_WIDTH FONT_ATLAS_SIZE_48_CHAR_DIM.x * 29
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
   #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 16
 #else
   #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 13
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
 texture2D TextureTextOverlay
 <
@@ -1570,8 +1569,7 @@ float GetCSP(precise const float3 XYZ)
       return IS_CSP_DCI_P3 / 255.f;
     }
 
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+#ifdef IS_UNORM_HDR_CSP
 
     else
     {
@@ -1597,7 +1595,7 @@ float GetCSP(precise const float3 XYZ)
       return IS_CSP_INVALID / 255.f;
     }
 
-#endif
+#endif //IS_UNORM_HDR_CSP
   }
   return IS_CSP_INVALID / 255.f;
 }
@@ -1738,15 +1736,14 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
       uint counter_BT709   = 0;
       uint counter_DCI_P3  = 0;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
       uint counter_BT2020  = 0;
       uint counter_AP1     = 0;
       uint counter_AP0     = 0;
       uint counter_invalid = 0;
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
       for (int y = 0; y < BUFFER_HEIGHT; y++)
       {
@@ -1758,8 +1755,7 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
           counter_DCI_P3++;
         }
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
         else if (curCSP == IS_CSP_BT2020) {
           counter_BT2020++;
@@ -1774,21 +1770,20 @@ void CountCSPs_y(uint3 ID : SV_DispatchThreadID)
           counter_invalid++;
         }
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
       }
 
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT709(ID.x),   counter_BT709);
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_DCI_P3(ID.x),  counter_DCI_P3);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_BT2020(ID.x),  counter_BT2020);
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_AP1(ID.x),     counter_AP1);
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_AP0(ID.x),     counter_AP0);
       tex2Dstore(Storage_Consolidated, COORDS_CSP_COUNTER_INVALID(ID.x), counter_invalid);
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
 #ifndef WIDTH0_DISPATCH_DOESNT_OVERFLOW
 
@@ -1805,30 +1800,28 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
     uint counter_BT709   = 0;
     uint counter_DCI_P3  = 0;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
     uint counter_BT2020  = 0;
     uint counter_AP1     = 0;
     uint counter_AP0     = 0;
     uint counter_invalid = 0;
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
     for (int x = 0; x < BUFFER_WIDTH; x++)
     {
       counter_BT709   += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_BT709(x)).r);
       counter_DCI_P3  += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_DCI_P3(x)).r);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
       counter_BT2020  += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_BT2020(x)).r);
       counter_AP1     += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_AP1(x)).r);
       counter_AP0     += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_AP0(x)).r);
       counter_invalid += uint(tex2Dfetch(Storage_Consolidated, COORDS_CSP_COUNTER_INVALID(x)).r);
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
     }
 
     barrier();
@@ -1836,15 +1829,14 @@ void CountCSPs_x(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT709,   counter_BT709   / PIXELS);
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3,  counter_DCI_P3  / PIXELS);
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT2020,  counter_BT2020  / PIXELS);
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_AP1,     counter_AP1     / PIXELS);
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_AP0,     counter_AP0     / PIXELS);
     tex2Dstore(Storage_Consolidated, COORDS_CSP_PERCENTAGE_INVALID, counter_invalid / PIXELS);
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
   }
 }
 
@@ -1948,8 +1940,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     precise float counter_DCI_P3 = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_DCI_P3).r
                                  * 100.0001f;
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
     precise float counter_BT2020 = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_BT2020).r
                                  * 100.0001f;
@@ -1958,10 +1949,9 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
             float counter_BT2020 = 100.f - counter_DCI_P3 - counter_BT709;
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+#ifdef IS_FLOAT_HDR_CSP
 
     precise float counter_AP1     = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_AP1).r
                                   * 100.0001f;
@@ -1970,7 +1960,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     precise float counter_invalid = tex2Dfetch(Storage_Consolidated, COORDS_CSP_PERCENTAGE_INVALID).r
                                   * 100.0001f;
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
     barrier();
 
@@ -1982,19 +1972,18 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_DCI_P3, counter_DCI_P3);
     tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_BT2020, counter_BT2020);
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+#ifdef IS_FLOAT_HDR_CSP
 
     tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP1,     counter_AP1);
     tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_AP0,     counter_AP0);
     tex2Dstore(Storage_Consolidated, COORDS_SHOW_PERCENTAGE_INVALID, counter_invalid);
 
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
   }
   return;
 }
 
-#endif
+#endif //HDR_ANALYSIS_ENABLE
 
-#endif
+#endif //is hdr API and hdr colour space

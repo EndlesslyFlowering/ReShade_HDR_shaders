@@ -153,7 +153,7 @@ technique lilium__scRGB_trc_fix
   }
 }
 
-#else
+#else //is hdr API and hdr colour space
 
 ERROR_STUFF
 
@@ -170,4 +170,4 @@ technique lilium__scRGB_trc_fix
   }
 }
 
-#endif
+#endif //is hdr API and hdr colour space

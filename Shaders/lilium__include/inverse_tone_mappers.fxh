@@ -692,4 +692,4 @@ namespace InverseToneMapping
 
 }
 
-#endif
+#endif //is hdr API and hdr colour space

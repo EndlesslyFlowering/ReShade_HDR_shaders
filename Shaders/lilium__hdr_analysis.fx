@@ -37,9 +37,9 @@ uniform int2 MOUSE_POSITION
 <
   source = "mousepoint";
 >;
-#else
+#else //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
   static const int2 MOUSE_POSITION = float2(0.f, 0.f);
-#endif
+#endif //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
 
 #if (ENABLE_CLL_FEATURES == YES)
 uniform float2 NIT_PINGPONG0
@@ -68,7 +68,7 @@ uniform float2 NIT_PINGPONG2
   step      = 3.f;
   smoothing = 0.f;
 >;
-#else
+#else //ENABLE_CLL_FEATURES == YES
   static const float2 NIT_PINGPONG0 = float2(0.f, 0.f);
   static const float2 NIT_PINGPONG1 = float2(0.f, 0.f);
   static const float2 NIT_PINGPONG2 = float2(0.f, 0.f);
@@ -128,7 +128,7 @@ uniform bool SHOW_CLL_FROM_CURSOR
   ui_category = "Content Light Level analysis";
   ui_label    = "show CLL value from cursor position";
 > = true;
-#else
+#else //ENABLE_CLL_FEATURES == YES
   static const bool SHOW_CLL_VALUES      = false;
   static const bool SHOW_CLL_FROM_CURSOR = false;
 #endif //ENABLE_CLL_FEATURES == YES
@@ -160,7 +160,7 @@ uniform bool SHOW_CSP_FROM_CURSOR
   ui_category = "Colour Space analysis";
   ui_label    = "show colour space from cursor position";
 > = true;
-#else
+#else //ENABLE_CSP_FEATURES == YES
   static const bool SHOW_CSPS            = false;
   static const bool SHOW_CSP_MAP         = false;
   static const bool SHOW_CSP_FROM_CURSOR = false;
@@ -199,7 +199,7 @@ uniform float CIE_DIAGRAM_SIZE
   ui_max      = 100.f;
   ui_step     = 0.1f;
 > = 100.f;
-#else
+#else //ENABLE_CIE_FEATURES == YES
   static const bool  SHOW_CIE               = false;
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
   static const float CIE_DIAGRAM_SIZE       = 0.f;
@@ -360,7 +360,7 @@ uniform float BELOW_NITS_AS_BLACK
   ui_max      = 10000.f;
   ui_step     = 1.f;
 > = 0.f;
-#else
+#else //ENABLE_CLL_FEATURES == YES
   static const bool  SHOW_HEATMAP                          = false;
   static const uint  HEATMAP_CUTOFF_POINT                  = 0;
   static const float HEATMAP_BRIGHTNESS                    = 0.f;
@@ -429,7 +429,7 @@ uniform float TEST_THINGY_B
   ui_max      = 125.f;
   ui_step     = 0.00000001f;
 > = 0.f;
-#endif
+#endif //_TESTY
 
 
 //void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
@@ -514,7 +514,7 @@ void Testy(
   else
     Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
 }
-#endif
+#endif //_TESTY
 
 
 uint2 GetCharSize()
@@ -565,16 +565,15 @@ uint2 GetCharSize()
 static const float ShowCllValuesLineCount     = 3;
 static const float ShowCllFromCursorLineCount = 1;
 
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+#if defined(IS_UNORM_HDR_CSP)
 
   static const float ShowCspsLineCount = 3;
 
-#else
+#else //IS_UNORM_HDR_CSP
 
   static const float ShowCspsLineCount = 6;
 
-#endif
+#endif //IS_UNORM_HDR_CSP
 
 
 void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
@@ -585,7 +584,7 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
   float floatShowCllValues     = SHOW_CLL_VALUES;
   float floatShowCllFromCrusor = SHOW_CLL_FROM_CURSOR;
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CSP_FEATURES == YES)
   float drawCspsLast       = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW2).r;
@@ -593,7 +592,7 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
   float floatShowCsps          = SHOW_CSPS;
   float floatShowCspFromCursor = SHOW_CSP_FROM_CURSOR;
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
   uint  fontSizeLast       = tex2Dfetch(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW4).r;
 
@@ -603,13 +602,13 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
       floatShowCllValues     != drawCllLast
    || floatShowCllFromCrusor != drawcursorCllLast
    ||
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CSP_FEATURES == YES)
       floatShowCsps          != drawCspsLast
    || floatShowCspFromCursor != drawcursorCspLast
    ||
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
       TEXT_SIZE              != fontSizeLast)
   {
@@ -617,12 +616,12 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 #if (ENABLE_CLL_FEATURES == YES)
     tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW0, floatShowCllValues);
     tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW1, floatShowCllFromCrusor);
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CSP_FEATURES == YES)
     tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW2, floatShowCsps);
     tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW3, floatShowCspFromCursor);
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
     tex2Dstore(Storage_Consolidated, COORDS_CHECK_OVERLAY_REDRAW4, TEXT_SIZE);
 
@@ -635,7 +634,7 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(Storage_Consolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL,
                cursorCllYOffset);
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CSP_FEATURES == YES)
     float cspsYOffset = ((!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR)
@@ -688,18 +687,17 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                               + ShowCllFromCursorLineCount
                               + ShowCspsLineCount)
 
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_HLG)
+#if defined(IS_UNORM_HDR_CSP)
                             : SPACING * 3) - 3;
-#else
+#else //IS_UNORM_HDR_CSP
                             : SPACING * 3);
-#endif
+#endif //IS_UNORM_HDR_CSP
 
     tex2Dstore(Storage_Consolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,
                cursorCspYOffset);
 
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
 
     float4 bgCol = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
@@ -762,7 +760,7 @@ void PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     }
   }
 
-#endif
+#endif //_DEBUG
 }
 
 
@@ -816,7 +814,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
       }
     }
 
-#endif
+#endif //_DEBUG
 
     switch(ID.y)
     {
@@ -1168,7 +1166,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
           }
         }
       } break;
-#else
+#else //ENABLE_CLL_FEATURES == YES
       case 5:
       {
         switch(ID.x)
@@ -1179,7 +1177,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
             return;
         }
       } break;
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 
 #if (ENABLE_CSP_FEATURES == YES)
@@ -1359,8 +1357,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
               DrawChar(_percent, cspsOffset + float2(2 + 5 + 1, -2), float2(ID.x, ID.y));
               return;
             }
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
             // AP1:
             case 8:
             {
@@ -1499,7 +1496,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
               DrawChar(_percent, cspsOffset + float2(5 + 1, -1), float2(ID.x, ID.y));
               return;
             }
-#endif
+#endif //IS_FLOAT_HDR_CSP
             default:
               return;
           }
@@ -1570,7 +1567,7 @@ void DrawOverlay(uint3 ID : SV_DispatchThreadID)
         }
         return;
       }
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
       default:
       {
@@ -1911,7 +1908,7 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CSP_FEATURES == YES)
     // show CSPs
@@ -2041,8 +2038,7 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
             DrawChar(uint2(curNumber, 0), cspsOffset + float2(10, 2), float2(ID.x, ID.y));
             return;
           }
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
           // AP1:
           case 5:
           {
@@ -2164,7 +2160,7 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
             DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 5, 4), float2(ID.x, ID.y));
             return;
           }
-#endif
+#endif //IS_FLOAT_HDR_CSP
           default:
             return;
         }
@@ -2312,8 +2308,7 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10 \
-  && ACTUAL_COLOUR_SPACE != CSP_HLG)
+#ifdef IS_FLOAT_HDR_CSP
 
         else if (cursorCSP == IS_CSP_AP1)
         {
@@ -2447,9 +2442,9 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
           }
           return;
         }
-#endif
+#endif //IS_FLOAT_HDR_CSP
 
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
       }
       return;
@@ -2479,11 +2474,11 @@ void DrawNumbersToOverlay(uint3 ID : SV_DispatchThreadID)
 
   #define MAP_INTO_CSP Ps5
 
-#else
+#else //ACTUAL_COLOUR_SPACE ==
 // FIX THIS someday...
   #define MAP_INTO_CSP Scrgb
 
-#endif
+#endif //ACTUAL_COLOUR_SPACE ==
 
 
 // Vertex shader generating a triangle covering the entire screen.
@@ -2575,7 +2570,7 @@ void VS_PrepareHdrAnalysis(
             round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT) * BRIGHTNESS_HISTOGRAM_SIZE / 100.f));
   }
 
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CIE_FEATURES == YES)
 
@@ -2586,7 +2581,7 @@ void VS_PrepareHdrAnalysis(
             round(float(CIE_BG_Y) * CIE_DIAGRAM_SIZE / 100.f));
   }
 
-#endif
+#endif //ENABLE_CIE_FEATURES == YES
 
   if (SHOW_CLL_VALUES
    || SHOW_CLL_FROM_CURSOR
@@ -2664,7 +2659,7 @@ void PS_HdrAnalysis(
                                      pixelCLL), 1.f);
     }
 
-#endif
+#endif //ENABLE_CSP_FEATURES == YES
 
 #if (ENABLE_CLL_FEATURES == YES)
 
@@ -2686,7 +2681,7 @@ void PS_HdrAnalysis(
       Output = float4(lerp(Output.rgb, highlightNitRangeOut, breathing), 1.f);
     }
 
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
   }
 
 #if (ENABLE_CLL_FEATURES == YES)
@@ -2708,7 +2703,7 @@ void PS_HdrAnalysis(
     }
   }
 
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 #if (ENABLE_CIE_FEATURES == YES)
 
@@ -2742,7 +2737,7 @@ void PS_HdrAnalysis(
     }
   }
 
-#endif
+#endif //ENABLE_CIE_FEATURES == YES
 
 #if (ENABLE_CLL_FEATURES == YES)
 
@@ -2769,11 +2764,8 @@ void PS_HdrAnalysis(
     }
   }
 
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
-
-#if (ENABLE_CLL_FEATURES == YES) \
-  || ENABLE_CSP_FEATURES == YES)
 
   if (SHOW_CLL_VALUES
    || SHOW_CLL_FROM_CURSOR
@@ -2814,8 +2806,6 @@ void PS_HdrAnalysis(
 
     Output = float4(lerp(Output.rgb, overlay.rgb, overlay.a), 1.f);
   }
-
-#endif //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
 
 }
 
@@ -2900,7 +2890,7 @@ technique lilium__hdr_analysis_TESTY
      PixelShader = Testy;
   }
 }
-#endif
+#endif //_TESTY
 
 technique lilium__hdr_analysis
 <
@@ -2960,7 +2950,7 @@ technique lilium__hdr_analysis
      PixelShader = PS_RenderBrightnessHistogramToScale;
     RenderTarget = Texture_Brightness_Histogram_Final;
   }
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 
 //CIE
@@ -2973,7 +2963,7 @@ technique lilium__hdr_analysis
      PixelShader = Copy_CIE_1931_BG;
     RenderTarget = Texture_CIE_1931_Current;
   }
-#endif
+#endif //CIE_DIAGRAM == CIE_1931
 
 #if (CIE_DIAGRAM == CIE_1976)
   pass Copy_CIE_1976_BG
@@ -2982,7 +2972,7 @@ technique lilium__hdr_analysis
      PixelShader = Copy_CIE_1976_BG;
     RenderTarget = Texture_CIE_1976_Current;
   }
-#endif
+#endif //CIE_DIAGRAM == CIE_1976
 
   pass Generate_CIE_Diagram
   {
@@ -2991,7 +2981,7 @@ technique lilium__hdr_analysis
     DispatchSizeY = DISPATCH_Y1;
   }
 
-#endif
+#endif //ENABLE_CIE_FEATURES == YES
 
 
 //CSP
@@ -3019,7 +3009,7 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
-#endif
+#endif //ENABLE_CSP_FEATURES == YES && ACTUAL_COLOUR_SPACE != CSP_SRGB
 
   pass CopyShowValues
   {
@@ -3057,7 +3047,7 @@ technique lilium__hdr_analysis
   }
 }
 
-#else
+#else //is hdr API and hdr colour space
 
 ERROR_STUFF
 
@@ -3074,4 +3064,4 @@ technique lilium__hdr_analysis
   }
 }
 
-#endif
+#endif //is hdr API and hdr colour space
