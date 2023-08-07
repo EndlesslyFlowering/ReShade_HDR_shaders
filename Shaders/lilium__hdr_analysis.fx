@@ -11,6 +11,8 @@
 // - bring overlay alpha "in line" with single trigger technique for HDR10 output
 // - improve vertex shader for clearing the brightness histogram with barebones Vertex shader?
 // - add namespace for UI
+// - fix 1x1 pixel offset in CIE textures
+// - add primaries triangles to show on the CIE diagram for all CSPs
 
 
 
@@ -338,7 +340,7 @@ uniform float ABOVE_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "draw above this brightness as black";
-  ui_type     = "drag";
+  ui_type     = "slider";
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
