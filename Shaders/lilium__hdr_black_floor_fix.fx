@@ -62,7 +62,6 @@ void VS_PrepareHdrBlackFloorFix(
 
   // gamma 2.2 emulation
   whitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::WhitePoint / 10000.f;
-
 }
 
 

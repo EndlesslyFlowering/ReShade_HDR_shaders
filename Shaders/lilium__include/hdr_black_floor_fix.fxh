@@ -27,13 +27,14 @@ namespace Ui
 
       uniform float WhitePoint
       <
-        ui_category  = "SDR black floor emulation";
-        ui_label     = "white point";
-        ui_type      = "drag";
-        ui_drag_desc = " nits";
-        ui_min       = 10.f;
-        ui_max       = 250.f;
-        ui_step      = 0.5f;
+        ui_category = "SDR black floor emulation";
+        ui_label    = "processing cut off";
+        ui_tooltip  = "How much of the lower range range should be processed.";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 40.f;
+        ui_max      = 250.f;
+        ui_step     = 0.5f;
       > = 80.f;
     }
 
@@ -111,20 +112,36 @@ namespace Ui
 
 void Gamma22Emulation(
   inout float3 Rgb,
-  const float  WhitePointNormalised)
+        float  WhitePointNormalised)
 {
-  Rgb = float3(pow(Csp::Trc::ToSrgb(Rgb.r / WhitePointNormalised), 2.2f) * WhitePointNormalised,
-               pow(Csp::Trc::ToSrgb(Rgb.g / WhitePointNormalised), 2.2f) * WhitePointNormalised,
-               pow(Csp::Trc::ToSrgb(Rgb.b / WhitePointNormalised), 2.2f) * WhitePointNormalised);
+  if (dot(Csp::Mat::Bt2020ToXYZ[1], Rgb) <= WhitePointNormalised)
+  {
+    Rgb = pow(Csp::Trc::ToSrgb(Rgb / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+  }
+
+//  float3 RgbNormalised = Rgb / WhitePointNormalised;
+//
+//  if (Rgb.r <= WhitePointNormalised)
+//  {
+//    Rgb.r = pow(Csp::Trc::ToSrgb(RgbNormalised.r), 2.2f) * WhitePointNormalised;
+//  }
+//  if (Rgb.g <= WhitePointNormalised)
+//  {
+//    Rgb.g = pow(Csp::Trc::ToSrgb(RgbNormalised.g), 2.2f) * WhitePointNormalised;
+//  }
+//  if (Rgb.b <= WhitePointNormalised)
+//  {
+//    Rgb.b = pow(Csp::Trc::ToSrgb(RgbNormalised.b), 2.2f) * WhitePointNormalised;
+//  }
 }
 
 
 float3 LowerBlackFloor(
-  const float3 Input,
-  const float  RollOffStoppingPoint,
-  const float  OldBlackPoint,
-  const float  RollOffMinusOldBlackPoint,
-  const float  MinLum)
+  float3 Input,
+  float  RollOffStoppingPoint,
+  float  OldBlackPoint,
+  float  RollOffMinusOldBlackPoint,
+  float  MinLum)
 {
   // ICtCp mode
   if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_ICTCP)
@@ -132,7 +149,7 @@ float3 LowerBlackFloor(
     //to L'M'S'
     float3 Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Input));
 
-    const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
+    float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
 
     if (i1 <= RollOffStoppingPoint)
     {
@@ -162,21 +179,21 @@ float3 LowerBlackFloor(
   // YCbCr mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YCBCR)
   {
-    const float3 InputInPq = Csp::Trc::ToPq(Input);
+    float3 InputInPq = Csp::Trc::ToPq(Input);
 
-    const float y1 = dot(InputInPq, Csp::KHelpers::Bt2020::K);
+    float y1 = dot(InputInPq, Csp::KHelpers::Bt2020::K);
 
     if (y1 <= RollOffStoppingPoint)
-    {  
+    {
       //E1
       float y2 = (y1 - OldBlackPoint) / RollOffMinusOldBlackPoint;
 
       //E3
       y2 += MinLum * pow((1.f - y2), 4.f);
-  
+
       //E4
       y2 = y2 * RollOffMinusOldBlackPoint + OldBlackPoint;
-  
+
       return Csp::Trc::FromPq(
         clamp(
           Csp::Ycbcr::ToRgb::Bt2020(
@@ -193,8 +210,8 @@ float3 LowerBlackFloor(
   // YRGB mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
   {
-    const float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
-    const float y1InPq = Csp::Trc::ToPq(y1);
+    float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
+    float y1InPq = Csp::Trc::ToPq(y1);
 
     if (y1InPq <= RollOffStoppingPoint)
     {
@@ -221,7 +238,7 @@ float3 LowerBlackFloor(
   {
     if (Csp::Trc::ToPq(dot(Input, Csp::Mat::Bt2020ToXYZ[1])) <= RollOffStoppingPoint)
     {
-      const float3 InputInPq = Csp::Trc::ToPq(Input);
+      float3 InputInPq = Csp::Trc::ToPq(Input);
 
       //E1
       float3 rgb = (InputInPq - OldBlackPoint) / RollOffMinusOldBlackPoint;
