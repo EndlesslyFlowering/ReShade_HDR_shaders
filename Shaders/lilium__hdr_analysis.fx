@@ -1,4 +1,4 @@
-#include "lilium__include/hdr_analysis.fxh"
+#include "lilium__include/colour_space.fxh"
 
 
 #if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
@@ -72,7 +72,7 @@ uniform float2 NIT_PINGPONG2
   static const float2 NIT_PINGPONG0 = float2(0.f, 0.f);
   static const float2 NIT_PINGPONG1 = float2(0.f, 0.f);
   static const float2 NIT_PINGPONG2 = float2(0.f, 0.f);
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 
 uniform uint TEXT_SIZE
@@ -131,7 +131,7 @@ uniform bool SHOW_CLL_FROM_CURSOR
 #else
   static const bool SHOW_CLL_VALUES      = false;
   static const bool SHOW_CLL_FROM_CURSOR = false;
-#endif
+#endif //ENABLE_CLL_FEATURES == YES
 
 // CIE
 #if (ENABLE_CIE_FEATURES == YES)
@@ -144,14 +144,6 @@ uniform bool SHOW_CIE
            "\n" "- 'CIE_1931' for the CIE 1931 xy diagram"
            "\n" "- 'CIE_1976' for the CIE 1976 UCS u'v' diagram";
 > = true;
-
-#if (CIE_DIAGRAM == CIE_1931)
-  static const uint CIE_BG_X = CIE_1931_BG_X;
-  static const uint CIE_BG_Y = CIE_1931_BG_Y;
-#else
-  static const uint CIE_BG_X = CIE_1976_BG_X;
-  static const uint CIE_BG_Y = CIE_1976_BG_Y;
-#endif
 
 uniform float CIE_DIAGRAM_BRIGHTNESS
 <
@@ -178,7 +170,7 @@ uniform float CIE_DIAGRAM_SIZE
   static const bool  SHOW_CIE               = false;
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
   static const float CIE_DIAGRAM_SIZE       = 0.f;
-#endif
+#endif //ENABLE_CIE_FEATURES == YES
 
 // Texture_CSPs
 #if (ENABLE_CSP_FEATURES == YES)
@@ -367,7 +359,21 @@ uniform float BELOW_NITS_AS_BLACK
   static const float ABOVE_NITS_AS_BLACK             = 0.f;
   static const bool  DRAW_BELOW_NITS_AS_BLACK        = false;
   static const float BELOW_NITS_AS_BLACK             = 0.f;
+#endif //ENABLE_CLL_FEATURES == YES
+
+
+#define HDR_ANALYSIS_ENABLE
+
+#include "lilium__include/hdr_analysis.fxh"
+
+#if (CIE_DIAGRAM == CIE_1931)
+  static const uint CIE_BG_X = CIE_1931_BG_X;
+  static const uint CIE_BG_Y = CIE_1931_BG_Y;
+#else
+  static const uint CIE_BG_X = CIE_1976_BG_X;
+  static const uint CIE_BG_Y = CIE_1976_BG_Y;
 #endif
+
 
 #ifdef _TESTY
 uniform bool ENABLE_TEST_THINGY
