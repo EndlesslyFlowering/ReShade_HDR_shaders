@@ -1,4 +1,4 @@
-#include "lilium__include\tone_mappers.fxh"
+#include "lilium__include/tone_mappers.fxh"
 
 
 #if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
@@ -6,10 +6,10 @@
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
-#include "lilium__include\draw_text_fix.fxh"
+#include "lilium__include/draw_text_fix.fxh"
 
 #if 0
-#include "lilium__include\HDR_black_floor_fix.fxh"
+#include "lilium__include/HDR_black_floor_fix.fxh"
 #endif
 
 
