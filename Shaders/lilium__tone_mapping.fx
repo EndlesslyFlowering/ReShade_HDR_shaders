@@ -869,13 +869,6 @@ technique lilium__tone_mapping
 <
   ui_label = "Lilium's tone mapping (ERROR)";
 >
-{
-  pass CS_Error
-  {
-    ComputeShader = CS_Error<1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-}
+CS_ERROR
 
 #endif //is hdr API and hdr colour space

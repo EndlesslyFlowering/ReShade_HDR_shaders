@@ -3056,13 +3056,6 @@ technique lilium__hdr_analysis
 <
   ui_label = "Lilium's HDR analysis (ERROR)";
 >
-{
-  pass CS_Error
-  {
-    ComputeShader = CS_Error<1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-}
+CS_ERROR
 
 #endif //is hdr API and hdr colour space

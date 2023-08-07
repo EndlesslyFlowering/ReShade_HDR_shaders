@@ -6,6 +6,10 @@
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
+// TODO:
+// - add chroma adjustment from BT.2390 too? maybe as option only
+
+
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
@@ -140,13 +144,6 @@ technique lilium__hdr_black_floor_fix
 <
   ui_label = "Lilium's HDR black floor fix (ERROR)";
 >
-{
-  pass CS_Error
-  {
-    ComputeShader = CS_Error<1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-}
+CS_ERROR
 
 #endif //is hdr API and hdr colour space

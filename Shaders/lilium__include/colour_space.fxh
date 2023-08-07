@@ -175,26 +175,35 @@
 #endif
 
 
-#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES)
-  #define INFO_TEXT \
-         "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
-    "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
-    "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
-    "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT
+#define INFO_TEXT_BACK_BUFFER \
+       "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
+  "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
+  "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
+  "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT
+
+#define INFO_TEXT_CSP_OVERRIDE \
+  "\n"                                                                         \
+  "\n" "Use the \"Preprocessor definition\" 'CSP_OVERRIDE' below to override " \
+       "the colour space in case the auto detection doesn't work. "            \
+       "Hit ENTER to apply."                                                   \
+  "\n"                                                                         \
+  "\n" "Currently allowed override:"                                           \
+  "\n"
+
+#if defined(IS_FLOAT_HDR_CSP)
+  #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_SCRGB'"
+#elif defined(IS_UNORM_HDR_CSP)
+  #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_HDR10'"
 #else
-  #define INFO_TEXT \
-         "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
-    "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
-    "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
-    "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT                   \
-    "\n"                                                                         \
-    "\n" "Use the \"Preprocessor definition\" 'CSP_OVERRIDE' below to override " \
-         "the colour space in case the auto detection doesn't work."             \
-    "\n" "Only overrides that make sense are allowed."                           \
-    "\n" "Possible values are:"                                                  \
-    "\n" "- 'CSP_HDR10'"                                                         \
-    "\n" "- 'CSP_SCRGB'"                                                         \
-    "\n" "Hit ENTER to apply."
+  #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "none!"
+#endif
+
+#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES)
+  #define INFO_TEXT INFO_TEXT_BACK_BUFFER
+#else
+  #define INFO_TEXT INFO_TEXT_BACK_BUFFER          \
+                    INFO_TEXT_CSP_OVERRIDE         \
+                    INFO_TEXT_ALLOWED_CSP_OVERRIDE
 #endif
 
 
@@ -214,20 +223,29 @@ uniform int GLOBAL_INFO
   #define ERROR_TEXT "Only HDR colour spaces are supported!"
 #endif
 
-#define ERROR_STUFF             \
-  uniform int ERROR_MESSAGE     \
-    <                           \
-      ui_category = "ERROR";    \
-      ui_label    = " ";        \
-      ui_type     = "radio";    \
-      ui_text     = ERROR_TEXT; \
-    >;                          \
-                                \
-    void CS_Error()             \
-    {                           \
-      return;                   \
-    }
+#define ERROR_STUFF           \
+  uniform int ERROR_MESSAGE   \
+  <                           \
+    ui_category = "ERROR";    \
+    ui_label    = " ";        \
+    ui_type     = "radio";    \
+    ui_text     = ERROR_TEXT; \
+  >;                          \
+                              \
+  void CS_Error()             \
+  {                           \
+    return;                   \
+  }
 
+#define CS_ERROR                      \
+  {                                   \
+    pass CS_Error                     \
+    {                                 \
+      ComputeShader = CS_Error<1, 1>; \
+      DispatchSizeX = 1;              \
+      DispatchSizeY = 1;              \
+    }                                 \
+  }
 
 namespace Csp
 {
