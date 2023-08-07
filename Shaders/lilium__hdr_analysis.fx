@@ -133,6 +133,39 @@ uniform bool SHOW_CLL_FROM_CURSOR
   static const bool SHOW_CLL_FROM_CURSOR = false;
 #endif //ENABLE_CLL_FEATURES == YES
 
+// Texture_CSPs
+#if (ENABLE_CSP_FEATURES == YES)
+uniform bool SHOW_CSPS
+<
+  ui_category = "Colour Space analysis";
+  ui_label    = "show colour spaces used";
+  ui_tooltip  = "in %";
+> = true;
+
+uniform bool SHOW_CSP_MAP
+<
+  ui_category = "Colour Space analysis";
+  ui_label    = "show colour space map";
+  ui_tooltip  = "        colours:"
+           "\n" "black and white: BT.709"
+           "\n" "           teal: DCI-P3"
+           "\n" "         yellow: BT.2020"
+           "\n" "           blue: AP1"
+           "\n" "            red: AP0"
+           "\n" "           pink: invalid";
+> = false;
+
+uniform bool SHOW_CSP_FROM_CURSOR
+<
+  ui_category = "Colour Space analysis";
+  ui_label    = "show colour space from cursor position";
+> = true;
+#else
+  static const bool SHOW_CSPS            = false;
+  static const bool SHOW_CSP_MAP         = false;
+  static const bool SHOW_CSP_FROM_CURSOR = false;
+#endif //ENABLE_CSP_FEATURES == YES
+
 // CIE
 #if (ENABLE_CIE_FEATURES == YES)
 uniform bool SHOW_CIE
@@ -171,39 +204,6 @@ uniform float CIE_DIAGRAM_SIZE
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
   static const float CIE_DIAGRAM_SIZE       = 0.f;
 #endif //ENABLE_CIE_FEATURES == YES
-
-// Texture_CSPs
-#if (ENABLE_CSP_FEATURES == YES)
-uniform bool SHOW_CSPS
-<
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour spaces used";
-  ui_tooltip  = "in %";
-> = true;
-
-uniform bool SHOW_CSP_MAP
-<
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour space map";
-  ui_tooltip  = "        colours:"
-           "\n" "black and white: BT.709"
-           "\n" "           teal: DCI-P3"
-           "\n" "         yellow: BT.2020"
-           "\n" "           blue: AP1"
-           "\n" "            red: AP0"
-           "\n" "           pink: invalid";
-> = false;
-
-uniform bool SHOW_CSP_FROM_CURSOR
-<
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour space from cursor position";
-> = true;
-#else
-  static const bool SHOW_CSPS            = false;
-  static const bool SHOW_CSP_MAP         = false;
-  static const bool SHOW_CSP_FROM_CURSOR = false;
-#endif
 
 // heatmap
 #if (ENABLE_CLL_FEATURES == YES)
@@ -268,6 +268,22 @@ uniform float BRIGHTNESS_HISTOGRAM_SIZE
   ui_max      = 100.f;
   ui_step     = 0.1f;
 > = 70.f;
+
+uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE
+<
+  ui_category = "Brightness histogram";
+  ui_label    = "show minCLL line";
+  ui_tooltip  = "Show a horizontal line where minCLL is on the histogram."
+           "\n" "The line is invisible when minCLL hits 0 nits.";
+> = true;
+
+uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE
+<
+  ui_category = "Brightness histogram";
+  ui_label    = "show maxCLL line";
+  ui_tooltip  = "Show a horizontal line where maxCLL is on the histogram."
+           "\n" "The line is invisible when maxCLL hits above 10000 nits.";
+> = true;
 
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
@@ -345,20 +361,22 @@ uniform float BELOW_NITS_AS_BLACK
   ui_step     = 1.f;
 > = 0.f;
 #else
-  static const bool  SHOW_HEATMAP                    = false;
-  static const uint  HEATMAP_CUTOFF_POINT            = 0;
-  static const float HEATMAP_BRIGHTNESS              = 0.f;
-  static const bool  SHOW_BRIGHTNESS_HISTOGRAM       = false;
-  static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS = 0.f;
-  static const float BRIGHTNESS_HISTOGRAM_SIZE       = 0.f;
-  static const bool  HIGHLIGHT_NIT_RANGE             = false;
-  static const float HIGHLIGHT_NIT_RANGE_START_POINT = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_END_POINT   = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS  = 0.f;
-  static const bool  DRAW_ABOVE_NITS_AS_BLACK        = false;
-  static const float ABOVE_NITS_AS_BLACK             = 0.f;
-  static const bool  DRAW_BELOW_NITS_AS_BLACK        = false;
-  static const float BELOW_NITS_AS_BLACK             = 0.f;
+  static const bool  SHOW_HEATMAP                          = false;
+  static const uint  HEATMAP_CUTOFF_POINT                  = 0;
+  static const float HEATMAP_BRIGHTNESS                    = 0.f;
+  static const bool  SHOW_BRIGHTNESS_HISTOGRAM             = false;
+  static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS       = 0.f;
+  static const float BRIGHTNESS_HISTOGRAM_SIZE             = 0.f;
+  static const bool  BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE = false;
+  static const bool  BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE = false;
+  static const bool  HIGHLIGHT_NIT_RANGE                   = false;
+  static const float HIGHLIGHT_NIT_RANGE_START_POINT       = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_END_POINT         = 0.f;
+  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS        = 0.f;
+  static const bool  DRAW_ABOVE_NITS_AS_BLACK              = false;
+  static const float ABOVE_NITS_AS_BLACK                   = 0.f;
+  static const bool  DRAW_BELOW_NITS_AS_BLACK              = false;
+  static const float BELOW_NITS_AS_BLACK                   = 0.f;
 #endif //ENABLE_CLL_FEATURES == YES
 
 
@@ -2931,8 +2949,8 @@ technique lilium__hdr_analysis
 
   pass RenderBrightnessHistogramToScale
   {
-    VertexShader = PostProcessVS;
-     PixelShader = RenderBrightnessHistogramToScale;
+    VertexShader = VS_PrepareRenderBrightnessHistogramToScale;
+     PixelShader = PS_RenderBrightnessHistogramToScale;
     RenderTarget = Texture_Brightness_Histogram_Final;
   }
 #endif

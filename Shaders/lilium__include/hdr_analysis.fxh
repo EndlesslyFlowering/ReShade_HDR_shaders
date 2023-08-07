@@ -676,26 +676,91 @@ void ComputeBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
   }
 }
 
-void RenderBrightnessHistogramToScale(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 Out      : SV_TARGET)
+// Vertex shader generating a triangle covering the entire screen.
+// Calculate values only "once" (3 times because it's 3 vertices)
+// for the pixel shader.
+void VS_PrepareRenderBrightnessHistogramToScale(
+  in                  uint   Id             : SV_VertexID,
+  out                 float4 VPos           : SV_Position,
+  out                 float2 TexCoord       : TEXCOORD0,
+  out nointerpolation int2   CllWhiteLinesY : CllWhiteLinesY)
 {
-  const int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH  - 0.5f - 250.f),
-                                    round(TexCoord.y * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT - 0.5f -  64.f));
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-  if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH
-   && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)
+#define minCllWhiteLineY CllWhiteLinesY.x
+#define maxCllWhiteLineY CllWhiteLinesY.y
+
+  if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
-    Out = float4(tex2D(Sampler_Brightness_Histogram_Scale, TexCoord).rgb
-                  + tex2Dfetch(Sampler_Brightness_Histogram, histogramCoords).rgb
-             , 1.f);
-    return;
+    if (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE)
+    {
+      float minCll = tex2Dfetch(Sampler_Consolidated, COORDS_MINCLL_VALUE).r;
+
+      int yPos =
+        min(
+          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(minCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
+        , 1023);
+
+      minCllWhiteLineY = minCll > 0.f ? yPos
+                                      : -1;
+    }
+
+    if (BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)
+    {
+      float maxCll = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+
+      int yPos =
+        max(
+          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(maxCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
+        , 0);
+
+      maxCllWhiteLineY = maxCll < 10000.f ? yPos
+                                          : -1;
+    }
   }
-  else
+}
+
+void PS_RenderBrightnessHistogramToScale(
+  in                  float4 VPos           : SV_Position,
+  in                  float2 TexCoord       : TEXCOORD0,
+  in  nointerpolation int2   CllWhiteLinesY : CllWhiteLinesY,
+  out                 float4 Out            : SV_TARGET0)
+{
+  if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
-    Out = tex2D(Sampler_Brightness_Histogram_Scale, TexCoord);
-    return;
+    int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH  - 0.5f - 250.f),
+                                round(TexCoord.y * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT - 0.5f -  64.f));
+
+    if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH
+     && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)
+    {
+      if (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE && (histogramCoords.y == minCllWhiteLineY
+                                                 || histogramCoords.y == minCllWhiteLineY - 1))
+      {
+        Out = float4(1.f, 1.f, 1.f, 1.f);
+        return;
+      }
+      if (BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE && (histogramCoords.y == maxCllWhiteLineY
+                                                 || histogramCoords.y == maxCllWhiteLineY + 1
+                                                 || histogramCoords.y == maxCllWhiteLineY + 2))
+      {
+        Out = float4(1.f, 1.f, 0.f, 1.f);
+        return;
+      }
+      Out = float4(tex2D(Sampler_Brightness_Histogram_Scale, TexCoord).rgb
+                 + tex2Dfetch(Sampler_Brightness_Histogram, histogramCoords).rgb
+            , 1.f);
+      return;
+    }
+    else
+    {
+      Out = tex2D(Sampler_Brightness_Histogram_Scale, TexCoord);
+      return;
+    }
   }
 }
 
