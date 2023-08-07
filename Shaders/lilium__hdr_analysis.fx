@@ -2588,42 +2588,48 @@ void VS_PrepareHdrAnalysis(
 
 #endif
 
-  uint activeLines = (SHOW_CLL_VALUES ? ShowCllValuesLineCount
-                                      : 0)
-                   + (SHOW_CLL_FROM_CURSOR ? ShowCllFromCursorLineCount
-                                           : 0)
-                   + (SHOW_CSPS ? ShowCspsLineCount
-                                : 0)
-                   + (SHOW_CSP_FROM_CURSOR ? 1
-                                           : 0);
-
-  uint activeCharacters =
-    max(max(max((SHOW_CLL_VALUES ? 25
-                                 : 0),
-                (SHOW_CLL_FROM_CURSOR ? 28
-                                      : 0)),
-                (SHOW_CSPS ? 16
-                           : 0)),
-                (SHOW_CSP_FROM_CURSOR ? 18
-                                      : 0));
-
-  uint2 charSize = GetCharSize();
-  uint2 currentOverlayDimensions = charSize
-                                 * uint2(activeCharacters, activeLines);
-  currentOverlayDimensions.y += max(SHOW_CLL_VALUES
-                                  + SHOW_CLL_FROM_CURSOR
-                                  + SHOW_CSPS
-                                  + SHOW_CSP_FROM_CURSOR
-                                  - 1, 0) * charSize.y * SPACING;
-
-  float2 bufferDimInFloat = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-
-  CurrentActiveOverlayArea = (currentOverlayDimensions - 1 + 0.5f)
-                           / bufferDimInFloat;
-
-  if (TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
+  if (SHOW_CLL_VALUES
+   || SHOW_CLL_FROM_CURSOR
+   || SHOW_CSPS
+   || SHOW_CSP_FROM_CURSOR)
   {
-    CurrentActiveOverlayArea.x = 1.f - CurrentActiveOverlayArea.x;
+    uint activeLines = (SHOW_CLL_VALUES ? ShowCllValuesLineCount
+                                        : 0)
+                     + (SHOW_CLL_FROM_CURSOR ? ShowCllFromCursorLineCount
+                                             : 0)
+                     + (SHOW_CSPS ? ShowCspsLineCount
+                                  : 0)
+                     + (SHOW_CSP_FROM_CURSOR ? 1
+                                             : 0);
+
+    uint activeCharacters =
+      max(max(max((SHOW_CLL_VALUES ? 25
+                                   : 0),
+                  (SHOW_CLL_FROM_CURSOR ? 28
+                                        : 0)),
+                  (SHOW_CSPS ? 16
+                             : 0)),
+                  (SHOW_CSP_FROM_CURSOR ? 18
+                                        : 0));
+
+    uint2 charSize = GetCharSize();
+    uint2 currentOverlayDimensions = charSize
+                                   * uint2(activeCharacters, activeLines);
+    currentOverlayDimensions.y += max(SHOW_CLL_VALUES
+                                    + SHOW_CLL_FROM_CURSOR
+                                    + SHOW_CSPS
+                                    + SHOW_CSP_FROM_CURSOR
+                                    - 1, 0) * charSize.y * SPACING;
+
+    float2 bufferDimInFloat = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+    CurrentActiveOverlayArea = (currentOverlayDimensions - 1 + 0.5f)
+                             / bufferDimInFloat;
+
+    if (TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
+    {
+      CurrentActiveOverlayArea.x = 1.f - CurrentActiveOverlayArea.x;
+    }
   }
 
 
@@ -2641,7 +2647,7 @@ void PS_HdrAnalysis(
   in  nointerpolation uint2  CieDiagramTextureDisplaySize          : CieDiagramTextureDisplaySize,
   in                  float2 CurrentActiveOverlayArea              : CurrentActiveOverlayArea)
 {
-  Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
+  Output = tex2D(ReShade::BackBuffer, TexCoord).rgba;
 
 
   if (SHOW_CSP_MAP
@@ -2766,49 +2772,50 @@ void PS_HdrAnalysis(
 #endif
 
 
-  float4 overlay;
-  if (TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
-  {
-    if (TexCoord.x <= CurrentActiveOverlayArea.x
-     && TexCoord.y <= CurrentActiveOverlayArea.y)
-    {
-      overlay = tex2D(SamplerTextOverlay, (TexCoord
-                                        * float2(BUFFER_WIDTH, BUFFER_HEIGHT)
-                                        / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT))).rgba;
-    }
-  }
-  else
-  {
-    if (TexCoord.x >= CurrentActiveOverlayArea.x
-     && TexCoord.y <= CurrentActiveOverlayArea.y)
-    {
-      overlay = tex2D(SamplerTextOverlay, float2(TexCoord.x - CurrentActiveOverlayArea.x, TexCoord.y)
-                                        * float2(BUFFER_WIDTH, BUFFER_HEIGHT)
-                                        / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT)).rgba;
-    }
-  }
+#if (ENABLE_CLL_FEATURES == YES) \
+  || ENABLE_CSP_FEATURES == YES)
 
-  overlay = pow(overlay, 2.2f);
+  if (SHOW_CLL_VALUES
+   || SHOW_CLL_FROM_CURSOR
+   || SHOW_CSPS
+   || SHOW_CSP_FROM_CURSOR)
+  {
+    float4 overlay;
+    if (TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
+    {
+      if (TexCoord.x <= CurrentActiveOverlayArea.x
+       && TexCoord.y <= CurrentActiveOverlayArea.y)
+      {
+        overlay = tex2D(SamplerTextOverlay, (TexCoord
+                                          * float2(BUFFER_WIDTH, BUFFER_HEIGHT)
+                                          / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT))).rgba;
+      }
+    }
+    else
+    {
+      if (TexCoord.x >= CurrentActiveOverlayArea.x
+       && TexCoord.y <= CurrentActiveOverlayArea.y)
+      {
+        overlay = tex2D(SamplerTextOverlay, float2(TexCoord.x - CurrentActiveOverlayArea.x, TexCoord.y)
+                                          * float2(BUFFER_WIDTH, BUFFER_HEIGHT)
+                                          / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT)).rgba;
+      }
+    }
 
+    overlay = pow(overlay, 2.2f);
+
+    overlay = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(overlay.rgb * TEXT_BRIGHTNESS),
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  overlay = float4(Csp::Map::Bt709Into::Scrgb(overlay.rgb * TEXT_BRIGHTNESS), pow(overlay.a, 1.f / 2.6f));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-  overlay = float4(Csp::Map::Bt709Into::Hdr10(overlay.rgb * TEXT_BRIGHTNESS), overlay.a);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  overlay = float4(Csp::Map::Bt709Into::Hlg(overlay.rgb * TEXT_BRIGHTNESS), overlay.a);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-  overlay = float4(Csp::Map::Bt709Into::Ps5(overlay.rgb * TEXT_BRIGHTNESS), pow(overlay.a, 1.f / 2.6f));
-
+                     pow(overlay.a, 1.f / 2.6f)
+#else
+                     overlay.a
 #endif
+                    );
 
-  Output = float4(lerp(Output.rgb, overlay.rgb, overlay.a), 1.f);
+    Output = float4(lerp(Output.rgb, overlay.rgb, overlay.a), 1.f);
+  }
+
+#endif //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
 
 }
 
