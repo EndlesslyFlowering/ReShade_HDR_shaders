@@ -9,6 +9,7 @@
   #define BUFFER_COLOR_SPACE    2
 #endif
 
+#define VS_PostProcess PostProcessVS
 
 #define YES 1
 #define NO  0

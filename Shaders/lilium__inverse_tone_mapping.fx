@@ -5,10 +5,13 @@
    || __RENDERER__ >= 0x20000)                           \
   && defined(IS_POSSIBLE_HDR_CSP))
 
+// TODO:
+// - implement vertex shader for optimisation
+// - add namespace for UI
 
 #include "lilium__include/draw_text_fix.fxh"
 
-#define ENABLE_DICE 0
+//#define ENABLE_DICE
 
 uniform uint ITM_METHOD
 <
@@ -212,7 +215,7 @@ uniform float BT2446C_ALPHA
 //      ui_step = 0.001f;
 //> = 0.5f;
 
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
 uniform float DICE_INPUT_BRIGHTNESS
 <
   ui_category = "Dice";
@@ -235,7 +238,7 @@ uniform float DICE_SHOULDER_START
   ui_max      = 100.f;
   ui_step     = 0.1f;
 > = 50.f;
-#endif
+#endif //ENABLE_DICE
 
 uniform float MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS
 <
@@ -249,7 +252,7 @@ uniform float MAP_SDR_INTO_HDR_TARGET_BRIGHTNESS
 > = 203.f;
 
 
-void InverseToneMapping(
+void PS_InverseToneMapping(
       float4     VPos : SV_Position,
       float2 TexCoord : TEXCOORD,
   out float4   Output : SV_Target)
@@ -284,20 +287,20 @@ void InverseToneMapping(
 
   //hdr = gamut(hdr, EXPAND_GAMUT);
 
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
   const float diceReferenceWhite = (DICE_INPUT_BRIGHTNESS / 80.f);
-#endif
+#endif //ENABLE_DICE
 
   if (ITM_METHOD != ITM_METHOD_DICE_INVERSE)
   {
     hdr = Csp::Mat::Bt709To::Bt2020(hdr);
   }
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
   else
   {
     hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
   }
-#endif
+#endif //ENABLE_DICE
 
   switch (ITM_METHOD)
   {
@@ -333,7 +336,7 @@ void InverseToneMapping(
     }
     break;
 
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
 
     case ITM_METHOD_DICE_INVERSE:
     {
@@ -345,7 +348,7 @@ void InverseToneMapping(
     }
     break;
 
-#endif
+#endif //ENABLE_DICE
 
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
@@ -357,14 +360,14 @@ void InverseToneMapping(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
 
   if (ITM_METHOD == ITM_METHOD_DICE_INVERSE)
   {
     hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
   }
 
-#endif
+#endif //ENABLE_DICE
 
   hdr = Csp::Trc::ToPq(hdr);
 
@@ -375,22 +378,22 @@ void InverseToneMapping(
     hdr = Csp::Mat::Bt2020To::Bt709(hdr);
   }
 
-#if (ENABLE_DICE != 0)
+#ifdef ENABLE_DICE
 
   else
   {
     hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
   }
 
-#endif
+#endif //ENABLE_DICE
 
-  hdr = hdr * 125.f; // 125 = 10000 / 80
+  hdr *= 125.f; // 125 = 10000 / 80
 
-#else
+#else //ACTUAL_COLOUR_SPACE ==
 
   hdr = float3(0.f, 0.f, 0.f);
 
-#endif
+#endif //ACTUAL_COLOUR_SPACE ==
 
   Output = float4(hdr, 1.f);
 }
@@ -400,10 +403,10 @@ technique lilium__inverse_tone_mapping
   ui_label = "Lilium's inverse tone mapping";
 >
 {
-  pass InverseToneMapping
+  pass PS_InverseToneMapping
   {
-    VertexShader = PostProcessVS;
-     PixelShader = InverseToneMapping;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_InverseToneMapping;
   }
 }
 

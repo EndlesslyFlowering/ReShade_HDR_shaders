@@ -2,6 +2,10 @@
 
 //#define _DEBUG
 
+// TODO:
+// - implement vertex shader for optimisation ?
+// - add namespace for UI
+
 uniform uint INPUT_TRC
 <
   ui_label = "input TRC";
@@ -63,50 +67,51 @@ uniform float BT1886_TARGET_BLACKPOINT
 > = 0.f;
 
 
-float3 BT1886_gamma(
-  const float3 V,
-  const float  TargetInverseGamma)
+float3 Bt1886(
+  float3 V,
+  float  TargetInverseGamma)
 {
-  const float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-  const float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
+  float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
+  float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
 
-  const float powLw_minus_powLb = powLw - powLb;
+  float powLw_minus_powLb = powLw - powLb;
 
-  const float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
-  const float b = powLb /
-                  (powLw_minus_powLb);
+  float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
+  float b = powLb /
+            (powLw_minus_powLb);
 
-  const float3 L = a * pow(max(V + b.xxx, 0.f.xxx), TARGET_POWER_GAMMA);
+  float3 L = a * pow(max(V + b.xxx, 0.f.xxx), TARGET_POWER_GAMMA);
 
   return pow(L / BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
 }
 
 
-void SDR_TRC_Fix(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
+void PS_SdrTrcFix(
+  in  float4 VPos     : SV_Position,
+  in  float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
-
-  float3 fixedGamma;
+  float3 fixedGamma = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
   if (INPUT_TRC == 0)
   {
-    fixedGamma = Csp::Trc::FromSrgb(input);
+    fixedGamma = Csp::Trc::FromSrgb(fixedGamma);
   }
   else
   {
-    fixedGamma = pow(input, INPUT_POWER_GAMMA);
+    fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
   }
 
   if (TARGET_TRC == 0)
   {
-    const float targetInverseGamma = 1.f / TARGET_POWER_GAMMA;
+    float targetInverseGamma = 1.f / TARGET_POWER_GAMMA;
 
     fixedGamma = pow(fixedGamma, targetInverseGamma);
+
     if (USE_BT1886)
-      fixedGamma = BT1886_gamma(fixedGamma, targetInverseGamma);
+    {
+      fixedGamma = Bt1886(fixedGamma, targetInverseGamma);
+    }
   }
   else
   {
@@ -122,9 +127,9 @@ technique lilium__sdr_trc_fix
   ui_label = "Lilium's SDR TRC fix";
 >
 {
-  pass SDR_TRC_Fix
+  pass PS_SdrTrcFix
   {
-    VertexShader = PostProcessVS;
-     PixelShader = SDR_TRC_Fix;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_SdrTrcFix;
   }
 }

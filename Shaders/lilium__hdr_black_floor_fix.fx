@@ -125,7 +125,7 @@ technique lilium__hdr_black_floor_fix
   ui_label = "Lilium's HDR black floor fix";
 >
 {
-  pass HdrBlackFloorFix
+  pass PS_HdrBlackFloorFix
   {
     VertexShader = VS_PrepareHdrBlackFloorFix;
      PixelShader = PS_HdrBlackFloorFix;

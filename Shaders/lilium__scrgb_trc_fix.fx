@@ -5,6 +5,9 @@
    || __RENDERER__ >= 0x20000)                           \
   && defined(IS_POSSIBLE_HDR_CSP))
 
+// TODO:
+// - add namespace for UI
+
 
 uniform uint INPUT_TRC
 <
@@ -74,14 +77,12 @@ uniform float CLAMP_POSITIVE_TO
 > = 125.f;
 
 
-void ScrgbTrcFix(
+void PS_ScrgbTrcFix(
       float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
+      float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
-
-  float3 fixedGamma = input;
+  float3 fixedGamma = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
   if (INPUT_TRC == TRC_SRGB)
   {
@@ -125,11 +126,11 @@ void ScrgbTrcFix(
 
 #if (CSP_OVERRIDE == CSP_PS5)
 
-    fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
+  fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
 
 #else
 
-    fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
+  fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
 
 #endif
 
@@ -146,10 +147,10 @@ technique lilium__scRGB_trc_fix
   ui_label = "Lilium's scRGB TRC fix";
 >
 {
-  pass scRGB_TRC_fix
+  pass PS_ScrgbTrcFix
   {
-    VertexShader = PostProcessVS;
-     PixelShader = ScrgbTrcFix;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_ScrgbTrcFix;
   }
 }
 

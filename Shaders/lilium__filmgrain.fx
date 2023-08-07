@@ -2,6 +2,10 @@
 
 #include "lilium__include/colour_space.fxh"
 
+// TODO:
+// - implement vertex shader for optimisation
+// - add namespace for UI
+
 uniform float INTENSITY
 <
   ui_label = "grain INTENSITY";
@@ -36,7 +40,7 @@ static const float a2 =  1.365020122861334;
 static const float b0 =  0.132089632343748;
 static const float b1 = -0.7607324991323768;
 
-void filmgrain(
+void PS_Filmgrain(
       float4 Vpos     : SV_Position,
       float2 Texcoord : TEXCOORD,
   out float4 Output   : SV_TARGET)
@@ -107,9 +111,9 @@ technique lilium__filmgrain
   ui_label = "Lilium's filmgrain";
 >
 {
-  pass filmgrain
+  pass PS_Filmgrain
   {
-    VertexShader = PostProcessVS;
-     PixelShader = filmgrain;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_Filmgrain;
   }
 }

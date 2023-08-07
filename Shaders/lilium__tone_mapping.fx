@@ -326,7 +326,7 @@ uniform float TEST_S
 
 
 //static const uint numberOfAdaptiveValues = 1000;
-//texture2D Texture_Adaptive_CLL_Values
+//texture2D TextureAdaptiveCllValues
 //{
 //   Width = numberOfAdaptiveValues;
 //  Height = 2;
@@ -336,16 +336,16 @@ uniform float TEST_S
 //  Format = R32F;
 //};
 //
-//sampler2D Sampler_Adaptive_CLL_Values
+//sampler2D SamplerAdaptiveCllValues
 //{
-//  Texture = Texture_Adaptive_CLL_Values;
+//  Texture = TextureAdaptiveCllValues;
 //
 //  SRGBTexture = false;
 //};
 //
-//storage2D Storage_Adaptive_CLL_Values
+//storage2D StorageAdaptiveCllValues
 //{
-//  Texture = Texture_Adaptive_CLL_Values;
+//  Texture = TextureAdaptiveCllValues;
 //
 //  MipLevel = 0;
 //};
@@ -374,7 +374,7 @@ void VS_PrepareToneMapping(
   }
   else
   {
-    usedMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+    usedMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL).r;
   }
 
   usedMaxCll = usedMaxCll > Ui::ToneMapping::Global::TargetBrightness
@@ -640,12 +640,12 @@ void PS_ToneMapping(
                                          __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
   const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
 
-  const float actualMaxCll = tex2Dfetch(Sampler_Consolidated, COORDS_MAXCLL_VALUE).r;
+  const float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE).r;
 
-  const float avgMaxCllInPq = tex2Dfetch(Sampler_Consolidated, COORDS_AVERAGED_MAXCLL).r;
+  const float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL).r;
   const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
 
-  const float adaptiveMaxCll     = tex2Dfetch(Sampler_Consolidated, COORDS_ADAPTIVE_CLL).r;
+  const float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL).r;
   const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
 
   const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
@@ -672,35 +672,35 @@ void PS_ToneMapping(
 }
 
 
-void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
+void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCllinPqAveraged = (tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL0).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL1).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL2).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL3).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL4).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL5).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL6).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL7).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL8).r
-                                         + tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL9).r) / 10.f;
+  const float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8).r
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9).r) / 10.f;
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGED_MAXCLL, currentMaxCllinPqAveraged);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGED_MAXCLL, currentMaxCllinPqAveraged);
 
 #endif
 
   const float currentMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(Storage_Consolidated, COORDS_MAXCLL_VALUE).r);
+    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE).r);
   const float currentAdaptiveMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(Storage_Consolidated, COORDS_ADAPTIVE_CLL).r);
+    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL).r);
 
-  const int curSlot = tex2Dfetch(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR).r;
+  const int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR).r;
   const int newSlot = curSlot > 10 ? 1
                                    : curSlot + 1;
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CUR
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR
                                  + int2(newSlot, 0), currentMaxCllInPQ);
 
   const float absFrametime = abs(RuntimeValues::Frametime);
@@ -734,7 +734,7 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 
   barrier();
 
-  tex2Dstore(Storage_Consolidated,
+  tex2Dstore(StorageConsolidated,
              COORDS_ADAPTIVE_CLL,
              min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt),
                  Ui::ToneMapping::AdaptiveMode::MaxCllCap));
@@ -742,18 +742,18 @@ void AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 }
 
 
-void ResetAveragedMaxCll(uint3 ID : SV_DispatchThreadID)
+void CS_ResetAveragedMaxCll(uint3 ID : SV_DispatchThreadID)
 {
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL0, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL1, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL2, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL3, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL4, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL5, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL6, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL7, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL8, 10000.f);
-  tex2Dstore(Storage_Consolidated, COORDS_AVERAGE_MAXCLL_CLL9, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8, 10000.f);
+  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9, 10000.f);
 }
 
 
@@ -762,30 +762,30 @@ void ResetAveragedMaxCll(uint3 ID : SV_DispatchThreadID)
 //  enabled = false;
 //>
 //{
-//  pass CalcCLL
+//  pass PS_CalcCllPerPixel
 //  {
-//    VertexShader = PostProcessVS;
-//     PixelShader = CalcCLL;
-//    RenderTarget = Texture_CLL_Values;
+//    VertexShader = VS_PostProcess;
+//     PixelShader = PS_CalcCllPerPixel;
+//    RenderTarget = TextureCllValues;
 //  }
 //
-//  pass GetMaxCLL0
+//  pass CS_GetMaxCll0
 //  {
-//    ComputeShader = GetMaxCLL0 <THREAD_SIZE1, 1>;
+//    ComputeShader = CS_GetMaxCll0 <THREAD_SIZE1, 1>;
 //    DispatchSizeX = DISPATCH_X1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass GetMaxCLL1
+//  pass CS_GetMaxCll1
 //  {
-//    ComputeShader = GetMaxCLL1 <1, 1>;
+//    ComputeShader = CS_GetMaxCll1 <1, 1>;
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
 //
-//  pass AdaptiveCLL
+//  pass CS_AdaptiveCLL
 //  {
-//    ComputeShader = AdaptiveCLL <1, 1>;
+//    ComputeShader = CS_AdaptiveCLL <1, 1>;
 //    DispatchSizeX = 1;
 //    DispatchSizeY = 1;
 //  }
@@ -798,9 +798,9 @@ technique lilium__reset_averaged_max_cll_values
   timeout = 1;
 >
 {
-  pass ResetAveragedMaxCll
+  pass CS_ResetAveragedMaxCll
   {
-    ComputeShader = ResetAveragedMaxCll <1, 1>;
+    ComputeShader = CS_ResetAveragedMaxCll <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -813,37 +813,37 @@ technique lilium__tone_mapping_adaptive_maximum_brightness
   enabled    = false;
 >
 {
-  pass CalcCLL
+  pass PS_CalcCllPerPixel
   {
-    VertexShader = PostProcessVS;
-     PixelShader = CalcCLL;
-    RenderTarget = Texture_CLL_Values;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_CalcCllPerPixel;
+    RenderTarget = TextureCllValues;
   }
 
-  pass GetMaxCLL0_NEW
+  pass CS_GetMaxCll0_NEW
   {
-    ComputeShader = GetMaxCLL0_NEW <THREAD_SIZE1, 1>;
+    ComputeShader = CS_GetMaxCll0_NEW <THREAD_SIZE1, 1>;
     DispatchSizeX = DISPATCH_X1;
     DispatchSizeY = 2;
   }
 
-  pass GetMaxCLL1_NEW
+  pass CS_GetMaxCll1_NEW
   {
-    ComputeShader = GetMaxCLL1_NEW <1, 1>;
+    ComputeShader = CS_GetMaxCll1_NEW <1, 1>;
     DispatchSizeX = 2;
     DispatchSizeY = 2;
   }
 
-  pass GetFinalMaxCLL_NEW
+  pass CS_GetFinalMaxCll_NEW
   {
-    ComputeShader = GetFinalMaxCLL_NEW <1, 1>;
+    ComputeShader = CS_GetFinalMaxCll_NEW <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
-  pass AdaptiveCLL
+  pass CS_AdaptiveCLL
   {
-    ComputeShader = AdaptiveCLL <1, 1>;
+    ComputeShader = CS_AdaptiveCLL <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -854,7 +854,7 @@ technique lilium__tone_mapping
   ui_label = "Lilium's tone mapping";
 >
 {
-  pass ToneMapping
+  pass PS_ToneMapping
   {
     VertexShader = VS_PrepareToneMapping;
      PixelShader = PS_ToneMapping;
