@@ -81,9 +81,8 @@ static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
 #define IS_CSP_BT709   0
 #define IS_CSP_DCI_P3  1
 #define IS_CSP_BT2020  2
-#define IS_CSP_AP1     3
-#define IS_CSP_AP0     4
-#define IS_CSP_INVALID 5
+#define IS_CSP_AP0     3
+#define IS_CSP_INVALID 4
 
 
 uniform float2 PINGPONG
@@ -420,18 +419,17 @@ static const int2 COORDS_AVGCLL_VALUE   = int2(2 + MAX_AVG_MIN_CLL_VALUES_X_OFFS
 static const int2 COORDS_MINCLL_VALUE   = int2(3 + MAX_AVG_MIN_CLL_VALUES_X_OFFSET, MAX_AVG_MIN_CLL_VALUES_Y_OFFSET);
 
 
-// (6) CSP counter for BT.709, DCI-P3, BT.2020, AP1, AP0 and invalid
+// (6) CSP counter for BT.709, DCI-P3, BT.2020, AP0 and invalid
 #define CSP_COUNTER_FINAL_X_OFFSET 16
 #define CSP_COUNTER_FINAL_Y_OFFSET 12
 static const int2 COORDS_CSP_PERCENTAGE_BT709   = int2(    CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
 static const int2 COORDS_CSP_PERCENTAGE_DCI_P3  = int2(1 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
 static const int2 COORDS_CSP_PERCENTAGE_BT2020  = int2(2 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_AP1     = int2(3 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_AP0     = int2(4 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_INVALID = int2(5 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_AP0     = int2(3 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
+static const int2 COORDS_CSP_PERCENTAGE_INVALID = int2(4 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
 
 
-// (9) show values for max, avg and min CLL plus CSP % for BT.709, DCI-P3, BT.2020, AP1, AP0 and invalid
+// (9) show values for max, avg and min CLL plus CSP % for BT.709, DCI-P3, BT.2020, AP0 and invalid
 #define SHOW_VALUES_X_OFFSET 22
 #define SHOW_VALUES_Y_OFFSET 12
 static const int2 COORDS_SHOW_MAXCLL             = int2(    SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
@@ -440,9 +438,8 @@ static const int2 COORDS_SHOW_MINCLL             = int2(2 + SHOW_VALUES_X_OFFSET
 static const int2 COORDS_SHOW_PERCENTAGE_BT709   = int2(3 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
 static const int2 COORDS_SHOW_PERCENTAGE_DCI_P3  = int2(4 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
 static const int2 COORDS_SHOW_PERCENTAGE_BT2020  = int2(5 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
-static const int2 COORDS_SHOW_PERCENTAGE_AP1     = int2(6 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
-static const int2 COORDS_SHOW_PERCENTAGE_AP0     = int2(7 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
-static const int2 COORDS_SHOW_PERCENTAGE_INVALID = int2(8 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_AP0     = int2(6 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
+static const int2 COORDS_SHOW_PERCENTAGE_INVALID = int2(7 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
 
 
 // (1) adaptive CLL for tone mapping
@@ -1598,10 +1595,6 @@ float GetCSP(precise const float3 XYZ)
     {
       return IS_CSP_BT2020 / 255.f;
     }
-    else if (IsCSP(Csp::Mat::XYZTo::AP1(XYZ)))
-    {
-      return IS_CSP_AP1 / 255.f;
-    }
     else if (IsCSP(Csp::Mat::XYZTo::AP0(XYZ)))
     {
       return IS_CSP_AP0 / 255.f;
@@ -1745,8 +1738,6 @@ void PS_CalcCsps(
   int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_DCI_P3  + CSP_COUNTER_Y_OFFSET)
 #define COORDS_CSP_COUNTER_BT2020(X) \
   int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_BT2020  + CSP_COUNTER_Y_OFFSET)
-#define COORDS_CSP_COUNTER_AP1(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_AP1     + CSP_COUNTER_Y_OFFSET)
 #define COORDS_CSP_COUNTER_AP0(X) \
   int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_AP0     + CSP_COUNTER_Y_OFFSET)
 #define COORDS_CSP_COUNTER_INVALID(X) \
@@ -1770,7 +1761,6 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
       uint counter_BT2020  = 0;
-      uint counter_AP1     = 0;
       uint counter_AP0     = 0;
 
 #endif //IS_FLOAT_HDR_CSP
@@ -1793,10 +1783,6 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
         {
           counter_BT2020++;
         }
-        else if (curCSP == IS_CSP_AP1)
-        {
-          counter_AP1++;
-        }
         else if (curCSP == IS_CSP_AP0)
         {
           counter_AP0++;
@@ -1811,7 +1797,6 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(ID.x), counter_BT2020);
-      tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_AP1(ID.x),    counter_AP1);
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_AP0(ID.x),    counter_AP0);
 
 #endif //IS_FLOAT_HDR_CSP
@@ -1834,7 +1819,6 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
     uint counter_BT2020 = 0;
-    uint counter_AP1    = 0;
     uint counter_AP0    = 0;
 
 #endif //IS_FLOAT_HDR_CSP
@@ -1847,7 +1831,6 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
       counter_BT2020  += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(x)));
-      counter_AP1     += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_AP1(x)));
       counter_AP0     += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_AP0(x)));
 
 #endif //IS_FLOAT_HDR_CSP
@@ -1861,7 +1844,6 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020, counter_BT2020 / PIXELS);
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP1,    counter_AP1    / PIXELS);
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0,    counter_AP0    / PIXELS);
 
 #endif //IS_FLOAT_HDR_CSP
@@ -1894,19 +1876,12 @@ float3 Create_CSP_Map(
       } break;
       case IS_CSP_DCI_P3:
       {
-        // teal
-        output = float3(0.f,
-                        Y,
-                        Y);
-      } break;
-      case IS_CSP_BT2020:
-      {
         // yellow
         output = float3(Y,
                         Y,
                         0.f);
       } break;
-      case IS_CSP_AP1:
+      case IS_CSP_BT2020:
       {
         // blue
         output = float3(0.f,
@@ -1920,7 +1895,7 @@ float3 Create_CSP_Map(
                         0.f,
                         0.f);
       } break;
-      default: // else
+      default: // invalid
       {
         // pink
         output = float3(Y,
@@ -1983,13 +1958,10 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    precise float counter_AP1     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP1)
-                                  * 100.f;
     precise float counter_AP0     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
                                   * 100.f;
     precise float counter_invalid = 100.f
                                   - counter_AP0
-                                  - counter_AP1
                                   - counter_BT2020
                                   - counter_DCI_P3
                                   - counter_BT709;
@@ -2008,7 +1980,6 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP1,     counter_AP1);
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0,     counter_AP0);
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID, counter_invalid);
 
