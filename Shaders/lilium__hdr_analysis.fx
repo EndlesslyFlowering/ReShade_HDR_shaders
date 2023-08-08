@@ -2895,6 +2895,27 @@ technique lilium__hdr_analysis_TESTY
 }
 #endif //_TESTY
 
+void CS_MakeOverlayBgRedraw(uint3 ID : SV_DispatchThreadID)
+{
+  tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
+  return;
+}
+
+technique lilium__make_overlay_bg_redraw
+<
+  enabled = true;
+  hidden  = true;
+  timeout = 1;
+>
+{
+  pass CS_MakeOverlayBgRedraw
+  {
+    ComputeShader = CS_MakeOverlayBgRedraw <1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+}
+
 technique lilium__hdr_analysis
 <
   ui_label = "Lilium's HDR analysis";
