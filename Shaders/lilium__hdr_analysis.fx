@@ -647,7 +647,9 @@ uint2 GetCharSize()
   }
 }
 
-#define SPACING 0.3f
+#define SPACING_MULTIPLIER  0.3f
+#define OUTER_SPACING      15.f
+#define OUTER_SPACING_X2    2.f * OUTER_SPACING
 
 static const float ShowCllValuesLineCount     = 3;
 static const float ShowCllFromCursorLineCount = 1;
@@ -717,7 +719,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 #if (ENABLE_CLL_FEATURES == YES)
     float cursorCllYOffset = (!SHOW_CLL_VALUES
                             ? -ShowCllValuesLineCount
-                            : SPACING);
+                            : SPACING_MULTIPLIER);
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL,
                cursorCllYOffset);
@@ -726,17 +728,17 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 #if (ENABLE_CSP_FEATURES == YES)
     float cspsYOffset = ((!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR)
                        ? -(ShowCllValuesLineCount
-                         - SPACING)
+                         - SPACING_MULTIPLIER)
 
                        : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR)
                        ? -(ShowCllFromCursorLineCount
-                         - SPACING)
+                         - SPACING_MULTIPLIER)
 
                        : (!SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR)
                        ? -(ShowCllValuesLineCount
                          + ShowCllFromCursorLineCount)
 
-                       : SPACING * 2);
+                       : SPACING_MULTIPLIER * 2);
 
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS,
@@ -744,30 +746,30 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     float cursorCspYOffset = ((!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR  && SHOW_CSPS)
                             ? -(ShowCllValuesLineCount
-                              - SPACING * 2)
+                              - SPACING_MULTIPLIER * 2)
 
                             : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR && SHOW_CSPS)
                             ? -(ShowCllFromCursorLineCount
-                              - SPACING * 2)
+                              - SPACING_MULTIPLIER * 2)
 
                             : (SHOW_CLL_VALUES  && SHOW_CLL_FROM_CURSOR  && !SHOW_CSPS)
                             ? -(ShowCspsLineCount
-                              - SPACING * 2)
+                              - SPACING_MULTIPLIER * 2)
 
                             : (!SHOW_CLL_VALUES && !SHOW_CLL_FROM_CURSOR && SHOW_CSPS)
                             ? -(ShowCllValuesLineCount
                               + ShowCllFromCursorLineCount
-                              - SPACING)
+                              - SPACING_MULTIPLIER)
 
                             : (!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR  && !SHOW_CSPS)
                             ? -(ShowCllValuesLineCount
                               + ShowCspsLineCount
-                              - SPACING)
+                              - SPACING_MULTIPLIER)
 
                             : (SHOW_CLL_VALUES  && !SHOW_CLL_FROM_CURSOR && !SHOW_CSPS)
                             ? -(ShowCllFromCursorLineCount
                               + ShowCspsLineCount
-                              - SPACING)
+                              - SPACING_MULTIPLIER)
 
                             : (!SHOW_CLL_VALUES && !SHOW_CLL_FROM_CURSOR && !SHOW_CSPS)
                             ? -(ShowCllValuesLineCount
@@ -775,9 +777,9 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                               + ShowCspsLineCount)
 
 #if defined(IS_HDR10_LIKE_CSP)
-                            : SPACING * 3) - 3;
+                            : SPACING_MULTIPLIER * 3) - 3;
 #else //IS_HDR10_LIKE_CSP
-                            : SPACING * 3);
+                            : SPACING_MULTIPLIER * 3);
 #endif //IS_HDR10_LIKE_CSP
 
     tex2Dstore(StorageConsolidated,
@@ -811,11 +813,12 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     uint2 charSize = GetCharSize();
     uint2 activeTextArea = charSize
                          * uint2(activeCharacters, activeLines);
-    activeTextArea.y += max(SHOW_CLL_VALUES
-                          + SHOW_CLL_FROM_CURSOR
-                          + SHOW_CSPS
-                          + SHOW_CSP_FROM_CURSOR
-                          - 1, 0) * charSize.y * SPACING;
+    activeTextArea.x += OUTER_SPACING_X2;
+    activeTextArea.y += (max(SHOW_CLL_VALUES
+                           + SHOW_CLL_FROM_CURSOR
+                           + SHOW_CSPS
+                           + SHOW_CSP_FROM_CURSOR
+                           - 1, 0) * charSize.y * SPACING_MULTIPLIER + OUTER_SPACING_X2);
 
     for (int y = 0; y < TEXTURE_OVERLAY_HEIGHT; y++)
     {
@@ -863,15 +866,15 @@ void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
     {
       uint2 currentOffset = uint2(x, y);
       float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset).rgba;
-      tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + currentOffset, pixel);
+      tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + OUTER_SPACING + currentOffset, pixel);
     }
   }
 }
 
 
-#define cursorCllOffset float2(0, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL))
-#define cspsOffset      float2(0, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS))
-#define cursorCspOffset float2(0, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP))
+#define cursorCllOffset float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL))
+#define cspsOffset      float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS))
+#define cursorCspOffset float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP))
 
 
 void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
@@ -2697,11 +2700,12 @@ void VS_PrepareHdrAnalysis(
     uint2 charSize = GetCharSize();
     uint2 currentOverlayDimensions = charSize
                                    * uint2(activeCharacters, activeLines);
-    currentOverlayDimensions.y += max(SHOW_CLL_VALUES
-                                    + SHOW_CLL_FROM_CURSOR
-                                    + SHOW_CSPS
-                                    + SHOW_CSP_FROM_CURSOR
-                                    - 1, 0) * charSize.y * SPACING;
+    currentOverlayDimensions.x += OUTER_SPACING_X2;
+    currentOverlayDimensions.y += (max(SHOW_CLL_VALUES
+                                     + SHOW_CLL_FROM_CURSOR
+                                     + SHOW_CSPS
+                                     + SHOW_CSP_FROM_CURSOR
+                                     - 1, 0) * charSize.y * SPACING_MULTIPLIER + OUTER_SPACING_X2);
 
     float2 bufferDimInFloat = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 
