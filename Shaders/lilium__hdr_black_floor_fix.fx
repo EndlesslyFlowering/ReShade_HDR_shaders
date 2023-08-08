@@ -71,6 +71,12 @@ void PS_HdrBlackFloorFix(
   out float4 Output       : SV_Target0,
   in  float  FuncParms[5] : FuncParms)
 {
+  if (!Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+   && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
+  {
+    discard;
+  }
+
   float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)

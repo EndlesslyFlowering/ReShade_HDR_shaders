@@ -161,7 +161,7 @@ namespace Ui
         ui_units    = " nits";
         ui_min      = 0.f;
         ui_max      = 0.5f;
-        ui_step     = 0.0000001f;
+        ui_step     = 0.000001f;
       > = 0.f;
 
       uniform float NewBlackPoint

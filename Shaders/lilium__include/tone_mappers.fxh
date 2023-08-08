@@ -216,7 +216,7 @@ namespace ToneMappers
         }
         else if (MinLum == 0.f)
         {
-          return Input;
+          discard;
         }
 
         //E3
@@ -254,7 +254,7 @@ namespace ToneMappers
         }
         else if (MinLum == 0.f)
         {
-          return Input;
+          discard;
         }
 
         //E3
@@ -286,7 +286,7 @@ namespace ToneMappers
         }
         else if (MinLum == 0.f)
         {
-          return Input;
+          discard;
         }
 
         //E3
@@ -379,7 +379,7 @@ namespace ToneMappers
       const uint   ProcessingMode,
       const uint   WorkingColourSpace)
     {
-    
+
     // why does this not work?!
     //  float3x3 RgbToLms = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
     //                    ? RGB_AP0_D65_To_LMS
@@ -431,6 +431,7 @@ namespace ToneMappers
 
         if (i1 < ShoulderStartInPq)
         {
+          //discard;
           return Input;
         }
         else
@@ -455,6 +456,7 @@ namespace ToneMappers
 
         if (y1 < ShoulderStartInPq)
         {
+          //discard;
           return Input;
         }
         else
