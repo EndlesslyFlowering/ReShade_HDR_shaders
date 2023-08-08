@@ -4,7 +4,6 @@
 
 
 // TODO:
-// - use precise for CLL calculations
 // - rework "DISPATCH_DOESNT_OVERFLOW"
 // - fix CIE diagram texture offset
 
@@ -767,9 +766,9 @@ void PS_RenderBrightnessHistogramToScale(
 #endif //HDR_ANALYSIS_ENABLE
 
 void PS_CalcCllPerPixel(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float  CurCLL   : SV_TARGET)
+              float4 VPos     : SV_Position,
+              float2 TexCoord : TEXCOORD,
+  out precise float  CurCll   : SV_TARGET)
 {
 #ifdef HDR_ANALYSIS_ENABLE
   if (SHOW_CLL_VALUES
@@ -782,32 +781,32 @@ void PS_CalcCllPerPixel(
   {
 #endif //HDR_ANALYSIS_ENABLE
 
-    const float3 pixel = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+    precise const float3 pixel = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float curPixel = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    float curPixel = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
 
 #else
 
-    float curPixel = 0.f;
+    float curPixelCll = 0.f;
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-    CurCLL = curPixel >= 0.f ? curPixel
-                             : 0.f;
+    CurCll = curPixelCll >= 0.f ? curPixelCll
+                                : 0.f;
 
     return;
 
