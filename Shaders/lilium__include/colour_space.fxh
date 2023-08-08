@@ -190,15 +190,17 @@
   "\n" "Currently allowed override:"                                           \
   "\n"
 
-#if defined(IS_FLOAT_HDR_CSP)
+#if defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_SCRGB'"
-#elif defined(IS_HDR10_LIKE_CSP)
+#elif defined(IS_POSSIBLE_HDR10_BIT_DEPTH)
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_HDR10'"
 #else
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "none!"
 #endif
 
-#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES)
+#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES \
+  || defined(IS_FLOAT_HDR_CSP)            \
+  || defined(IS_HDR10_LIKE_CSP))
   #define INFO_TEXT INFO_TEXT_BACK_BUFFER
 #else
   #define INFO_TEXT INFO_TEXT_BACK_BUFFER          \
