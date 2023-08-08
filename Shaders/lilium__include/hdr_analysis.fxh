@@ -1959,32 +1959,34 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
   || (pingpong > 0.65f && pingpong < 0.67f)
   ||  pingpong > 0.99f)
   {
-    float maxCLL = tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE);
-    float avgCLL = tex2Dfetch(StorageConsolidated, COORDS_AVGCLL_VALUE);
-    float minCLL = tex2Dfetch(StorageConsolidated, COORDS_MINCLL_VALUE);
+    precise float maxCLL = tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE);
+    precise float avgCLL = tex2Dfetch(StorageConsolidated, COORDS_AVGCLL_VALUE);
+    precise float minCLL = tex2Dfetch(StorageConsolidated, COORDS_MINCLL_VALUE);
 
-    precise float counter_BT709  = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709)
-                                 * 100.f;
-    precise float counter_DCI_P3 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3)
-                                 * 100.f;
+    precise float counter_BT709  = round(tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709)
+                                        * 10000.f) / 100.f;
+    precise float counter_DCI_P3 = round(tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3)
+                                        * 10000.f) / 100.f;
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    precise float counter_BT2020 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020)
-                                 * 100.f;
+    precise float counter_BT2020 = round(tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020)
+                                        * 10000.f) / 100.f;
 
 #else
 
-    precise float counter_BT2020 = 100.f - counter_DCI_P3 - counter_BT709;
+    precise float counter_BT2020 = 100.f
+                                 - counter_DCI_P3
+                                 - counter_BT709;
 
 #endif //IS_FLOAT_HDR_CSP
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    precise float counter_AP1     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP1)
-                                  * 100.f;
-    precise float counter_AP0     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
-                                  * 100.f;
+    precise float counter_AP1     = round(tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP1)
+                                        * 10000.f) / 100.f;
+    precise float counter_AP0     = round(tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
+                                        * 10000.f) / 100.f;
     precise float counter_invalid = 100.f
                                   - counter_AP0
                                   - counter_AP1
