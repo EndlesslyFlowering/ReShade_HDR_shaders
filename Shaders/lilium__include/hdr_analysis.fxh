@@ -230,12 +230,13 @@ texture2D TextureCie1931Current
 
 sampler2D SamplerCie1931Current
 {
-  Texture = TextureCie1931Current;
+  Texture   = TextureCie1931Current;
+  MagFilter = POINT;
 };
 
 storage2D StorageCie1931Current
 {
-  Texture  = TextureCie1931Current;
+  Texture = TextureCie1931Current;
 };
 #endif
 
@@ -289,6 +290,7 @@ texture2D TextureCie1976Current
 sampler2D SamplerCie1976Current
 {
   Texture   = TextureCie1976Current;
+  MagFilter = POINT;
 };
 
 storage2D StorageCie1976Current
@@ -336,9 +338,9 @@ texture2D TextureBrightnessHistogram
   pooled = true;
 >
 {
-  Width     = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
-  Height    = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
-  Format    = RGBA16;
+  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
+  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
+  Format = RGBA16;
 };
 
 sampler2D SamplerBrightnessHistogram
@@ -378,7 +380,8 @@ texture2D TextureBrightnessHistogramFinal
 
 sampler2D SamplerBrightnessHistogramFinal
 {
-  Texture = TextureBrightnessHistogramFinal;
+  Texture   = TextureBrightnessHistogramFinal;
+  MagFilter = POINT;
 };
 
 #endif //HDR_ANALYSIS_ENABLE
@@ -654,7 +657,7 @@ void PS_ClearBrightnessHistogramTexture(
       float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_TARGET)
 {
-  return;
+  discard;
 }
 
 void CS_RenderBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
@@ -755,12 +758,11 @@ void PS_RenderBrightnessHistogramToScale(
             , 1.f);
       return;
     }
-    else
-    {
-      Out = tex2D(SamplerBrightnessHistogramScale, TexCoord);
-      return;
-    }
+    //else
+    Out = tex2D(SamplerBrightnessHistogramScale, TexCoord);
+    return;
   }
+  discard;
 }
 
 #endif //HDR_ANALYSIS_ENABLE
@@ -808,8 +810,11 @@ void PS_CalcCllPerPixel(
     CurCLL = curPixel >= 0.f ? curPixel
                              : 0.f;
 
+    return;
+
 #ifdef HDR_ANALYSIS_ENABLE
   }
+  discard;
 #endif //HDR_ANALYSIS_ENABLE
 }
 
@@ -1435,7 +1440,9 @@ void PS_CopyCie1931Bg(
   if (SHOW_CIE)
   {
     CIE_BG = tex2D(SamplerCie1931BlackBg, TexCoord).rgba;
+    return;
   }
+  discard;
 }
 #endif
 
@@ -1448,7 +1455,9 @@ void PS_CopyCie1976Bg(
   if (SHOW_CIE)
   {
     CIE_BG = tex2D(SamplerCie1976BlackBg, TexCoord).rgba;
+    return;
   }
+  discard;
 }
 #endif
 
@@ -1625,10 +1634,13 @@ void PS_CalcCsps(
     {
       curCSP = IS_CSP_BT709 / 255.f;
     }
+    return;
 
 #else
 
     curCSP = GetCSP(Csp::Mat::Bt709To::XYZ(pixel));
+
+    return;
 
 #endif
 
@@ -1636,7 +1648,7 @@ void PS_CalcCsps(
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-  const float3 curPixel = Csp::Trc::FromPq(pixel);
+  precise const float3 curPixel = Csp::Trc::FromPq(pixel);
 
     if (!(curPixel.r < SMALLEST_UINT10
        && curPixel.g < SMALLEST_UINT10
@@ -1648,10 +1660,13 @@ void PS_CalcCsps(
     {
       curCSP = IS_CSP_BT709 / 255.f;
     }
+    return;
 
 #else
 
     curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel)));
+
+    return;
 
 #endif
 
@@ -1659,7 +1674,7 @@ void PS_CalcCsps(
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-    const float3 curPixel = Csp::Trc::FromPq(pixel);
+    precise const float3 curPixel = Csp::Trc::FromPq(pixel);
 
     if (!(curPixel.r < SMALLEST_UINT10
        && curPixel.g < SMALLEST_UINT10
@@ -1671,10 +1686,13 @@ void PS_CalcCsps(
     {
       curCSP = IS_CSP_BT709 / 255.f;
     }
+    return;
 
 #else
 
     curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel)));
+
+    return;
 
 #endif
 
@@ -1692,10 +1710,13 @@ void PS_CalcCsps(
     {
       curCSP = IS_CSP_BT709 / 255.f;
     }
+    return;
 
 #else
 
     curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(pixel));
+
+    return;
 
 #endif
 
@@ -1703,8 +1724,11 @@ void PS_CalcCsps(
 
     curCSP = IS_CSP_INVALID / 255.f;
 
+    return;
+
 #endif
   }
+  discard;
 }
 
 
@@ -1748,25 +1772,31 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
       for (int y = 0; y < BUFFER_HEIGHT; y++)
       {
         const uint curCSP = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)).r * 255.f);
-        if (curCSP == IS_CSP_BT709) {
+        if (curCSP == IS_CSP_BT709)
+        {
           counter_BT709++;
         }
-        else if (curCSP == IS_CSP_DCI_P3) {
+        else if (curCSP == IS_CSP_DCI_P3)
+        {
           counter_DCI_P3++;
         }
 
 #ifdef IS_FLOAT_HDR_CSP
 
-        else if (curCSP == IS_CSP_BT2020) {
+        else if (curCSP == IS_CSP_BT2020)
+        {
           counter_BT2020++;
         }
-        else if (curCSP == IS_CSP_AP1) {
+        else if (curCSP == IS_CSP_AP1)
+        {
           counter_AP1++;
         }
-        else if (curCSP == IS_CSP_AP0) {
+        else if (curCSP == IS_CSP_AP0)
+        {
           counter_AP0++;
         }
-        else {
+        else
+        {
           counter_invalid++;
         }
 

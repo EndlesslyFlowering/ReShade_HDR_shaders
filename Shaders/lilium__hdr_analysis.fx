@@ -403,34 +403,82 @@ uniform bool ENABLE_TEST_THINGY
   ui_label    = "enable test thingy";
 > = false;
 
-uniform float TEST_THINGY_R
+uniform uint TEST_MODE
+<
+  ui_category = "TESTY";
+  ui_label    = "mode";
+  ui_type     = "combo";
+  ui_items    = " RGB\0"
+                " xyY\0"
+                "+Inf (0x7F800000) on R (else is 0)\0"
+                "-Inf (0xFF800000) on G (else is 0)\0"
+                " NaN (0xFFFFFFFF) on B (else is 0)\0";
+> = 0;
+
+precise uniform float TEST_THINGY_R
 <
   ui_category = "TESTY";
   ui_label    = "R";
   ui_type     = "drag";
+  ui_units    = " R";
   ui_min      = -125.f;
   ui_max      = 125.f;
   ui_step     = 0.00000001f;
 > = 0.f;
 
-uniform float TEST_THINGY_G
+precise uniform float TEST_THINGY_G
 <
   ui_category = "TESTY";
   ui_label    = "G";
   ui_type     = "drag";
+  ui_units    = " G";
   ui_min      = -125.f;
   ui_max      = 125.f;
   ui_step     = 0.00000001f;
 > = 0.f;
 
-uniform float TEST_THINGY_B
+precise uniform float TEST_THINGY_B
 <
   ui_category = "TESTY";
   ui_label    = "B";
   ui_type     = "drag";
+  ui_units    = " B";
   ui_min      = -125.f;
   ui_max      = 125.f;
   ui_step     = 0.00000001f;
+> = 0.f;
+
+precise uniform float TEST_THINGY_x
+<
+  ui_category = "TESTY";
+  ui_label    = "x";
+  ui_type     = "drag";
+  ui_units    = " x";
+  ui_min      = -125.f;
+  ui_max      = 125.f;
+  ui_step     = 0.001f;
+> = 0.f;
+
+precise uniform float TEST_THINGY_y
+<
+  ui_category = "TESTY";
+  ui_label    = "y";
+  ui_type     = "drag";
+  ui_units    = " y";
+  ui_min      = -125.f;
+  ui_max      = 125.f;
+  ui_step     = 0.001f;
+> = 0.f;
+
+precise uniform float TEST_THINGY_Y
+<
+  ui_category = "TESTY";
+  ui_label    = "Y";
+  ui_type     = "drag";
+  ui_units    = " Y";
+  ui_min      = -125.f;
+  ui_max      = 125.f;
+  ui_step     = 0.001f;
 > = 0.f;
 #endif //_TESTY
 
@@ -496,26 +544,62 @@ uniform float TEST_THINGY_B
 
 #ifdef _TESTY
 void Testy(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 Output   : SV_Target0)
+  in          float4 VPos     : SV_Position,
+  in          float2 TexCoord : TEXCOORD,
+  out precise float4 Output   : SV_Target0)
 {
   if(ENABLE_TEST_THINGY == true)
   {
-    const float xxx = BUFFER_WIDTH  / 2.f - 100.f;
-    const float xxe = (BUFFER_WIDTH  - xxx);
-    const float yyy = BUFFER_HEIGHT / 2.f - 100.f;
-    const float yye = (BUFFER_HEIGHT - yyy);
+    float xxx = BUFFER_WIDTH  / 2.f - 100.f;
+    float xxe = (BUFFER_WIDTH  - xxx);
+    float yyy = BUFFER_HEIGHT / 2.f - 100.f;
+    float yye = (BUFFER_HEIGHT - yyy);
     if (TexCoord.x > xxx / BUFFER_WIDTH
      && TexCoord.x < xxe / BUFFER_WIDTH
      && TexCoord.y > yyy / BUFFER_HEIGHT
      && TexCoord.y < yye / BUFFER_HEIGHT)
-      Output = float4(TEST_THINGY_R, TEST_THINGY_G, TEST_THINGY_B, 1.f);
+    {
+      if (TEST_MODE == 0)
+      {
+        Output = float4(TEST_THINGY_R, TEST_THINGY_G, TEST_THINGY_B, 1.f);
+        return;
+      }
+      else if (TEST_MODE == 1)
+      {
+        precise float3 XYZ = float3(
+                       TEST_THINGY_x / TEST_THINGY_y * TEST_THINGY_Y,
+                       TEST_THINGY_Y,
+                       (1.f - TEST_THINGY_x - TEST_THINGY_y) / TEST_THINGY_y * TEST_THINGY_Y);
+        Output = float4(mul(Csp::Mat::XYZToBt709, XYZ), 1.f);
+        return;
+      }
+      else if (TEST_MODE == 2)
+      {
+        precise float asFloat = asfloat(0x7F800000);
+        Output = float4(asFloat, 0.f, 0.f, 1.f);
+        return;
+      }
+      else if (TEST_MODE == 3)
+      {
+        precise float asFloat = asfloat(0xFF800000);
+        Output = float4(0.f, asFloat, 0.f, 1.f);
+        return;
+      }
+      else if (TEST_MODE == 4)
+      {
+        precise float asFloat = asfloat(0xFFFFFFFF);
+        Output = float4(0.f, 0.f, asFloat, 1.f);
+        return;
+      }
+    }
     else
+    {
       Output = float4(0.f, 0.f, 0.f, 0.f);
+      return;
+    }
   }
-  else
-    Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
+  // else
+  discard;
 }
 #endif //_TESTY
 
