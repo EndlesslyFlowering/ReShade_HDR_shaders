@@ -374,7 +374,7 @@ void VS_PrepareToneMapping(
   }
   else
   {
-    usedMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL).r;
+    usedMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
   }
 
   usedMaxCll = usedMaxCll > Ui::ToneMapping::Global::TargetBrightness
@@ -640,12 +640,12 @@ void PS_ToneMapping(
                                          __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
   const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
 
-  const float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE).r;
+  const float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE);
 
-  const float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL).r;
+  const float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL);
   const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
 
-  const float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL).r;
+  const float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
   const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
 
   const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
@@ -674,16 +674,16 @@ void PS_ToneMapping(
 
 void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8).r
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9).r) / 10.f;
+  const float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8)
+                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9)) / 10.f;
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
@@ -692,11 +692,11 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 #endif
 
   const float currentMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE).r);
+    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE));
   const float currentAdaptiveMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL).r);
+    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL));
 
-  const int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR).r;
+  const int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR);
   const int newSlot = curSlot > 10 ? 1
                                    : curSlot + 1;
   tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
