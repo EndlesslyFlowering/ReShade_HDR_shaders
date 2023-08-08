@@ -1486,40 +1486,47 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
-      const float3 pixel = tex2Dfetch(ReShade::BackBuffer, ID.xy).rgb;
+      precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, ID.xy).rgb;
+
+      if (pixel.r == 0.f
+       && pixel.g == 0.f
+       && pixel.b == 0.f)
+      {
+        return;
+      }
 
     // get XYZ
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB || ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      precise float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
+      precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel));
+      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel));
+      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      precise float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
+      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
 
 #else
 
-      precise float3 XYZ = float3(0.f, 0.f, 0.f);
+      precise const float3 XYZ = float3(0.f, 0.f, 0.f);
 
 #endif
 
 #if (CIE_DIAGRAM == CIE_1931)
-    // get xy
-      precise float xyz = XYZ.x + XYZ.y + XYZ.z;
-      precise int2  xy  = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
-              CIE_1931_Y - 1 - round(XYZ.y / xyz * 1000.f)); // clamp to texture size
-                                                                                             // ^you should be able to do this
-                                                                                             // via the sampler. set to clamping?
+      // get xy
+      precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
 
-      precise int2 xyDiagramPos = int2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER); // adjust for the added borders
+      precise const int2  xy  = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
+                    CIE_1931_Y - 1 - round(XYZ.y / xyz * 1000.f));
+
+      // adjust for the added borders
+      precise const int2 xyDiagramPos = int2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER);
 
       tex2Dstore(StorageCie1931Current,
                  xyDiagramPos,
@@ -1528,13 +1535,15 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 #if (CIE_DIAGRAM == CIE_1976)
       // get u'v'
-      precise float X15Y3Z = XYZ.x
+      precise const float X15Y3Z = XYZ.x
                            + 15.f * XYZ.y
                            +  3.f * XYZ.z;
-      precise int2 uv      = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f),
-                 CIE_1976_Y - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f));
 
-      precise int2 uvDiagramPos = int2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER); // adjust for the added borders
+      precise const int2 uv      = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f),
+                       CIE_1976_Y - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f));
+
+      // adjust for the added borders
+      precise const int2 uvDiagramPos = int2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER);
 
       tex2Dstore(StorageCie1976Current,
                  uvDiagramPos,
