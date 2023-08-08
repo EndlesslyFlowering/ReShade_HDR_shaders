@@ -286,9 +286,9 @@ texture2D TextureCie1976Current
   Format = RGBA8;
 };
 
-sampler2D SamplerCie1931Current
+sampler2D SamplerCie1976Current
 {
-  Texture = TextureCie1976Current;
+  Texture   = TextureCie1976Current;
 };
 
 storage2D StorageCie1976Current

@@ -2727,7 +2727,7 @@ void PS_HdrAnalysis(
 #if (CIE_DIAGRAM == CIE_1931)
   #define CIE_SAMPLER SamplerCie1931Current
 #else
-  #define CIE_SAMPLER SamplerCie1931Current
+  #define CIE_SAMPLER SamplerCie1976Current
 #endif
 
       float3 currentPixelToDisplay =
