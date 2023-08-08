@@ -568,15 +568,15 @@ uint2 GetCharSize()
 static const float ShowCllValuesLineCount     = 3;
 static const float ShowCllFromCursorLineCount = 1;
 
-#if defined(IS_UNORM_HDR_CSP)
+#if defined(IS_HDR10_LIKE_CSP)
 
   static const float ShowCspsLineCount = 3;
 
-#else //IS_UNORM_HDR_CSP
+#else //IS_HDR10_LIKE_CSP
 
   static const float ShowCspsLineCount = 6;
 
-#endif //IS_UNORM_HDR_CSP
+#endif //IS_HDR10_LIKE_CSP
 
 
 void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
@@ -690,11 +690,11 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                               + ShowCllFromCursorLineCount
                               + ShowCspsLineCount)
 
-#if defined(IS_UNORM_HDR_CSP)
+#if defined(IS_HDR10_LIKE_CSP)
                             : SPACING * 3) - 3;
-#else //IS_UNORM_HDR_CSP
+#else //IS_HDR10_LIKE_CSP
                             : SPACING * 3);
-#endif //IS_UNORM_HDR_CSP
+#endif //IS_HDR10_LIKE_CSP
 
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,

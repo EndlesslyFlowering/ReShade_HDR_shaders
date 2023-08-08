@@ -1569,7 +1569,7 @@ float GetCSP(precise const float3 XYZ)
       return IS_CSP_DCI_P3 / 255.f;
     }
 
-#ifdef IS_UNORM_HDR_CSP
+#ifdef IS_HDR10_LIKE_CSP
 
     else
     {
@@ -1595,7 +1595,7 @@ float GetCSP(precise const float3 XYZ)
       return IS_CSP_INVALID / 255.f;
     }
 
-#endif //IS_UNORM_HDR_CSP
+#endif //IS_HDR10_LIKE_CSP
   }
   return IS_CSP_INVALID / 255.f;
 }

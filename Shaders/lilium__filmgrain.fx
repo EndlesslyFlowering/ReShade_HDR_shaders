@@ -61,7 +61,7 @@ void PS_Filmgrain(
 
   float3 Ycbcr = Csp::Ycbcr::FromRgb::Ap0D65(Csp::Trc::ToPq(Csp::Mat::Bt709To::Ap0D65(input / 125.f)));
 
-#elif defined(IS_UNORM_HDR_CSP)
+#elif defined(IS_HDR10_LIKE_CSP)
 
   float3 Ycbcr = Csp::Ycbcr::FromRgb::Bt2020(input);
 
@@ -89,7 +89,7 @@ void PS_Filmgrain(
 
   float3 Rgb = Csp::Mat::Ap0D65To::Bt709(Csp::Trc::FromPq(Csp::Ycbcr::ToRgb::Ap0D65(Ycbcr))) * 125.f;
 
-#elif defined(IS_UNORM_HDR_CSP)
+#elif defined(IS_HDR10_LIKE_CSP)
 
   float3 Rgb = Csp::Ycbcr::ToRgb::Bt2020(Ycbcr);
 

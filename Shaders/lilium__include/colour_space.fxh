@@ -96,7 +96,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  #define IS_UNORM_HDR_CSP
+  #define IS_HDR10_LIKE_CSP
 #endif
 
 
@@ -192,7 +192,7 @@
 
 #if defined(IS_FLOAT_HDR_CSP)
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_SCRGB'"
-#elif defined(IS_UNORM_HDR_CSP)
+#elif defined(IS_HDR10_LIKE_CSP)
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "'CSP_HDR10'"
 #else
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "none!"
