@@ -151,7 +151,7 @@ namespace InverseToneMapping
 
     float3 hdr = Csp::Ycbcr::ToRgb::Bt2020(float3(yHdr, cbHdr, crHdr));
 
-    hdr = saturate(hdr); //on edge cases the YCbCr->RGB conversion isn't accurate enough
+    hdr = max(hdr, 0.f); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
     // Non-linear transfer function (inverse)
     // get RGB

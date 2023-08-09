@@ -79,7 +79,7 @@ namespace ToneMappers
 
     hdrOut = Csp::Ycbcr::ToRgb::Bt2020(float3(yTmo, cbTmo, crTmo));
 
-    hdrOut = saturate(hdrOut);
+    hdrOut = max(hdrOut, 0.f);
 
     // gamma decompression and adjust to TargetCll
     hdrOut = pow(hdrOut, inverseGamma) * (TargetCll / 10000.f);
@@ -152,7 +152,7 @@ namespace ToneMappers
 
     hdrOut = Csp::Ycbcr::ToRgb::Bt2020(float3(yTmo, cbTmo, crTmo));
 
-    hdrOut = saturate(hdrOut);
+    hdrOut = max(hdrOut, 0.f);
 
     // gamma decompression and adjust to TargetCll
     hdrOut = pow(hdrOut, inverseGamma) * (TargetCll / 10000.f);

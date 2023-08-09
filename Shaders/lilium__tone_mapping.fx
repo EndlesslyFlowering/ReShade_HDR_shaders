@@ -21,6 +21,8 @@
 // - BT.2390 raises brightness???
 // - inlcude fxh after UI
 // - do maxCLL calc in quarter res?
+// - add option to do BT.2446A as post adjustment of BT.2390/Dice
+// - test how BT.2446A works with using max(x, 0) instead of saturate
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
