@@ -572,7 +572,7 @@ namespace Csp
     // outputs as 1 = 10000 nits
     float FromPq(float E_)
     {
-      E_ = clamp(E_, 0.f, 65504.f);
+      E_ = max(E_, 0.f);
 
       const float E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);
 
@@ -625,7 +625,7 @@ namespace Csp
     // (inverse EOTF) takes normalised to 10000 nits values as input
     float ToPq(float Y)
     {
-      Y = clamp(Y, 0.f, 65504.f);
+      Y = max(Y, 0.f);
 
       const float Y_pow_m1 = pow(Y, PQ_m1);
 
@@ -654,7 +654,7 @@ namespace Csp
     // (OETF) takes nits as input
     float ToPqFromNits(const float Fd)
     {
-      const float Y = clamp(Fd / 10000.f, 0.f, 65504.f);
+      const float Y = max(Fd / 10000.f, 0.f);
 
       const float Y_pow_m1 = pow(Y, PQ_m1);
 

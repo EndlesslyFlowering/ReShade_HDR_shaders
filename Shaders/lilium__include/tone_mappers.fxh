@@ -226,7 +226,7 @@ namespace ToneMappers
         i2 = i2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
         //i2 = i2 * SrcMaxPq;
 
-        const float minI = clamp(min((i1 / i2), (i2 / i1)), 0.f, 65504.f); // prevent colour corruption
+        const float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // prevent colour corruption
 
         //to L'M'S'
         Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(
@@ -237,7 +237,7 @@ namespace ToneMappers
         //to LMS
         Lms = Csp::Trc::FromPq(Lms);
         //to RGB
-        return clamp(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f, 65504.f);
+        return max(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
@@ -261,15 +261,15 @@ namespace ToneMappers
         y2 += MinLum * pow((1.f - y2), 4.f);
 
         //E4
-        y2 = clamp(y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f, 65504.f);
+        y2 = max(y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f);
         //y2 = y2 * SrcMaxPq;
 
         const float minY = min((y1 / y2), (y2 / y1));
 
-        return clamp(Csp::Ycbcr::ToRgb::Bt2020(float3(
+        return max(Csp::Ycbcr::ToRgb::Bt2020(float3(
                  y2,
                  (Input.b - y1) / Csp::KHelpers::Bt2020::Kb * minY,
-                 (Input.r - y1) / Csp::KHelpers::Bt2020::Kr * minY)), 0.f, 65504.f);
+                 (Input.r - y1) / Csp::KHelpers::Bt2020::Kr * minY)), 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
@@ -298,7 +298,7 @@ namespace ToneMappers
 
         y2 = Csp::Trc::FromPq(y2);
 
-        return clamp(y2 / y1 * Input, 0.f, 65504.f);
+        return max(y2 / y1 * Input, 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_RGB)
@@ -325,7 +325,7 @@ namespace ToneMappers
         rgb += MinLum * pow((1.f - rgb), 4.f);
 
         //E4
-        return clamp(rgb * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f, 65504.f);
+        return max(rgb * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f);
         //return rgb * SrcMaxPq;
       }
       else
@@ -447,7 +447,7 @@ namespace ToneMappers
           //to LMS
           Lms = Csp::Trc::FromPq(Lms);
           //to RGB
-          return clamp(mul(LmsToRgb, Lms), 0.f, 65504.f);
+          return max(mul(LmsToRgb, Lms), 0.f);
         }
       }
       else
@@ -474,9 +474,9 @@ namespace ToneMappers
           //                       y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
           //                       y2 + KbHelper * cb2));
 
-          return clamp(float3(y2 + KrHelper    * cr2,
-                              y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
-                              y2 + KbHelper    * cb2), 0, 65504.f);
+          return max(float3(y2 + KrHelper    * cr2,
+                            y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
+                            y2 + KbHelper    * cb2), 0.f);
         }
       }
 

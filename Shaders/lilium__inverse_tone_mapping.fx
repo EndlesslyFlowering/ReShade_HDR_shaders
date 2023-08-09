@@ -318,7 +318,7 @@ void PS_InverseToneMapping(
 #ifdef ENABLE_DICE
   else
   {
-    hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr * diceReferenceWhite / 125.f), 0.f, 65504.f);
+    hdr = max(Csp::Mat::Bt709To::Ap0D65(hdr * diceReferenceWhite / 125.f), 0.f);
   }
 #endif //ENABLE_DICE
 

@@ -170,7 +170,7 @@ float3 LowerBlackFloor(
       //to LMS
       Lms = Csp::Trc::FromPq(Lms);
       //to RGB
-      return clamp(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f, 65504.f);
+      return max(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f);
     }
     discard;
   }
@@ -193,12 +193,12 @@ float3 LowerBlackFloor(
       y2 = y2 * RollOffMinusOldBlackPoint + OldBlackPoint;
 
       return Csp::Trc::FromPq(
-        clamp(
+        max(
           Csp::Ycbcr::ToRgb::Bt2020(
             float3(y2,
                    (inputInPq.b - y1) / Csp::KHelpers::Bt2020::Kb,
                    (inputInPq.r - y1) / Csp::KHelpers::Bt2020::Kr))
-        , 0.f, 65504.f));
+        , 0.f));
     }
     discard;
   }
@@ -221,7 +221,7 @@ float3 LowerBlackFloor(
 
       y2 = Csp::Trc::FromPq(y2);
 
-      return clamp(y2 / y1 * Input, 0.f, 65504.f);
+      return max(y2 / y1 * Input, 0.f);
     }
     discard;
   }
@@ -241,7 +241,7 @@ float3 LowerBlackFloor(
       //E4
       rgb = rgb * RollOffMinusOldBlackPoint + OldBlackPoint;
 
-      return Csp::Trc::FromPq(clamp(rgb, 0.f, 65504.f));
+      return Csp::Trc::FromPq(max(rgb, 0.f));
     }
     discard;
   }
@@ -259,7 +259,7 @@ float3 LowerBlackFloor(
       //E4
       rgb = rgb * RollOffMinusOldBlackPoint + OldBlackPoint;
 
-      return clamp(rgb, 0.f, 65504.f);
+      return max(rgb, 0.f);
     }
     discard;
   }

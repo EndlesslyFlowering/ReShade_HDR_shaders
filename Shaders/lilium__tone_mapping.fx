@@ -453,7 +453,7 @@ void PS_ToneMapping(
 
       if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
       {
-        hdr = clamp(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f, 65504.f);
+        hdr = max(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f);
 
         if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
         {
@@ -481,7 +481,7 @@ void PS_ToneMapping(
     }
     else if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
     {
-      hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
+      hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
 
       if (Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
        || Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
@@ -493,11 +493,11 @@ void PS_ToneMapping(
     {
       if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
       {
-        hdr = clamp(Csp::Mat::Bt709To::Bt2020(hdr), 0.f, 65504.f);
+        hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
       }
       else
       {
-        hdr = clamp(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f, 65504.f);
+        hdr = max(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f);
       }
 
       if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)

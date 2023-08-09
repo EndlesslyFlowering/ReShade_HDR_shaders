@@ -684,7 +684,7 @@ namespace InverseToneMapping
         //to LMS
         LMS = Csp::Trc::FromPq(LMS);
         //to RGB
-        return clamp(mul(LmsToRgb, LMS), 0.f, 65504.f);
+        return max(mul(LmsToRgb, LMS), 0.f);
       }
     } //InverseToneMapper
 
