@@ -19,6 +19,8 @@
 // - add black point adaption for every tone mapper
 // - figure out why discard doesn't work in the dice tone mapper with the DX compiler...
 // - BT.2390 raises brightness???
+// - inlcude fxh after UI
+// - do maxCLL calc in quarter res?
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
@@ -188,8 +190,8 @@ namespace Ui
                  "\n" "The brightness compression will start at 500 nits.";
         ui_type     = "drag";
         ui_units    = "%%";
-        ui_min      = 0.1f;
-        ui_max      = 100.f;
+        ui_min      = 10.f;
+        ui_max      = 90.f;
         ui_step     = 0.1f;
       > = 50.f;
     } //Bt2390
@@ -207,8 +209,8 @@ namespace Ui
                  "\n" "The brightness compression will start at 500 nits.";
         ui_type     = "drag";
         ui_units    = "%%";
-        ui_min      = 0.1f;
-        ui_max      = 100.f;
+        ui_min      = 10.f;
+        ui_max      = 90.f;
         ui_step     = 0.1f;
       > = 50.f;
 
@@ -357,10 +359,11 @@ uniform float TEST_S
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareToneMapping(
-  in  uint   Id         : SV_VertexID,
-  out float4 VPos       : SV_Position,
-  out float2 TexCoord   : TEXCOORD0,
-  out float  TmParms[7] : TmParms)
+  in  uint   Id       : SV_VertexID,
+  out float4 VPos     : SV_Position,
+  out float2 TexCoord : TEXCOORD0,
+  out float4 TmParms0 : TmParms0,
+  out float3 TmParms1 : TmParms1)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -368,7 +371,7 @@ void VS_PrepareToneMapping(
                          : 0.f;
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-#define usedMaxCll TmParms[0]
+#define usedMaxCll TmParms0.x
 
   if (Ui::ToneMapping::Global::Mode == TM_MODE_STATIC)
   {
@@ -386,12 +389,12 @@ void VS_PrepareToneMapping(
   if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
   {
 
-#define bt2390SrcMinPq              TmParms[1]
-#define bt2390SrcMaxPq              TmParms[2]
-#define bt2390SrcMaxPqMinusSrcMinPq TmParms[3]
-#define bt2390MinLum                TmParms[4]
-#define bt2390MaxLum                TmParms[5]
-#define bt2390KneeStart             TmParms[6]
+#define bt2390SrcMinPq              TmParms0.y
+#define bt2390SrcMaxPq              TmParms0.z
+#define bt2390SrcMaxPqMinusSrcMinPq TmParms0.w
+#define bt2390MinLum                TmParms1.x
+#define bt2390MaxLum                TmParms1.y
+#define bt2390KneeStart             TmParms1.z
 
     // source min brightness (Lb) in PQ
     bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::OldBlackPoint);
@@ -418,23 +421,29 @@ void VS_PrepareToneMapping(
   else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
   {
 
-#define diceTargetCllInPq     TmParms[1]
-#define diceShoulderStartInPq TmParms[2]
+#define diceTargetCllInPq     TmParms0.y
+#define diceShoulderStartInPq TmParms0.z
+#define diceUnused0           TmParms0.w
+#define diceUnused1           TmParms1 //.xyz
 
     diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
     diceShoulderStartInPq =
       Csp::Trc::ToPqFromNits(Ui::ToneMapping::Dice::ShoulderStart / 100.f
                            * Ui::ToneMapping::Global::TargetBrightness);
+
+    diceUnused0 = 0.f;
+    diceUnused1 = float3(0.f, 0.f, 0.f);
   }
 
 }
 
 
 void PS_ToneMapping(
-  in  float4 VPos       : SV_Position,
-  in  float2 TexCoord   : TEXCOORD0,
-  in  float  TmParms[7] : TmParms,
-  out float4 Output     : SV_Target0)
+  in  float4 VPos     : SV_Position,
+  in  float2 TexCoord : TEXCOORD0,
+  in  float4 TmParms0 : TmParms0,
+  in  float3 TmParms1 : TmParms1,
+  out float4 Output   : SV_Target0)
 {
   float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
