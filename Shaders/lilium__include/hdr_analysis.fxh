@@ -75,7 +75,7 @@ static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 //#endif
 
 
-static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
+precise static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
 
 
 #define IS_CSP_BT709   0
@@ -1755,13 +1755,13 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
-      uint counter_BT709   = 0;
-      uint counter_DCI_P3  = 0;
+      precise uint counter_BT709   = 0;
+      precise uint counter_DCI_P3  = 0;
 
 #ifdef IS_FLOAT_HDR_CSP
 
-      uint counter_BT2020  = 0;
-      uint counter_AP0     = 0;
+      precise uint counter_BT2020  = 0;
+      precise uint counter_AP0     = 0;
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -1813,13 +1813,13 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 {
   if (SHOW_CSPS)
   {
-    uint counter_BT709  = 0;
-    uint counter_DCI_P3 = 0;
+    precise uint counter_BT709  = 0;
+    precise uint counter_DCI_P3 = 0;
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    uint counter_BT2020 = 0;
-    uint counter_AP0    = 0;
+    precise uint counter_BT2020 = 0;
+    precise uint counter_AP0    = 0;
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -1838,13 +1838,17 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 
     barrier();
 
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709,  counter_BT709  / PIXELS);
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3, counter_DCI_P3 / PIXELS);
+    precise float percentageBt709 = counter_BT709  / PIXELS;
+    precise float percentageDciP3 = counter_DCI_P3 / PIXELS;
+    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709,  percentageBt709);
+    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3, percentageDciP3);
 
 #ifdef IS_FLOAT_HDR_CSP
 
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020, counter_BT2020 / PIXELS);
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0,    counter_AP0    / PIXELS);
+    precise float percentageBt2020 = counter_BT2020 / PIXELS;
+    precise float percentageAp0    = counter_AP0    / PIXELS;
+    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020, percentageBt2020);
+    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0,    percentageAp0);
 
 #endif //IS_FLOAT_HDR_CSP
   }
@@ -1939,14 +1943,26 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     float minCLL = tex2Dfetch(StorageConsolidated, COORDS_MINCLL_VALUE);
 
     precise float counter_BT709  = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709)
+#if (__VENDOR__ == 0x1002)
+                                 * 100.0001f;
+#else
                                  * 100.f;
+#endif
     precise float counter_DCI_P3 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3)
+#if (__VENDOR__ == 0x1002)
+                                 * 100.0001f;
+#else
                                  * 100.f;
+#endif
 
 #ifdef IS_FLOAT_HDR_CSP
 
     precise float counter_BT2020 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020)
+#if (__VENDOR__ == 0x1002)
+                                 * 100.0001f;
+#else
                                  * 100.f;
+#endif
 
 #else
 
@@ -1959,7 +1975,11 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
 
     precise float counter_AP0     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
-                                  * 100.f;
+#if (__VENDOR__ == 0x1002)
+                                 * 100.0001f;
+#else
+                                 * 100.f;
+#endif
     precise float counter_invalid = 100.f
                                   - counter_AP0
                                   - counter_BT2020
