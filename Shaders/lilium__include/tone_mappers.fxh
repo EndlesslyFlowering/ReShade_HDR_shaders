@@ -17,10 +17,10 @@ namespace ToneMappers
 
   // Rep. ITU-R BT.2446-1 Table 2 & 3
   float3 Bt2446A(
-    const float3 Input,
-    const float  TargetCll,
-    const float  MaxCll,
-    const float  GamutCompression)
+    float3 Input,
+    float  TargetCll,
+    float  MaxCll,
+    float  GamutCompression)
   {
     float3 hdrIn = Input;
 
@@ -31,49 +31,49 @@ namespace ToneMappers
     hdrIn = pow(hdrIn, gamma);
 
     //Y'C'bC'r
-    const float3 ycbcr = Csp::Ycbcr::FromRgb::Bt2020(hdrIn);
+    float3 ycbcr = Csp::Ycbcr::FromRgb::Bt2020(hdrIn);
 
     // tone mapping step 1
-    const float pHdr = 1.f + 32.f * pow(
-                                        MaxCll /
-                                        10000.f
-                                    , gamma);
+    float pHdr = 1.f + 32.f * pow(
+                                  MaxCll /
+                                  10000.f
+                              , gamma);
 
     //Y'p
-    const float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
-                      log(pHdr);
+    float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
+               log(pHdr);
 
     // tone mapping step 2
     //Y'c
-    const float yC = yP <= 0.7399f
-                   ? 1.0770f * yP
-                   : yP > 0.7399f && yP < 0.9909f
-                   ? (-1.1510f * pow(yP , 2)) + (2.7811f * yP) - 0.6302f
-                   : (0.5000f * yP) + 0.5000f;
+    float yC = yP <= 0.7399f
+             ? 1.0770f * yP
+             : yP > 0.7399f && yP < 0.9909f
+             ? (-1.1510f * pow(yP , 2)) + (2.7811f * yP) - 0.6302f
+             : (0.5000f * yP) + 0.5000f;
 
     // tone mapping step 3
-    const float pSdr = 1.f + 32.f * pow(
-                                        TargetCll /
-                                        10000.f
-                                    , gamma);
+    float pSdr = 1.f + 32.f * pow(
+                                  TargetCll /
+                                  10000.f
+                              , gamma);
 
     //Y'sdr
-    const float ySdr = (pow(pSdr, yC) - 1.f) /
-                       (pSdr - 1.f);
+    float ySdr = (pow(pSdr, yC) - 1.f) /
+                 (pSdr - 1.f);
 
     //f(Y'sdr)
-    const float colourScaling = ySdr /
-                                (GamutCompression * ycbcr.x);
+    float colourScaling = ySdr /
+                          (GamutCompression * ycbcr.x);
 
     //C'b,tmo
-    const float cbTmo = colourScaling * ycbcr.y;
+    float cbTmo = colourScaling * ycbcr.y;
 
     //C'r,tmo
-    const float crTmo = colourScaling * ycbcr.z;
+    float crTmo = colourScaling * ycbcr.z;
 
     //Y'tmo
-    const float yTmo = ySdr
-                     - max(0.1f * crTmo, 0.f);
+    float yTmo = ySdr
+               - max(0.1f * crTmo, 0.f);
 
     float3 hdrOut;
 
@@ -88,12 +88,12 @@ namespace ToneMappers
   }
 
   float3 Bt2446A_MOD1(
-    const float3 Input,
-    const float  TargetCll,
-    const float  MaxCll,
-    const float  GamutCompression,
-    const float  TestH,
-    const float  TestS)
+    float3 Input,
+    float  TargetCll,
+    float  MaxCll,
+    float  GamutCompression,
+    float  TestH,
+    float  TestS)
   {
     float3 hdrIn = Input;
 
@@ -104,49 +104,49 @@ namespace ToneMappers
     hdrIn = pow(hdrIn, gamma);
 
     //Y'C'bC'r
-    const float3 ycbcr = Csp::Ycbcr::FromRgb::Bt2020(hdrIn);
+    float3 ycbcr = Csp::Ycbcr::FromRgb::Bt2020(hdrIn);
 
     // tone mapping step 1
-    const float pHdr = 1.f + 32.f * pow(
-                                        TestH /
-                                        10000.f
-                                    , gamma);
+    float pHdr = 1.f + 32.f * pow(
+                                  TestH /
+                                  10000.f
+                              , gamma);
 
     //Y'p
-    const float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
-                      log(pHdr);
+    float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
+               log(pHdr);
 
     // tone mapping step 2
     //Y'c
-    const float yC = yP <= 0.7399f
-                   ? 1.0770f * yP
-                   : yP > 0.7399f && yP < 0.9909f
-                   ? (-1.1510f * pow(yP, 2)) + (2.7811f * yP) - 0.6302f
-                   : (0.5000f * yP) + 0.5000f;
+    float yC = yP <= 0.7399f
+             ? 1.0770f * yP
+             : yP > 0.7399f && yP < 0.9909f
+             ? (-1.1510f * pow(yP, 2)) + (2.7811f * yP) - 0.6302f
+             : (0.5000f * yP) + 0.5000f;
 
     // tone mapping step 3
-    const float pSdr = 1.f + 32.f * pow(
-                                        TestS /
-                                        10000.f
-                                    , gamma);
+    float pSdr = 1.f + 32.f * pow(
+                                  TestS /
+                                  10000.f
+                              , gamma);
 
     //Y'sdr
-    const float ySdr = (pow(pSdr, yC) - 1.f) /
-                       (pSdr - 1.f);
+    float ySdr = (pow(pSdr, yC) - 1.f) /
+                 (pSdr - 1.f);
 
     //f(Y'sdr)
-    const float colourScaling = ySdr /
-                                (GamutCompression * ycbcr.x);
+    float colourScaling = ySdr /
+                          (GamutCompression * ycbcr.x);
 
     //C'b,tmo
-    const float cbTmo = colourScaling * ycbcr.y;
+    float cbTmo = colourScaling * ycbcr.y;
 
     //C'r,tmo
-    const float crTmo = colourScaling * ycbcr.z;
+    float crTmo = colourScaling * ycbcr.z;
 
     //Y'tmo
-    const float yTmo = ySdr
-                     - max(0.1f * crTmo, 0.f);
+    float yTmo = ySdr
+               - max(0.1f * crTmo, 0.f);
 
     float3 hdrOut;
 
@@ -164,14 +164,14 @@ namespace ToneMappers
   {
 
     float HermiteSpline(
-      const float E1,
-      const float KneeStart,
-      const float MaxLum)
+      float E1,
+      float KneeStart,
+      float MaxLum)
     {
-      const float oneMinusKneeStart = 1.f - KneeStart;
-    	const float t = (E1 - KneeStart) / oneMinusKneeStart;
-      const float tPow2 = pow(t, 2.f);
-      const float tPow3 = pow(t, 3.f);
+      float oneMinusKneeStart = 1.f - KneeStart;
+      float t = (E1 - KneeStart) / oneMinusKneeStart;
+      float tPow2 = pow(t, 2.f);
+      float tPow3 = pow(t, 3.f);
 
     	return
         ( 2.f * tPow3 - 3.f * tPow2 + 1.f) * KneeStart
@@ -179,9 +179,9 @@ namespace ToneMappers
       + (-2.f * tPow3 + 3.f * tPow2)       * MaxLum;
     }
 
-  //const float tgt_max_PQ, // Lmax in PQ
-  //const float tgt_min_PQ, // Lmin in PQ
-  //const float SrcMaxPq,   // Lw in PQ
+  //float tgt_max_PQ, // Lmax in PQ
+  //float tgt_min_PQ, // Lmin in PQ
+  //float SrcMaxPq,   // Lw in PQ
 
 #define BT2390_PRO_MODE_ICTCP 0
 #define BT2390_PRO_MODE_YCBCR 1
@@ -190,21 +190,21 @@ namespace ToneMappers
 
     // works in PQ
     float3 Eetf(
-      const float3 Input,
-      const uint   ProcessingMode,
-      const float  SrcMinPq, // Lb in PQ
-      const float  SrcMaxPq, // Lw in PQ
-      const float  ScrMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
-      const float  MinLum,   // minLum
-      const float  MaxLum,   // maxLum
-      const float  KneeStart // KS
+      float3 Input,
+      uint   ProcessingMode,
+      float  SrcMinPq, // Lb in PQ
+      float  SrcMaxPq, // Lw in PQ
+      float  ScrMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
+      float  MinLum,   // minLum
+      float  MaxLum,   // maxLum
+      float  KneeStart // KS
     )
     {
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
         float3 Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Input));
 
-        const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
+        float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
         //E1
         float i2 = (i1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float i2 = i1 / SrcMaxPq;
@@ -226,7 +226,7 @@ namespace ToneMappers
         i2 = i2 * ScrMaxPqMinusSrcMinPq + SrcMinPq;
         //i2 = i2 * SrcMaxPq;
 
-        const float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // prevent colour corruption
+        float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // prevent colour corruption
 
         //to L'M'S'
         Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(
@@ -242,7 +242,7 @@ namespace ToneMappers
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
       {
-        const float y1 = dot(Input, Csp::KHelpers::Bt2020::K);
+        float y1 = dot(Input, Csp::KHelpers::Bt2020::K);
         //E1
         float y2 = (y1 - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float y2 = y1 / SrcMaxPq;
@@ -264,7 +264,7 @@ namespace ToneMappers
         y2 = max(y2 * ScrMaxPqMinusSrcMinPq + SrcMinPq, 0.f);
         //y2 = y2 * SrcMaxPq;
 
-        const float minY = min((y1 / y2), (y2 / y1));
+        float minY = min((y1 / y2), (y2 / y1));
 
         return max(Csp::Ycbcr::ToRgb::Bt2020(float3(
                  y2,
@@ -274,7 +274,7 @@ namespace ToneMappers
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        const float y1 = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        float y1 = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
         //E1
         float y2 = (Csp::Trc::ToPq(y1) - SrcMinPq) / ScrMaxPqMinusSrcMinPq;
         //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
@@ -351,9 +351,9 @@ namespace ToneMappers
     }
 
     float LuminanceCompress(
-      const float Colour,
-      const float TargetCll,
-      const float ShoulderStart)
+      float Colour,
+      float TargetCll,
+      float ShoulderStart)
     {
 #if 1
       return ShoulderStart
@@ -373,11 +373,11 @@ namespace ToneMappers
     // remap from infinite
     // ShoulderStart denotes the point where we change from linear to shoulder
     float3 ToneMapper(
-      const float3 Input,
-      const float  TargetCllInPq,
-      const float  ShoulderStartInPq,
-      const uint   ProcessingMode,
-      const uint   WorkingColourSpace)
+      float3 Input,
+      float  TargetCllInPq,
+      float  ShoulderStartInPq,
+      uint   ProcessingMode,
+      uint   WorkingColourSpace)
     {
 
     // why does this not work?!
@@ -427,7 +427,7 @@ namespace ToneMappers
 
         Lms = Csp::Trc::ToPq(Lms);
 
-        const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
+        float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
 
         if (i1 < ShoulderStartInPq)
         {
@@ -436,9 +436,9 @@ namespace ToneMappers
         }
         else
         {
-          const float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
+          float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
-          const float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
+          float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
 
           //to L'M'S'
           Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2,
@@ -452,7 +452,7 @@ namespace ToneMappers
       }
       else
       {
-        const float y1 = dot(Input, KFactors);
+        float y1 = dot(Input, KFactors);
 
         if (y1 < ShoulderStartInPq)
         {
@@ -461,13 +461,13 @@ namespace ToneMappers
         }
         else
         {
-          const float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
+          float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
 
-          const float minY = min(min((y1 / y2), (y2 / y1)) * 1.1f, 1.f);
+          float minY = min(min((y1 / y2), (y2 / y1)) * 1.1f, 1.f);
 
-          const float cb2 = minY * (Input.b - y1) /
+          float cb2 = minY * (Input.b - y1) /
                                    KbHelper;
-          const float cr2 = minY * (Input.r - y1) /
+          float cr2 = minY * (Input.r - y1) /
                                    KrHelper;
 
           //return saturate(float3(y2 + KrHelper * cr2,

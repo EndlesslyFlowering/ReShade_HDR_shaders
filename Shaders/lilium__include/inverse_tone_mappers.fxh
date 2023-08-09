@@ -9,8 +9,8 @@
 
 
 //float3 gamut(
-//  const float3 Input,
-//  const uint   gamutExpansionType)
+//  float3 Input,
+//  uint   gamutExpansionType)
 //{
 //  float3 sdr = Input;
 //
@@ -44,13 +44,13 @@ namespace InverseToneMapping
 
   // outputs normalised values
   float3 Bt2446a(
-    const float3 Input,
-    const float  Lhdr,
-    const float  Lsdr,
-    const float  InputNitsFactor,
-    const float  GamutExpansion,
-    const float  GammaIn,
-    const float  GammaOut)
+    float3 Input,
+    float  Lhdr,
+    float  Lsdr,
+    float  InputNitsFactor,
+    float  GamutExpansion,
+    float  GammaIn,
+    float  GammaOut)
   {
     float3 sdr = saturate(Input / InputNitsFactor);
 
@@ -59,40 +59,38 @@ namespace InverseToneMapping
 
     // Rec. ITU-R BT.2020-2 Table 4
     //Y'C'bC'r,tmo
-    const float3 ycbcrTmo = Csp::Ycbcr::FromRgb::Bt2020(sdr);
+    float3 ycbcrTmo = Csp::Ycbcr::FromRgb::Bt2020(sdr);
 
     // adjusted luma component (inverse)
     // get Y'sdr
-    const float ySdr = ycbcrTmo.x + max(0.1f * ycbcrTmo.z, 0.f);
+    float ySdr = ycbcrTmo.x + max(0.1f * ycbcrTmo.z, 0.f);
 
     // Tone mapping step 3 (inverse)
     // get Y'c
-    const float pSdr = 1.f + 32.f * pow(
-                                        Lsdr /
-                                        10000.f
-                                    , gamma);
+    float pSdr = 1.f + 32.f * pow(
+                                  Lsdr /
+                                  10000.f
+                              , gamma);
 
     //Y'c
     //if pSdr == 1 there is a division by zero
     //this happens when Lsdr == 0
-    const float yC = log((ySdr * (pSdr - 1)) + 1) /
-                      log(pSdr); //log = ln
+    float yC = log((ySdr * (pSdr - 1)) + 1) /
+               log(pSdr); //log = ln
 
     // Tone mapping step 2 (inverse)
     // get Y'p
     float yP = 0.f;
 
-    const float yP0 = yC / 1.0770f;
-    const float yP2 = (yC - 0.5000f) /
-                        0.5000f;
+    float yP0 = yC / 1.0770f;
+    float yP2 = (yC - 0.5000f) /
+                0.5000f;
     //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
-    const float yP11 = (-2.7811f + sqrt(4.83307641 - 4.604f * yC)) /
-                          -2.302f;
+    float yP11 = (-2.7811f + sqrt(4.83307641 - 4.604f * yC)) /
+                 -2.302f;
     //yP12 is never reached
-    //const float  yP12 = abs(
-    //              (_1_first - _1_sqrt) /
-    //              _1_div
-    //            );
+    //float yP12 = abs((_1_first - _1_sqrt) /
+    //                 _1_div);
 
     if (yP0 <= 0.7399f)
       yP = yP0;
@@ -119,23 +117,23 @@ namespace InverseToneMapping
 
     // Tone mapping step 1 (inverse)
     // get Y'
-    const float pHdr = 1.f + 32.f * pow(
-                                        Lhdr /
-                                        10000.f
-                                    , gamma);
+    float pHdr = 1.f + 32.f * pow(
+                                  Lhdr /
+                                  10000.f
+                              , gamma);
     //Y'hdr
     //if pHdr == 1 there is a division by zero
     //this happens when Lhdr == 0
-    const float yHdr = (pow(pHdr, yP) - 1.f) /
-                        (pHdr - 1.f);
+    float yHdr = (pow(pHdr, yP) - 1.f) /
+                 (pHdr - 1.f);
 
     // Colour scaling function
     // TODO: analyse behaviour of colourScale being 1 or 0.00000001
     //float colourScale = 0.0000001f;
     //if (yHdr > 0.f && ySdr > 0.f) // avoid division by zero
     // this is actually fine to be infinite because it will create 0 as a result in the next step
-    const float colourScale = ySdr /
-                              (GamutExpansion * yHdr);
+    float colourScale = ySdr /
+                        (GamutExpansion * yHdr);
 
     // Colour difference signals (inverse) and Luma (inverse)
     // get R'G'B'
@@ -148,8 +146,8 @@ namespace InverseToneMapping
   //          K_BT2020.g;
 
   //  produces the same results
-    const float cbHdr = ycbcrTmo.y / colourScale;
-    const float crHdr = ycbcrTmo.z / colourScale;
+    float cbHdr = ycbcrTmo.y / colourScale;
+    float crHdr = ycbcrTmo.z / colourScale;
 
     float3 hdr = Csp::Ycbcr::ToRgb::Bt2020(float3(yHdr, cbHdr, crHdr));
 
@@ -168,8 +166,8 @@ namespace InverseToneMapping
 
   // outputs normalised values
   float3 MapSdrIntoHdr(
-    const float3 Input,
-    const float  Brightness)
+    float3 Input,
+    float  Brightness)
   {
     //map SDR into HDR
     return Input * (Brightness / 10000.f);
@@ -184,13 +182,13 @@ namespace InverseToneMapping
 
   //// outputs normalised values
   //float3 Bt2446c(
-  //  const float3 Input,
-  //  const float  SdrBrightness,
-  //  const float  Alpha,
-  ////        float  k1,
-  ////        float  inf_point,
-  //  const bool   UseAchromaticCorrection,
-  //  const float  Sigma)
+  //  float3 Input,
+  //  float  SdrBrightness,
+  //  float  Alpha,
+  ////  float  k1,
+  ////  float  inf_point,
+  //  bool   UseAchromaticCorrection,
+  //  float  Sigma)
   //{
   //
   //  //103.2 =  400 nits
@@ -207,41 +205,41 @@ namespace InverseToneMapping
   //
   //  //6.1.6 (inverse)
   //  //crosstalk matrix from 6.1.2
-  //  //const float Alpha   = 0.f; //hardcode for now as it gives the best results imo
-  //  const float xlpha = 1.f - 2.f * Alpha;
-  //  const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
-  //                                             Alpha, xlpha, Alpha,
-  //                                             Alpha, Alpha, xlpha);
+  //  //float Alpha = 0.f; //hardcode for now as it gives the best results imo
+  //  float xlpha = 1.f - 2.f * Alpha;
+  //  float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
+  //                                      Alpha, xlpha, Alpha,
+  //                                      Alpha, Alpha, xlpha);
   //
   //  sdr = mul(crosstalkMatrix, sdr);
   //
   //  //6.1.5 (inverse)
   //  //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
   //  sdr = mul(Bt2020ToXYZ, sdr);
-  //  const float YSdr = sdr.y;
-  //  const float xyz  = sdr.x + sdr.y + sdr.z;
-  //  const float xSdr = sdr.x /
-  //                     xyz;
-  //  const float ySdr = sdr.y /
-  //                     xyz;
+  //  float YSdr = sdr.y;
+  //  float xyz  = sdr.x + sdr.y + sdr.z;
+  //  float xSdr = sdr.x /
+  //               xyz;
+  //  float ySdr = sdr.y /
+  //               xyz;
   //
   //  //6.1.4 (inverse)
   //  //inverse tone mapping
-  //  const float k1 = 0.83802f;
-  //  const float k2 = 15.09968f;
-  //  const float k3 = 0.74204f;
-  //  const float k4 = 78.99439f;
-  //  const float YHdrIp = 69.84922394059541817564; // 58.535046646 / k1; // 58.5 = 0.80^2.4
+  //  float k1 = 0.83802f;
+  //  float k2 = 15.09968f;
+  //  float k3 = 0.74204f;
+  //  float k4 = 78.99439f;
+  //  float YHdrIp = 69.84922394059541817564; // 58.535046646 / k1; // 58.5 = 0.80^2.4
   //  //k1 = 0.83802f;
   //  //k2 = 15.09968f;
   //  //k3 = 0.74204f;
   //  //k4 = 78.99439f;
-  //  //const float Y_hlg_ref = 203.f;
-  //  //const float Y_sdr_wp  = pow(0.96, 2.4f) * 100.f
-  //  //const float YHdrIp = inf_point / k1; // 58.5 = 0.80^2.4
-  //  //const float k2 = inf_point * (1.f - k3);
-  //  //const float k4 = inf_point - k2 * log(1.f - k3);
-  //  //const float k3 = -exp((Y_sdr_wp - k4) / k2) + (203.f / YHdrIp);
+  //  //float Y_hlg_ref = 203.f;
+  //  //float Y_sdr_wp  = pow(0.96, 2.4f) * 100.f
+  //  //float YHdrIp = inf_point / k1; // 58.5 = 0.80^2.4
+  //  //float k2 = inf_point * (1.f - k3);
+  //  //float k4 = inf_point - k2 * log(1.f - k3);
+  //  //float k3 = -exp((Y_sdr_wp - k4) / k2) + (203.f / YHdrIp);
   //
   //  float YHdr = YSdr / k1;
   //
@@ -250,9 +248,9 @@ namespace InverseToneMapping
   //
   //  //6.1.3 (inverse) part 1
   //  //convert to XYZ
-  //  const float  XHdrUncorrected = (xSdr / ySdr) * YHdr;
-  //  const float  ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
-  //        float3 hdr             = float3(XHdrUncorrected, YHdr, ZHdrUncorrected);
+  //  float  XHdrUncorrected = (xSdr / ySdr) * YHdr;
+  //  float  ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
+  //  float3 hdr             = float3(XHdrUncorrected, YHdr, ZHdrUncorrected);
   //
   //  bool  usefulCorrection = false;
   //  float xCorrected = 0.f;
@@ -270,8 +268,8 @@ namespace InverseToneMapping
   //    // it's missing the division by 10 in the ITU doc
   //
   //    // get L*
-  //    const float tY = YHdr / HDR_REF_WHITE_XYZ.y;
-  //          float fY = 0.f;
+  //    float tY = YHdr / HDR_REF_WHITE_XYZ.y;
+  //    float fY = 0.f;
   //
   //    if (tY > POW_DELTA_3) {
   //      fY = (pow(tY, 1.f / 3.f));
@@ -280,11 +278,11 @@ namespace InverseToneMapping
   //      fY = (tY / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
   //    }
   //
-  //    const float lStar = 116.f * fY - 16.f;
+  //    float lStar = 116.f * fY - 16.f;
   //
   //    // get a*
-  //    const float tX = sdr.x / HDR_REF_WHITE_XYZ.x;
-  //          float fX = 0.f;
+  //    float tX = sdr.x / HDR_REF_WHITE_XYZ.x;
+  //    float fX = 0.f;
   //
   //    if (tX > POW_DELTA_3) {
   //      fX = (pow(tY, 1.f / 3.f));
@@ -294,11 +292,11 @@ namespace InverseToneMapping
   //    }
   //    fX -= fY;
   //
-  //    const float a_star = 116.f * fX - 16.f;
+  //    float a_star = 116.f * fX - 16.f;
   //
   //    // get b*
-  //    const float tZ = sdr.z / HDR_REF_WHITE_XYZ.z;
-  //          float fZ = 0.f;
+  //    float tZ = sdr.z / HDR_REF_WHITE_XYZ.z;
+  //    float fZ = 0.f;
   //
   //    if (tZ > POW_DELTA_3) {
   //      fZ = (pow(tY, 1.f / 3.f));
@@ -308,15 +306,15 @@ namespace InverseToneMapping
   //    }
   //    fZ = fY - fZ;
   //
-  //    const float bStar = 116.f * fZ - 16.f;
+  //    float bStar = 116.f * fZ - 16.f;
   //
   //    // (2) chroma correction above Reference White
-  //    const float lStarRef = 100.f;
-  //    const float lStarMax = 116.f * pow(10000.f / 203.f, 1.f / 3.f) - 16.f; // hardcode to PQ max for now
+  //    float lStarRef = 100.f;
+  //    float lStarMax = 116.f * pow(10000.f / 203.f, 1.f / 3.f) - 16.f; // hardcode to PQ max for now
   //
   //    // convert to CIELCh
-  //    const float cStarAb = sqrt(pow(a_star, 2.f) + pow(bStar, 2.f));
-  //    const float hAb     = atan(bStar / a_star);
+  //    float cStarAb = sqrt(pow(a_star, 2.f) + pow(bStar, 2.f));
+  //    float hAb     = atan(bStar / a_star);
   //
   //    float fCorrected = 1.f;
   //    if (lStar > lStarRef)
@@ -330,21 +328,21 @@ namespace InverseToneMapping
   //      usefulCorrection = true;
   //
   //      // amazing function inversion!!
-  //      const float cStarAbCorrected = cStarAb / fCorrected;
+  //      float cStarAbCorrected = cStarAb / fCorrected;
   //
   //      // convert back to CIELAB
-  //      const float aStarCorrected = cStarAbCorrected * cos(hAb);
-  //      const float bStarCorrected = cStarAbCorrected * sin(hAb);
+  //      float aStarCorrected = cStarAbCorrected * cos(hAb);
+  //      float bStarCorrected = cStarAbCorrected * sin(hAb);
   //
   //      // (1) inverse
   //      // conversion from L*a*b* to XYZ from (3) and then Yxy
   //      float3 XYZCorrected;
-  //      const float fYCorrected = (lStar + 16.f) /
-  //                                116.f;
-  //      const float fXCorrected = fYCorrected + aStarCorrected /
-  //                                              500.f;
-  //      const float fZCorrected = fYCorrected - bStarCorrected /
-  //                                              200.f;
+  //      float fYCorrected = (lStar + 16.f) /
+  //                          116.f;
+  //      float fXCorrected = fYCorrected + aStarCorrected /
+  //                                        500.f;
+  //      float fZCorrected = fYCorrected - bStarCorrected /
+  //                                        200.f;
   //
   //      //X
   //      if (fXCorrected > DELTA) {
@@ -373,7 +371,7 @@ namespace InverseToneMapping
   //      }
   //
   //      //convert to Yxy without the Y as it is unneeded
-  //      const float xyz = XYZCorrected.x + XYZCorrected.y + XYZCorrected.z;
+  //      float xyz = XYZCorrected.x + XYZCorrected.y + XYZCorrected.z;
   //
   //      xCorrected = XYZCorrected.x /
   //                   xyz;
@@ -387,8 +385,8 @@ namespace InverseToneMapping
   //  //and then to RGB
   //  if (UseAchromaticCorrection && usefulCorrection)
   //  {
-  //    const float XHdrCorrected = (xCorrected / yCorrected) * YHdr;
-  //    const float ZHdrCorrected = ((1.f - xCorrected - yCorrected) / yCorrected) * YHdr;
+  //    float XHdrCorrected = (xCorrected / yCorrected) * YHdr;
+  //    float ZHdrCorrected = ((1.f - xCorrected - yCorrected) / yCorrected) * YHdr;
   //
   //    hdr = float3(XHdrCorrected, YHdr, ZHdrCorrected);
   //  }
@@ -396,8 +394,8 @@ namespace InverseToneMapping
   //
   //  //6.1.2 (inverse)
   //  //inverse crosstalk matrix from 6.1.6
-  //  const float mlpha = 1.f - Alpha;
-  //  const float3x3 inverseCrosstalkMatrix =
+  //  float mlpha = 1.f - Alpha;
+  //  float3x3 inverseCrosstalkMatrix =
   //    mul(1.f / (1.f - 3.f * Alpha), float3x3( mlpha, -Alpha, -Alpha,
   //                                            -Alpha,  mlpha, -Alpha,
   //                                            -Alpha, -Alpha,  mlpha));
@@ -410,13 +408,13 @@ namespace InverseToneMapping
 
   // outputs normalised values
   float3 Bt2446c(
-    const float3 Input,
-    const float  SdrRelativeBrightness,
-    const float  Alpha)
-  //        float  k1,
-  //        float  inf_point,
-  //  const bool   UseAchromaticCorrection,
-  //  const float  Sigma)
+    float3 Input,
+    float  SdrRelativeBrightness,
+    float  Alpha)
+  //  float  k1,
+  //  float  inf_point,
+  //  bool   UseAchromaticCorrection,
+  //  float  Sigma)
   {
 
     //103.2 =  400 nits
@@ -431,43 +429,43 @@ namespace InverseToneMapping
 
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
-    //const float Alpha   = 0.f; //hardcode for now as it gives the best results imo
-    const float xlpha = 1.f - 2.f * Alpha;
-    const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
-                                                      Alpha, xlpha, Alpha,
-                                                      Alpha, Alpha, xlpha);
+    //float Alpha = 0.f; //hardcode for now as it gives the best results imo
+    float xlpha = 1.f - 2.f * Alpha;
+    float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
+                                        Alpha, xlpha, Alpha,
+                                        Alpha, Alpha, xlpha);
 
     sdr = mul(crosstalkMatrix, sdr);
 
     //6.1.5 (inverse)
     //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
     sdr = Csp::Mat::Bt2020To::XYZ(sdr);
-    const float YSdr = sdr.y;
-    const float xyz  = sdr.x + sdr.y + sdr.z;
-    const float xSdr = sdr.x /
-                       xyz;
-    const float ySdr = sdr.y /
-                       xyz;
+    float YSdr = sdr.y;
+    float xyz  = sdr.x + sdr.y + sdr.z;
+    float xSdr = sdr.x /
+                 xyz;
+    float ySdr = sdr.y /
+                 xyz;
 
     //6.1.4 (inverse)
     //inverse tone mapping
-    const float k1 = 83.802f; // multiplied by 100
-    //const float k1 = 0.83802f;
-    const float k2 = 15.09968f;
-    const float k3 = 0.74204f;
-    const float k4 = 78.99439f;
-    //const float YHdrIp = 69.84922394059541817564; // 58.535046646 / k1; // 58.5 = 0.80^2.4
-    const float YHdrIp = 0.006984922394059541817564; // divided by 10000
+    float k1 = 83.802f; // multiplied by 100
+    //float k1 = 0.83802f;
+    float k2 = 15.09968f;
+    float k3 = 0.74204f;
+    float k4 = 78.99439f;
+    //float YHdrIp = 69.84922394059541817564; // 58.535046646 / k1; // 58.5 = 0.80^2.4
+    float YHdrIp = 0.006984922394059541817564; // divided by 10000
     //k1 = 0.83802f;
     //k2 = 15.09968f;
     //k3 = 0.74204f;
     //k4 = 78.99439f;
-    //const float Y_hlg_ref = 203.f;
-    //const float Y_sdr_wp  = pow(0.96, 2.4f) * 100.f
-    //const float YHdrIp = inf_point / k1; // 58.5 = 0.80^2.4
-    //const float k2 = inf_point * (1.f - k3);
-    //const float k4 = inf_point - k2 * log(1.f - k3);
-    //const float k3 = -exp((Y_sdr_wp - k4) / k2) + (203.f / YHdrIp);
+    //float Y_hlg_ref = 203.f;
+    //float Y_sdr_wp  = pow(0.96, 2.4f) * 100.f
+    //float YHdrIp = inf_point / k1; // 58.5 = 0.80^2.4
+    //float k2 = inf_point * (1.f - k3);
+    //float k4 = inf_point - k2 * log(1.f - k3);
+    //float k3 = -exp((Y_sdr_wp - k4) / k2) + (203.f / YHdrIp);
 
     float YHdr = YSdr / k1;
 
@@ -477,9 +475,10 @@ namespace InverseToneMapping
 
     //6.1.3 (inverse) part 1
     //convert to XYZ
-    const float  XHdrUncorrected = (xSdr / ySdr) * YHdr;
-    const float  ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
-          float3 hdr         = float3(XHdrUncorrected, YHdr, ZHdrUncorrected);
+    float  XHdrUncorrected = (xSdr / ySdr) * YHdr;
+    float  ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
+
+    float3 hdr = float3(XHdrUncorrected, YHdr, ZHdrUncorrected);
 
   //  bool  usefulCorrection = false;
   //  float xCorrected = 0.f;
@@ -497,8 +496,8 @@ namespace InverseToneMapping
   //    // it's missing the division by 10 in the ITU doc
   //
   //    // get L*
-  //    const float tY = YHdr / HDR_REF_WHITE_XYZ.y;
-  //          float fY = 0.f;
+  //    float tY = YHdr / HDR_REF_WHITE_XYZ.y;
+  //    float fY = 0.f;
   //
   //    if (tY > POW_DELTA_3) {
   //      fY = (pow(tY, 1.f / 3.f));
@@ -507,11 +506,11 @@ namespace InverseToneMapping
   //      fY = (tY / (3.f * pow(DELTA, 2.f)) + (16.f / 116.f));
   //    }
   //
-  //    const float lStar = 116.f * fY - 16.f;
+  //    float lStar = 116.f * fY - 16.f;
   //
   //    // get a*
-  //    const float tX = sdr.x / HDR_REF_WHITE_XYZ.x;
-  //          float fX = 0.f;
+  //    float tX = sdr.x / HDR_REF_WHITE_XYZ.x;
+  //    float fX = 0.f;
   //
   //    if (tX > POW_DELTA_3) {
   //      fX = (pow(tY, 1.f / 3.f));
@@ -521,11 +520,11 @@ namespace InverseToneMapping
   //    }
   //    fX -= fY;
   //
-  //    const float a_star = 116.f * fX - 16.f;
+  //    float a_star = 116.f * fX - 16.f;
   //
   //    // get b*
-  //    const float tZ = sdr.z / HDR_REF_WHITE_XYZ.z;
-  //          float fZ = 0.f;
+  //    float tZ = sdr.z / HDR_REF_WHITE_XYZ.z;
+  //    float fZ = 0.f;
   //
   //    if (tZ > POW_DELTA_3) {
   //      fZ = (pow(tY, 1.f / 3.f));
@@ -535,15 +534,15 @@ namespace InverseToneMapping
   //    }
   //    fZ = fY - fZ;
   //
-  //    const float bStar = 116.f * fZ - 16.f;
+  //    float bStar = 116.f * fZ - 16.f;
   //
   //    // (2) chroma correction above Reference White
-  //    const float lStarRef = 100.f;
-  //    const float lStarMax = 116.f * pow(10000.f / 203.f, 1.f / 3.f) - 16.f; // hardcode to PQ max for now
+  //    float lStarRef = 100.f;
+  //    float lStarMax = 116.f * pow(10000.f / 203.f, 1.f / 3.f) - 16.f; // hardcode to PQ max for now
   //
   //    // convert to CIELCh
-  //    const float cStarAb = sqrt(pow(a_star, 2.f) + pow(bStar, 2.f));
-  //    const float hAb      = atan(bStar / a_star);
+  //    float cStarAb = sqrt(pow(a_star, 2.f) + pow(bStar, 2.f));
+  //    float hAb      = atan(bStar / a_star);
   //
   //    float fCorrected = 1.f;
   //    if (lStar > lStarRef)
@@ -556,21 +555,21 @@ namespace InverseToneMapping
   //      usefulCorrection = true;
   //
   //      // amazing function inversion!!
-  //      const float cStarAbCorrected = cStarAb / fCorrected;
+  //      float cStarAbCorrected = cStarAb / fCorrected;
   //
   //      // convert back to CIELAB
-  //      const float aStarCorrected = cStarAbCorrected * cos(hAb);
-  //      const float bStarCorrected = cStarAbCorrected * sin(hAb);
+  //      float aStarCorrected = cStarAbCorrected * cos(hAb);
+  //      float bStarCorrected = cStarAbCorrected * sin(hAb);
   //
   //      // (1) inverse
   //      // conversion from L*a*b* to XYZ from (3) and then Yxy
   //      float3 XYZCorrected;
-  //      const float fYCorrected = (lStar + 16.f) /
-  //                                116.f;
-  //      const float fXCorrected = fYCorrected + aStarCorrected /
-  //                                              500.f;
-  //      const float fZCorrected = fYCorrected - bStarCorrected /
-  //                                              200.f;
+  //      float fYCorrected = (lStar + 16.f) /
+  //                          116.f;
+  //      float fXCorrected = fYCorrected + aStarCorrected /
+  //                                        500.f;
+  //      float fZCorrected = fYCorrected - bStarCorrected /
+  //                                        200.f;
   //
   //      //X
   //      if (fXCorrected > DELTA) {
@@ -599,7 +598,7 @@ namespace InverseToneMapping
   //      }
   //
   //      //convert to Yxy without the Y as it is unneeded
-  //      const float xyz = XYZCorrected.x + XYZCorrected.y + XYZCorrected.z;
+  //      float xyz = XYZCorrected.x + XYZCorrected.y + XYZCorrected.z;
   //
   //      xCorrected = XYZCorrected.x /
   //                   xyz;
@@ -613,8 +612,8 @@ namespace InverseToneMapping
     //and then to RGB
   //  if (UseAchromaticCorrection && usefulCorrection)
   //  {
-  //    const float XHdrCorrected = (xCorrected / yCorrected) * YHdr;
-  //    const float ZHdrCorrected = ((1.f - xCorrected - yCorrected) / yCorrected) * YHdr;
+  //    float XHdrCorrected = (xCorrected / yCorrected) * YHdr;
+  //    float ZHdrCorrected = ((1.f - xCorrected - yCorrected) / yCorrected) * YHdr;
   //
   //    hdr = float3(XHdrCorrected, YHdr, ZHdrCorrected);
   //  }
@@ -623,8 +622,8 @@ namespace InverseToneMapping
 
     //6.1.2 (inverse)
     //inverse crosstalk matrix from 6.1.6
-    const float mlpha = 1.f - Alpha;
-    const float3x3 inverseCrosstalkMatrix =
+    float mlpha = 1.f - Alpha;
+    float3x3 inverseCrosstalkMatrix =
       mul(1.f / (1.f - 3.f * Alpha), float3x3(mlpha, -Alpha, -Alpha,
                                              -Alpha,  mlpha, -Alpha,
                                              -Alpha, -Alpha,  mlpha));
@@ -647,9 +646,9 @@ namespace InverseToneMapping
     } //LuminanceExpand
 
     float3 InverseToneMapper(
-      const float3 Input,
-            float  MaxNits,
-            float  ShoulderStart)
+      float3 Input,
+      float  MaxNits,
+      float  ShoulderStart)
     {
 
       float3x3 RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
@@ -664,7 +663,7 @@ namespace InverseToneMapping
 
       LMS = Csp::Trc::ToPq(LMS);
 
-      const float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
+      float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
       if (I1 < ShoulderStart)
       {
@@ -672,12 +671,12 @@ namespace InverseToneMapping
       }
       else
       {
-        const float Ct1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
-        const float Cp1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
+        float Ct1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
+        float Cp1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
 
-        const float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
+        float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 
-        const float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
+        float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
         //to L'M'S'
         LMS = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));

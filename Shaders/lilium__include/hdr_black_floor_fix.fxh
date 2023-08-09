@@ -112,7 +112,7 @@ namespace Ui
 
 void Gamma22Emulation(
   inout float3 Rgb,
-  const float  WhitePointNormalised)
+        float  WhitePointNormalised)
 {
   if (dot(Csp::Mat::Bt2020ToXYZ[1], Rgb) <= WhitePointNormalised)
   {
@@ -138,11 +138,11 @@ void Gamma22Emulation(
 
 
 float3 LowerBlackFloor(
-  const float3 Input,
-  const float  RollOffStoppingPoint,
-  const float  OldBlackPoint,
-  const float  RollOffMinusOldBlackPoint,
-  const float  MinLum)
+  float3 Input,
+  float  RollOffStoppingPoint,
+  float  OldBlackPoint,
+  float  RollOffMinusOldBlackPoint,
+  float  MinLum)
 {
   // ICtCp mode
   if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_ICTCP)
@@ -150,7 +150,7 @@ float3 LowerBlackFloor(
     //to L'M'S'
     float3 Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Input));
 
-    const float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
+    float i1 = 0.5f * Lms.x + 0.5f * Lms.y;
 
     if (i1 <= RollOffStoppingPoint)
     {
@@ -177,9 +177,9 @@ float3 LowerBlackFloor(
   // YCbCr mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YCBCR)
   {
-    const float3 inputInPq = Csp::Trc::ToPq(Input);
+    float3 inputInPq = Csp::Trc::ToPq(Input);
 
-    const float y1 = dot(inputInPq, Csp::KHelpers::Bt2020::K);
+    float y1 = dot(inputInPq, Csp::KHelpers::Bt2020::K);
 
     if (y1 <= RollOffStoppingPoint)
     {
@@ -205,8 +205,8 @@ float3 LowerBlackFloor(
   // YRGB mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
   {
-    const float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
-    const float y1InPq = Csp::Trc::ToPq(y1);
+    float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
+    float y1InPq = Csp::Trc::ToPq(y1);
 
     if (y1InPq <= RollOffStoppingPoint)
     {
@@ -230,7 +230,7 @@ float3 LowerBlackFloor(
   {
     if (Csp::Trc::ToPq(dot(Input, Csp::Mat::Bt2020ToXYZ[1])) <= RollOffStoppingPoint)
     {
-      const float3 inputInPq = Csp::Trc::ToPq(Input);
+      float3 inputInPq = Csp::Trc::ToPq(Input);
 
       //E1
       float3 rgb = (inputInPq - OldBlackPoint) / RollOffMinusOldBlackPoint;

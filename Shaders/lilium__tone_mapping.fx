@@ -559,8 +559,8 @@ void PS_ToneMapping(
 
       case TM_METHOD_BT2446A_MOD1:
       {
-        const float testH = clamp(TEST_H + usedMaxCll,                                0.f, 10000.f);
-        const float testS = clamp(TEST_S + Ui::ToneMapping::Global::TargetBrightness, 0.f, 10000.f);
+        float testH = clamp(TEST_H + usedMaxCll,                                0.f, 10000.f);
+        float testS = clamp(TEST_S + Ui::ToneMapping::Global::TargetBrightness, 0.f, 10000.f);
         hdr = ToneMappers::Bt2446A_MOD1(hdr,
                                         Ui::ToneMapping::Global::TargetBrightness,
                                         usedMaxCll,
@@ -644,24 +644,24 @@ void PS_ToneMapping(
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
-  const uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  const uint text_avgdCLL[35] = { __a, __v, __e, __r, __a, __g, __e, __d, __Space,
+  uint text_maxCLL[26] = { __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
+  uint text_avgdCLL[35] = { __a, __v, __e, __r, __a, __g, __e, __d, __Space,
                                   __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  const uint text_adaptiveMaxCLL[35] = { __a, __d, __a, __p, __t, __i, __v, __e, __Space,
+  uint text_adaptiveMaxCLL[35] = { __a, __d, __a, __p, __t, __i, __v, __e, __Space,
                                          __m, __a, __x, __C, __L, __L, __Colon, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __Space, __n, __i, __t, __s };
-  const uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
+  uint text_finalAdaptMode[17] = { __f, __i, __n, __a, __l, __Space, __a, __d, __a, __p, __t, __Space, __m, __o, __d, __e, __Colon };
 
-  const float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE);
+  float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE);
 
-  const float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL);
-  const float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
+  float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL);
+  float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
 
-  const float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
-  const float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
+  float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
+  float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
 
-  const float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
+  float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
 
-  const float finalAdaptMode = 
+  float finalAdaptMode = 
     absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))
   ? 2.f
   : absDiff < abs((avgMaxCllInPq - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
@@ -685,16 +685,16 @@ void PS_ToneMapping(
 
 void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
-  const float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8)
-                                         + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9)) / 10.f;
+  float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8)
+                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9)) / 10.f;
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
@@ -702,25 +702,25 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
-  const float currentMaxCllInPQ =
+  float currentMaxCllInPQ =
     Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE));
-  const float currentAdaptiveMaxCllInPQ =
+  float currentAdaptiveMaxCllInPQ =
     Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL));
 
-  const int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR);
-  const int newSlot = curSlot > 10 ? 1
+  int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR);
+  int newSlot = curSlot > 10 ? 1
                                    : curSlot + 1;
   tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR, newSlot);
   tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR
                                  + int2(newSlot, 0), currentMaxCllInPQ);
 
-  const float absFrametime = abs(RuntimeValues::Frametime);
+  float absFrametime = abs(RuntimeValues::Frametime);
 
-  const float curDiff = currentMaxCllinPqAveraged * 1.0005f - currentAdaptiveMaxCllInPQ;
-  const float absCurDiff = abs(curDiff);
-  const float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged
+  float curDiff = currentMaxCllinPqAveraged * 1.0005f - currentAdaptiveMaxCllInPQ;
+  float absCurDiff = abs(curDiff);
+  float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged
                                       - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxCllinPqAveraged);
-  const float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged
+  float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged
                                       - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
   float adapt = 0.f;
 
@@ -730,9 +730,9 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   }
   else if (absCurDiff < finalAdaptPointInPq)
   {
-    const float actualFinalAdapt = absFrametime
-                                 * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSteps / 10000.f)
-                                 * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSpeed / 1000.f);
+    float actualFinalAdapt = absFrametime
+                           * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSteps / 10000.f)
+                           * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSpeed / 1000.f);
     adapt = curDiff > 0.f ?  actualFinalAdapt
                           : -actualFinalAdapt;
   }

@@ -13,6 +13,7 @@
 // - add namespace for UI
 // - fix 1x1 pixel offset in CIE textures
 // - add primaries triangles to show on the CIE diagram for all CSPs
+// - fix performance mode issues with HDR analysis shader
 
 
 
@@ -485,7 +486,7 @@ precise uniform float TEST_THINGY_Y
 //void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
 //void draw_maxCLL(float4 VPos : SV_Position, float2 TexCoord : TEXCOORD, out float4 fragment : SV_Target0)
 //{
-//  const uint int_maxCLL = int(round(maxCLL));
+//  uint int_maxCLL = int(round(maxCLL));
 //  uint digit1;
 //  uint digit2;
 //  uint digit3;

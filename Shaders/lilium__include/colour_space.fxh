@@ -306,7 +306,7 @@ namespace Csp
     //gamma compressed->display (also linear) = EOTF -> ^(2.2)
 
     // IEC 61966-2-1
-    float FromSrgb(const float C)
+    float FromSrgb(float C)
     {
       if (C <= 0.04045f)
         return C / 12.92f;
@@ -314,7 +314,7 @@ namespace Csp
         return pow(((C + 0.055f) / 1.055f), 2.4f);
     }
 
-    float3 FromSrgb(const float3 Colour)
+    float3 FromSrgb(float3 Colour)
     {
       return float3(
         FromSrgb(Colour.r),
@@ -322,7 +322,7 @@ namespace Csp
         FromSrgb(Colour.b));
     }
 
-    float ToSrgb(const float C)
+    float ToSrgb(float C)
     {
       if (C <= 0.0031308f)
         return C * 12.92f;
@@ -330,7 +330,7 @@ namespace Csp
         return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
     }
 
-    float3 ToSrgb(const float3 Colour)
+    float3 ToSrgb(float3 Colour)
     {
       return float3(
         ToSrgb(Colour.r),
@@ -342,7 +342,7 @@ namespace Csp
     //#define X_sRGB_x 0.039815307380813555
     //#define X_sRGB_y_adjust 1.21290538811
     // extended sRGB gamma including above 1 and below -1
-    float FromExtendedSrgb(const float C)
+    float FromExtendedSrgb(float C)
     {
       if (C < -1.f)
         return
@@ -378,7 +378,7 @@ namespace Csp
     //      1.055f * (pow(C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) - 0.055f;
     //}
 
-    float3 FromExtendedSrgb(const float3 Colour)
+    float3 FromExtendedSrgb(float3 Colour)
     {
       return float3(
         FromExtendedSrgb(Colour.r),
@@ -387,7 +387,7 @@ namespace Csp
     }
 
     
-    float ToExtendedSrgb(const float C)
+    float ToExtendedSrgb(float C)
     {
       if (C < -1.f)
         return
@@ -406,7 +406,7 @@ namespace Csp
           pow((C + 0.055f) / 1.055f, 2.4f);
     }
 
-    float3 ToExtendedSrgb(const float3 Colour)
+    float3 ToExtendedSrgb(float3 Colour)
     {
       return float3(
         ToExtendedSrgb(Colour.r),
@@ -420,7 +420,7 @@ namespace Csp
     //#define X_22_x 0.0370133892172524
     //#define X_22_y_adjust 1.5f - pow(X_22_x, InverseGamma22)
     // extended gamma 2.2 including above 1 and below 0
-    float FromExtendedGamma22(const float C)
+    float FromExtendedGamma22(float C)
     {
       if (C < -1.f)
         return
@@ -450,7 +450,7 @@ namespace Csp
     //      (pow(C - X_22_1 + X_22_x, InverseGamma22) + X_22_y_adjust);
     //}
 
-    float3 FromExtendedGamma22(const float3 Colour)
+    float3 FromExtendedGamma22(float3 Colour)
     {
       return float3(
         FromExtendedGamma22(Colour.r),
@@ -464,7 +464,7 @@ namespace Csp
     //#define X_24_x 0.033138075
     //#define X_24_y_adjust 1.5f - pow(X_24_x, InverseGamma24)
     // extended gamma 2.4 including above 1 and below 0
-    float FromExtendedGamma24(const float C)
+    float FromExtendedGamma24(float C)
     {
       if (C < -1.f)
         return
@@ -494,7 +494,7 @@ namespace Csp
     //      (pow(C - X_24_1 + X_24_x, InverseGamma24) + X_24_y_adjust);
     //}
 
-    float3 FromExtendedGamma24(const float3 Colour)
+    float3 FromExtendedGamma24(float3 Colour)
     {
       return float3(
         FromExtendedGamma24(Colour.r),
@@ -502,9 +502,9 @@ namespace Csp
         FromExtendedGamma24(Colour.b));
     }
 
-    //float X_power_TRC(const float C, const float pow_gamma)
+    //float X_power_TRC(float C, float pow_gamma)
     //{
-    //  const float pow_Inverse_gamma = 1.f / pow_gamma;
+    //  float pow_Inverse_gamma = 1.f / pow_gamma;
     //
     //  if (C < -1)
     //    return
@@ -520,7 +520,7 @@ namespace Csp
     //      pow(C, pow_Inverse_gamma);
     //}
     //
-    //float3 X_power_TRC(const float3 Colour, const float pow_gamma)
+    //float3 X_power_TRC(float3 Colour, float pow_gamma)
     //{
     //  return float3(
     //    X_power_TRC(Colour.r, pow_gamma),
@@ -530,9 +530,9 @@ namespace Csp
 
 
     // gamma adjust including values above 1 and below 0
-    float ExtendedGammaAdjust(const float C, const float Adjust)
+    float ExtendedGammaAdjust(float C, float Adjust)
     {
-      /*static*/ const float inverseAdjust = 1.f / Adjust;
+      /*static*/ float inverseAdjust = 1.f / Adjust;
     
       if (C < -1.f)
         return
@@ -548,7 +548,7 @@ namespace Csp
           pow(C, inverseAdjust);
     }
 
-    float3 ExtendedGammaAdjust(const float3 Colour, const float Adjust)
+    float3 ExtendedGammaAdjust(float3 Colour, float Adjust)
     {
       return float3(
         ExtendedGammaAdjust(Colour.r, Adjust),
@@ -574,7 +574,7 @@ namespace Csp
     {
       E_ = max(E_, 0.f);
 
-      const float E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);
+      float E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);
 
       //Y
       return pow(
@@ -627,7 +627,7 @@ namespace Csp
     {
       Y = max(Y, 0.f);
 
-      const float Y_pow_m1 = pow(Y, PQ_m1);
+      float Y_pow_m1 = pow(Y, PQ_m1);
 
       //E'
       return pow(
@@ -652,11 +652,11 @@ namespace Csp
     }
 
     // (OETF) takes nits as input
-    float ToPqFromNits(const float Fd)
+    float ToPqFromNits(float Fd)
     {
-      const float Y = max(Fd / 10000.f, 0.f);
+      float Y = max(Fd / 10000.f, 0.f);
 
-      const float Y_pow_m1 = pow(Y, PQ_m1);
+      float Y_pow_m1 = pow(Y, PQ_m1);
 
       //E'
       return pow(
@@ -764,7 +764,7 @@ namespace Csp
           Colour.x + KHelpers::Bt709::Kb    * Colour.y);
       }
 
-      float3 Bt2020(const float3 Colour)
+      float3 Bt2020(float3 Colour)
       {
         return float3(
           Colour.x + KHelpers::Bt2020::Kr    * Colour.z,
@@ -772,7 +772,7 @@ namespace Csp
           Colour.x + KHelpers::Bt2020::Kb    * Colour.y);
       }
 
-      float3 Ap0D65(const float3 Colour)
+      float3 Ap0D65(float3 Colour)
       {
         return float3(
           Colour.x + KHelpers::Ap0D65::Kr    * Colour.z,
@@ -785,25 +785,25 @@ namespace Csp
     namespace FromRgb
     {
 
-      float3 Bt709(const float3 Colour)
+      float3 Bt709(float3 Colour)
       {
-        const float Y = dot(Colour, KHelpers::Bt709::K);
+        float Y = dot(Colour, KHelpers::Bt709::K);
         return float3(Y,
                       (Colour.b - Y) / KHelpers::Bt709::Kb,
                       (Colour.r - Y) / KHelpers::Bt709::Kr);
       }
 
-      float3 Bt2020(const float3 Colour)
+      float3 Bt2020(float3 Colour)
       {
-        const float Y = dot(Colour, KHelpers::Bt2020::K);
+        float Y = dot(Colour, KHelpers::Bt2020::K);
         return float3(Y,
                       (Colour.b - Y) / KHelpers::Bt2020::Kb,
                       (Colour.r - Y) / KHelpers::Bt2020::Kr);
       }
 
-      float3 Ap0D65(const float3 Colour)
+      float3 Ap0D65(float3 Colour)
       {
-        const float Y = dot(Colour, KHelpers::Ap0D65::K);
+        float Y = dot(Colour, KHelpers::Ap0D65::K);
         return float3(Y,
                       (Colour.b - Y) / KHelpers::Ap0D65::Kb,
                       (Colour.r - Y) / KHelpers::Ap0D65::Kr);
@@ -912,22 +912,22 @@ namespace Csp
 
     namespace Bt709To
     {
-      float3 XYZ(const float3 Colour)
+      float3 XYZ(float3 Colour)
       {
         return mul(Bt709ToXYZ, Colour);
       }
 
-      float3 DciP3(const float3 Colour)
+      float3 DciP3(float3 Colour)
       {
         return mul(Bt709ToDciP3, Colour);
       }
 
-      float3 Bt2020(const float3 Colour)
+      float3 Bt2020(float3 Colour)
       {
         return mul(Bt709ToBt2020, Colour);
       }
 
-      float3 Ap0D65(const float3 Colour)
+      float3 Ap0D65(float3 Colour)
       {
         return mul(Bt709ToAp0D65, Colour);
       }
@@ -935,17 +935,17 @@ namespace Csp
 
     namespace Bt2020To
     {
-      float3 XYZ(const float3 Colour)
+      float3 XYZ(float3 Colour)
       {
         return mul(Bt2020ToXYZ, Colour);
       }
 
-      float3 Bt709(const float3 Colour)
+      float3 Bt709(float3 Colour)
       {
         return mul(Bt2020ToBt709, Colour);
       }
 
-      float3 Ap0D65(const float3 Colour)
+      float3 Ap0D65(float3 Colour)
       {
         return mul(Bt2020ToAp0D65, Colour);
       }
@@ -953,17 +953,17 @@ namespace Csp
 
     namespace Ap0D65To
     {
-      float3 XYZ(const float3 Colour)
+      float3 XYZ(float3 Colour)
       {
         return mul(Ap0D65ToXYZ, Colour);
       }
 
-      float3 Bt709(const float3 Colour)
+      float3 Bt709(float3 Colour)
       {
         return mul(Ap0D65ToBt709, Colour);
       }
 
-      float3 Bt2020(const float3 Colour)
+      float3 Bt2020(float3 Colour)
       {
         return mul(Ap0D65ToBt2020, Colour);
       }
@@ -971,7 +971,7 @@ namespace Csp
 
     namespace AP1_D65To
     {
-      float3 XYZ(const float3 Colour)
+      float3 XYZ(float3 Colour)
       {
         return mul(Ap1D65ToXYZ, Colour);
       }
@@ -979,27 +979,27 @@ namespace Csp
 
     namespace XYZTo
     {
-      float3 Bt709(const float3 Colour)
+      float3 Bt709(float3 Colour)
       {
         return mul(XYZToBt709, Colour);
       }
 
-      float3 DciP3(const float3 Colour)
+      float3 DciP3(float3 Colour)
       {
         return mul(XYZToDciP3, Colour);
       }
 
-      float3 Bt2020(const float3 Colour)
+      float3 Bt2020(float3 Colour)
       {
         return mul(XYZToBt2020, Colour);
       }
 
-      float3 AP1(const float3 Colour)
+      float3 AP1(float3 Colour)
       {
         return mul(XYZToAp1, Colour);
       }
 
-      float3 AP0(const float3 Colour)
+      float3 AP0(float3 Colour)
       {
         return mul(XYZToAp0, Colour);
       }
@@ -1055,7 +1055,7 @@ namespace Csp
       namespace IctcpTo
       {
         //ICtCp->L'M'S'
-        float3 PqLms(const float3 Colour)
+        float3 PqLms(float3 Colour)
         {
           return mul(IctcpToPqLms, Colour);
         }
@@ -1064,7 +1064,7 @@ namespace Csp
       namespace PqLmsTo
       {
         //L'M'S'->ICtCp
-        float3 Ictcp(const float3 Colour)
+        float3 Ictcp(float3 Colour)
         {
           return mul(PqLmsToIctcp, Colour);
         }
@@ -1073,7 +1073,7 @@ namespace Csp
       namespace Bt2020To
       {
         //RGB BT.2020->LMS
-        float3 Lms(const float3 Colour)
+        float3 Lms(float3 Colour)
         {
           return mul(Bt2020ToLms, Colour);
         }
@@ -1082,7 +1082,7 @@ namespace Csp
       namespace Ap0D65To
       {
         //RGB AP0_D65->LMS
-        float3 Lms(const float3 Colour)
+        float3 Lms(float3 Colour)
         {
           return mul(Ap0D65ToLms, Colour);
         }
@@ -1091,13 +1091,13 @@ namespace Csp
       namespace LmsTo
       {
         //LMS->RGB BT.2020
-        float3 Bt2020(const float3 Colour)
+        float3 Bt2020(float3 Colour)
         {
           return mul(LmsToBt2020, Colour);
         }
 
         //LMS->RGB AP0_D65
-        float3 Ap0D65(const float3 Colour)
+        float3 Ap0D65(float3 Colour)
         {
           return mul(LmsToAp0D65, Colour);
         }
@@ -1114,22 +1114,22 @@ namespace Csp
     namespace Bt709Into
     {
 
-      float3 Scrgb(const float3 Input)
+      float3 Scrgb(float3 Input)
       {
         return Input / 80.f;
       }
 
-      float3 Hdr10(const float3 Input)
+      float3 Hdr10(float3 Input)
       {
         return Csp::Trc::ToPqFromNits(Csp::Mat::Bt709To::Bt2020(Input));
       }
 
-      float3 Hlg(const float3 Input)
+      float3 Hlg(float3 Input)
       {
         return Csp::Trc::ToHlgFromNits(Csp::Mat::Bt709To::Bt2020(Input));
       }
 
-      float3 Ps5(const float3 Input)
+      float3 Ps5(float3 Input)
       {
         return Csp::Mat::Bt709To::Bt2020(Input / 100.f);
       }
@@ -1451,7 +1451,7 @@ struct colourspace
 //
 
 
-bool IsNAN(const float Input)
+bool IsNAN(float Input)
 {
   if (isnan(Input) || isinf(Input))
     return true;
@@ -1459,7 +1459,7 @@ bool IsNAN(const float Input)
     return false;
 }
 
-float fixNAN(const float Input)
+float fixNAN(float Input)
 {
   if (IsNAN(Input))
     return 0.f;

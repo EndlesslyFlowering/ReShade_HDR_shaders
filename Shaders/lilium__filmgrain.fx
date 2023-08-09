@@ -45,7 +45,7 @@ void PS_Filmgrain(
       float2 Texcoord : TEXCOORD,
   out float4 Output   : SV_TARGET)
 {
-  const float3 input = tex2D(ReShade::BackBuffer, Texcoord).rgb;
+  float3 input = tex2D(ReShade::BackBuffer, Texcoord).rgb;
 
   float3 m     = float3(Texcoord, RANDOM / 100000.f) + 1.f;
   float  state = Permute(Permute(m.x) + m.y) + m.z;
@@ -75,8 +75,8 @@ void PS_Filmgrain(
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-//  const float maxMul = min(1.25f + INTENSITY, 2.f);
-//  const float minMul = 2.01f - maxMul;
+//  float maxMul = min(1.25f + INTENSITY, 2.f);
+//  float minMul = 2.01f - maxMul;
 //
 //  float maxY = Ycbcr.x * maxMul;
 //  float minY = Ycbcr.x * minMul;

@@ -308,7 +308,7 @@ void PS_InverseToneMapping(
   //hdr = gamut(hdr, EXPAND_GAMUT);
 
 #ifdef ENABLE_DICE
-  const float diceReferenceWhite = (Ui::Itm::Dice::DiceInputBrightness / 80.f);
+  float diceReferenceWhite = (Ui::Itm::Dice::DiceInputBrightness / 80.f);
 #endif //ENABLE_DICE
 
   if (Ui::Itm::Global::ItmMethod != ITM_METHOD_DICE_INVERSE)
@@ -327,7 +327,7 @@ void PS_InverseToneMapping(
   {
     case ITM_METHOD_BT2446A:
     {
-      const float inputNitsFactor = Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness > Ui::Itm::Bt2446A::Bt2446AInputBrightness
+      float inputNitsFactor = Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness > Ui::Itm::Bt2446A::Bt2446AInputBrightness
                                   ? Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness / Ui::Itm::Bt2446A::Bt2446AInputBrightness
                                   : 1.f;
 
@@ -360,7 +360,7 @@ void PS_InverseToneMapping(
 
     case ITM_METHOD_DICE_INVERSE:
     {
-      const float target_CLL_normalised = Ui::Itm::Global::TargetBrightness / 10000.f;
+      float target_CLL_normalised = Ui::Itm::Global::TargetBrightness / 10000.f;
       hdr = InverseToneMapping::Dice::InverseToneMapper(
               hdr,
               Csp::Trc::ToPqFromNits(Ui::Itm::Dice::DiceInputBrightness),
