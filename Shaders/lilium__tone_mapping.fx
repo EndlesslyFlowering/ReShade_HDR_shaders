@@ -17,6 +17,8 @@
 
 // TODO
 // - add black point adaption for every tone mapper
+// - figure out why discard doesn't work in the dice tone mapper with the DX compiler...
+// - BT.2390 raises brightness???
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
