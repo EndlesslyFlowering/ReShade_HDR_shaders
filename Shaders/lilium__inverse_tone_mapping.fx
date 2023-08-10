@@ -7,9 +7,7 @@
 
 // TODO:
 // - implement vertex shader for optimisation
-// - add namespace for UI
 // - finish BT.2446 Method C
-// - inlcude fxh after UI
 
 #include "lilium__include/draw_text_fix.fxh"
 
@@ -336,24 +334,24 @@ void PS_InverseToneMapping(
                                ? referenceWhiteNits
                                : Ui::Itm::Global::TargetBrightness;
 
-      hdr = InverseToneMapping::Bt2446a(hdr,
-                                        Ui::Itm::Global::TargetBrightness,
-                                        referenceWhiteNits,
-                                        inputNitsFactor,
-                                        Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
-                                        Ui::Itm::Bt2446A::GammaIn,
-                                        Ui::Itm::Bt2446A::GammaOut);
+      hdr = Itmos::Bt2446A(hdr,
+                           Ui::Itm::Global::TargetBrightness,
+                           referenceWhiteNits,
+                           inputNitsFactor,
+                           Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
+                           Ui::Itm::Bt2446A::GammaIn,
+                           Ui::Itm::Bt2446A::GammaOut);
     } break;
 
     case ITM_METHOD_BT2446C:
     {
-      hdr = InverseToneMapping::Bt2446c(hdr,
-                                        Ui::Itm::Bt2446C::Bt2446CInputBrightness > 153.9f
-                                      ? 1.539f
-                                      : Ui::Itm::Bt2446C::Bt2446CInputBrightness / 100.f,
-                                        0.33f - Ui::Itm::Bt2446C::Alpha);
-                                        //BT2446C_USE_ACHROMATIC_CORRECTION,
-                                        //BT2446C_SIGMA);
+      hdr = Itmos::Bt2446c(hdr,
+                           Ui::Itm::Bt2446C::Bt2446CInputBrightness > 153.9f
+                         ? 1.539f
+                         : Ui::Itm::Bt2446C::Bt2446CInputBrightness / 100.f,
+                           0.33f - Ui::Itm::Bt2446C::Alpha);
+                           //BT2446C_USE_ACHROMATIC_CORRECTION,
+                           //BT2446C_SIGMA);
     } break;
 
 #ifdef ENABLE_DICE
@@ -361,7 +359,7 @@ void PS_InverseToneMapping(
     case ITM_METHOD_DICE_INVERSE:
     {
       float target_CLL_normalised = Ui::Itm::Global::TargetBrightness / 10000.f;
-      hdr = InverseToneMapping::Dice::InverseToneMapper(
+      hdr = Itmos::Dice::InverseToneMapper(
               hdr,
               Csp::Trc::ToPqFromNits(Ui::Itm::Dice::DiceInputBrightness),
               Csp::Trc::ToPqFromNits(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
@@ -371,8 +369,8 @@ void PS_InverseToneMapping(
 
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
-      hdr = InverseToneMapping::MapSdrIntoHdr(hdr,
-                                              Ui::Itm::MapSdrIntoHdr::SdrHdrTargetBrightness);
+      hdr = Itmos::MapSdrIntoHdr(hdr,
+                                 Ui::Itm::MapSdrIntoHdr::SdrHdrTargetBrightness);
     } break;
   }
 

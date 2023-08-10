@@ -13,16 +13,14 @@
 #endif
 
 
-//#define _DEBUG
+//#define BT2446A_MOD1_ENABLE
 
 // TODO
 // - add black point adaption for every tone mapper
-// - figure out why discard doesn't work in the dice tone mapper with the DX compiler...
 // - BT.2390 raises brightness???
-// - inlcude fxh after UI
 // - do maxCLL calc in quarter res?
+// - put excessive checks for setup of the tone mappers into vertex shader?
 // - add option to do BT.2446A as post adjustment of BT.2390/Dice
-// - test how BT.2446A works with using max(x, 0) instead of saturate
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
@@ -46,11 +44,11 @@ namespace RuntimeValues
 
 namespace Ui
 {
-  namespace ToneMapping
+  namespace Tm
   {
     namespace Global
     {
-      uniform uint Method
+      uniform uint TmMethod
       <
         ui_category = "global";
         ui_label    = "tone mapping method";
@@ -71,12 +69,10 @@ namespace Ui
         ui_items    = "BT.2390 EETF\0"
                       "BT.2446 Method A\0"
                       "Dice\0"
-      #ifdef _DEBUG
+      #ifdef BT2446A_MOD1_ENABLE
                       "BT.2446A mod1\0"
       #endif
                       ;
-      //                "BT.2446A mod2\0"
-      //                "BT.2446A mod1+mod2\0";
       > = 0;
 
 #define TM_METHOD_BT2390       0
@@ -227,18 +223,18 @@ namespace Ui
                       "YCbCr\0";
       > = 0;
 
-      uniform uint WorkingColourSpace
-      <
-        ui_category = "Dice";
-        ui_label    = "processing colour space";
-        ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point"
-                 "\n" "AP0_D65 technically covers every humanly perceivable colour."
-                 "\n" "It's meant for future use if we ever move past the BT.2020 colour space."
-                 "\n" "Just use BT.2020 for now.";
-        ui_type     = "combo";
-        ui_items    = "BT.2020\0"
-                      "AP0_D65\0";
-      > = 0;
+//      uniform uint WorkingColourSpace
+//      <
+//        ui_category = "Dice";
+//        ui_label    = "processing colour space";
+//        ui_tooltip  = "AP0_D65: AP0 primaries with D65 white point"
+//                 "\n" "AP0_D65 technically covers every humanly perceivable colour."
+//                 "\n" "It's meant for future use if we ever move past the BT.2020 colour space."
+//                 "\n" "Just use BT.2020 for now.";
+//        ui_type     = "combo";
+//        ui_items    = "BT.2020\0"
+//                      "AP0_D65\0";
+//      > = 0;
     } //Dice
 
     namespace AdaptiveMode
@@ -307,8 +303,7 @@ namespace Ui
   }
 }
 
-
-#ifdef _DEBUG
+#ifdef BT2446A_MOD1_ENABLE
 uniform float TEST_H
 <
   ui_category = "mod1";
@@ -375,20 +370,20 @@ void VS_PrepareToneMapping(
 
 #define usedMaxCll TmParms0.x
 
-  if (Ui::ToneMapping::Global::Mode == TM_MODE_STATIC)
+  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
   {
-    usedMaxCll = Ui::ToneMapping::StaticMode::MaxCll;
+    usedMaxCll = Ui::Tm::StaticMode::MaxCll;
   }
   else
   {
     usedMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
   }
 
-  usedMaxCll = usedMaxCll > Ui::ToneMapping::Global::TargetBrightness
+  usedMaxCll = usedMaxCll > Ui::Tm::Global::TargetBrightness
              ? usedMaxCll
-             : Ui::ToneMapping::Global::TargetBrightness;
+             : Ui::Tm::Global::TargetBrightness;
 
-  if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
   {
 
 #define bt2390SrcMinPq              TmParms0.y
@@ -399,14 +394,14 @@ void VS_PrepareToneMapping(
 #define bt2390KneeStart             TmParms1.z
 
     // source min brightness (Lb) in PQ
-    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::OldBlackPoint);
+    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::OldBlackPoint);
     // source max brightness (Lw) in PQ
     bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(usedMaxCll);
 
     // target min brightness (Lmin) in PQ
-    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::NewBlackPoint);
+    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::NewBlackPoint);
     // target max brightness (Lmin) in PQ
-    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
+    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Global::TargetBrightness);
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -416,11 +411,12 @@ void VS_PrepareToneMapping(
 
     // knee start (KS)
     bt2390KneeStart =
-      Csp::Trc::ToPqFromNits(Ui::ToneMapping::Bt2390::KneeStart / 100.f
-                           * Ui::ToneMapping::Global::TargetBrightness);
+      Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::KneeStart
+                           / 100.f
+                           * Ui::Tm::Global::TargetBrightness);
 
   }
-  else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
+  else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
   {
 
 #define diceTargetCllInPq     TmParms0.y
@@ -428,10 +424,11 @@ void VS_PrepareToneMapping(
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
-    diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::ToneMapping::Global::TargetBrightness);
+    diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::Tm::Global::TargetBrightness);
     diceShoulderStartInPq =
-      Csp::Trc::ToPqFromNits(Ui::ToneMapping::Dice::ShoulderStart / 100.f
-                           * Ui::ToneMapping::Global::TargetBrightness);
+      Csp::Trc::ToPqFromNits(Ui::Tm::Dice::ShoulderStart
+                           / 100.f
+                           * Ui::Tm::Global::TargetBrightness);
 
     diceUnused0 = 0.f;
     diceUnused1 = float3(0.f, 0.f, 0.f);
@@ -449,196 +446,239 @@ void PS_ToneMapping(
 {
   float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-//  if (usedMaxCll > Ui::ToneMapping::Global::TargetBrightness)
-//  {
-
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
-    {
-      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-       || Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_ICTCP)
-      {
-        hdr = Csp::Trc::FromPq(hdr);
-      }
+  if ((Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+    && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+    && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR)
 
-      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
-      {
-        hdr = max(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f);
+   || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
+    && Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
 
-        if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
-        {
-          hdr = Csp::Trc::ToPq(hdr);
-        }
-      }
-    }
-    else if(Ui::ToneMapping::Global::Method != TM_METHOD_BT2390
-         || (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
-          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
-          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
-    {
-      hdr = Csp::Trc::FromPq(hdr);
-    }
+   || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
+  {
+    hdr = Csp::Trc::FromPq(hdr);
+  }
+
+//  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+//  {
+//    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
+//     || Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
+//    {
+//      hdr = Csp::Trc::FromPq(hdr);
+//    }
+//
+//    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+//    {
+//      hdr = max(Csp::Mat::Bt2020To::Ap0D65(hdr), 0.f);
+//
+//      if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
+//      {
+//        hdr = Csp::Trc::ToPq(hdr);
+//      }
+//    }
+//  }
+//  else if(Ui::Tm::Global::TmMethod != TM_METHOD_BT2390
+//       || (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+//        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+//        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
+//  {
+//    hdr = Csp::Trc::FromPq(hdr);
+//  }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    //if (Ui::ToneMapping::Global::Method != TM_METHOD_DICE)
-    hdr /= 125.f;
+  hdr /= 125.f;
 
-    if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A
-     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A_MOD1)
-    {
-      hdr = saturate(Csp::Mat::Bt709To::Bt2020(hdr));
-    }
-    else if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
-    {
-      hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
+  hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
 
-      if (Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
-       || Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
-      {
-        hdr = Csp::Trc::ToPq(hdr);
-      }
-    }
-    else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
-    {
-      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
-      {
-        hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
-      }
-      else
-      {
-        hdr = max(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f);
-      }
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+   && (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+    || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
 
-      if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
-      {
-        hdr = Csp::Trc::ToPq(hdr);
-      }
-    }
+   || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
+    && Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR))
+  {
+    hdr = Csp::Trc::ToPq(hdr);
+  }
+
+//  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A
+//   || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A_MOD1)
+//  {
+//    hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
+//  }
+//  else if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
+//  {
+//    hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
+//
+//    if (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+//     || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
+//    {
+//      hdr = Csp::Trc::ToPq(hdr);
+//    }
+//  }
+//  else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+//  {
+//    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
+//    {
+//      hdr = max(Csp::Mat::Bt709To::Bt2020(hdr), 0.f);
+//    }
+//    else
+//    {
+//      hdr = max(Csp::Mat::Bt709To::Ap0D65(hdr), 0.f);
+//    }
+//
+//    if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
+//    {
+//      hdr = Csp::Trc::ToPq(hdr);
+//    }
+//  }
 
 #else
 
-    hdr = float3(0.f, 0.f, 0.f);
+  hdr = float3(0.f, 0.f, 0.f);
 
 #endif
 
-    switch (Ui::ToneMapping::Global::Method)
+  switch (Ui::Tm::Global::TmMethod)
+  {
+    case TM_METHOD_BT2446A:
     {
-      case TM_METHOD_BT2446A:
-      {
-        hdr = ToneMappers::Bt2446A(hdr,
-                                   Ui::ToneMapping::Global::TargetBrightness,
-                                   usedMaxCll,
-                                   Ui::ToneMapping::Bt2446A::GamutCompression);
-      }
-      break;
-      case TM_METHOD_BT2390:
-      {
+      Tmos::Bt2446A(hdr,
+                    usedMaxCll,
+                    Ui::Tm::Global::TargetBrightness,
+                    Ui::Tm::Bt2446A::GamutCompression);
+    }
+    break;
+    case TM_METHOD_BT2390:
+    {
+      Tmos::Bt2390::Eetf(hdr,
+                         Ui::Tm::Bt2390::ProcessingModeBt2390,
+                         bt2390SrcMinPq,
+                         bt2390SrcMaxPq,
+                         bt2390SrcMaxPqMinusSrcMinPq,
+                         bt2390MinLum,
+                         bt2390MaxLum,
+                         bt2390KneeStart);
+    }
+    break;
+    case TM_METHOD_DICE:
+    {
+      Tmos::Dice::ToneMapper(hdr,
+                             Ui::Tm::Dice::ProcessingModeDice,
+                             diceTargetCllInPq,
+                             diceShoulderStartInPq);
+    }
+    break;
 
-        hdr = ToneMappers::Bt2390::Eetf(hdr,
-                                        Ui::ToneMapping::Bt2390::ProcessingModeBt2390,
-                                        bt2390SrcMinPq,  // source min brightness (Lb) in PQ
-                                        bt2390SrcMaxPq,  // source max brightness (Lw) in PQ
-                                        bt2390SrcMaxPqMinusSrcMinPq,
-                                        bt2390MinLum,
-                                        bt2390MaxLum,
-                                        bt2390KneeStart);
-      }
-      break;
-      case TM_METHOD_DICE:
-      {
-        hdr = ToneMappers::Dice::ToneMapper(hdr,
-                                            diceTargetCllInPq,
-                                            diceShoulderStartInPq,
-                                            Ui::ToneMapping::Dice::ProcessingModeDice,
-                                            Ui::ToneMapping::Dice::WorkingColourSpace);
-        //hdr = saturate(hdr);
-      }
-      break;
+#ifdef BT2446A_MOD1_ENABLE
 
-#ifdef _DEBUG
-
-      case TM_METHOD_BT2446A_MOD1:
-      {
-        float testH = clamp(TEST_H + usedMaxCll,                                0.f, 10000.f);
-        float testS = clamp(TEST_S + Ui::ToneMapping::Global::TargetBrightness, 0.f, 10000.f);
-        hdr = ToneMappers::Bt2446A_MOD1(hdr,
-                                        Ui::ToneMapping::Global::TargetBrightness,
-                                        usedMaxCll,
-                                        Ui::ToneMapping::Bt2446A::GamutCompression,
-                                        testH,
-                                        testS);
-      } break;
+    case TM_METHOD_BT2446A_MOD1:
+    {
+      //move test parameters to vertex shader if this ever gets released
+      float testH = clamp(TEST_H + usedMaxCll,                                0.f, 10000.f);
+      float testS = clamp(TEST_S + Ui::Tm::Global::TargetBrightness, 0.f, 10000.f);
+      Tmos::Bt2446A_MOD1(hdr,
+                         usedMaxCll,
+                         Ui::Tm::Global::TargetBrightness,
+                         Ui::Tm::Bt2446A::GamutCompression,
+                         testH,
+                         testS);
+    } break;
 
 #endif
-    }
+  }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
-    {
-      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
-      {
-        if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
-        {
-          hdr = Csp::Trc::FromPq(hdr);
-          hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
-        }
-        else
-        {
-          hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
-        }
-        hdr = Csp::Trc::ToPq(hdr);
-      }
-      else if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_ICTCP)
-      {
-        hdr = Csp::Trc::ToPq(hdr);
-      }
-    }
-    else if(Ui::ToneMapping::Global::Method != TM_METHOD_BT2390
-         || (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
-          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
-          && Ui::ToneMapping::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
-    {
-      hdr = Csp::Trc::ToPq(hdr);
-    }
+  if ((Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+    && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+    && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR)
+
+   || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
+    && Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
+
+   || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
+  {
+    hdr = Csp::Trc::ToPq(hdr);
+  }
+
+//  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+//  {
+//    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
+//    {
+//      if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
+//      {
+//        hdr = Csp::Trc::FromPq(hdr);
+//        hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
+//      }
+//      else
+//      {
+//        hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
+//      }
+//      hdr = Csp::Trc::ToPq(hdr);
+//    }
+//    else if (Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
+//    {
+//      hdr = Csp::Trc::ToPq(hdr);
+//    }
+//  }
+//  else if(Ui::Tm::Global::TmMethod != TM_METHOD_BT2390
+//       || (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+//        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
+//        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
+//  {
+//    hdr = Csp::Trc::ToPq(hdr);
+//  }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A
-     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2446A_MOD1
-     || Ui::ToneMapping::Global::Method == TM_METHOD_BT2390)
-    {
-      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+   && (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+    || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
 
-      if (Ui::ToneMapping::Global::Method == TM_METHOD_BT2390
-       && (Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
-        || Ui::ToneMapping::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR))
-      {
-        hdr = Csp::Trc::FromPq(hdr);
-      }
-    }
-    else if (Ui::ToneMapping::Global::Method == TM_METHOD_DICE)
-    {
-      if (Ui::ToneMapping::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
-      {
-        hdr = Csp::Trc::FromPq(hdr);
-      }
+   || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
+    && Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR))
+  {
+    hdr = Csp::Trc::FromPq(hdr);
+  }
 
-      if (Ui::ToneMapping::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
-      {
-        hdr = Csp::Mat::Bt2020To::Bt709(hdr);
-      }
-      else
-      {
-        hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
-      }
-    }
-    hdr *= 125.f;
+  hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+
+  hdr *= 125.f;
+
+//  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A
+//   || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A_MOD1
+//   || Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
+//  {
+//    if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390
+//     && (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
+//      || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR))
+//    {
+//      hdr = Csp::Trc::FromPq(hdr);
+//    }
+//    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+//  }
+//  else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+//  {
+//    if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
+//    {
+//      hdr = Csp::Trc::FromPq(hdr);
+//    }
+//
+//    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
+//    {
+//      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+//    }
+//    else
+//    {
+//      hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
+//    }
+//  }
+//
+//  hdr *= 125.f;
 
 #endif
-//  }
 
   Output = float4(hdr, 1.f);
 
@@ -666,7 +706,7 @@ void PS_ToneMapping(
   float finalAdaptMode = 
     absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))
   ? 2.f
-  : absDiff < abs((avgMaxCllInPq - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
+  : absDiff < abs((avgMaxCllInPq - Ui::Tm::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
   ? 1.f
   : 0.f;
 
@@ -688,15 +728,15 @@ void PS_ToneMapping(
 void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 {
   float currentMaxCllinPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL0)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8)
-                                  + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9)) / 10.f;
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL1)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL2)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL3)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL4)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL5)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL6)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL7)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL8)
+                                   + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CLL9)) / 10.f;
 
 #if (SHOW_ADAPTIVE_MAXCLL == YES)
 
@@ -721,9 +761,9 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   float curDiff = currentMaxCllinPqAveraged * 1.0005f - currentAdaptiveMaxCllInPQ;
   float absCurDiff = abs(curDiff);
   float finalAdaptPointInPq = abs(currentMaxCllinPqAveraged
-                                      - Ui::ToneMapping::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxCllinPqAveraged);
+                            - Ui::Tm::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxCllinPqAveraged);
   float stopAdaptPointInPq  = abs(currentMaxCllinPqAveraged
-                                      - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
+                            - FINAL_ADAPT_STOP * currentMaxCllinPqAveraged);
   float adapt = 0.f;
 
   if (absCurDiff < stopAdaptPointInPq)
@@ -733,14 +773,14 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   else if (absCurDiff < finalAdaptPointInPq)
   {
     float actualFinalAdapt = absFrametime
-                           * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSteps / 10000.f)
-                           * (Ui::ToneMapping::AdaptiveMode::FinalAdaptSpeed / 1000.f);
+                           * (Ui::Tm::AdaptiveMode::FinalAdaptSteps / 10000.f)
+                           * (Ui::Tm::AdaptiveMode::FinalAdaptSpeed / 1000.f);
     adapt = curDiff > 0.f ?  actualFinalAdapt
                           : -actualFinalAdapt;
   }
   else
   {
-    adapt = curDiff * (absFrametime / (Ui::ToneMapping::AdaptiveMode::TimeToAdapt * 1000.f));
+    adapt = curDiff * (absFrametime / (Ui::Tm::AdaptiveMode::TimeToAdapt * 1000.f));
   }
   //else
   //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
@@ -750,7 +790,7 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
   tex2Dstore(StorageConsolidated,
              COORDS_ADAPTIVE_CLL,
              min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt),
-                 Ui::ToneMapping::AdaptiveMode::MaxCllCap));
+                 Ui::Tm::AdaptiveMode::MaxCllCap));
 
 }
 

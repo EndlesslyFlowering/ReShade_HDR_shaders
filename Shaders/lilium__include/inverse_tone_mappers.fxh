@@ -35,15 +35,14 @@
 //}
 
 
-namespace InverseToneMapping
+namespace Itmos
 {
-
   //gamma
   static const float gamma        = 2.4f;
   static const float inverseGamma = 1.f / gamma;
 
   // outputs normalised values
-  float3 Bt2446a(
+  float3 Bt2446A(
     float3 Input,
     float  Lhdr,
     float  Lsdr,
