@@ -21,6 +21,7 @@
 // - do maxCLL calc in quarter res?
 // - put excessive checks for setup of the tone mappers into vertex shader?
 // - add option to do BT.2446A as post adjustment of BT.2390/Dice
+// - use BT.709 RGB->LMS matrix instead of rotating into BT.2020
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
@@ -177,21 +178,18 @@ namespace Ui
         ui_step     = 0.0001f;
       > = 0.f;
 
-      uniform float KneeStart
+      uniform float KneeOffset
       <
         ui_category = "BT.2390 EETF";
-        ui_label    = "knee start";
-        ui_tooltip  = "Set this to where the brightness compression curve starts."
-                 "\n" "In % of the target brightness."
-                 "\n" "example:"
-                 "\n" "With \"target brightness\" set to \"1000 nits\" and \"shoulder start\" to \"50%\"."
-                 "\n" "The brightness compression will start at 500 nits.";
+        ui_label    = "knee offset";
+        ui_tooltip  = "This adjusts where the brightness compression curve starts."
+                 "\n" "The higher the value the earlier the ealier the compression starts."
+                 "\n" "0.5 is the spec default.";
         ui_type     = "drag";
-        ui_units    = "%%";
-        ui_min      = 10.f;
-        ui_max      = 90.f;
-        ui_step     = 0.1f;
-      > = 50.f;
+        ui_min      = 0.5f;
+        ui_max      = 1.0f;
+        ui_step     = 0.005f;
+      > = 0.5f;
     } //Bt2390
 
     namespace Dice
@@ -411,9 +409,9 @@ void VS_PrepareToneMapping(
 
     // knee start (KS)
     bt2390KneeStart =
-      Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::KneeStart
-                           / 100.f
-                           * Ui::Tm::Global::TargetBrightness);
+      Csp::Trc::ToPqFromNits(1.5f
+                           * bt2390MaxLum
+                           - Ui::Tm::Bt2390::KneeOffset);
 
   }
   else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
