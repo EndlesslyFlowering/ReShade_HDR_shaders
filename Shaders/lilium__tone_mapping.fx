@@ -17,11 +17,12 @@
 
 // TODO
 // - add black point adaption for every tone mapper
-// - BT.2390 raises brightness???
 // - do maxCLL calc in quarter res?
 // - put excessive checks for setup of the tone mappers into vertex shader?
 // - add option to do BT.2446A as post adjustment of BT.2390/Dice
 // - use BT.709 RGB->LMS matrix instead of rotating into BT.2020
+// - make Dice use the same knee function as BT.2390?
+// - put oneMinusKneeStart into the vertex shader?
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
@@ -398,7 +399,7 @@ void VS_PrepareToneMapping(
 
     // target min brightness (Lmin) in PQ
     float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::NewBlackPoint);
-    // target max brightness (Lmin) in PQ
+    // target max brightness (Lmax) in PQ
     float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Global::TargetBrightness);
 
     // this is needed often so precalculate it
@@ -408,10 +409,9 @@ void VS_PrepareToneMapping(
     bt2390MaxLum = (tgtMaxPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
 
     // knee start (KS)
-    bt2390KneeStart =
-      Csp::Trc::ToPqFromNits(1.5f
-                           * bt2390MaxLum
-                           - Ui::Tm::Bt2390::KneeOffset);
+    bt2390KneeStart = 1.5f
+                    * bt2390MaxLum
+                    - Ui::Tm::Bt2390::KneeOffset;
 
   }
   else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)

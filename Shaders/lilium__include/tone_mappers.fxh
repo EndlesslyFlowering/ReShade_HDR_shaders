@@ -163,19 +163,19 @@ namespace Tmos
                  float KneeStart,
                  float MaxLum)
     {
-      float oneMinusKneeStart = 1.f - KneeStart; // put this into the vertex shader?
+      float oneMinusKneeStart = 1.f - KneeStart;
       float t = (E1 - KneeStart) / oneMinusKneeStart;
       float tPow2 = pow(t, 2.f);
       float tPow3 = pow(t, 3.f);
+      //float tPow2 = t >= 0.f ?  pow( t, 2.f)
+      //                       : -pow(-t, 2.f);
+      //float tPow3 = t >= 0.f ?  pow( t, 3.f)
+      //                       : -pow(-t, 3.f);
 
       E1 = ( 2.f * tPow3 - 3.f * tPow2 + 1.f) * KneeStart
          + (       tPow3 - 2.f * tPow2 + t)   * oneMinusKneeStart
          + (-2.f * tPow3 + 3.f * tPow2)       * MaxLum;
     }
-
-  //float tgt_max_PQ, // Lmax in PQ
-  //float tgt_min_PQ, // Lmin in PQ
-  //float SrcMaxPq,   // Lw in PQ
 
 #define BT2390_PRO_MODE_ICTCP 0
 #define BT2390_PRO_MODE_YCBCR 1

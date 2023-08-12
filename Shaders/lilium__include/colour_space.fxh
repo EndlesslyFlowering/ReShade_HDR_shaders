@@ -249,6 +249,7 @@ uniform int GLOBAL_INFO
     }                                 \
   }
 
+
 namespace Csp
 {
 
@@ -386,7 +387,6 @@ namespace Csp
         FromExtendedSrgb(Colour.b));
     }
 
-    
     float ToExtendedSrgb(float C)
     {
       if (C < -1.f)
@@ -532,8 +532,8 @@ namespace Csp
     // gamma adjust including values above 1 and below 0
     float ExtendedGammaAdjust(float C, float Adjust)
     {
-      /*static*/ float inverseAdjust = 1.f / Adjust;
-    
+      float inverseAdjust = 1.f / Adjust;
+
       if (C < -1.f)
         return
           -pow(-C, inverseAdjust);
@@ -840,7 +840,7 @@ namespace Csp
       0.0885578169506515, 0.809428607238992, 0.102029598497234,
       0.0177530102658331, 0.109561562944343, 0.872889419606533);
 
-    
+
     //BT2020 To
     static const float3x3 Bt2020ToXYZ = float3x3(
       0.636744702289598,    0.144643300793529,  0.168779119372055,
