@@ -310,33 +310,39 @@ namespace Csp
     float FromSrgb(float C)
     {
       if (C <= 0.04045f)
+      {
         return C / 12.92f;
+      }
       else
+      {
         return pow(((C + 0.055f) / 1.055f), 2.4f);
+      }
     }
 
     float3 FromSrgb(float3 Colour)
     {
-      return float3(
-        FromSrgb(Colour.r),
-        FromSrgb(Colour.g),
-        FromSrgb(Colour.b));
+      return float3(FromSrgb(Colour.r),
+                    FromSrgb(Colour.g),
+                    FromSrgb(Colour.b));
     }
 
     float ToSrgb(float C)
     {
       if (C <= 0.0031308f)
+      {
         return C * 12.92f;
+      }
       else
+      {
         return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
     }
 
     float3 ToSrgb(float3 Colour)
     {
-      return float3(
-        ToSrgb(Colour.r),
-        ToSrgb(Colour.g),
-        ToSrgb(Colour.b));
+      return float3(ToSrgb(Colour.r),
+                    ToSrgb(Colour.g),
+                    ToSrgb(Colour.b));
     }
 
     //#define X_sRGB_1 1.19417654368084505707
@@ -346,20 +352,25 @@ namespace Csp
     float FromExtendedSrgb(float C)
     {
       if (C < -1.f)
-        return
-          -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      {
+        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      }
       else if (C < -0.04045f)
-        return
-          -pow((-C + 0.055f) / 1.055f, 2.4f);
+      {
+        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+      }
       else if (C <= 0.04045f)
-        return
-          C / 12.92f;
+      {
+        return C / 12.92f;
+      }
       else if (C <= 1.f)
-        return
-          pow((C + 0.055f) / 1.055f, 2.4f);
+      {
+        return pow((C + 0.055f) / 1.055f, 2.4f);
+      }
       else
-        return
-          1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      {
+        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
     }
     //{
     //  if (C < -X_sRGB_1)
@@ -381,38 +392,147 @@ namespace Csp
 
     float3 FromExtendedSrgb(float3 Colour)
     {
-      return float3(
-        FromExtendedSrgb(Colour.r),
-        FromExtendedSrgb(Colour.g),
-        FromExtendedSrgb(Colour.b));
+      return float3(FromExtendedSrgb(Colour.r),
+                    FromExtendedSrgb(Colour.g),
+                    FromExtendedSrgb(Colour.b));
     }
 
     float ToExtendedSrgb(float C)
     {
       if (C < -1.f)
-        return
-          -pow((-C + 0.055f) / 1.055f, 2.4f);
+      {
+        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+      }
       else if (C < -0.0031308f)
-        return
-          -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      {
+        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      }
       else if (C <= 0.0031308f)
-        return
-          C * 12.92f;
+      {
+        return C * 12.92f;
+      }
       else if (C <= 1.f)
-        return
-          1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      {
+        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
       else
-        return
-          pow((C + 0.055f) / 1.055f, 2.4f);
+      {
+        return pow((C + 0.055f) / 1.055f, 2.4f);
+      }
     }
 
     float3 ToExtendedSrgb(float3 Colour)
     {
-      return float3(
-        ToExtendedSrgb(Colour.r),
-        ToExtendedSrgb(Colour.g),
-        ToExtendedSrgb(Colour.b));
+      return float3(ToExtendedSrgb(Colour.r),
+                    ToExtendedSrgb(Colour.g),
+                    ToExtendedSrgb(Colour.b));
     }
+
+    // accurate sRGB with no slope discontinuity
+    static const float X         =  0.0392857f;
+    static const float Phi       = 12.92321f;
+    static const float X_div_Phi =  0.003039935f;
+
+    float FromSrgbAccurate(float C)
+    {
+      if (C <= X)
+      {
+        return C / Phi;
+      }
+      else
+      {
+        return pow(((C + 0.055f) / 1.055f), 2.4f);
+      }
+    }
+
+    float3 FromSrgbAccurate(float3 Colour)
+    {
+      return float3(FromSrgbAccurate(Colour.r),
+                    FromSrgbAccurate(Colour.g),
+                    FromSrgbAccurate(Colour.b));
+    }
+
+    float ToSrgbAccurate(float C)
+    {
+      if (C <= X_div_Phi)
+      {
+        return C * Phi;
+      }
+      else
+      {
+        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
+    }
+
+    float3 ToSrgbAccurate(float3 Colour)
+    {
+      return float3(ToSrgbAccurate(Colour.r),
+                    ToSrgbAccurate(Colour.g),
+                    ToSrgbAccurate(Colour.b));
+    }
+
+    float FromExtendedSrgbAccurate(float C)
+    {
+      if (C < -1.f)
+      {
+        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      }
+      else if (C < -X)
+      {
+        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+      }
+      else if (C <= X)
+      {
+        return C / Phi;
+      }
+      else if (C <= 1.f)
+      {
+        return pow((C + 0.055f) / 1.055f, 2.4f);
+      }
+      else
+      {
+        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
+    }
+
+    float3 FromExtendedSrgbAccurate(float3 Colour)
+    {
+      return float3(FromExtendedSrgbAccurate(Colour.r),
+                    FromExtendedSrgbAccurate(Colour.g),
+                    FromExtendedSrgbAccurate(Colour.b));
+    }
+
+    float ToExtendedSrgbAccurate(float C)
+    {
+      if (C < -1.f)
+      {
+        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+      }
+      else if (C < -X_div_Phi)
+      {
+        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+      }
+      else if (C <= X_div_Phi)
+      {
+        return C * Phi;
+      }
+      else if (C <= 1.f)
+      {
+        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+      }
+      else
+      {
+        return pow((C + 0.055f) / 1.055f, 2.4f);
+      }
+    }
+
+    float3 ToExtendedSrgbAccurate(float3 Colour)
+    {
+      return float3(ToExtendedSrgbAccurate(Colour.r),
+                    ToExtendedSrgbAccurate(Colour.g),
+                    ToExtendedSrgbAccurate(Colour.b));
+    }
+
 
     static const float Gamma22        = 2.2f;
     static const float InverseGamma22 = 1.f / 2.2f;
@@ -423,17 +543,21 @@ namespace Csp
     float FromExtendedGamma22(float C)
     {
       if (C < -1.f)
-        return
-          -pow(-C, InverseGamma22);
+      {
+        return -pow(-C, InverseGamma22);
+      }
       else if (C < 0.f)
-        return
-          -pow(-C, Gamma22);
+      {
+        return -pow(-C, Gamma22);
+      }
       else if (C <= 1.f)
-        return
-          pow(C, Gamma22);
+      {
+        return pow(C, Gamma22);
+      }
       else
-        return
-          pow(C, InverseGamma22);
+      {
+        return pow(C, InverseGamma22);
+      }
     }
     //{
     //  if (C < -X_22_1)
@@ -452,10 +576,9 @@ namespace Csp
 
     float3 FromExtendedGamma22(float3 Colour)
     {
-      return float3(
-        FromExtendedGamma22(Colour.r),
-        FromExtendedGamma22(Colour.g),
-        FromExtendedGamma22(Colour.b));
+      return float3(FromExtendedGamma22(Colour.r),
+                    FromExtendedGamma22(Colour.g),
+                    FromExtendedGamma22(Colour.b));
     }
 
     static const float Gamma24        = 2.4f;
@@ -467,17 +590,21 @@ namespace Csp
     float FromExtendedGamma24(float C)
     {
       if (C < -1.f)
-        return
-          -pow(-C, InverseGamma24);
+      {
+        return -pow(-C, InverseGamma24);
+      }
       else if (C < 0.f)
-        return
-          -pow(-C, Gamma24);
+      {
+        return -pow(-C, Gamma24);
+      }
       else if (C <= 1.f)
-        return
-          pow(C, Gamma24);
+      {
+        return pow(C, Gamma24);
+      }
       else
-        return
-          pow(C, InverseGamma24);
+      {
+        return pow(C, InverseGamma24);
+      }
     }
     //{
     //  if (C < -X_24_1)
@@ -496,10 +623,9 @@ namespace Csp
 
     float3 FromExtendedGamma24(float3 Colour)
     {
-      return float3(
-        FromExtendedGamma24(Colour.r),
-        FromExtendedGamma24(Colour.g),
-        FromExtendedGamma24(Colour.b));
+      return float3(FromExtendedGamma24(Colour.r),
+                    FromExtendedGamma24(Colour.g),
+                    FromExtendedGamma24(Colour.b));
     }
 
     //float X_power_TRC(float C, float pow_gamma)
@@ -535,25 +661,28 @@ namespace Csp
       float inverseAdjust = 1.f / Adjust;
 
       if (C < -1.f)
-        return
-          -pow(-C, inverseAdjust);
+      {
+        return -pow(-C, inverseAdjust);
+      }
       else if (C < 0.f)
-        return
-          -pow(-C, Adjust);
+      {
+        return -pow(-C, Adjust);
+      }
       else if (C <= 1.f)
-        return
-          pow(C, Adjust);
+      {
+        return pow(C, Adjust);
+      }
       else
-        return
-          pow(C, inverseAdjust);
+      {
+        return pow(C, inverseAdjust);
+      }
     }
 
     float3 ExtendedGammaAdjust(float3 Colour, float Adjust)
     {
-      return float3(
-        ExtendedGammaAdjust(Colour.r, Adjust),
-        ExtendedGammaAdjust(Colour.g, Adjust),
-        ExtendedGammaAdjust(Colour.b, Adjust));
+      return float3(ExtendedGammaAdjust(Colour.r, Adjust),
+                    ExtendedGammaAdjust(Colour.g, Adjust),
+                    ExtendedGammaAdjust(Colour.b, Adjust));
     }
 
 
