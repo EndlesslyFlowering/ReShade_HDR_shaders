@@ -14,6 +14,7 @@
 // - fix 1x1 pixel offset in CIE textures
 // - add primaries triangles to show on the CIE diagram for all CSPs
 // - fix performance mode issues with HDR analysis shader
+// - fix ENABLE_CLL_FEATUES == NO not working
 
 
 
@@ -2717,8 +2718,8 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #endif
       }
       return;
-#endif
     }
+#endif
     default:
       return;
   }
