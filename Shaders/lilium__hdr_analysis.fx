@@ -389,11 +389,11 @@ uniform float BELOW_NITS_AS_BLACK
 #include "lilium__include/hdr_analysis.fxh"
 
 #if (CIE_DIAGRAM == CIE_1931)
-  static const uint CIE_BG_X = CIE_1931_BG_X;
-  static const uint CIE_BG_Y = CIE_1931_BG_Y;
+  static const uint CIE_BG_WIDTH  = CIE_1931_BG_WIDTH;
+  static const uint CIE_BG_HEIGHT = CIE_1931_BG_HEIGHT;
 #else
-  static const uint CIE_BG_X = CIE_1976_BG_X;
-  static const uint CIE_BG_Y = CIE_1976_BG_Y;
+  static const uint CIE_BG_WIDTH  = CIE_1976_BG_WIDTH;
+  static const uint CIE_BG_HEIGHT = CIE_1976_BG_HEIGHT;
 #endif
 
 
@@ -2846,8 +2846,8 @@ void VS_PrepareHdrAnalysis(
   if (SHOW_CIE)
   {
     CieDiagramTextureDisplaySize = 
-      uint2(round(float(CIE_BG_X) * CIE_DIAGRAM_SIZE / 100.f),
-            round(float(CIE_BG_Y) * CIE_DIAGRAM_SIZE / 100.f));
+      uint2(round(float(CIE_BG_WIDTH ) * CIE_DIAGRAM_SIZE / 100.f),
+            round(float(CIE_BG_HEIGHT) * CIE_DIAGRAM_SIZE / 100.f));
   }
 
 #endif //ENABLE_CIE_FEATURES == YES

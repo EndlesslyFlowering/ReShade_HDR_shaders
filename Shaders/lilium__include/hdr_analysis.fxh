@@ -178,10 +178,10 @@ storage2D<float> StorageMaxCll0Dot01Percent
 
 #define CIE_BG_BORDER  50
 
-#define CIE_1931_X    735
-#define CIE_1931_Y    835
-#define CIE_1931_BG_X 835
-#define CIE_1931_BG_Y 935
+#define CIE_1931_WIDTH     736
+#define CIE_1931_HEIGHT    837
+#define CIE_1931_BG_WIDTH  835
+#define CIE_1931_BG_HEIGHT 935
 
 #if (CIE_DIAGRAM == CIE_1931)
 texture2D TextureCie1931
@@ -190,8 +190,9 @@ texture2D TextureCie1931
   pooled = true;
 >
 {
-  Width  = CIE_1931_X;
-  Height = CIE_1931_Y;
+  Width  = CIE_1931_WIDTH;
+  Height = CIE_1931_HEIGHT;
+  Format = RGBA8;
 };
 
 sampler2D SamplerCie1931
@@ -205,8 +206,9 @@ texture2D TextureCie1931BlackBg
   pooled = true;
 >
 {
-  Width  = CIE_1931_BG_X;
-  Height = CIE_1931_BG_Y;
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
+  Format = RGBA8;
 };
 
 sampler2D SamplerCie1931BlackBg
@@ -219,8 +221,8 @@ texture2D TextureCie1931Current
   pooled = true;
 >
 {
-  Width  = CIE_1931_BG_X;
-  Height = CIE_1931_BG_Y;
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
 
   Format = RGBA8;
 };
@@ -237,10 +239,10 @@ storage2D StorageCie1931Current
 };
 #endif
 
-#define CIE_1976_X    623
-#define CIE_1976_Y    587
-#define CIE_1976_BG_X 723
-#define CIE_1976_BG_Y 687
+#define CIE_1976_WIDTH     625
+#define CIE_1976_HEIGHT    589
+#define CIE_1976_BG_WIDTH  725
+#define CIE_1976_BG_HEIGHT 689
 
 #if (CIE_DIAGRAM == CIE_1976)
 texture2D TextureCie1976
@@ -249,8 +251,9 @@ texture2D TextureCie1976
   pooled = true;
 >
 {
-  Width  = CIE_1976_X;
-  Height = CIE_1976_Y;
+  Width  = CIE_1976_WIDTH;
+  Height = CIE_1976_HEIGHT;
+  Format = RGBA8;
 };
 
 sampler2D SamplerCie1976
@@ -264,8 +267,9 @@ texture2D TextureCie1976BlackBg
   pooled = true;
 >
 {
-  Width  = CIE_1976_BG_X;
-  Height = CIE_1976_BG_Y;
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
+  Format = RGBA8;
 };
 
 sampler2D SamplerCie1976BlackBg
@@ -278,8 +282,8 @@ texture2D TextureCie1976Current
   pooled = true;
 >
 {
-  Width  = CIE_1976_BG_X;
-  Height = CIE_1976_BG_Y;
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
 
   Format = RGBA8;
 };
@@ -358,6 +362,7 @@ texture2D TextureBrightnessHistogramScale
 {
   Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH;
   Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT;
+  Format = RGBA8;
 };
 
 sampler2D SamplerBrightnessHistogramScale
@@ -1517,8 +1522,8 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
       // get xy
       precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
 
-      precise const int2  xy  = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
-                    CIE_1931_Y - 1 - round(XYZ.y / xyz * 1000.f));
+      precise const int2 xy = int2(round(XYZ.x / xyz * 1000.f) - 1,  // 1000 is the original texture size
+             CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * 1000.f) - 1);
 
       // adjust for the added borders
       precise const int2 xyDiagramPos = int2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER);
@@ -1531,11 +1536,11 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 #if (CIE_DIAGRAM == CIE_1976)
       // get u'v'
       precise const float X15Y3Z = XYZ.x
-                           + 15.f * XYZ.y
-                           +  3.f * XYZ.z;
+                                 + 15.f * XYZ.y
+                                 +  3.f * XYZ.z;
 
-      precise const int2 uv      = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f),
-                       CIE_1976_Y - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f));
+      precise const int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f) - 1,  // 1000 is the original texture size
+             CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f) - 1);
 
       // adjust for the added borders
       precise const int2 uvDiagramPos = int2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER);
