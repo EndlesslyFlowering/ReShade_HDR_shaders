@@ -184,6 +184,7 @@ storage2D<float> StorageMaxCll0Dot01Percent
 #define CIE_1931_BG_HEIGHT 935
 
 #if (CIE_DIAGRAM == CIE_1931)
+
 texture2D TextureCie1931
 <
   source = "lilium__cie_1931.png";
@@ -237,6 +238,71 @@ storage2D StorageCie1931Current
 {
   Texture = TextureCie1931Current;
 };
+
+texture2D TextureCie1931CspTriangleBt709
+<
+  source = "lilium__cie_1931_csp_triangle_bt.709.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1931CspTriangleBt709
+{
+  Texture = TextureCie1931CspTriangleBt709;
+};
+
+texture2D TextureCie1931CspTriangleDciP3
+<
+  source = "lilium__cie_1931_csp_triangle_dci-p3.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1931CspTriangleDciP3
+{
+  Texture = TextureCie1931CspTriangleDciP3;
+};
+
+texture2D TextureCie1931CspTriangleBt2020
+<
+  source = "lilium__cie_1931_csp_triangle_bt.2020.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1931CspTriangleBt2020
+{
+  Texture = TextureCie1931CspTriangleBt2020;
+};
+
+texture2D TextureCie1931CspTriangleAp0
+<
+  source = "lilium__cie_1931_csp_triangle_ap0.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1931_BG_WIDTH;
+  Height = CIE_1931_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1931CspTriangleAp0
+{
+  Texture = TextureCie1931CspTriangleAp0;
+};
+
 #endif
 
 #define CIE_1976_WIDTH     625
@@ -245,6 +311,7 @@ storage2D StorageCie1931Current
 #define CIE_1976_BG_HEIGHT 689
 
 #if (CIE_DIAGRAM == CIE_1976)
+
 texture2D TextureCie1976
 <
   source = "lilium__cie_1976_ucs.png";
@@ -298,7 +365,73 @@ storage2D StorageCie1976Current
 {
   Texture  = TextureCie1976Current;
 };
+
+texture2D TextureCie1976CspTriangleBt709
+<
+  source = "lilium__cie_1976_ucs_csp_triangle_bt.709.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1976CspTriangleBt709
+{
+  Texture = TextureCie1976CspTriangleBt709;
+};
+
+texture2D TextureCie1976CspTriangleDciP3
+<
+  source = "lilium__cie_1976_ucs_csp_triangle_dci-p3.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1976CspTriangleDciP3
+{
+  Texture = TextureCie1976CspTriangleDciP3;
+};
+
+texture2D TextureCie1976CspTriangleBt2020
+<
+  source = "lilium__cie_1976_ucs_csp_triangle_bt.2020.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1976CspTriangleBt2020
+{
+  Texture = TextureCie1976CspTriangleBt2020;
+};
+
+texture2D TextureCie1976CspTriangleAp0
+<
+  source = "lilium__cie_1976_ucs_csp_triangle_ap0.png";
+  pooled = true;
+>
+{
+  Width  = CIE_1976_BG_WIDTH;
+  Height = CIE_1976_BG_HEIGHT;
+  Format = RGBA8;
+};
+
+sampler2D SamplerCie1976CspTriangleAp0
+{
+  Texture = TextureCie1976CspTriangleAp0;
+};
+
 #endif
+
 
 texture2D TextureCsps
 <

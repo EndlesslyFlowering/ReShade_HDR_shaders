@@ -11,8 +11,6 @@
 // - bring overlay alpha "in line" with single trigger technique for HDR10 output
 // - improve vertex shader for clearing the brightness histogram with barebones Vertex shader?
 // - add namespace for UI
-// - fix 1x1 pixel offset in CIE textures
-// - add primaries triangles to show on the CIE diagram for all CSPs
 // - fix performance mode issues with HDR analysis shader
 // - fix ENABLE_CLL_FEATUES == NO not working
 
@@ -203,6 +201,25 @@ uniform float CIE_DIAGRAM_SIZE
   ui_max      = 100.f;
   ui_step     = 0.1f;
 > = 100.f;
+
+uniform uint CIE_CSP_TRIANGLE_OVERLAY
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "colour space triangle to overlay";
+  ui_type     = "combo";
+  ui_items    = "none\0"
+                "BT.709\0"
+                "DCI-P3\0"
+                "BT.2020\0"
+                "AP0\0";
+> = 1;
+
+#define CIE_CSP_TRIANGLE_NONE   0
+#define CIE_CSP_TRIANGLE_BT709  1
+#define CIE_CSP_TRIANGLE_DCI_P3 2
+#define CIE_CSP_TRIANGLE_BT2020 3
+#define CIE_CSP_TRIANGLE_AP0    4
+
 #else //ENABLE_CIE_FEATURES == YES
   static const bool  SHOW_CIE               = false;
   static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
@@ -2993,16 +3010,64 @@ void PS_HdrAnalysis(
 
 #if (CIE_DIAGRAM == CIE_1931)
   #define CIE_SAMPLER SamplerCie1931Current
+  #define CIE_TRIANGLE_SAMPLER_BT709  SamplerCie1931CspTriangleBt709
+  #define CIE_TRIANGLE_SAMPLER_DCI_P3 SamplerCie1931CspTriangleDciP3
+  #define CIE_TRIANGLE_SAMPLER_BT2020 SamplerCie1931CspTriangleBt2020
+  #define CIE_TRIANGLE_SAMPLER_AP0    SamplerCie1931CspTriangleAp0
 #else
   #define CIE_SAMPLER SamplerCie1976Current
+  #define CIE_TRIANGLE_SAMPLER_BT709  SamplerCie1976CspTriangleBt709
+  #define CIE_TRIANGLE_SAMPLER_DCI_P3 SamplerCie1976CspTriangleDciP3
+  #define CIE_TRIANGLE_SAMPLER_BT2020 SamplerCie1976CspTriangleBt2020
+  #define CIE_TRIANGLE_SAMPLER_AP0    SamplerCie1976CspTriangleAp0
 #endif
 
       float3 currentPixelToDisplay =
         pow(tex2D(CIE_SAMPLER, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
 
-#undef CIE_SAMPLER
+      switch(CIE_CSP_TRIANGLE_OVERLAY)
+      {
+        case CIE_CSP_TRIANGLE_BT709:
+        {
+          float3 currentOverlayCsp =
+            pow(tex2D(CIE_TRIANGLE_SAMPLER_BT709, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
 
-      Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay), 1.f);
+          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
+        }
+        break;
+        case CIE_CSP_TRIANGLE_DCI_P3:
+        {
+          float3 currentOverlayCsp =
+            pow(tex2D(CIE_TRIANGLE_SAMPLER_DCI_P3, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+
+          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
+        }
+        break;
+        case CIE_CSP_TRIANGLE_BT2020:
+        {
+          float3 currentOverlayCsp =
+            pow(tex2D(CIE_TRIANGLE_SAMPLER_BT2020, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+
+          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
+        }
+        break;
+        case CIE_CSP_TRIANGLE_AP0:
+        {
+          float3 currentOverlayCsp =
+            pow(tex2D(CIE_TRIANGLE_SAMPLER_AP0, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+
+          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
+        }
+        break;
+        default:
+        {
+          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay), 1.f);
+        }
+        break;
+      }
+
+#undef CIE_SAMPLER
+#undef CIE_TRIANGLE_SAMPLER
 
     }
   }
