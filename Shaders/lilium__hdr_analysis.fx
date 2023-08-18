@@ -202,28 +202,42 @@ uniform float CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = 100.f;
 
-uniform uint CIE_CSP_TRIANGLE_OVERLAY
+uniform bool SHOW_CIE_CSP_BT709_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "colour space triangle to overlay";
-  ui_type     = "combo";
-  ui_items    = "none\0"
-                "BT.709\0"
-                "DCI-P3\0"
-                "BT.2020\0"
-                "AP0\0";
-> = 1;
+  ui_label    = "show BT.709 colour space outline";
+> = true;
 
-#define CIE_CSP_TRIANGLE_NONE   0
-#define CIE_CSP_TRIANGLE_BT709  1
-#define CIE_CSP_TRIANGLE_DCI_P3 2
-#define CIE_CSP_TRIANGLE_BT2020 3
-#define CIE_CSP_TRIANGLE_AP0    4
+uniform bool SHOW_CIE_CSP_DCI_P3_OUTLINE
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "show DCI-P3 colour space outline";
+> = false;
+
+uniform bool SHOW_CIE_CSP_BT2020_OUTLINE
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "show BT.2020 colour space outline";
+> = false;
+
+#ifdef IS_FLOAT_HDR_CSP
+
+uniform bool SHOW_CIE_CSP_AP0_OUTLINE
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "show AP0 colour space outline";
+> = false;
+
+#endif
 
 #else //ENABLE_CIE_FEATURES == YES
-  static const bool  SHOW_CIE               = false;
-  static const float CIE_DIAGRAM_BRIGHTNESS = 0.f;
-  static const float CIE_DIAGRAM_SIZE       = 0.f;
+  static const bool  SHOW_CIE                    = false;
+  static const float CIE_DIAGRAM_BRIGHTNESS      = 0.f;
+  static const float CIE_DIAGRAM_SIZE            = 0.f;
+  static const bool  SHOW_CIE_CSP_BT709_OUTLINE  = false;
+  static const bool  SHOW_CIE_CSP_DCI_P3_OUTLINE = false;
+  static const bool  SHOW_CIE_CSP_BT2020_OUTLINE = false;
+  static const bool  SHOW_CIE_CSP_AP0_OUTLINE    = false;
 #endif //ENABLE_CIE_FEATURES == YES
 
 // heatmap
@@ -3025,46 +3039,32 @@ void PS_HdrAnalysis(
       float3 currentPixelToDisplay =
         pow(tex2D(CIE_SAMPLER, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
 
-      switch(CIE_CSP_TRIANGLE_OVERLAY)
+      float3 cspOutlineOverlay = float3(0.f, 0.f, 0.f);
+
+      if (SHOW_CIE_CSP_BT709_OUTLINE)
       {
-        case CIE_CSP_TRIANGLE_BT709:
-        {
-          float3 currentOverlayCsp =
-            pow(tex2D(CIE_TRIANGLE_SAMPLER_BT709, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
-
-          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
-        }
-        break;
-        case CIE_CSP_TRIANGLE_DCI_P3:
-        {
-          float3 currentOverlayCsp =
-            pow(tex2D(CIE_TRIANGLE_SAMPLER_DCI_P3, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
-
-          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
-        }
-        break;
-        case CIE_CSP_TRIANGLE_BT2020:
-        {
-          float3 currentOverlayCsp =
-            pow(tex2D(CIE_TRIANGLE_SAMPLER_BT2020, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
-
-          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
-        }
-        break;
-        case CIE_CSP_TRIANGLE_AP0:
-        {
-          float3 currentOverlayCsp =
-            pow(tex2D(CIE_TRIANGLE_SAMPLER_AP0, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
-
-          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + currentOverlayCsp), 1.f);
-        }
-        break;
-        default:
-        {
-          Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay), 1.f);
-        }
-        break;
+        cspOutlineOverlay +=
+          pow(tex2D(CIE_TRIANGLE_SAMPLER_BT709, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
       }
+      if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
+      {
+        cspOutlineOverlay +=
+          pow(tex2D(CIE_TRIANGLE_SAMPLER_DCI_P3, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+      }
+      if (SHOW_CIE_CSP_BT2020_OUTLINE)
+      {
+        cspOutlineOverlay +=
+          pow(tex2D(CIE_TRIANGLE_SAMPLER_BT2020, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+      }
+#ifdef IS_FLOAT_HDR_CSP
+      if (SHOW_CIE_CSP_AP0_OUTLINE)
+      {
+        cspOutlineOverlay +=
+          pow(tex2D(CIE_TRIANGLE_SAMPLER_AP0, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+      }
+#endif
+
+      Output = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + cspOutlineOverlay), 1.f);
 
 #undef CIE_SAMPLER
 #undef CIE_TRIANGLE_SAMPLER
