@@ -80,7 +80,7 @@ uniform float2 NIT_PINGPONG2
 
 uniform uint TEXT_SIZE
 <
-  ui_category = "global";
+  ui_category = "Global";
   ui_label    = "text size";
   ui_type     = "combo";
   ui_items    = "32\0"
@@ -96,7 +96,7 @@ uniform uint TEXT_SIZE
 
 uniform float TEXT_BRIGHTNESS
 <
-  ui_category = "global";
+  ui_category = "Global";
   ui_label    = "text brightness";
   ui_type     = "slider";
   ui_units    = " nits";
@@ -110,15 +110,23 @@ uniform float TEXT_BRIGHTNESS
 
 uniform uint TEXT_POSITION
 <
-  ui_category = "global";
+  ui_category = "Global";
   ui_label    = "text position";
   ui_type     = "combo";
   ui_items    = "top left\0"
                 "top right\0";
 > = 0;
 
+uniform int GLOBAL_SPACER_0
+<
+  ui_category = "Global";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 // CLL
 #if (ENABLE_CLL_FEATURES == YES)
+
 uniform bool SHOW_CLL_VALUES
 <
   ui_category = "Content Light Level analysis";
@@ -131,6 +139,14 @@ uniform bool SHOW_CLL_FROM_CURSOR
   ui_category = "Content Light Level analysis";
   ui_label    = "show CLL value from cursor position";
 > = true;
+
+uniform int CLL_SPACER_0
+<
+  ui_category = "Content Light Level analysis";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 #else //ENABLE_CLL_FEATURES == YES
   static const bool SHOW_CLL_VALUES      = false;
   static const bool SHOW_CLL_FROM_CURSOR = false;
@@ -138,11 +154,18 @@ uniform bool SHOW_CLL_FROM_CURSOR
 
 // TextureCsps
 #if (ENABLE_CSP_FEATURES == YES)
+
 uniform bool SHOW_CSPS
 <
   ui_category = "Colour Space analysis";
   ui_label    = "show colour spaces used";
   ui_tooltip  = "in %";
+> = true;
+
+uniform bool SHOW_CSP_FROM_CURSOR
+<
+  ui_category = "Colour Space analysis";
+  ui_label    = "show colour space from cursor position";
 > = true;
 
 uniform bool SHOW_CSP_MAP
@@ -157,11 +180,13 @@ uniform bool SHOW_CSP_MAP
            "\n" "           pink: invalid";
 > = false;
 
-uniform bool SHOW_CSP_FROM_CURSOR
+uniform int CSP_SPACER_0
 <
   ui_category = "Colour Space analysis";
-  ui_label    = "show colour space from cursor position";
-> = true;
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 #else //ENABLE_CSP_FEATURES == YES
   static const bool SHOW_CSPS            = false;
   static const bool SHOW_CSP_MAP         = false;
@@ -170,6 +195,7 @@ uniform bool SHOW_CSP_FROM_CURSOR
 
 // CIE
 #if (ENABLE_CIE_FEATURES == YES)
+
 uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
@@ -202,6 +228,13 @@ uniform float CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = 100.f;
 
+uniform int CIE_SPACER_0
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 uniform bool SHOW_CIE_CSP_BT709_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
@@ -230,6 +263,13 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 
 #endif
 
+uniform int CIE_SPACER_1
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 #else //ENABLE_CIE_FEATURES == YES
   static const bool  SHOW_CIE                    = false;
   static const float CIE_DIAGRAM_BRIGHTNESS      = 0.f;
@@ -242,6 +282,7 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 
 // heatmap
 #if (ENABLE_CLL_FEATURES == YES)
+
 uniform bool SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
@@ -255,15 +296,6 @@ uniform bool SHOW_HEATMAP
            "\n" "  pink to blue:      4000-10000     800-1000";
 > = false;
 
-uniform uint HEATMAP_CUTOFF_POINT
-<
-  ui_category = "Heatmap visualisation";
-  ui_label    = "heatmap cutoff point";
-  ui_type     = "combo";
-  ui_items    = "10000 nits\0"
-                " 1000 nits\0";
-> = 0;
-
 uniform float HEATMAP_BRIGHTNESS
 <
   ui_category = "Heatmap visualisation";
@@ -274,6 +306,22 @@ uniform float HEATMAP_BRIGHTNESS
   ui_max      = 250.f;
   ui_step     = 0.5f;
 > = 80.f;
+
+uniform uint HEATMAP_CUTOFF_POINT
+<
+  ui_category = "Heatmap visualisation";
+  ui_label    = "heatmap cutoff point";
+  ui_type     = "combo";
+  ui_items    = "10000 nits\0"
+                " 1000 nits\0";
+> = 0;
+
+uniform int HEATMAP_SPACER_0
+<
+  ui_category = "Heatmap visualisation";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
 
 uniform bool SHOW_BRIGHTNESS_HISTOGRAM
 <
@@ -304,6 +352,13 @@ uniform float BRIGHTNESS_HISTOGRAM_SIZE
   ui_step     = 0.1f;
 > = 70.f;
 
+uniform int BRIGHTNESS_HISTOGRAM_SPACER_0
+<
+  ui_category = "Brightness histogram";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE
 <
   ui_category = "Brightness histogram";
@@ -320,6 +375,13 @@ uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE
            "\n" "The line is invisible when maxCLL hits above 10000 nits.";
 > = true;
 
+uniform int BRIGHTNESS_HISTOGRAM_SPACER_1
+<
+  ui_category = "Brightness histogram";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
 <
@@ -328,10 +390,29 @@ uniform bool HIGHLIGHT_NIT_RANGE
   ui_tooltip  = "in nits";
 > = false;
 
+uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+<
+  ui_category = "Highlight brightness range visualisation";
+  ui_label    = "highlighted range brightness";
+  ui_type     = "slider";
+  ui_units    = " nits";
+  ui_min      = 10.f;
+  ui_max      = 250.f;
+  ui_step     = 0.5f;
+> = 80.f;
+
+uniform int HIGHLIGHT_NIT_RANGE_SPACER_0
+<
+  ui_category = "Highlight brightness range visualisation";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "range starting point";
+  ui_tooltip  = "CTRL + LEFT CLICK on the value to input an exact value.";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -343,6 +424,7 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "range end point";
+  ui_tooltip  = "CTRL + LEFT CLICK on the value to input an exact value.";
   ui_type     = "drag";
   ui_units    = " nits";
   ui_min      = 0.f;
@@ -350,16 +432,12 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_step     = 0.0000001f;
 > = 0.f;
 
-uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+uniform int HIGHLIGHT_NIT_RANGE_SPACER_1
 <
   ui_category = "Highlight brightness range visualisation";
-  ui_label    = "range brightness";
-  ui_type     = "slider";
-  ui_units    = " nits";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
-  ui_step     = 0.5f;
-> = 80.f;
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
 
 // draw pixels as black depending on their nits
 uniform bool DRAW_ABOVE_NITS_AS_BLACK
@@ -379,6 +457,13 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_step     = 0.0000001f;
 > = 10000.f;
 
+uniform int DRAW_AS_BLACK_SPACER_0
+<
+  ui_category = "Draw certain brightness levels as black";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 uniform bool DRAW_BELOW_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
@@ -395,6 +480,14 @@ uniform float BELOW_NITS_AS_BLACK
   ui_max      = 10000.f;
   ui_step     = 1.f;
 > = 0.f;
+
+uniform int DRAW_AS_BLACK_SPACER_1
+<
+  ui_category = "Draw certain brightness levels as black";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
 #else //ENABLE_CLL_FEATURES == YES
   static const bool  SHOW_HEATMAP                          = false;
   static const uint  HEATMAP_CUTOFF_POINT                  = 0;

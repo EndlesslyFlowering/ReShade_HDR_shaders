@@ -210,7 +210,7 @@
 
 uniform int GLOBAL_INFO
 <
-  ui_category = "info";
+  ui_category = "Info";
   ui_label    = " ";
   ui_type     = "radio";
   ui_text     = INFO_TEXT;
