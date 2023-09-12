@@ -13,6 +13,7 @@
 // - add namespace for UI
 // - fix performance mode issues with HDR analysis shader
 // - fix ENABLE_CLL_FEATUES == NO not working
+// - add separate pixel/compute shader for combining the colour space outlines?
 
 
 
@@ -287,13 +288,6 @@ uniform bool SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
-  ui_tooltip  = "         colours:   10000 nits:   1000 nits:"
-           "\n" " black and white:       0-  100       0- 100"
-           "\n" "  teal to green:      100-  203     100- 203"
-           "\n" " green to yellow:     203-  400     203- 400"
-           "\n" "yellow to red:        400- 1000     400- 600"
-           "\n" "   red to pink:      1000- 4000     600- 800"
-           "\n" "  pink to blue:      4000-10000     800-1000";
 > = false;
 
 uniform float HEATMAP_BRIGHTNESS
@@ -313,7 +307,22 @@ uniform uint HEATMAP_CUTOFF_POINT
   ui_label    = "heatmap cutoff point";
   ui_type     = "combo";
   ui_items    = "10000 nits\0"
+                " 4000 nits\0"
+                " 2000 nits\0"
                 " 1000 nits\0";
+  ui_tooltip  = "         colours: | 10000 nits: | 4000 nits: | 2000 nits: | 1000 nits:"
+           "\n" "------------------|-------------|------------|------------|-----------"
+           "\n" " black to white:  |     0-  100 |     0- 100 |     0- 100 |     0- 100"
+           "\n" "  teal to green:  |   100-  203 |   100- 203 |   100- 203 |   100- 203"
+           "\n" " green to yellow: |   203-  400 |   203- 400 |   203- 400 |   203- 400"
+           "\n" "yellow to red:    |   400- 1000 |   400-1000 |   400-1000 |   400- 600"
+           "\n" "   red to pink:   |  1000- 4000 |  1000-2000 |  1000-1500 |   600- 800"
+           "\n" "  pink to blue:   |  4000-10000 |  2000-4000 |  1500-2000 |   800-1000"
+           "\n" "----------------------------------------------------------------------"
+           "\n"
+           "\n" "extra cases:"
+           "\n" "highly saturated red:  above the cutoff point"
+           "\n" "highly saturated blue: below 0 nits";
 > = 0;
 
 uniform int HEATMAP_SPACER_0

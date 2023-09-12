@@ -651,7 +651,21 @@ storage2D<float> StorageConsolidated
 #ifdef HDR_ANALYSIS_ENABLE
 
 #define HEATMAP_MODE_10000 0
-#define HEATMAP_MODE_1000  1
+#define HEATMAP_MODE_4000  1
+#define HEATMAP_MODE_2000  2
+#define HEATMAP_MODE_1000  3
+
+static const float4x3 HeatmapSteps0 = float4x3(
+  100.f, 203.f, 400.f,
+  100.f, 203.f, 400.f,
+  100.f, 203.f, 400.f,
+  100.f, 203.f, 400.f);
+
+static const float4x3 HeatmapSteps1 = float4x3(
+  1000.f, 4000.f, 10000.f,
+  1000.f, 2000.f,  4000.f,
+  1000.f, 1500.f,  2000.f,
+   600.f,  800.f,  1000.f);
 
 float3 HeatmapRgbValues(
   float Y,
@@ -660,36 +674,6 @@ float3 HeatmapRgbValues(
   bool  HistogramOutput)
 {
   float3 output;
-
-  float r0,
-        r1,
-        r2,
-        r3,
-        r4,
-        r5;
-
-  switch (Mode)
-  {
-    case HEATMAP_MODE_10000:
-    {
-      r0 =   100.f;
-      r1 =   203.f;
-      r2 =   400.f;
-      r3 =  1000.f;
-      r4 =  4000.f;
-      r5 = 10000.f;
-    } break;
-
-    case HEATMAP_MODE_1000:
-    {
-      r0 =  100.f;
-      r1 =  203.f;
-      r2 =  400.f;
-      r3 =  600.f;
-      r4 =  800.f;
-      r5 = 1000.f;
-    } break;
-  }
 
   if (IsNAN(Y))
   {
@@ -703,47 +687,47 @@ float3 HeatmapRgbValues(
     output.g = 0.f;
     output.b = 6.25f;
   }
-  else if (Y <= r0) // <= 100nits
+  else if (Y <= HeatmapSteps0[Mode][0]) // <= 100nits
   {
     //shades of grey
-    float clamped = !HistogramOutput ? Y / r0 * 0.25f
+    float clamped = !HistogramOutput ? Y / HeatmapSteps0[Mode][0] * 0.25f
                                      : 0.666f;
     output.r = clamped;
     output.g = clamped;
     output.b = clamped;
   }
-  else if (Y <= r1) // <= 203nits
+  else if (Y <= HeatmapSteps0[Mode][1]) // <= 203nits
   {
     //(blue+green) to green
     output.r = 0.f;
     output.g = 1.f;
-    output.b = 1.f - ((Y - r0) / (r1 - r0));
+    output.b = 1.f - ((Y - HeatmapSteps0[Mode][0]) / (HeatmapSteps0[Mode][1] - HeatmapSteps0[Mode][0]));
   }
-  else if (Y <= r2) // <= 400nits
+  else if (Y <= HeatmapSteps0[Mode][2]) // <= 400nits
   {
     //green to yellow
-    output.r = (Y - r1) / (r2 - r1);
+    output.r = (Y - HeatmapSteps0[Mode][1]) / (HeatmapSteps0[Mode][2] - HeatmapSteps0[Mode][1]);
     output.g = 1.f;
     output.b = 0.f;
   }
-  else if (Y <= r3) // <= 1000nits
+  else if (Y <= HeatmapSteps1[Mode][0]) // <= 1000nits
   {
     //yellow to red
     output.r = 1.f;
-    output.g = 1.f - ((Y - r2) / (r3 - r2));
+    output.g = 1.f - ((Y - HeatmapSteps0[Mode][2]) / (HeatmapSteps1[Mode][0] - HeatmapSteps0[Mode][2]));
     output.b = 0.f;
   }
-  else if (Y <= r4) // <= 4000nits
+  else if (Y <= HeatmapSteps1[Mode][1]) // <= 4000nits
   {
     //red to pink
     output.r = 1.f;
     output.g = 0.f;
-    output.b = (Y - r3) / (r4 - r3);
+    output.b = (Y - HeatmapSteps1[Mode][0]) / (HeatmapSteps1[Mode][1] - HeatmapSteps1[Mode][0]);
   }
-  else if(Y <= r5) // <= 10000nits
+  else if(Y <= HeatmapSteps1[Mode][2]) // <= 10000nits
   {
     //pink to blue
-    output.r = max(1.f - ((Y - r4) / (r5 - r4)), 0.f);
+    output.r = max(1.f - ((Y - HeatmapSteps1[Mode][1]) / (HeatmapSteps1[Mode][2] - HeatmapSteps1[Mode][1])), 0.f);
     output.g = 0.f;
     output.b = 1.f;
   }
