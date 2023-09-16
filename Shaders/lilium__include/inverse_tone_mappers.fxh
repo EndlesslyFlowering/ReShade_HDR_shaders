@@ -38,8 +38,8 @@
 namespace Itmos
 {
   //gamma
-  static const float gamma        = 2.4f;
-  static const float inverseGamma = 1.f / gamma;
+  static const float removeGamma = 2.4f;
+  static const float applyGamma  = 1.f / removeGamma;
 
   // outputs normalised values
   float3 Bt2446A(
@@ -54,7 +54,7 @@ namespace Itmos
     float3 sdr = saturate(Input / InputNitsFactor);
 
     //RGB->R'G'B' gamma compression
-    sdr = pow(sdr, 1.f / (gamma + GammaIn));
+    sdr = pow(sdr, 1.f / (removeGamma + GammaIn));
 
     // Rec. ITU-R BT.2020-2 Table 4
     //Y'C'bC'r,tmo
@@ -69,7 +69,7 @@ namespace Itmos
     float pSdr = 1.f + 32.f * pow(
                                   Lsdr /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
 
     //Y'c
     //if pSdr == 1 there is a division by zero
@@ -85,7 +85,7 @@ namespace Itmos
     float yP2 = (yC - 0.5000f) /
                 0.5000f;
     //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
-    float yP11 = (-2.7811f + sqrt(4.83307641 - 4.604f * yC)) /
+    float yP11 = (-2.7811f + sqrt(pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))) /
                  -2.302f;
     //yP12 is never reached
     //float yP12 = abs((_1_first - _1_sqrt) /
@@ -119,7 +119,7 @@ namespace Itmos
     float pHdr = 1.f + 32.f * pow(
                                   Lhdr /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
     //Y'hdr
     //if pHdr == 1 there is a division by zero
     //this happens when Lhdr == 0
@@ -137,14 +137,14 @@ namespace Itmos
     // Colour difference signals (inverse) and Luma (inverse)
     // get R'G'B'
 
-  //  hdr.b = ((C_b_tmo * 1.8814f) /
+  //  hdr.b = ((ycbcrTmo.y * Csp::KHelpers::Bt2020::Kb) /
   //           colourScale) + yHdr;
-  //  hdr.r = ((C_r_tmo * 1.4746f) /
+  //  hdr.r = ((ycbcrTmo.z * Csp::KHelpers::Bt2020::Kr) /
   //           colourScale) + yHdr;
-  //  hdr.g = (yHdr - (K_BT2020.r * hdr.r + K_BT2020.b * hdr.b)) /
-  //          K_BT2020.g;
+  //  hdr.g = (yHdr - (Csp::KHelpers::Bt2020::K.r * hdr.r + Csp::KHelpers::Bt2020::K.b * hdr.b)) /
+  //          Csp::KHelpers::Bt2020::K.g;
 
-  //  produces the same results
+    // produces the same results
     float cbHdr = ycbcrTmo.y / colourScale;
     float crHdr = ycbcrTmo.z / colourScale;
 
@@ -154,7 +154,7 @@ namespace Itmos
 
     // Non-linear transfer function (inverse)
     // get RGB
-    hdr = pow(hdr, gamma + GammaIn + GammaOut);
+    hdr = pow(hdr, removeGamma + GammaIn + GammaOut);
 
     //expand to target luminance
     hdr *= (Lhdr / 10000.f);

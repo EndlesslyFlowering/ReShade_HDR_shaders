@@ -84,8 +84,15 @@ namespace Ui
         ui_label    = "input white point";
         ui_tooltip  = "Sets the brightness to this value for the inverse tone mapping process."
                  "\n" "Controls the average brightness."
+                 "\n"
+                 "\n" "If you want to change just the average brightness,"
+                 "\n" "adjust both \"input white point\" and \"max input brightness\""
+                 "\n" "to the same value."
+                 "\n"
+                 "\n" "If higher than \"max input brightness\" then this is the \"max input brightness\"!"
                  "\n" "Can't be higher than \"target brightness\"!";
         ui_type     = "drag";
+        ui_units    = " nits";
         ui_min      = 1.f;
         ui_max      = 1200.f;
         ui_step     = 0.1f;
@@ -98,7 +105,12 @@ namespace Ui
         ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed."
                  "\n" "Analyse a good value with the \"scRGB TRC fix\" and \"HDR analysis\" shader"
                  "\n" "before applying the inverse tone mapping shader!"
-                 "\n" "Can't be lower than \"input white point\"!"
+                 "\n"
+                 "\n" "If you want to change just the average brightness,"
+                 "\n" "adjust both \"input white point\" and \"max input brightness\""
+                 "\n" "to the same value."
+                 "\n"
+                 "\n" "If lower than \"input white point\" then \"input white point\" is the \"max input brightness\"!"
                  "\n" "Can't be higher than \"target brightness\"!";
         ui_type     = "drag";
         ui_units    = " nits";
@@ -326,8 +338,8 @@ void PS_InverseToneMapping(
     case ITM_METHOD_BT2446A:
     {
       float inputNitsFactor = Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness > Ui::Itm::Bt2446A::Bt2446AInputBrightness
-                                  ? Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness / Ui::Itm::Bt2446A::Bt2446AInputBrightness
-                                  : 1.f;
+                            ? Ui::Itm::Bt2446A::Bt2446AMaxInputBrightness / Ui::Itm::Bt2446A::Bt2446AInputBrightness
+                            : 1.f;
 
       float referenceWhiteNits = Ui::Itm::Bt2446A::Bt2446AInputBrightness * inputNitsFactor;
             referenceWhiteNits = referenceWhiteNits < Ui::Itm::Global::TargetBrightness
