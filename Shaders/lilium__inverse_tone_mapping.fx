@@ -57,7 +57,7 @@ namespace Ui
                       "sRGB\0"
                       "2.4\0"
                       "linear (scRGB)\0";
-      > = 1;
+      > = 0;
 
 #define CONTENT_TRC_GAMMA_22 0
 #define CONTENT_TRC_SRGB     1

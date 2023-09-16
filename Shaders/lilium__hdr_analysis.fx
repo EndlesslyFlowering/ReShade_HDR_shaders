@@ -12,7 +12,6 @@
 // - improve vertex shader for clearing the brightness histogram with barebones Vertex shader?
 // - add namespace for UI
 // - fix performance mode issues with HDR analysis shader
-// - fix ENABLE_CLL_FEATUES == NO not working
 // - add separate pixel/compute shader for combining the colour space outlines?
 
 
@@ -22,30 +21,12 @@
 //#define _DEBUG
 //#define _TESTY
 
-#ifndef ENABLE_CLL_FEATURES
-  #define ENABLE_CLL_FEATURES YES
-#endif
 
-#ifndef ENABLE_CIE_FEATURES
-  #define ENABLE_CIE_FEATURES YES
-#endif
-
-#ifndef ENABLE_CSP_FEATURES
-  #define ENABLE_CSP_FEATURES YES
-#endif
-
-
-#if (ENABLE_CLL_FEATURES == YES \
-  || ENABLE_CSP_FEATURES == YES)
 uniform int2 MOUSE_POSITION
 <
   source = "mousepoint";
 >;
-#else //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
-  static const int2 MOUSE_POSITION = float2(0.f, 0.f);
-#endif //ENABLE_CLL_FEATURES == YES || ENABLE_CSP_FEATURES == YES
 
-#if (ENABLE_CLL_FEATURES == YES)
 uniform float2 NIT_PINGPONG0
 <
   source    = "pingpong";
@@ -72,11 +53,6 @@ uniform float2 NIT_PINGPONG2
   step      = 3.f;
   smoothing = 0.f;
 >;
-#else //ENABLE_CLL_FEATURES == YES
-  static const float2 NIT_PINGPONG0 = float2(0.f, 0.f);
-  static const float2 NIT_PINGPONG1 = float2(0.f, 0.f);
-  static const float2 NIT_PINGPONG2 = float2(0.f, 0.f);
-#endif //ENABLE_CLL_FEATURES == YES
 
 
 uniform uint TEXT_SIZE
@@ -125,9 +101,8 @@ uniform int GLOBAL_SPACER_0
   ui_type     = "radio";
 >;
 
-// CLL
-#if (ENABLE_CLL_FEATURES == YES)
 
+// CLL
 uniform bool SHOW_CLL_VALUES
 <
   ui_category = "Content Light Level analysis";
@@ -148,14 +123,8 @@ uniform int CLL_SPACER_0
   ui_type     = "radio";
 >;
 
-#else //ENABLE_CLL_FEATURES == YES
-  static const bool SHOW_CLL_VALUES      = false;
-  static const bool SHOW_CLL_FROM_CURSOR = false;
-#endif //ENABLE_CLL_FEATURES == YES
 
 // TextureCsps
-#if (ENABLE_CSP_FEATURES == YES)
-
 uniform bool SHOW_CSPS
 <
   ui_category = "Colour Space analysis";
@@ -188,15 +157,8 @@ uniform int CSP_SPACER_0
   ui_type     = "radio";
 >;
 
-#else //ENABLE_CSP_FEATURES == YES
-  static const bool SHOW_CSPS            = false;
-  static const bool SHOW_CSP_MAP         = false;
-  static const bool SHOW_CSP_FROM_CURSOR = false;
-#endif //ENABLE_CSP_FEATURES == YES
 
 // CIE
-#if (ENABLE_CIE_FEATURES == YES)
-
 uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
@@ -271,19 +233,8 @@ uniform int CIE_SPACER_1
   ui_type     = "radio";
 >;
 
-#else //ENABLE_CIE_FEATURES == YES
-  static const bool  SHOW_CIE                    = false;
-  static const float CIE_DIAGRAM_BRIGHTNESS      = 0.f;
-  static const float CIE_DIAGRAM_SIZE            = 0.f;
-  static const bool  SHOW_CIE_CSP_BT709_OUTLINE  = false;
-  static const bool  SHOW_CIE_CSP_DCI_P3_OUTLINE = false;
-  static const bool  SHOW_CIE_CSP_BT2020_OUTLINE = false;
-  static const bool  SHOW_CIE_CSP_AP0_OUTLINE    = false;
-#endif //ENABLE_CIE_FEATURES == YES
 
 // heatmap
-#if (ENABLE_CLL_FEATURES == YES)
-
 uniform bool SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
@@ -496,25 +447,6 @@ uniform int DRAW_AS_BLACK_SPACER_1
   ui_label    = " ";
   ui_type     = "radio";
 >;
-
-#else //ENABLE_CLL_FEATURES == YES
-  static const bool  SHOW_HEATMAP                          = false;
-  static const uint  HEATMAP_CUTOFF_POINT                  = 0;
-  static const float HEATMAP_BRIGHTNESS                    = 0.f;
-  static const bool  SHOW_BRIGHTNESS_HISTOGRAM             = false;
-  static const float BRIGHTNESS_HISTOGRAM_BRIGHTNESS       = 0.f;
-  static const float BRIGHTNESS_HISTOGRAM_SIZE             = 0.f;
-  static const bool  BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE = false;
-  static const bool  BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE = false;
-  static const bool  HIGHLIGHT_NIT_RANGE                   = false;
-  static const float HIGHLIGHT_NIT_RANGE_START_POINT       = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_END_POINT         = 0.f;
-  static const float HIGHLIGHT_NIT_RANGE_BRIGHTNESS        = 0.f;
-  static const bool  DRAW_ABOVE_NITS_AS_BLACK              = false;
-  static const float ABOVE_NITS_AS_BLACK                   = 0.f;
-  static const bool  DRAW_BELOW_NITS_AS_BLACK              = false;
-  static const float BELOW_NITS_AS_BLACK                   = 0.f;
-#endif //ENABLE_CLL_FEATURES == YES
 
 
 #define HDR_ANALYSIS_ENABLE
@@ -801,65 +733,44 @@ static const float ShowCllFromCursorLineCount = 1;
 
 void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 {
-#if (ENABLE_CLL_FEATURES == YES)
   float drawCllLast       = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0);
   float drawcursorCllLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1);
 
   float floatShowCllValues     = SHOW_CLL_VALUES;
   float floatShowCllFromCrusor = SHOW_CLL_FROM_CURSOR;
-#endif //ENABLE_CLL_FEATURES == YES
 
-#if (ENABLE_CSP_FEATURES == YES)
   float drawCspsLast      = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2);
   float drawcursorCspLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3);
 
   float floatShowCsps          = SHOW_CSPS;
   float floatShowCspFromCursor = SHOW_CSP_FROM_CURSOR;
-#endif //ENABLE_CSP_FEATURES == YES
 
   uint fontSizeLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4);
 
 
   if (
-#if (ENABLE_CLL_FEATURES == YES)
       floatShowCllValues     != drawCllLast
    || floatShowCllFromCrusor != drawcursorCllLast
-   ||
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CSP_FEATURES == YES)
-      floatShowCsps          != drawCspsLast
+   || floatShowCsps          != drawCspsLast
    || floatShowCspFromCursor != drawcursorCspLast
-   ||
-#endif //ENABLE_CSP_FEATURES == YES
-
-      TEXT_SIZE              != fontSizeLast)
+   || TEXT_SIZE              != fontSizeLast)
   {
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW,  1);
-#if (ENABLE_CLL_FEATURES == YES)
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, floatShowCllValues);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, floatShowCllFromCrusor);
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CSP_FEATURES == YES)
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2, floatShowCsps);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3, floatShowCspFromCursor);
-#endif //ENABLE_CSP_FEATURES == YES
-
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, TEXT_SIZE);
 
 
 
-#if (ENABLE_CLL_FEATURES == YES)
     float cursorCllYOffset = (!SHOW_CLL_VALUES
                             ? -ShowCllValuesLineCount
                             : SPACING_MULTIPLIER);
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL,
                cursorCllYOffset);
-#endif //ENABLE_CLL_FEATURES == YES
 
-#if (ENABLE_CSP_FEATURES == YES)
     float cspsYOffset = ((!SHOW_CLL_VALUES && SHOW_CLL_FROM_CURSOR)
                        ? -(ShowCllValuesLineCount
                          - SPACING_MULTIPLIER)
@@ -919,8 +830,6 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,
                cursorCspYOffset);
-
-#endif //ENABLE_CSP_FEATURES == YES
 
 
     float4 bgCol = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
@@ -1042,7 +951,6 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 
     switch(ID.x)
     {
-#if (ENABLE_CLL_FEATURES == YES)
       // max/avg/min CLL
       // maxCLL:
       case 0:
@@ -1457,9 +1365,6 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
         return;
       }
 
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CSP_FEATURES == YES)
 
       // CSPs
       // BT.709:
@@ -1903,7 +1808,6 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
         }
         return;
       }
-#endif //ENABLE_CSP_FEATURES == YES
 
       case 105:
       {
@@ -1952,7 +1856,6 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 {
   switch(ID.x)
   {
-#if (ENABLE_CLL_FEATURES == YES)
     // max/avg/min CLL
     // maxCLL:
     case 0:
@@ -2309,9 +2212,6 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       return;
     }
 
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CSP_FEATURES == YES)
 
     // show CSPs
     // BT.709:
@@ -2852,7 +2752,6 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-#endif
     default:
       return;
   }
@@ -2914,8 +2813,6 @@ void VS_PrepareHdrAnalysis(
   breathingIsActive = false;
 
 
-#if (ENABLE_CLL_FEATURES == YES)
-
   if (HIGHLIGHT_NIT_RANGE)
   {
     float pingpong0 = NIT_PINGPONG0.x + 0.25f;
@@ -2976,18 +2873,12 @@ void VS_PrepareHdrAnalysis(
             round(float(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT) * BRIGHTNESS_HISTOGRAM_SIZE / 100.f));
   }
 
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CIE_FEATURES == YES)
-
   if (SHOW_CIE)
   {
     CieDiagramTextureDisplaySize = 
       uint2(round(float(CIE_BG_WIDTH ) * CIE_DIAGRAM_SIZE / 100.f),
             round(float(CIE_BG_HEIGHT) * CIE_DIAGRAM_SIZE / 100.f));
   }
-
-#endif //ENABLE_CIE_FEATURES == YES
 
   if (SHOW_CLL_VALUES
    || SHOW_CLL_FROM_CURSOR
@@ -3058,17 +2949,11 @@ void PS_HdrAnalysis(
   {
     float pixelCLL = tex2D(SamplerCllValues, TexCoord).r;
 
-#if (ENABLE_CSP_FEATURES == YES)
-
     if (SHOW_CSP_MAP)
     {
       Output = float4(Create_CSP_Map(tex2D(SamplerCsps, TexCoord).r * 255.f,
                                      pixelCLL), 1.f);
     }
-
-#endif //ENABLE_CSP_FEATURES == YES
-
-#if (ENABLE_CLL_FEATURES == YES)
 
     if (SHOW_HEATMAP)
     {
@@ -3088,10 +2973,7 @@ void PS_HdrAnalysis(
       Output = float4(lerp(Output.rgb, highlightNitRangeOut, breathing), 1.f);
     }
 
-#endif //ENABLE_CLL_FEATURES == YES
   }
-
-#if (ENABLE_CLL_FEATURES == YES)
 
   if (DRAW_ABOVE_NITS_AS_BLACK)
   {
@@ -3109,10 +2991,6 @@ void PS_HdrAnalysis(
       Output = (0.f, 0.f, 0.f, 0.f);
     }
   }
-
-#endif //ENABLE_CLL_FEATURES == YES
-
-#if (ENABLE_CIE_FEATURES == YES)
 
   if (SHOW_CIE)
   {
@@ -3178,10 +3056,6 @@ void PS_HdrAnalysis(
     }
   }
 
-#endif //ENABLE_CIE_FEATURES == YES
-
-#if (ENABLE_CLL_FEATURES == YES)
-
   if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
 
@@ -3204,9 +3078,6 @@ void PS_HdrAnalysis(
 
     }
   }
-
-#endif //ENABLE_CLL_FEATURES == YES
-
 
   if (SHOW_CLL_VALUES
    || SHOW_CLL_FROM_CURSOR
@@ -3361,8 +3232,6 @@ technique lilium__hdr_analysis
 {
 
 //CLL
-#if (ENABLE_CLL_FEATURES == YES)
-
   pass PS_CalcCllPerPixel
   {
     VertexShader = VS_PostProcess;
@@ -3412,12 +3281,9 @@ technique lilium__hdr_analysis
      PixelShader = PS_RenderBrightnessHistogramToScale;
     RenderTarget = TextureBrightnessHistogramFinal;
   }
-#endif //ENABLE_CLL_FEATURES == YES
 
 
 //CIE
-#if (ENABLE_CIE_FEATURES == YES)
-
 #if (CIE_DIAGRAM == CIE_1931)
   pass PS_CopyCie1931Bg
   {
@@ -3443,13 +3309,8 @@ technique lilium__hdr_analysis
     DispatchSizeY = DISPATCH_Y1;
   }
 
-#endif //ENABLE_CIE_FEATURES == YES
-
 
 //CSP
-#if (ENABLE_CSP_FEATURES == YES \
-  && ACTUAL_COLOUR_SPACE != CSP_SRGB)
-
   pass PS_CalcCsps
   {
     VertexShader = VS_PostProcess;
@@ -3471,7 +3332,6 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
-#endif //ENABLE_CSP_FEATURES == YES && ACTUAL_COLOUR_SPACE != CSP_SRGB
 
   pass CS_CopyShowValues
   {
