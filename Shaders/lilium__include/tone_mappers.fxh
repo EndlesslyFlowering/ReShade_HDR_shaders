@@ -11,8 +11,8 @@
 namespace Tmos
 {
   // gamma
-  static const float inverseGamma = 2.4f;
-  static const float gamma        = 1.f / inverseGamma;
+  static const float removeGamma = 2.4f;
+  static const float applyGamma  = 1.f / removeGamma;
 
   // Rep. ITU-R BT.2446-1 Table 2 & 3
   void Bt2446A(
@@ -25,7 +25,7 @@ namespace Tmos
     Colour *= (10000.f / MaxCll);
 
     // non-linear transfer function RGB->R'G'B'
-    Colour = pow(Colour, gamma);
+    Colour = pow(Colour, applyGamma);
 
 #define ycbcr Colour
     //to Y'C'bC'r
@@ -35,7 +35,7 @@ namespace Tmos
     //pHDR
     float pHdr = 1.f + 32.f * pow(MaxCll /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
 
     //Y'p
     float y = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
@@ -54,7 +54,7 @@ namespace Tmos
     float pSdr = 1.f + 32.f * pow(
                                   TargetCll /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
 
     //Y'SDR
     y = (pow(pSdr, y) - 1.f) /
@@ -81,7 +81,7 @@ namespace Tmos
     Colour = max(Colour, 0.f);
 
     // gamma decompression and adjust to TargetCll
-    Colour = pow(Colour, inverseGamma) * (TargetCll / 10000.f);
+    Colour = pow(Colour, removeGamma) * (TargetCll / 10000.f);
   }
 
   void Bt2446A_MOD1(
@@ -96,7 +96,7 @@ namespace Tmos
     Colour *= (10000.f / MaxCll);
 
     // non-linear transfer function RGB->R'G'B'
-    Colour = pow(Colour, gamma);
+    Colour = pow(Colour, applyGamma);
 
     //to Y'C'bC'r
     ycbcr = Csp::Ycbcr::FromRgb::Bt2020(Colour);
@@ -106,7 +106,7 @@ namespace Tmos
     float pHdr = 1.f + 32.f * pow(
                                   TestH /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
 
     //Y'p
     float y = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
@@ -125,7 +125,7 @@ namespace Tmos
     float pSdr = 1.f + 32.f * pow(
                                   TestS /
                                   10000.f
-                              , gamma);
+                              , applyGamma);
 
     //Y'SDR
     y = (pow(pSdr, y) - 1.f) /
@@ -152,7 +152,7 @@ namespace Tmos
     Colour = max(Colour, 0.f);
 
     // gamma decompression and adjust to TargetCll
-    Colour = pow(Colour, inverseGamma) * (TargetCll / 10000.f);
+    Colour = pow(Colour, removeGamma) * (TargetCll / 10000.f);
   }
 
   namespace Bt2390
