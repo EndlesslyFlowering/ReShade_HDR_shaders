@@ -2910,6 +2910,10 @@ void VS_PrepareHdrAnalysis(
 #define breathing            HighlightNitRange.w
 
 
+  pingpong0Above1   = false;
+  breathingIsActive = false;
+
+
 #if (ENABLE_CLL_FEATURES == YES)
 
   if (HIGHLIGHT_NIT_RANGE)
