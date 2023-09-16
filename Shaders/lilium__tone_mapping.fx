@@ -23,6 +23,7 @@
 // - use BT.709 RGB->LMS matrix instead of rotating into BT.2020
 // - make Dice use the same knee function as BT.2390?
 // - put oneMinusKneeStart into the vertex shader?
+// - LUT based tone mapping
 
 //ideas:
 // - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that

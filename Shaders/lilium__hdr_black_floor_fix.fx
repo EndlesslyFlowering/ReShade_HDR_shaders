@@ -8,6 +8,7 @@
 
 // TODO:
 // - add chroma adjustment from BT.2390 too? maybe as option only
+// - use BT.709<->LMS matrices instead of BT.2020<->LMS matrices if possible
 
 
 // Vertex shader generating a triangle covering the entire screen.
@@ -81,15 +82,42 @@ void PS_HdrBlackFloorFix(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  hdr = Csp::Mat::Bt709To::Bt2020(hdr / 125.f);
+  hdr /= 125.f;
+
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::Bt709To::DciP3(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+  {
+    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+  }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   hdr = Csp::Trc::FromPq(hdr);
 
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  {
+    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+  }
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   hdr = Csp::Trc::FromHlg(hdr);
+
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  {
+    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+  }
 
 #else //ACTUAL_COLOUR_SPACE ==
 
@@ -113,13 +141,40 @@ void PS_HdrBlackFloorFix(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  hdr = Csp::Mat::Bt2020To::Bt709(hdr) * 125.f;
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::DciP3To::Bt709(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+  {
+    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+  }
+
+  hdr *= 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  {
+    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+  }
 
   hdr = Csp::Trc::ToPq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  {
+    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+  }
+  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  {
+    hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+  }
 
   hdr = Csp::Trc::ToHlg(hdr);
 

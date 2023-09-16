@@ -25,6 +25,23 @@ namespace Ui
         ui_tooltip  = "This emulates how the black floor looks on an SDR display using gamma 2.2.";
       > = false;
 
+      uniform uint ProcessingColourSpace
+      <
+        ui_category = "SDR black floor emulation";
+        ui_label    = "processing colour space";
+        ui_tooltip  = "Using BT.709 will not push affected colours outside of BT.709."
+                 "\n" "Using DCI-P3 can push affected colours into DCI-P3."
+                 "\n" "Using BT.2020 can push affected colours into DCI-P3 and BT.2020.";
+        ui_type     = "combo";
+        ui_items    = "BT.709\0"
+                      "DCI-P3\0"
+                      "BT.2020\0";
+      > = 0;
+
+#define HDR_BF_FIX_CSP_BT709  0
+#define HDR_BF_FIX_CSP_DCI_P3 1
+#define HDR_BF_FIX_CSP_BT2020 2
+
       uniform float WhitePoint
       <
         ui_category = "SDR black floor emulation";
@@ -114,10 +131,37 @@ void Gamma22Emulation(
   inout float3 Rgb,
         float  WhitePointNormalised)
 {
-  if (dot(Csp::Mat::Bt2020ToXYZ[1], Rgb) <= WhitePointNormalised)
+  switch(Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace)
   {
-    Rgb = pow(Csp::Trc::ToSrgb(Rgb / WhitePointNormalised), 2.2f) * WhitePointNormalised;
-    return;
+    case HDR_BF_FIX_CSP_BT709:
+    {
+      if (dot(Rgb, Csp::Mat::Bt709ToXYZ[1]) <= WhitePointNormalised)
+      {
+        Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
+      }
+      return;
+    }
+    case HDR_BF_FIX_CSP_DCI_P3:
+    {
+      if (dot(Rgb, Csp::Mat::DciP3ToXYZ[1]) <= WhitePointNormalised)
+      {
+        Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
+      }
+      return;
+    }
+    //BT.2020
+    default:
+    {
+      if (dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]) <= WhitePointNormalised)
+      {
+#if defined(IS_FLOAT_HDR_CSP)
+        Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
+#else
+        Rgb = pow(Csp::Trc::ToSrgb(Rgb / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+#endif
+      }
+      return;
+    }
   }
 
 //  float3 RgbNormalised = Rgb / WhitePointNormalised;

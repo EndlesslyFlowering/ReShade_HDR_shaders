@@ -7,7 +7,9 @@
 
 // TODO:
 // - implement vertex shader for optimisation
+// - general clean up needed
 // - finish BT.2446 Method C
+// - LUT based inverse tone mapping
 
 #include "lilium__include/draw_text_fix.fxh"
 
