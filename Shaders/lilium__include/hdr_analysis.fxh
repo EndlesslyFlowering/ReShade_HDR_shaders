@@ -3,11 +3,6 @@
 #include "colour_space.fxh"
 
 
-// TODO:
-// - rework "DISPATCH_DOESNT_OVERFLOW"
-// - fix CIE diagram texture offset
-
-
 #if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
    || __RENDERER__ >= 0x20000)                           \
   && defined(IS_POSSIBLE_HDR_CSP))
@@ -904,19 +899,19 @@ void PS_CalcCllPerPixel(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    precise float curPixelCll = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
+    precise float curPixelCll = dot(Bt709ToXYZ[1], pixel) * 80.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
+    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
+    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
+    precise float curPixelCll = dot(Bt2020ToXYZ[1], pixel) * 100.f;
 
 #else
 

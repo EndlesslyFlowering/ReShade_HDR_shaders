@@ -5,9 +5,6 @@
    || __RENDERER__ >= 0x20000)                           \
   && defined(IS_POSSIBLE_HDR_CSP))
 
-// TODO:
-// - add namespace for UI
-
 
 uniform uint INPUT_TRC
 <

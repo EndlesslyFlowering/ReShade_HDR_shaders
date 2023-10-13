@@ -135,7 +135,7 @@ void Gamma22Emulation(
   {
     case HDR_BF_FIX_CSP_BT709:
     {
-      if (dot(Rgb, Csp::Mat::Bt709ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Rgb, Bt709ToXYZ[1]) <= WhitePointNormalised)
       {
         Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
       }
@@ -143,7 +143,7 @@ void Gamma22Emulation(
     }
     case HDR_BF_FIX_CSP_DCI_P3:
     {
-      if (dot(Rgb, Csp::Mat::DciP3ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Rgb, DciP3ToXYZ[1]) <= WhitePointNormalised)
       {
         Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
       }
@@ -152,7 +152,7 @@ void Gamma22Emulation(
     //BT.2020
     default:
     {
-      if (dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Rgb, Bt2020ToXYZ[1]) <= WhitePointNormalised)
       {
 #if defined(IS_FLOAT_HDR_CSP)
         Rgb = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Rgb / WhitePointNormalised)) * WhitePointNormalised;
@@ -209,8 +209,8 @@ float3 LowerBlackFloor(
 
       //to L'M'S'
       Lms = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(i2,
-                                                   dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[1]),
-                                                   dot(Lms, Csp::Ictcp::Mat::PqLmsToIctcp[2])));
+                                                   dot(Lms, PqLmsToIctcp[1]),
+                                                   dot(Lms, PqLmsToIctcp[2])));
       //to LMS
       Lms = Csp::Trc::FromPq(Lms);
       //to RGB
@@ -223,7 +223,7 @@ float3 LowerBlackFloor(
   {
     float3 inputInPq = Csp::Trc::ToPq(Input);
 
-    float y1 = dot(inputInPq, Csp::KHelpers::Bt2020::K);
+    float y1 = dot(inputInPq, KBt2020);
 
     if (y1 <= RollOffStoppingPoint)
     {
@@ -240,8 +240,8 @@ float3 LowerBlackFloor(
         max(
           Csp::Ycbcr::ToRgb::Bt2020(
             float3(y2,
-                   (inputInPq.b - y1) / Csp::KHelpers::Bt2020::Kb,
-                   (inputInPq.r - y1) / Csp::KHelpers::Bt2020::Kr))
+                   (inputInPq.b - y1) / KbBt2020,
+                   (inputInPq.r - y1) / KrBt2020))
         , 0.f));
     }
     discard;
@@ -249,7 +249,7 @@ float3 LowerBlackFloor(
   // YRGB mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
   {
-    float y1     = dot(Input, Csp::Mat::Bt2020ToXYZ[1].rgb);
+    float y1     = dot(Input, Bt2020ToXYZ[1].rgb);
     float y1InPq = Csp::Trc::ToPq(y1);
 
     if (y1InPq <= RollOffStoppingPoint)
@@ -272,7 +272,7 @@ float3 LowerBlackFloor(
   // RGB in PQ mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB_IN_PQ)
   {
-    if (Csp::Trc::ToPq(dot(Input, Csp::Mat::Bt2020ToXYZ[1])) <= RollOffStoppingPoint)
+    if (Csp::Trc::ToPq(dot(Input, Bt2020ToXYZ[1])) <= RollOffStoppingPoint)
     {
       float3 inputInPq = Csp::Trc::ToPq(Input);
 
@@ -292,7 +292,7 @@ float3 LowerBlackFloor(
   // RBG mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB)
   {
-    if (dot(Input, Csp::Mat::Bt2020ToXYZ[1]) <= RollOffStoppingPoint)
+    if (dot(Input, Bt2020ToXYZ[1]) <= RollOffStoppingPoint)
     {
       //E1
       float3 rgb = (Input - OldBlackPoint) / RollOffMinusOldBlackPoint;

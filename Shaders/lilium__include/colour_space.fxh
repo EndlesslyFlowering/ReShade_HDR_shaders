@@ -270,29 +270,29 @@ namespace Csp
 
     namespace Bt709
     {
-      static const float3 K  = float3(0.212636821677324, 0.715182981841251,  0.0721801964814255);
+      #define KBt709  float3(asfloat(0x3e599b82), asfloat(0x3f37212e), asfloat(0x3d93bf90))
 
-      static const float  Kb = 1.85563960703715;
-      static const float  Kr = 1.57472635664535;
-      static const float2 Kg = float2(0.187281345942859, 0.468194596334655);
+      #define KbBt709 asfloat(0x3fed880e)
+      #define KrBt709 asfloat(0x3fc99920)
+      #define KgBt709 float2(asfloat(0xbe3fa3b7), asfloat(0xbeef8d95))
     } //Bt709
 
     namespace Bt2020
     {
-      static const float3 K  = float3(0.262698338956556, 0.678008765772817,  0.0592928952706273);
+      #define KBt2020  float3(asfloat(0x3e86751c), asfloat(0x3f2d9964), asfloat(0x3d72c0da))
 
-      static const float  Kb = 1.88141420945875;
-      static const float  Kr = 1.47460332208689;
-      static const float2 Kg = float2(0.164532527178987, 0.571343414550845);
+      #define KbBt2020 asfloat(0x3ff0d3f2)
+      #define KrBt2020 asfloat(0x3fbcc572)
+      #define KgBt2020 float2(asfloat(0xbe2861a9), asfloat(0xbf12356b))
     } //Bt2020
 
     namespace Ap0D65
     {
-      static const float3 K  = float3(0.343163015452697, 0.734695029446046, -0.0778580448987425);
+      #define KAp0D65  float3(asfloat(0x3eafa6b1), asfloat(0x3f3c18ec), asfloat(0xbd9f6224))
 
-      static const float  Kb = 2.15571608979748;
-      static const float  Kr = 1.31367396909461;
-      static const float2 Kg = float2(-0.228448313084334, 0.613593807618545);
+      #define KbAp0D65 asfloat(0x4009f622)
+      #define KrAp0D65 asfloat(0x3fa82ca7)
+      #define KgAp0D65 float2(asfloat(0x3e69cd4c), asfloat(0xbf1d0be7))
     } //AP0_D65
 
   } //KHelpers
@@ -686,14 +686,14 @@ namespace Csp
 
 
     // Rec. ITU-R BT.2100-2 Table 4
-    static const float PQ_m1 =  0.1593017578125; //1305.f / 8192.f;
-    static const float PQ_m2 = 78.84375;         //2523.f / 32.f;
-    static const float PQ_c1 =  0.8359375;       // 107.f / 128.f;
-    static const float PQ_c2 = 18.8515625;       //2413.f / 128.f;
-    static const float PQ_c3 = 18.6875;          //2392.f / 128.f;
+    #define PQ_m1 asfloat(0x3E232000) //  0.1593017578125 = 1305.f / 8192.f;
+    #define PQ_m2 asfloat(0x429DB000) // 78.84375         = 2523.f / 32.f;
+    #define PQ_c1 asfloat(0x3F560000) //  0.8359375       =  107.f / 128.f;
+    #define PQ_c2 asfloat(0x4196D000) // 18.8515625       = 2413.f / 128.f;
+    #define PQ_c3 asfloat(0x41958000) // 18.6875          = 2392.f / 128.f;
 
-    static const float _1_div_PQ_m1 = 6.2773946360153256705;
-    static const float _1_div_PQ_m2 = 0.01268331351565596512;
+    #define _1_div_PQ_m1 asfloat(0x40C8E06B)
+    #define _1_div_PQ_m2 asfloat(0x3C4FCDAC)
 
     // Rec. ITU-R BT.2100-2 Table 4
     // (EOTF) takes PQ values as input
@@ -803,9 +803,9 @@ namespace Csp
 
 
     // Rec. ITU-R BT.2100-2 Table 5
-    static const float HLG_a = 0.17883277;
-    static const float HLG_b = 0.28466892; // 1 - 4 * HLG_a
-    static const float HLG_c = 0.55991072952956202016; // 0.5 - HLG_a * ln(4 * HLG_a)
+    #define HLG_a asfloat(0x3E371FF0) //0.17883277
+    #define HLG_b asfloat(0x3E91C020) //0.28466892 = 1 - 4 * HLG_a
+    #define HLG_c asfloat(0x3F0F564F) //0.55991072952956202016 = 0.5 - HLG_a * ln(4 * HLG_a)
 
     // Rec. ITU-R BT.2100-2 Table 5 (end)
     // (EOTF) takes HLG values as input
@@ -887,25 +887,25 @@ namespace Csp
       float3 Bt709(float3 Colour)
       {
         return float3(
-          Colour.x + KHelpers::Bt709::Kr    * Colour.z,
-          Colour.x - KHelpers::Bt709::Kg[0] * Colour.y - KHelpers::Bt709::Kg[1] * Colour.z,
-          Colour.x + KHelpers::Bt709::Kb    * Colour.y);
+          Colour.x + KrBt709    * Colour.z,
+          Colour.x + KgBt709[0] * Colour.y + KgBt709[1] * Colour.z,
+          Colour.x + KbBt709    * Colour.y);
       }
 
       float3 Bt2020(float3 Colour)
       {
         return float3(
-          Colour.x + KHelpers::Bt2020::Kr    * Colour.z,
-          Colour.x - KHelpers::Bt2020::Kg[0] * Colour.y - KHelpers::Bt2020::Kg[1] * Colour.z,
-          Colour.x + KHelpers::Bt2020::Kb    * Colour.y);
+          Colour.x + KrBt2020    * Colour.z,
+          Colour.x + KgBt2020[0] * Colour.y + KgBt2020[1] * Colour.z,
+          Colour.x + KbBt2020    * Colour.y);
       }
 
       float3 Ap0D65(float3 Colour)
       {
         return float3(
-          Colour.x + KHelpers::Ap0D65::Kr    * Colour.z,
-          Colour.x - KHelpers::Ap0D65::Kg[0] * Colour.y - KHelpers::Ap0D65::Kg[1] * Colour.z,
-          Colour.x + KHelpers::Ap0D65::Kb    * Colour.y);
+          Colour.x + KrAp0D65    * Colour.z,
+          Colour.x + KgAp0D65[0] * Colour.y + KgAp0D65[1] * Colour.z,
+          Colour.x + KbAp0D65    * Colour.y);
       }
 
     } //ToRgb
@@ -915,26 +915,26 @@ namespace Csp
 
       float3 Bt709(float3 Colour)
       {
-        float Y = dot(Colour, KHelpers::Bt709::K);
+        float Y = dot(Colour, KBt709);
         return float3(Y,
-                      (Colour.b - Y) / KHelpers::Bt709::Kb,
-                      (Colour.r - Y) / KHelpers::Bt709::Kr);
+                      (Colour.b - Y) / KbBt709,
+                      (Colour.r - Y) / KrBt709);
       }
 
       float3 Bt2020(float3 Colour)
       {
-        float Y = dot(Colour, KHelpers::Bt2020::K);
+        float Y = dot(Colour, KBt2020);
         return float3(Y,
-                      (Colour.b - Y) / KHelpers::Bt2020::Kb,
-                      (Colour.r - Y) / KHelpers::Bt2020::Kr);
+                      (Colour.b - Y) / KbBt2020,
+                      (Colour.r - Y) / KrBt2020);
       }
 
       float3 Ap0D65(float3 Colour)
       {
-        float Y = dot(Colour, KHelpers::Ap0D65::K);
+        float Y = dot(Colour, KAp0D65);
         return float3(Y,
-                      (Colour.b - Y) / KHelpers::Ap0D65::Kb,
-                      (Colour.r - Y) / KHelpers::Ap0D65::Kr);
+                      (Colour.b - Y) / KbAp0D65,
+                      (Colour.r - Y) / KrAp0D65);
       }
 
     } //FromRgb
@@ -946,115 +946,115 @@ namespace Csp
   {
 
     //BT709 To
-    static const float3x3 Bt709ToXYZ = float3x3(
-      0.412135323426798,  0.357675002654190, 0.180356796374193,
-      0.212507276141942,  0.715350005308380, 0.0721427185496773,
-      0.0193188432856311, 0.119225000884730, 0.949879127570751);
+    #define Bt709ToXYZ float3x3( \
+      asfloat(0x3ed30367), asfloat(0x3eb7212e), asfloat(0x3e38af74), \
+      asfloat(0x3e599b82), asfloat(0x3f37212e), asfloat(0x3d93bf90), \
+      asfloat(0x3c9e428d), asfloat(0x3df42c3d), asfloat(0x3f732b47)) \
 
-    static const float3x3 Bt709ToDciP3 = float3x3(
-      0.822334429220561,  0.177665570779439,  0.000000000000000,
-      0.0331661871416848, 0.966833812858315,  0.000000000000000,
-      0.0170826010352503, 0.0724605600100221, 0.910456838954727);
+    #define Bt709ToDciP3 float3x3( \
+      asfloat(0x3f528482), asfloat(0x3e35edf7), asfloat(0x00000000), \
+      asfloat(0x3d07d945), asfloat(0x3f77826c), asfloat(0x00000000), \
+      asfloat(0x3c8bf0d0), asfloat(0x3d946634), asfloat(0x3f6913b3)) \
 
-    static const float3x3 Bt709ToBt2020 = float3x3(
-      0.627225305694944,  0.329476882715808,  0.0432978115892484,
-      0.0690418812810714, 0.919605681354755,  0.0113524373641739,
-      0.0163911702607078, 0.0880887513437058, 0.895520078395586);
+    #define Bt709ToBt2020 float3x3( \
+      asfloat(0x3f2091d6), asfloat(0x3ea8b132), asfloat(0x3d31590c), \
+      asfloat(0x3d8d65d4), asfloat(0x3f6b6b47), asfloat(0x3c39ff93), \
+      asfloat(0x3c8646c7), asfloat(0x3db467e0), asfloat(0x3f6540ce)) \
 
-    static const float3x3 Bt709ToAp0D65 = float3x3(
-      0.433794606634382,  0.376462173976941, 0.189743219388678,
-      0.0885563980392147, 0.809415638225667, 0.102027963735118,
-      0.0177493895178705, 0.109539217730778, 0.872711392751351);
+    #define Bt709ToAp0D65 float3x3( \
+      asfloat(0x3ede1a54), asfloat(0x3ec0bfa6), asfloat(0x3e424c0c), \
+      asfloat(0x3db55d0f), asfloat(0x3f4f35dd), asfloat(0x3dd0f409), \
+      asfloat(0x3c91672b), asfloat(0x3de05619), asfloat(0x3f5f6a04)) \
 
 
     //DCI-P3 To
-    static const float3x3 DciP3ToXYZ = float3x3(
-       0.486344935949720,    0.265727352508436,  0.198094833997025,
-       0.228868205152809,    0.691893861248381,  0.0792379335988102,
-      -3.97023048383254e-17, 0.0451235126901118, 1.04329945905100);
+    #define DciP3ToXYZ float3x3( \
+      asfloat(0x3ef90234), asfloat(0x3e880d6a), asfloat(0x3e4ad95f), \
+      asfloat(0x3e6a5c6d), asfloat(0x3f311ff5), asfloat(0x3da2477f), \
+      asfloat(0xa4371835), asfloat(0x3d38d36f), asfloat(0x3f858ad6)) \
 
-    static const float3x3 DciP3ToBt709 = float3x3(
-       1.22513015768529,   -0.225130157685288,  -1.11022302462516e-16,
-      -0.0420267635888596,  1.04202676358886,    6.93889390390723e-18,
-      -0.0196419271181099, -0.0787077773534108,  1.09834970447152);
+    #define DciP3ToBt709 float3x3( \
+      asfloat(0x3f9cd111), asfloat(0xbe668885), asfloat(0x00000000), \
+      asfloat(0xbd2c2441), asfloat(0x3f856122), asfloat(0x00000000), \
+      asfloat(0xbca0e81b), asfloat(0xbda1318b), asfloat(0x3f8c96b9)) \
 
-    static const float3x3 DciP3ToBt2020 = float3x3(
-       0.753735338152748,   0.198708523283938,  0.0475561385633145,
-       0.0457142565881795,  0.941816797187848,  0.0124689462239718,
-      -0.00121050823406260, 0.0176162947799571, 0.983594213454105);
+    #define DciP3ToBt2020 float3x3( \
+      asfloat(0x3f40f4cd), asfloat(0x3e4b7a3f), asfloat(0x3d42ca3a), \
+      asfloat(0x3d3b3edf), asfloat(0x3f711ae8), asfloat(0x3c4c4a8d), \
+      asfloat(0xba9ea9eb), asfloat(0x3c90500c), asfloat(0x3f7bccd5)) \
 
 
     //BT2020 To
-    static const float3x3 Bt2020ToXYZ = float3x3(
-      0.636744702289598,    0.144643300793529,  0.168779119372055,
-      0.262612221848252,    0.678121827837897,  0.0592659503138512,
-      4.99243382266951e-17, 0.0280778172128614, 1.06034515452825);
+    #define Bt2020ToXYZ float3x3( \
+      asfloat(0x3f2301b3), asfloat(0x3e141d60), asfloat(0x3e2cd46f), \
+      asfloat(0x3e86751c), asfloat(0x3f2d9964), asfloat(0x3d72c0da), \
+      asfloat(0x24663c41), asfloat(0x3ce60373), asfloat(0x3f87b964)) \
 
-    static const float3x3 Bt2020ToBt709 = float3x3(
-       1.66096379471340,   -0.588112737547978, -0.0728510571654192,
-      -0.124477196529907,   1.13281946828499,  -0.00834227175508652,
-      -0.0181571579858552, -0.100666415661988,  1.11882357364784);
+    #define Bt2020ToBt709 float3x3( \
+      asfloat(0x3fd49a76), asfloat(0xbf168e8e), asfloat(0xbd9532ef), \
+      asfloat(0xbdfeede7), asfloat(0x3f91003a), asfloat(0xbc08ae06), \
+      asfloat(0xbc94be52), asfloat(0xbdce2a32), asfloat(0x3f8f359c)) \
 
-    static const float3x3 Bt2020ToDciP3 = float3x3(
-       1.34375240191115,    -0.282362334925945,  -0.0613900669852040,
-      -0.0652609264838958,   1.07574270868818,   -0.0104817822042884,
-       0.00282258580584645, -0.0196141887896108,  1.01679160298376);
+    #define Bt2020ToDciP3 float3x3( \
+      asfloat(0x3fac0014), asfloat(0xbe9091cc), asfloat(0xbd7b7427), \
+      asfloat(0xbd85a785), asfloat(0x3f89b1f0), asfloat(0xbc2bbbc8), \
+      asfloat(0x3b38fb22), asfloat(0xbca0adef), asfloat(0x3f82263a)) \
 
-    static const float3x3 Bt2020ToAp0D65 = float3x3(
-      0.670210982334260,    0.152242776320651,  0.177546241345089,
-      0.0444826436030544,   0.854569857831622,  0.100947498565324,
-      4.58685084042583e-17, 0.0257967885113140, 0.974203211488686);
+    #define Bt2020ToAp0D65 float3x3( \
+      asfloat(0x3f2b92f2), asfloat(0x3e1be588), asfloat(0x3e35ceaf), \
+      asfloat(0x3d36336f), asfloat(0x3f5ac517), asfloat(0x3dcebd90), \
+      asfloat(0x245387fa), asfloat(0x3cd353c9), asfloat(0x3f796562)) \
 
 
     //AP0_D65 To
-    static const float3x3 Ap0D65ToXYZ = float3x3(
-      0.952552395938186, 0.000000000000000,  0.0000936786316604686,
-      0.343966449765075, 0.728166096613486, -0.0721325463785608,
-      0.000000000000000, 0.000000000000000,  1.00882518435159);
+    #define Ap0D65ToXYZ float3x3( \
+      asfloat(0x3f733787), asfloat(0x00000000), asfloat(0x38d3f58d), \
+      asfloat(0x3eafa6b1), asfloat(0x3f3c18ec), asfloat(0xbd9f6224), \
+      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f8b5172)) \
 
-    static const float3x3 Ap0D65ToBt709 = float3x3(
-       2.55328933678315,   -1.13030062521233,  -0.422988711570823,
-      -0.277189591827210,   1.37802763361914,  -0.100838041791932,
-      -0.0171376196790229, -0.149976182293453,  1.16711380197248);
+    #define Ap0D65ToBt709 float3x3( \
+      asfloat(0x40236918), asfloat(0xbf90adb1), asfloat(0xbed891fa), \
+      asfloat(0xbe8debcb), asfloat(0x3fb06336), asfloat(0xbdce842d), \
+      asfloat(0xbc8c6432), asfloat(0xbe19935b), asfloat(0x3f9563fc)) \
 
-    static const float3x3 Ap0D65ToBt2020 = float3x3(
-       1.50941810072701,    -0.261418546638730,  -0.247999554088277,
-      -0.0788157779442775,   1.18750136414658,   -0.108685586202300,
-       0.00208703269605959, -0.0314448989559114,  1.02935786625985);
+    #define Ap0D65ToBt2020 float3x3( \
+      asfloat(0x3fc1349d), asfloat(0xbe85d8a7), asfloat(0xbe7df398), \
+      asfloat(0xbda16a2b), asfloat(0x3f98000b), asfloat(0xbdde968c), \
+      asfloat(0x3b08c699), asfloat(0xbd00cc5e), asfloat(0x3f83c200)) \
 
 
     //AP1_D65 To
-    static const float3x3 Ap1D65ToXYZ = float3x3(
-       0.647292657846805,   0.134403399178057,   0.168471065430319,
-       0.265998245089921,   0.676089826168407,   0.0579119287416720,
-      -0.00544706303938401, 0.00407283027812294, 1.08979720450237);
+    #define Ap1D65ToXYZ float3x3( \
+      asfloat(0x3f25b4f9), asfloat(0x3e09a10b), asfloat(0x3e2c83ae), \
+      asfloat(0x3e8830ec), asfloat(0x3f2d1439), asfloat(0x3d6d350f), \
+      asfloat(0xbbb27d47), asfloat(0x3b857560), asfloat(0x3f8b7e7a)) \
 
 
     //XYZ To
-    static const float3x3 XYZToBt709 = float3x3(
-       3.24297896532120,   -1.53833617585749,  -0.498919840818647,
-      -0.968997952917093,   1.87549198225861,   0.0415445240532242,
-       0.0556683243682128, -0.204117189350113,  1.05769816299604);
+    #define XYZToBt709 float3x3( \
+      asfloat(0x404f8cf8), asfloat(0xbfc4e833), asfloat(0xbeff726c), \
+      asfloat(0xbf781040), asfloat(0x3ff0101f), asfloat(0x3d2a2a97), \
+      asfloat(0x3d640478), asfloat(0xbe510419), asfloat(0x3f8762a7)) \
 
-    static const float3x3 XYZToDciP3 = float3x3(
-       2.49465568203257,   -0.931816447602876,  -0.402897930947739,
-      -0.829302738210345,   1.76226831869698,    0.0236193817844718,
-       0.0358679881475428, -0.0762194748135283,  0.957476016938569);
+    #define XYZToDciP3 float3x3( \
+      asfloat(0x401fa870), asfloat(0xbf6e8b86), asfloat(0xbece48a3), \
+      asfloat(0xbf544d2f), asfloat(0x3fe19202), asfloat(0x3cc17d6f), \
+      asfloat(0x3d12ea50), asfloat(0xbd9c18f5), asfloat(0x3f751d26)) \
 
-    static const float3x3 XYZToBt2020 = float3x3(
-       1.71722636462073,   -0.355789953897356,  -0.253451173616083,
-      -0.666562682837409,   1.61618623098933,    0.0157656680755665,
-       0.0176505028477730, -0.0427964247130936,  0.942671667036796);
+    #define XYZToBt2020 float3x3( \
+      asfloat(0x3fdbce13), asfloat(0xbeb62a1a), asfloat(0xbe81c45a), \
+      asfloat(0xbf2aa3da), asfloat(0x3fcedf31), asfloat(0x3c812701), \
+      asfloat(0x3c9097ca), asfloat(0xbd2f4b4e), asfloat(0x3f7152ee)) \
 
-    static const float3x3 XYZToAp1 = float3x3(
-       1.64102337969433,   -0.324803294184790,   -0.236424695237612,
-      -0.663662858722983,   1.61533159165734,     0.0167563476855301,
-       0.0117218943283754, -0.00828444199623741,  0.988394858539022);
+    #define XYZToAp1 float3x3( \
+      asfloat(0x3fd20d0e), asfloat(0xbea64c9e), asfloat(0xbe721951), \
+      asfloat(0xbf29e5cf), asfloat(0x3fcec330), asfloat(0x3c89449c), \
+      asfloat(0x3c400d30), asfloat(0xbc07bb78), asfloat(0x3f7d0772)) \
 
-    static const float3x3 XYZToAp0 = float3x3(
-       1.04981101749797,  0.000000000000000, -0.0000974845405792529,
-      -0.495903023077320, 1.37331304581571,   0.0982400360573100,
-       0.000000000000000, 0.000000000000000,  0.991252018200499);
+    #define XYZToAp0 float3x3( \
+      asfloat(0x3f866035), asfloat(0x00000000), asfloat(0xb8cc709d), \
+      asfloat(0xbefde700), asfloat(0x3fafc8b9), asfloat(0x3dc93212), \
+      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f7dc2b1)) \
 
 
     namespace Bt709To
@@ -1185,54 +1185,54 @@ namespace Csp
     {
 
       //L'M'S'->ICtCp
-      static const float3x3 PqLmsToIctcp = float3x3(
-        0.5,             0.5,             0.0,
-        1.61376953125,  -3.323486328125,  1.709716796875,
-        4.378173828125, -4.24560546875,  -0.132568359375);
+      #define PqLmsToIctcp float3x3( \
+        asfloat(0x3f000000), asfloat(0x3f000000), asfloat(0x00000000), \
+        asfloat(0x3fce9000), asfloat(0xc054b400), asfloat(0x3fdad800), \
+        asfloat(0x408c1a00), asfloat(0xc087dc00), asfloat(0xbe07c000)) \
 
       //ICtCp->L'M'S'
-      static const float3x3 IctcpToPqLms = float3x3(
-        1.0,  0.00860903703793276,  0.111029625003026,
-        1.0, -0.00860903703793276, -0.111029625003026,
-        1.0,  0.560031335710679,   -0.320627174987319);
+      #define IctcpToPqLms float3x3( \
+        asfloat(0x3f800000), asfloat(0x3c0d0ceb), asfloat(0x3de36380), \
+        asfloat(0x3f800000), asfloat(0xbc0d0ceb), asfloat(0xbde36380), \
+        asfloat(0x3f800000), asfloat(0x3f0f5e37), asfloat(0xbea4293f)) \
 
 
       //RGB BT.709->LMS
-      static const float3x3 Bt709ToLms = float3x3(
-        0.295654296875, 0.623291015625, 0.0810546875,
-        0.156005859375, 0.7275390625,   0.116455078125,
-        0.03515625,     0.15673828125,  0.807861328125);
+      #define Bt709ToLms float3x3( \
+        asfloat(0x3e976000), asfloat(0x3f1f9000), asfloat(0x3da60000), \
+        asfloat(0x3e1fc000), asfloat(0x3f3a4000), asfloat(0x3dee8000), \
+        asfloat(0x3d100000), asfloat(0x3e208000), asfloat(0x3f4ed000)) \
 
       //RGB BT.2020->LMS
-      static const float3x3 Bt2020ToLms = float3x3(
-        0.412109375,    0.52392578125,  0.06396484375,
-        0.166748046875, 0.720458984375, 0.11279296875,
-        0.024169921875, 0.075439453125, 0.900390625);
+      #define Bt2020ToLms float3x3( \
+        asfloat(0x3ed30000), asfloat(0x3f062000), asfloat(0x3d830000), \
+        asfloat(0x3e2ac000), asfloat(0x3f387000), asfloat(0x3de70000), \
+        asfloat(0x3cc60000), asfloat(0x3d9a8000), asfloat(0x3f668000)) \
 
       //RGB AP0_D65->LMS
-      static const float3x3 Ap0D65ToLms = float3x3(
-        0.58056640625, 0.512451171875, -0.09326171875,
-        0.19482421875, 0.80859375,     -0.00341796875,
-        0.0322265625,  0.054931640625,  0.912109375);
+      #define Ap0D65ToLms float3x3( \
+        asfloat(0x3f14a000), asfloat(0x3f033000), asfloat(0xbdbf0000), \
+        asfloat(0x3e478000), asfloat(0x3f4f0000), asfloat(0xbb600000), \
+        asfloat(0x3d040000), asfloat(0x3d610000), asfloat(0x3f698000)) \
 
 
       //LMS->RGB BT.709
-      static const float3x3 LmsToBt709 = float3x3(
-         6.17134315782714,   -5.31884512380582,   0.147537985994792,
-        -1.32136604271351,    2.5573855902299,   -0.23607718354753,
-        -0.0121959550634734, -0.264710743759311,  1.27721851975046);
+      #define LmsToBt709 float3x3( \
+        asfloat(0x40c57ba5), asfloat(0xc0aa33fb), asfloat(0x3e171433), \
+        asfloat(0xbfa92286), asfloat(0x4023ac35), asfloat(0xbe71be38), \
+        asfloat(0xbc47d18b), asfloat(0xbe87882b), asfloat(0x3fa37be5)) \
 
       //LMS->RGB BT.2020
-      static const float3x3 LmsToBt2020 = float3x3(
-         3.43660669433308,   -2.50645211865627,    0.0698454243231915,
-        -0.791329555598929,   1.98360045179229,   -0.192270896193362,
-        -0.0259498996905927, -0.0989137147117265,  1.12486361440232);
+      #define LmsToBt2020 float3x3( \
+        asfloat(0x405bf15d), asfloat(0xc02069b6), asfloat(0x3d8f0b1e), \
+        asfloat(0xbf4a9493), asfloat(0x3ffde69f), asfloat(0xbe44e2a9), \
+        asfloat(0xbcd494e2), asfloat(0xbdca9346), asfloat(0x3f8ffb88)) \
 
       //LMS->RGB AP0_D65
-      static const float3x3 LmsToAp0D65 = float3x3(
-         2.17868902216104,   -1.39553571611220,    0.217537929989279,
-        -0.525129456297629,   1.57276622109436,   -0.0477999799813633,
-        -0.0453513980884076, -0.0454126566433140,  1.09155245951210);
+      #define LmsToAp0D65 float3x3( \
+        asfloat(0x400b6fa4), asfloat(0xbfb2a0ea), asfloat(0x3e5ec243), \
+        asfloat(0xbf066ee2), asfloat(0x3fc95067), asfloat(0xbd43c9e9), \
+        asfloat(0xbd39c263), asfloat(0xbd3a029f), asfloat(0x3f8bb7fe)) \
 
       namespace IctcpTo
       {

@@ -226,8 +226,8 @@ namespace Tmos
         //to L'M'S'
         Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(
                    float3(i2,
-                          dot(Colour, Csp::Ictcp::Mat::PqLmsToIctcp[1]) * minI,
-                          dot(Colour, Csp::Ictcp::Mat::PqLmsToIctcp[2]) * minI));
+                          dot(Colour, PqLmsToIctcp[1]) * minI,
+                          dot(Colour, PqLmsToIctcp[2]) * minI));
 
         //to LMS
         Colour = Csp::Trc::FromPq(Colour);
@@ -237,7 +237,7 @@ namespace Tmos
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
       {
-        float y1 = dot(Colour, Csp::KHelpers::Bt2020::K);
+        float y1 = dot(Colour, KBt2020);
         //E1
         float y2 = (y1 - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
         //float y2 = y1 / SrcMaxPq;
@@ -264,14 +264,14 @@ namespace Tmos
         Colour = max(
                    Csp::Ycbcr::ToRgb::Bt2020(
                      float3(y2,
-                            (Colour.b - y1) / Csp::KHelpers::Bt2020::Kb * minY,
-                            (Colour.r - y1) / Csp::KHelpers::Bt2020::Kr * minY))
+                            (Colour.b - y1) / KbBt2020 * minY,
+                            (Colour.r - y1) / KrBt2020 * minY))
                  , 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        float y1 = dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        float y1 = dot(Colour, Bt2020ToXYZ[1].rgb);
         //E1
         float y2 = (Csp::Trc::ToPq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
         //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
@@ -435,8 +435,8 @@ namespace Tmos
           //to L'M'S'
           Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(
                     float3(i2,
-                           dot(Colour, Csp::Ictcp::Mat::PqLmsToIctcp[1]) * minI,
-                           dot(Colour, Csp::Ictcp::Mat::PqLmsToIctcp[2]) * minI));
+                           dot(Colour, PqLmsToIctcp[1]) * minI,
+                           dot(Colour, PqLmsToIctcp[2]) * minI));
 
           //to LMS
           Colour = Csp::Trc::FromPq(Colour);
@@ -449,7 +449,7 @@ namespace Tmos
       }
       else
       {
-        float y1 = dot(Colour, Csp::KHelpers::Bt2020::K);
+        float y1 = dot(Colour, KBt2020);
 
         //float y1 = dot(Colour, KFactors);
 
@@ -467,8 +467,8 @@ namespace Tmos
           Colour = max(
                      Csp::Ycbcr::ToRgb::Bt2020(
                        float3(y2,
-                              (Colour.b - y1) / Csp::KHelpers::Bt2020::Kb * minY,
-                              (Colour.r - y1) / Csp::KHelpers::Bt2020::Kr * minY))
+                              (Colour.b - y1) / KbBt2020 * minY,
+                              (Colour.r - y1) / KrBt2020 * minY))
                    , 0.f);
 
 //          float cb2 = (Colour.b - y1) / KbHelper * minY;

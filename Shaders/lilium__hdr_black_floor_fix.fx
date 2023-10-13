@@ -6,11 +6,6 @@
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
-// TODO:
-// - add chroma adjustment from BT.2390 too? maybe as option only
-// - use BT.709<->LMS matrices instead of BT.2020<->LMS matrices if possible
-
-
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.

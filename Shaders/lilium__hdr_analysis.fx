@@ -6,16 +6,6 @@
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
-// TODO:
-// - redo font atlas texture
-// - bring overlay alpha "in line" with single trigger technique for HDR10 output
-// - improve vertex shader for clearing the brightness histogram with barebones Vertex shader?
-// - add namespace for UI
-// - fix performance mode issues with HDR analysis shader
-// - add separate pixel/compute shader for combining the colour space outlines?
-
-
-
 #undef TEXT_BRIGHTNESS
 
 //#define _DEBUG

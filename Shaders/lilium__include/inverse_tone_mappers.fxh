@@ -650,12 +650,12 @@ namespace Itmos
       float  ShoulderStart)
     {
 
-      float3x3 RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
-      float3x3 LmsToRgb = Csp::Ictcp::Mat::LmsToAp0D65;
-      float3   K_factors  = Csp::KHelpers::Ap0D65::K;
-      float    KR_helper  = Csp::KHelpers::Ap0D65::Kr;
-      float    KB_helper  = Csp::KHelpers::Ap0D65::Kb;
-      float2   KG_helper  = Csp::KHelpers::Ap0D65::Kg;
+      float3x3 RgbToLms  = Ap0D65ToLms;
+      float3x3 LmsToRgb  = LmsToAp0D65;
+      float3   K_factors = KAp0D65;
+      float    KR_helper = KrAp0D65;
+      float    KB_helper = KbAp0D65;
+      float2   KG_helper = KgAp0D65;
 
 
       float3 LMS = mul(RgbToLms, Input);
@@ -670,8 +670,8 @@ namespace Itmos
       }
       else
       {
-        float Ct1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[1]);
-        float Cp1 = dot(LMS, Csp::Ictcp::Mat::PqLmsToIctcp[2]);
+        float Ct1 = dot(LMS, PqLmsToIctcp[1]);
+        float Cp1 = dot(LMS, PqLmsToIctcp[2]);
 
         float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 

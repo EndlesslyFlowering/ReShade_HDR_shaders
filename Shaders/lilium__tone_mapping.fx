@@ -15,19 +15,6 @@
 
 //#define BT2446A_MOD1_ENABLE
 
-// TODO
-// - add black point adaption for every tone mapper
-// - do maxCLL calc in quarter res?
-// - put excessive checks for setup of the tone mappers into vertex shader?
-// - add option to do BT.2446A as post adjustment of BT.2390/Dice
-// - use BT.709 RGB->LMS matrix instead of rotating into BT.2020
-// - make Dice use the same knee function as BT.2390?
-// - put oneMinusKneeStart into the vertex shader?
-// - LUT based tone mapping
-
-//ideas:
-// - average maxCLL over last 60? frames -> save last 100/1000 CLL values and their frametime and average over that
-// - maxCLL adapation: fade to actual maxCLL over time (should read time to render per frame for this); make adjustable
 
 #undef CIE_DIAGRAM
 #undef IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION

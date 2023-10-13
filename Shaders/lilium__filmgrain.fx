@@ -2,9 +2,6 @@
 
 #include "lilium__include/colour_space.fxh"
 
-// TODO:
-// - implement vertex shader for optimisation
-// - add namespace for UI
 
 uniform float INTENSITY
 <
