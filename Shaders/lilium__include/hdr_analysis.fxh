@@ -1090,7 +1090,9 @@ void PS_CalcCllPerPixel(
 
 void CS_GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CLL_VALUES)
+  if (SHOW_CLL_VALUES
+   || (SHOW_BRIGHTNESS_HISTOGRAM
+    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
   {
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 
@@ -1160,7 +1162,9 @@ void CS_GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 
 void CS_GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CLL_VALUES)
+  if (SHOW_CLL_VALUES
+   || (SHOW_BRIGHTNESS_HISTOGRAM
+    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
   {
     if (ID.x == 0)
     {
@@ -1297,7 +1301,9 @@ void CS_GetMaxAvgMinCLL1_NEW(uint3 ID : SV_DispatchThreadID)
 
 void CS_GetFinalMaxAvgMinCLL_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CLL_VALUES)
+  if (SHOW_CLL_VALUES
+   || (SHOW_BRIGHTNESS_HISTOGRAM
+    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
   {
     float maxCLL0 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAXCLL_VALUE0);
     float maxCLL1 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAXCLL_VALUE1);
