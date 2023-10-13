@@ -31,11 +31,11 @@ float Rand(inout float State)
     return frac(State * 1.f / 41.f);
 }
 
-static const float a0 =  0.151015505647689;
-static const float a1 = -0.5303572634357367;
-static const float a2 =  1.365020122861334;
-static const float b0 =  0.132089632343748;
-static const float b1 = -0.7607324991323768;
+#define a0 asfloat(0x3E1AA3CF) //  0.151015505647689
+#define a1 asfloat(0xBF07C57E) // -0.5303572634357367
+#define a2 asfloat(0x3FAEB8FB) //  1.365020122861334
+#define b0 asfloat(0x3E074281) //  0.132089632343748
+#define b1 asfloat(0xBF42BF5D) // -0.7607324991323768
 
 void PS_Filmgrain(
       float4 Vpos     : SV_Position,
@@ -52,7 +52,7 @@ void PS_Filmgrain(
   float r = q * q;
 
   float Grain = q * (a2 + (a1 * r + a0) / (r*r + b1*r + b0));
-  Grain *= 0.255121822830526; // normalize to (-1, 1)
+  Grain *= asfloat(0x3E829F54); // 0.255121822830526; normalize to (-1, 1)
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
