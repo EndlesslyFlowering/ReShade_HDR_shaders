@@ -84,39 +84,48 @@ void PS_HdrBlackFloorFix(
 
   hdr /= 125.f;
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    hdr = Csp::Mat::Bt709To::DciP3(hdr);
-  }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
-  {
-    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::Bt709To::DciP3(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+    {
+      hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+    }
   }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   hdr = Csp::Trc::FromPq(hdr);
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
-  }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-  {
-    hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+    {
+      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+    }
   }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
   hdr = Csp::Trc::FromHlg(hdr);
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
-  }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-  {
-    hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+    {
+      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::Bt2020To::DciP3(hdr);
+    }
   }
 
 #else //ACTUAL_COLOUR_SPACE ==
@@ -132,6 +141,18 @@ void PS_HdrBlackFloorFix(
   }
   if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
+    {
+      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+      {
+        hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+      }
+      else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+      {
+        hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+      }
+    }
+
     hdr = LowerBlackFloor(hdr,
                           rollOffStoppingPoint,
                           oldBlackPoint,
@@ -141,11 +162,19 @@ void PS_HdrBlackFloorFix(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+  && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
-    hdr = Csp::Mat::DciP3To::Bt709(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::DciP3To::Bt709(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+    {
+      hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+    }
   }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+  else
   {
     hdr = Csp::Mat::Bt2020To::Bt709(hdr);
   }
@@ -154,26 +183,34 @@ void PS_HdrBlackFloorFix(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+  && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
-    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
-  }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-  {
-    hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+    {
+      hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+    }
   }
 
   hdr = Csp::Trc::ToPq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+  && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
-    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
-  }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-  {
-    hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+    {
+      hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+    }
+    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    {
+      hdr = Csp::Mat::DciP3To::Bt2020(hdr);
+    }
   }
 
   hdr = Csp::Trc::ToHlg(hdr);
