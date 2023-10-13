@@ -80,13 +80,9 @@ precise static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
 #define IS_CSP_INVALID 4
 
 
-uniform float2 PINGPONG
+uniform float FRAMETIME
 <
-  source    = "pingpong";
-  min       = 0;
-  max       = 1;
-  step      = 1;
-  smoothing = 0.0;
+  source = "frametime";
 >;
 
 
@@ -615,6 +611,12 @@ static const int2 COORDS_CHECK_OVERLAY_REDRAW4 = int2(5 + CHECK_OVERLAY_REDRAW_X
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL = int2(    OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS       = int2(1 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP = int2(2 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
+
+
+// (1) update CLL values and CSP percentages for the overlay
+#define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET 53
+#define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 12
+static const int2 COORDS_UPDATE_OVERLAY_PERCENTAGES = int2(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET, UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET);
 
 
 #define CONSOLIDATED_TEXTURE_SIZE_WIDTH  BUFFER_WIDTH
@@ -2055,12 +2057,14 @@ float3 Create_CSP_Map(
 
 void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 {
-  float pingpong = PINGPONG.x;
-  if (pingpong < 0.01f
-  || (pingpong > 0.32f && pingpong < 0.34f)
-  || (pingpong > 0.65f && pingpong < 0.67f)
-  ||  pingpong > 0.99f)
+  float frametimeCounter = tex2Dfetch(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES);
+  frametimeCounter += FRAMETIME;
+
+  // only update every 1/2 of a second
+  if (frametimeCounter >= 500.f)
   {
+    tex2Dstore(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES, 0.f);
+
     float maxCLL = tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE);
     float avgCLL = tex2Dfetch(StorageConsolidated, COORDS_AVGCLL_VALUE);
     float minCLL = tex2Dfetch(StorageConsolidated, COORDS_MINCLL_VALUE);
@@ -2128,6 +2132,10 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
 #endif //IS_FLOAT_HDR_CSP
 
+  }
+  else
+  {
+    tex2Dstore(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES, frametimeCounter);
   }
   return;
 }
