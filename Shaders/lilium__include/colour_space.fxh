@@ -252,52 +252,6 @@ uniform int GLOBAL_INFO
 namespace Csp
 {
 
-  namespace KHelpers
-  {
-
-    //#define K_BT709  float3(0.2126f, 0.7152f, 0.0722f)
-    //#define K_BT2020 float3(0.2627f, 0.6780f, 0.0593f)
-
-    //#define KB_BT709_HELPER 1.8556f //2 - 2 * 0.0722
-    //#define KR_BT709_HELPER 1.5748f //2 - 2 * 0.2126
-    //#define KG_BT709_HELPER float2(0.187324272930648, 0.468124272930648)
-    //(0.0722/0.7152)*(2-2*0.0722), (0.2126/0.7152)*(2-2*0.2126)
-
-    //#define KB_BT2020_HELPER 1.8814f //2 - 2 * 0.0593
-    //#define KR_BT2020_HELPER 1.4746f //2 - 2 * 0.2627
-    //#define KG_BT2020_HELPER float2(0.164553126843658, 0.571353126843658)
-    //(0.0593/0.6780)*(2-2*0.0593), (0.2627/0.6780)*(2-2*0.2627)
-
-    namespace Bt709
-    {
-      #define KBt709  float3(asfloat(0x3e599b82), asfloat(0x3f37212e), asfloat(0x3d93bf90))
-
-      #define KbBt709 asfloat(0x3fed880e)
-      #define KrBt709 asfloat(0x3fc99920)
-      #define KgBt709 float2(asfloat(0xbe3fa3b7), asfloat(0xbeef8d95))
-    } //Bt709
-
-    namespace Bt2020
-    {
-      #define KBt2020  float3(asfloat(0x3e86751c), asfloat(0x3f2d9964), asfloat(0x3d72c0da))
-
-      #define KbBt2020 asfloat(0x3ff0d3f2)
-      #define KrBt2020 asfloat(0x3fbcc572)
-      #define KgBt2020 float2(asfloat(0xbe2861a9), asfloat(0xbf12356b))
-    } //Bt2020
-
-    namespace Ap0D65
-    {
-      #define KAp0D65  float3(asfloat(0x3eafa6b1), asfloat(0x3f3c18ec), asfloat(0xbd9f6224))
-
-      #define KbAp0D65 asfloat(0x4009f622)
-      #define KrAp0D65 asfloat(0x3fa82ca7)
-      #define KgAp0D65 float2(asfloat(0x3e69cd4c), asfloat(0xbf1d0be7))
-    } //AP0_D65
-
-  } //KHelpers
-
-
   namespace Trc
   {
 
@@ -428,15 +382,15 @@ namespace Csp
     }
 
     // accurate sRGB with no slope discontinuity
-    static const float X         =  0.0392857f;
-    static const float Phi       = 12.92321f;
-    static const float X_div_Phi =  0.003039935f;
+    #define sRGB_X         asfloat(0x3D20EA0B) //  0.0392857
+    #define sRGB_Phi       asfloat(0x414EC578) // 12.92321
+    #define sRGB_X_div_Phi asfloat(0x3B4739A5) //  0.003039935
 
     float FromSrgbAccurate(float C)
     {
-      if (C <= X)
+      if (C <= sRGB_X)
       {
-        return C / Phi;
+        return C / sRGB_Phi;
       }
       else
       {
@@ -453,9 +407,9 @@ namespace Csp
 
     float ToSrgbAccurate(float C)
     {
-      if (C <= X_div_Phi)
+      if (C <= sRGB_X_div_Phi)
       {
-        return C * Phi;
+        return C * sRGB_Phi;
       }
       else
       {
@@ -476,13 +430,13 @@ namespace Csp
       {
         return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
       }
-      else if (C < -X)
+      else if (C < -sRGB_X)
       {
         return -pow((-C + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C <= X)
+      else if (C <= sRGB_X)
       {
-        return C / Phi;
+        return C / sRGB_Phi;
       }
       else if (C <= 1.f)
       {
@@ -507,13 +461,13 @@ namespace Csp
       {
         return -pow((-C + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C < -X_div_Phi)
+      else if (C < -sRGB_X_div_Phi)
       {
         return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
       }
-      else if (C <= X_div_Phi)
+      else if (C <= sRGB_X_div_Phi)
       {
-        return C * Phi;
+        return C * sRGB_Phi;
       }
       else if (C <= 1.f)
       {
@@ -880,6 +834,34 @@ namespace Csp
 
   namespace Ycbcr
   {
+
+    //#define K_BT709  float3(0.2126f, 0.7152f, 0.0722f)
+    //#define K_BT2020 float3(0.2627f, 0.6780f, 0.0593f)
+
+    //#define KB_BT709_HELPER 1.8556f //2 - 2 * 0.0722
+    //#define KR_BT709_HELPER 1.5748f //2 - 2 * 0.2126
+    //#define KG_BT709_HELPER float2(0.187324272930648, 0.468124272930648)
+    //(0.0722/0.7152)*(2-2*0.0722), (0.2126/0.7152)*(2-2*0.2126)
+
+    //#define KB_BT2020_HELPER 1.8814f //2 - 2 * 0.0593
+    //#define KR_BT2020_HELPER 1.4746f //2 - 2 * 0.2627
+    //#define KG_BT2020_HELPER float2(0.164553126843658, 0.571353126843658)
+    //(0.0593/0.6780)*(2-2*0.0593), (0.2627/0.6780)*(2-2*0.2627)
+
+      #define KBt709  float3(asfloat(0x3e599b82), asfloat(0x3f37212e), asfloat(0x3d93bf90))
+      #define KbBt709 asfloat(0x3fed880e)
+      #define KrBt709 asfloat(0x3fc99920)
+      #define KgBt709 float2(asfloat(0xbe3fa3b7), asfloat(0xbeef8d95))
+
+      #define KBt2020  float3(asfloat(0x3e86751c), asfloat(0x3f2d9964), asfloat(0x3d72c0da))
+      #define KbBt2020 asfloat(0x3ff0d3f2)
+      #define KrBt2020 asfloat(0x3fbcc572)
+      #define KgBt2020 float2(asfloat(0xbe2861a9), asfloat(0xbf12356b))
+
+      #define KAp0D65  float3(asfloat(0x3eafa6b1), asfloat(0x3f3c18ec), asfloat(0xbd9f6224))
+      #define KbAp0D65 asfloat(0x4009f622)
+      #define KrAp0D65 asfloat(0x3fa82ca7)
+      #define KgAp0D65 float2(asfloat(0x3e69cd4c), asfloat(0xbf1d0be7))
 
     namespace ToRgb
     {
