@@ -92,6 +92,59 @@ uniform int GLOBAL_SPACER_0
 >;
 
 
+// Active Area
+uniform float ACTIVE_AREA_CROP_LEFT
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = "% to crop from the left side";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 0.f;
+
+uniform float ACTIVE_AREA_CROP_TOP
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = "% to crop from the top side";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 0.f;
+
+uniform float ACTIVE_AREA_CROP_RIGHT
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = "% to crop from the right side";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 0.f;
+
+uniform float ACTIVE_AREA_CROP_BOTTOM
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = "% to crop from the bottom side";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.1f;
+> = 0.f;
+
+uniform int ACTIVE_AREA_SPACER_0
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = " ";
+  ui_type     = "radio";
+>;
+
+
 // CLL
 uniform bool SHOW_CLL_VALUES
 <
@@ -548,7 +601,7 @@ precise uniform float TEST_THINGY_Y
 //  uint digit3;
 //  uint digit4;
 //  uint digit5;
-//  
+//
 //  if (maxCLL < 10)
 //  {
 //    digit1 = 0;
@@ -2775,6 +2828,62 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
+void VS_PrepareSetActiveArea(
+  in  uint   Id                : SV_VertexID,
+  out float4 VPos              : SV_Position,
+  out float2 TexCoord          : TEXCOORD0,
+  out float4 PercentagesToCrop : PercentagesToCrop)
+{
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+
+
+#define percentageToCropFromLeft   PercentagesToCrop.x
+#define percentageToCropFromTop    PercentagesToCrop.y
+#define percentageToCropFromRight  PercentagesToCrop.z
+#define percentageToCropFromBottom PercentagesToCrop.w
+
+  float fractionCropLeft   = ACTIVE_AREA_CROP_LEFT   / 100.f;
+  float fractionCropTop    = ACTIVE_AREA_CROP_TOP    / 100.f;
+  float fractionCropRight  = ACTIVE_AREA_CROP_RIGHT  / 100.f;
+  float fractionCropBottom = ACTIVE_AREA_CROP_BOTTOM / 100.f;
+
+  percentageToCropFromLeft   =                 fractionCropLeft   * BUFFER_WIDTH;
+  percentageToCropFromTop    =                 fractionCropTop    * BUFFER_HEIGHT;
+  percentageToCropFromRight  = BUFFER_WIDTH  - fractionCropRight  * BUFFER_WIDTH;
+  percentageToCropFromBottom = BUFFER_HEIGHT - fractionCropBottom * BUFFER_HEIGHT;
+
+}
+
+void PS_SetActiveArea(
+  in  float4 VPos              : SV_Position,
+  in  float2 TexCoord          : TEXCOORD,
+  out float4 Output            : SV_Target0,
+  in  float4 PercentagesToCrop : PercentagesToCrop)
+{
+  float pureXCoord = TexCoord.x * BUFFER_WIDTH;
+  float pureYCoord = TexCoord.y * BUFFER_HEIGHT;
+
+  if (pureXCoord > percentageToCropFromLeft
+   && pureYCoord > percentageToCropFromTop
+   && pureXCoord < percentageToCropFromRight
+   && pureYCoord < percentageToCropFromBottom)
+  {
+    Output = tex2D(ReShade::BackBuffer, TexCoord).rgba;
+  }
+  else
+  {
+    Output = float4(0.f, 0.f, 0.f, 1.f);
+  }
+}
+
+
+// Vertex shader generating a triangle covering the entire screen.
+// Calculate values only "once" (3 times because it's 3 vertices)
+// for the pixel shader.
 void VS_PrepareHdrAnalysis(
   in                  uint   Id                                    : SV_VertexID,
   out                 float4 VPos                                  : SV_Position,
@@ -2914,8 +3023,6 @@ void VS_PrepareHdrAnalysis(
       CurrentActiveOverlayArea.x = 1.f - CurrentActiveOverlayArea.x;
     }
   }
-
-
 
 }
 
@@ -3220,6 +3327,14 @@ technique lilium__hdr_analysis
   ui_label = "Lilium's HDR analysis";
 >
 {
+
+//Active Area
+  pass PS_SetActiveArea
+  {
+    VertexShader = VS_PrepareSetActiveArea;
+     PixelShader = PS_SetActiveArea;
+  }
+
 
 //CLL
   pass PS_CalcCllPerPixel
