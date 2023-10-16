@@ -931,112 +931,122 @@ namespace Csp
     #define Bt709ToXYZ float3x3( \
       asfloat(0x3ed30367), asfloat(0x3eb7212e), asfloat(0x3e38af74), \
       asfloat(0x3e599b82), asfloat(0x3f37212e), asfloat(0x3d93bf90), \
-      asfloat(0x3c9e428d), asfloat(0x3df42c3d), asfloat(0x3f732b47)) \
+      asfloat(0x3c9e428d), asfloat(0x3df42c3d), asfloat(0x3f732b47))
 
     #define Bt709ToDciP3 float3x3( \
       asfloat(0x3f528482), asfloat(0x3e35edf7), asfloat(0x00000000), \
       asfloat(0x3d07d945), asfloat(0x3f77826c), asfloat(0x00000000), \
-      asfloat(0x3c8bf0d0), asfloat(0x3d946634), asfloat(0x3f6913b3)) \
+      asfloat(0x3c8bf0d0), asfloat(0x3d946634), asfloat(0x3f6913b3))
 
     #define Bt709ToBt2020 float3x3( \
       asfloat(0x3f2091d6), asfloat(0x3ea8b132), asfloat(0x3d31590c), \
       asfloat(0x3d8d65d4), asfloat(0x3f6b6b47), asfloat(0x3c39ff93), \
-      asfloat(0x3c8646c7), asfloat(0x3db467e0), asfloat(0x3f6540ce)) \
+      asfloat(0x3c8646c7), asfloat(0x3db467e0), asfloat(0x3f6540ce))
+
+    #define Bt709ToAp0 float3x3( \
+      asfloat(0x3edd85ea), asfloat(0x3ec03edb), asfloat(0x3e41ca37), \
+      asfloat(0x3db70132), asfloat(0x3f5115e0), asfloat(0x3dd2d816), \
+      asfloat(0x3c9ce021), asfloat(0x3df2096b), asfloat(0x3f710ab5))
 
     #define Bt709ToAp0D65 float3x3( \
       asfloat(0x3ede1a54), asfloat(0x3ec0bfa6), asfloat(0x3e424c0c), \
       asfloat(0x3db55d0f), asfloat(0x3f4f35dd), asfloat(0x3dd0f409), \
-      asfloat(0x3c91672b), asfloat(0x3de05619), asfloat(0x3f5f6a04)) \
+      asfloat(0x3c91672b), asfloat(0x3de05619), asfloat(0x3f5f6a04))
 
 
     //DCI-P3 To
     #define DciP3ToXYZ float3x3( \
       asfloat(0x3ef90234), asfloat(0x3e880d6a), asfloat(0x3e4ad95f), \
       asfloat(0x3e6a5c6d), asfloat(0x3f311ff5), asfloat(0x3da2477f), \
-      asfloat(0xa4371835), asfloat(0x3d38d36f), asfloat(0x3f858ad6)) \
+      asfloat(0xa4371835), asfloat(0x3d38d36f), asfloat(0x3f858ad6))
 
     #define DciP3ToBt709 float3x3( \
       asfloat(0x3f9cd111), asfloat(0xbe668885), asfloat(0x00000000), \
       asfloat(0xbd2c2441), asfloat(0x3f856122), asfloat(0x00000000), \
-      asfloat(0xbca0e81b), asfloat(0xbda1318b), asfloat(0x3f8c96b9)) \
+      asfloat(0xbca0e81b), asfloat(0xbda1318b), asfloat(0x3f8c96b9))
 
     #define DciP3ToBt2020 float3x3( \
       asfloat(0x3f40f4cd), asfloat(0x3e4b7a3f), asfloat(0x3d42ca3a), \
       asfloat(0x3d3b3edf), asfloat(0x3f711ae8), asfloat(0x3c4c4a8d), \
-      asfloat(0xba9ea9eb), asfloat(0x3c90500c), asfloat(0x3f7bccd5)) \
+      asfloat(0xba9ea9eb), asfloat(0x3c90500c), asfloat(0x3f7bccd5))
 
 
     //BT2020 To
     #define Bt2020ToXYZ float3x3( \
       asfloat(0x3f2301b3), asfloat(0x3e141d60), asfloat(0x3e2cd46f), \
       asfloat(0x3e86751c), asfloat(0x3f2d9964), asfloat(0x3d72c0da), \
-      asfloat(0x24663c41), asfloat(0x3ce60373), asfloat(0x3f87b964)) \
+      asfloat(0x24663c41), asfloat(0x3ce60373), asfloat(0x3f87b964))
 
     #define Bt2020ToBt709 float3x3( \
       asfloat(0x3fd49a76), asfloat(0xbf168e8e), asfloat(0xbd9532ef), \
       asfloat(0xbdfeede7), asfloat(0x3f91003a), asfloat(0xbc08ae06), \
-      asfloat(0xbc94be52), asfloat(0xbdce2a32), asfloat(0x3f8f359c)) \
+      asfloat(0xbc94be52), asfloat(0xbdce2a32), asfloat(0x3f8f359c))
 
     #define Bt2020ToDciP3 float3x3( \
       asfloat(0x3fac0014), asfloat(0xbe9091cc), asfloat(0xbd7b7427), \
       asfloat(0xbd85a785), asfloat(0x3f89b1f0), asfloat(0xbc2bbbc8), \
-      asfloat(0x3b38fb22), asfloat(0xbca0adef), asfloat(0x3f82263a)) \
+      asfloat(0x3b38fb22), asfloat(0xbca0adef), asfloat(0x3f82263a))
+
+    #define Bt2020ToAp0 float3x3( \
+      asfloat(0x3f2b204d), asfloat(0x3e1b7d5c), asfloat(0x3e355532), \
+      asfloat(0x3d37d982), asfloat(0x3f5cbfe1), asfloat(0x3dd09c7c), \
+      asfloat(0x246438a6), asfloat(0x3ce40057), asfloat(0x3f868970))
 
     #define Bt2020ToAp0D65 float3x3( \
       asfloat(0x3f2b92f2), asfloat(0x3e1be588), asfloat(0x3e35ceaf), \
       asfloat(0x3d36336f), asfloat(0x3f5ac517), asfloat(0x3dcebd90), \
-      asfloat(0x245387fa), asfloat(0x3cd353c9), asfloat(0x3f796562)) \
+      asfloat(0x245387fa), asfloat(0x3cd353c9), asfloat(0x3f796562))
 
 
     //AP0_D65 To
     #define Ap0D65ToXYZ float3x3( \
       asfloat(0x3f733787), asfloat(0x00000000), asfloat(0x38d3f58d), \
       asfloat(0x3eafa6b1), asfloat(0x3f3c18ec), asfloat(0xbd9f6224), \
-      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f8b5172)) \
+      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f8b5172))
 
     #define Ap0D65ToBt709 float3x3( \
       asfloat(0x40236918), asfloat(0xbf90adb1), asfloat(0xbed891fa), \
       asfloat(0xbe8debcb), asfloat(0x3fb06336), asfloat(0xbdce842d), \
-      asfloat(0xbc8c6432), asfloat(0xbe19935b), asfloat(0x3f9563fc)) \
+      asfloat(0xbc8c6432), asfloat(0xbe19935b), asfloat(0x3f9563fc))
 
     #define Ap0D65ToBt2020 float3x3( \
       asfloat(0x3fc1349d), asfloat(0xbe85d8a7), asfloat(0xbe7df398), \
       asfloat(0xbda16a2b), asfloat(0x3f98000b), asfloat(0xbdde968c), \
-      asfloat(0x3b08c699), asfloat(0xbd00cc5e), asfloat(0x3f83c200)) \
+      asfloat(0x3b08c699), asfloat(0xbd00cc5e), asfloat(0x3f83c200))
 
 
     //AP1_D65 To
     #define Ap1D65ToXYZ float3x3( \
       asfloat(0x3f25b4f9), asfloat(0x3e09a10b), asfloat(0x3e2c83ae), \
       asfloat(0x3e8830ec), asfloat(0x3f2d1439), asfloat(0x3d6d350f), \
-      asfloat(0xbbb27d47), asfloat(0x3b857560), asfloat(0x3f8b7e7a)) \
+      asfloat(0xbbb27d47), asfloat(0x3b857560), asfloat(0x3f8b7e7a))
 
 
     //XYZ To
     #define XYZToBt709 float3x3( \
       asfloat(0x404f8cf8), asfloat(0xbfc4e833), asfloat(0xbeff726c), \
       asfloat(0xbf781040), asfloat(0x3ff0101f), asfloat(0x3d2a2a97), \
-      asfloat(0x3d640478), asfloat(0xbe510419), asfloat(0x3f8762a7)) \
+      asfloat(0x3d640478), asfloat(0xbe510419), asfloat(0x3f8762a7))
 
     #define XYZToDciP3 float3x3( \
       asfloat(0x401fa870), asfloat(0xbf6e8b86), asfloat(0xbece48a3), \
       asfloat(0xbf544d2f), asfloat(0x3fe19202), asfloat(0x3cc17d6f), \
-      asfloat(0x3d12ea50), asfloat(0xbd9c18f5), asfloat(0x3f751d26)) \
+      asfloat(0x3d12ea50), asfloat(0xbd9c18f5), asfloat(0x3f751d26))
 
     #define XYZToBt2020 float3x3( \
       asfloat(0x3fdbce13), asfloat(0xbeb62a1a), asfloat(0xbe81c45a), \
       asfloat(0xbf2aa3da), asfloat(0x3fcedf31), asfloat(0x3c812701), \
-      asfloat(0x3c9097ca), asfloat(0xbd2f4b4e), asfloat(0x3f7152ee)) \
+      asfloat(0x3c9097ca), asfloat(0xbd2f4b4e), asfloat(0x3f7152ee))
 
     #define XYZToAp1 float3x3( \
       asfloat(0x3fd20d0e), asfloat(0xbea64c9e), asfloat(0xbe721951), \
       asfloat(0xbf29e5cf), asfloat(0x3fcec330), asfloat(0x3c89449c), \
-      asfloat(0x3c400d30), asfloat(0xbc07bb78), asfloat(0x3f7d0772)) \
+      asfloat(0x3c400d30), asfloat(0xbc07bb78), asfloat(0x3f7d0772))
 
     #define XYZToAp0 float3x3( \
       asfloat(0x3f866035), asfloat(0x00000000), asfloat(0xb8cc709d), \
       asfloat(0xbefde700), asfloat(0x3fafc8b9), asfloat(0x3dc93212), \
-      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f7dc2b1)) \
+      asfloat(0x00000000), asfloat(0x00000000), asfloat(0x3f7dc2b1))
 
 
     namespace Bt709To
@@ -1054,6 +1064,11 @@ namespace Csp
       float3 Bt2020(float3 Colour)
       {
         return mul(Bt709ToBt2020, Colour);
+      }
+
+      float3 Ap0(float3 Colour)
+      {
+        return mul(Bt709ToAp0, Colour);
       }
 
       float3 Ap0D65(float3 Colour)
@@ -1097,6 +1112,11 @@ namespace Csp
         return mul(Bt2020ToDciP3, Colour);
       }
 
+      float3 Ap0(float3 Colour)
+      {
+        return mul(Bt2020ToAp0, Colour);
+      }
+
       float3 Ap0D65(float3 Colour)
       {
         return mul(Bt2020ToAp0D65, Colour);
@@ -1121,13 +1141,13 @@ namespace Csp
       }
     } //Ap0D65To
 
-    namespace AP1_D65To
+    namespace Ap1D65To
     {
       float3 XYZ(float3 Colour)
       {
         return mul(Ap1D65ToXYZ, Colour);
       }
-    } //AP1_D65To
+    } //Ap1D65To
 
     namespace XYZTo
     {
@@ -1146,12 +1166,12 @@ namespace Csp
         return mul(XYZToBt2020, Colour);
       }
 
-      float3 AP1(float3 Colour)
+      float3 Ap1(float3 Colour)
       {
         return mul(XYZToAp1, Colour);
       }
 
-      float3 AP0(float3 Colour)
+      float3 Ap0(float3 Colour)
       {
         return mul(XYZToAp0, Colour);
       }
@@ -1317,6 +1337,42 @@ namespace Csp
 
   }
 
+}
+
+
+struct Sxy
+{
+  float x;
+  float y;
+};
+
+
+Sxy GetxyFromXYZ(float3 XYZ)
+{
+  const float xyz = XYZ.x + XYZ.y + XYZ.z;
+
+  Sxy xy;
+
+  xy.x = XYZ.x / xyz;
+
+  xy.y = XYZ.y / xyz;
+
+  return xy;
+}
+
+float3 GetXYZfromxyY(Sxy xy, float Y)
+{
+  float3 XYZ;
+
+  XYZ.x = (xy.x / xy.y)
+        * Y;
+
+  XYZ.y = Y;
+
+  XYZ.z = ((1.0 - xy.x - xy.y) / xy.y)
+        * Y;
+
+  return XYZ;
 }
 
 

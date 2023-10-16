@@ -56,21 +56,26 @@ static const uint HEIGHT0 = BUFFER_HEIGHT / 2;
 static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 
 #include "draw_font.fxh"
 
-#define SMALLEST_FP16   0.00000009
-#define SMALLEST_UINT10 0.00013
+// 0.0000000894069671630859375 = ((ieee754_half_decode(0x0002)
+//                               - ieee754_half_decode(0x0001))
+//                              / 2)
+//                             + ieee754_half_decode(0x0001)
+#define SMALLEST_FP16   asfloat(0x33C00000)
+// 0.0014662756584584712982177734375 = 1.5 / 1023
+#define SMALLEST_UINT10 asfloat(0x3AC0300C)
 
 
 //#ifndef IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION
-  #define IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION YES
+  #define IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION NO
 //#endif
 
 
-precise static const float PIXELS = BUFFER_WIDTH * BUFFER_HEIGHT;
+precise static const float PIXELS = uint(BUFFER_WIDTH) * uint(BUFFER_HEIGHT);
 
 
 #define IS_CSP_BT709   0
@@ -87,7 +92,7 @@ uniform float FRAMETIME
 
 
 #define TEXTURE_OVERLAY_WIDTH FONT_ATLAS_SIZE_48_CHAR_DIM.x * 29
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
   #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 16
 #else
   #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_48_CHAR_DIM.y * 13
@@ -131,7 +136,7 @@ sampler2D<float> SamplerCllValues
   Texture = TextureCllValues;
 };
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 #if 0
 static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
@@ -645,7 +650,7 @@ storage2D<float> StorageConsolidated
 
 // consolidated texture end
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 #define HEATMAP_MODE_10000 0
 #define HEATMAP_MODE_4000  1
@@ -886,14 +891,15 @@ void PS_CalcCllPerPixel(
               float2 TexCoord : TEXCOORD,
   out precise float  CurCll   : SV_TARGET)
 {
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
   if (SHOW_CLL_VALUES
    || SHOW_CLL_FROM_CURSOR
    || SHOW_HEATMAP
    || SHOW_BRIGHTNESS_HISTOGRAM
    || HIGHLIGHT_NIT_RANGE
    || DRAW_ABOVE_NITS_AS_BLACK
-   || DRAW_BELOW_NITS_AS_BLACK)
+   || DRAW_BELOW_NITS_AS_BLACK
+   || SHOW_CSP_MAP)
   {
 #endif //HDR_ANALYSIS_ENABLE
 
@@ -926,13 +932,13 @@ void PS_CalcCllPerPixel(
 
     return;
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
   }
   discard;
 #endif //HDR_ANALYSIS_ENABLE
 }
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 #define COORDS_INTERMEDIATE_MAXCLL(X) \
   int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 0 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
@@ -1083,7 +1089,7 @@ void PS_CalcCllPerPixel(
 #define COORDS_INTERMEDIATE_MINCLL1(X) \
   int2(X + INTERMEDIATE_CLL_VALUES_X_OFFSET, 5 + INTERMEDIATE_CLL_VALUES_Y_OFFSET)
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 void CS_GetMaxAvgMinCLL0_NEW(uint3 ID : SV_DispatchThreadID)
 {
@@ -1476,7 +1482,7 @@ void CS_GetFinalMaxCll_NEW(uint3 ID : SV_DispatchThreadID)
 #undef COORDS_INTERMEDIATE_AVGCLL1
 #undef COORDS_INTERMEDIATE_MINCLL1
 
-#ifdef HDR_ANALYSIS_ENABLE
+#if defined(HDR_ANALYSIS_ENABLE)
 
 // per column first
 //void CS_GetAvgCll0(uint3 ID : SV_DispatchThreadID)
@@ -1682,7 +1688,7 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 bool IsCSP(precise float3 RGB)
 {
-  if ((SHOW_CSPS || SHOW_CSP_MAP || SHOW_CSP_FROM_CURSOR)
+  if ((SHOW_CSPS || SHOW_CSP_FROM_CURSOR || SHOW_CSP_MAP)
    && RGB.r >= 0.f
    && RGB.g >= 0.f
    && RGB.b >= 0.f)
@@ -1692,22 +1698,39 @@ bool IsCSP(precise float3 RGB)
   return false;
 }
 
-float GetCSP(precise float3 XYZ)
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  #define _IS_CSP_BT709(Rgb)  Rgb
+  #define _IS_CSP_DCI_P3(Rgb) Csp::Mat::Bt709To::DciP3(Rgb)
+  #define _IS_CSP_BT2020(Rgb) Csp::Mat::Bt709To::Bt2020(Rgb)
+  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt709To::Ap0(Rgb)
+
+#elif (defined(IS_HDR10_LIKE_CSP) \
+    || ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  #define _IS_CSP_BT709(Rgb)  Csp::Mat::Bt2020To::Bt709(Rgb)
+  #define _IS_CSP_DCI_P3(Rgb) Csp::Mat::Bt2020To::DciP3(Rgb)
+  #define _IS_CSP_BT2020(Rgb) Rgb
+  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt2020To::Ap0(Rgb)
+
+#endif
+
+float GetCSP(precise float3 Rgb)
 {
   if (SHOW_CSPS
-   || SHOW_CSP_MAP
-   || SHOW_CSP_FROM_CURSOR)
+   || SHOW_CSP_FROM_CURSOR
+   || SHOW_CSP_MAP)
   {
-    if (IsCSP(Csp::Mat::XYZTo::Bt709(XYZ)))
+    if (IsCSP(_IS_CSP_BT709(Rgb)))
     {
       return IS_CSP_BT709;
     }
-    else if (IsCSP(Csp::Mat::XYZTo::DciP3(XYZ)))
+    else if (IsCSP(_IS_CSP_DCI_P3(Rgb)))
     {
       return IS_CSP_DCI_P3 / 255.f;
     }
 
-#ifdef IS_HDR10_LIKE_CSP
+#if defined(IS_HDR10_LIKE_CSP)
 
     else
     {
@@ -1716,11 +1739,11 @@ float GetCSP(precise float3 XYZ)
 
 #else
 
-    else if (IsCSP(Csp::Mat::XYZTo::Bt2020(XYZ)))
+    else if (IsCSP(_IS_CSP_BT2020(Rgb)))
     {
       return IS_CSP_BT2020 / 255.f;
     }
-    else if (IsCSP(Csp::Mat::XYZTo::AP0(XYZ)))
+    else if (IsCSP(_IS_CSP_AP0(Rgb)))
     {
       return IS_CSP_AP0 / 255.f;
     }
@@ -1740,20 +1763,21 @@ void PS_CalcCsps(
   out precise float  curCSP   : SV_TARGET)
 {
   if (SHOW_CSPS
-   || SHOW_CSP_MAP
-   || SHOW_CSP_FROM_CURSOR)
+   || SHOW_CSP_FROM_CURSOR
+   || SHOW_CSP_MAP)
   {
     precise const float3 pixel = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+#if defined(IS_FLOAT_HDR_CSP)
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-    if (!(pixel.r > -SMALLEST_FP16 && pixel.r < SMALLEST_FP16
-       || pixel.g > -SMALLEST_FP16 && pixel.g < SMALLEST_FP16
-       || pixel.b > -SMALLEST_FP16 && pixel.b < SMALLEST_FP16))
+    const float3 absPixel = abs(pixel);
+    if (absPixel.r > SMALLEST_FP16
+     && absPixel.g > SMALLEST_FP16
+     && absPixel.b > SMALLEST_FP16)
     {
-      curCSP = GetCSP(Csp::Mat::Bt709To::XYZ(pixel));
+      curCSP = GetCSP(pixel);
     }
     else
     {
@@ -1763,73 +1787,26 @@ void PS_CalcCsps(
 
 #else
 
-    curCSP = GetCSP(Csp::Mat::Bt709To::XYZ(pixel));
+    curCSP = GetCSP(pixel);
 
     return;
 
 #endif
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif defined(IS_HDR10_LIKE_CSP)
 
 #if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
 
-  precise const float3 curPixel = Csp::Trc::FromPq(pixel);
-
-    if (!(curPixel.r < SMALLEST_UINT10
-       && curPixel.g < SMALLEST_UINT10
-       && curPixel.b < SMALLEST_UINT10))
+    if (pixel.r > SMALLEST_UINT10
+     && pixel.g > SMALLEST_UINT10
+     && pixel.b > SMALLEST_UINT10)
     {
-      curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(curPixel));
-    }
-    else
-    {
-      curCSP = IS_CSP_BT709 / 255.f;
-    }
-    return;
-
-#else
-
-    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel)));
-
-    return;
-
-#endif
-
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      precise const float3 curPixel = Csp::Trc::FromPq(pixel);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-#if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
-
-    precise const float3 curPixel = Csp::Trc::FromPq(pixel);
-
-    if (!(curPixel.r < SMALLEST_UINT10
-       && curPixel.g < SMALLEST_UINT10
-       && curPixel.b < SMALLEST_UINT10))
-    {
-      curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(curPixel)));
-    }
-    else
-    {
-      curCSP = IS_CSP_BT709 / 255.f;
-    }
-    return;
-
-#else
-
-    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel)));
-
-    return;
-
+      precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
 #endif
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-#if (IGNORE_NEAR_BLACK_VALUES_FOR_CSP_DETECTION == YES)
-
-    if (!(pixel.r > -SMALLEST_FP16 && pixel.r < SMALLEST_FP16
-       && pixel.g > -SMALLEST_FP16 && pixel.g < SMALLEST_FP16
-       && pixel.b > -SMALLEST_FP16 && pixel.b < SMALLEST_FP16))
-    {
-      curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(pixel));
+      curCSP = GetCSP(curPixel);
     }
     else
     {
@@ -1839,7 +1816,12 @@ void PS_CalcCsps(
 
 #else
 
-    curCSP = GetCSP(Csp::Mat::Bt2020To::XYZ(pixel));
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    precise const float3 curPixel = Csp::Trc::FromPq(pixel);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+    precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
+#endif
+    curCSP = GetCSP(curPixel);
 
     return;
 
@@ -1871,7 +1853,9 @@ void PS_CalcCsps(
 
 void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CSPS)
+  if (SHOW_CSPS
+   || SHOW_CSP_FROM_CURSOR
+   || SHOW_CSP_MAP)
   {
 #ifndef WIDTH0_DISPATCH_DOESNT_OVERFLOW
 
@@ -1880,13 +1864,13 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
-      precise uint counter_BT709   = 0;
-      precise uint counter_DCI_P3  = 0;
+      precise uint counter_BT709  = 0;
+      precise uint counter_DCI_P3 = 0;
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
-      precise uint counter_BT2020  = 0;
-      precise uint counter_AP0     = 0;
+      precise uint counter_BT2020 = 0;
+      precise uint counter_AP0    = 0;
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -1902,7 +1886,7 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
           counter_DCI_P3++;
         }
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
         else if (curCSP == IS_CSP_BT2020)
         {
@@ -1919,7 +1903,7 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_BT709(ID.x),  counter_BT709);
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_DCI_P3(ID.x), counter_DCI_P3);
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(ID.x), counter_BT2020);
       tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_AP0(ID.x),    counter_AP0);
@@ -1936,12 +1920,14 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 
 void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CSPS)
+  if (SHOW_CSPS
+   || SHOW_CSP_FROM_CURSOR
+   || SHOW_CSP_MAP)
   {
     precise uint counter_BT709  = 0;
     precise uint counter_DCI_P3 = 0;
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
     precise uint counter_BT2020 = 0;
     precise uint counter_AP0    = 0;
@@ -1950,13 +1936,13 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 
     for (int x = 0; x < BUFFER_WIDTH; x++)
     {
-      counter_BT709   += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT709(x)));
-      counter_DCI_P3  += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_DCI_P3(x)));
+      counter_BT709  += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT709(x)));
+      counter_DCI_P3 += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_DCI_P3(x)));
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
-      counter_BT2020  += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(x)));
-      counter_AP0     += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_AP0(x)));
+      counter_BT2020 += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(x)));
+      counter_AP0    += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_AP0(x)));
 
 #endif //IS_FLOAT_HDR_CSP
     }
@@ -1968,7 +1954,7 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709,  percentageBt709);
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3, percentageDciP3);
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
     precise float percentageBt2020 = counter_BT2020 / PIXELS;
     precise float percentageAp0    = counter_AP0    / PIXELS;
@@ -2082,7 +2068,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
                                  * 100.f;
 #endif
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
     precise float counter_BT2020 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020)
 #if (__VENDOR__ == 0x1002)
@@ -2099,7 +2085,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
 #endif //IS_FLOAT_HDR_CSP
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
     precise float counter_AP0     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
 #if (__VENDOR__ == 0x1002)
@@ -2125,7 +2111,7 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3, counter_DCI_P3);
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020, counter_BT2020);
 
-#ifdef IS_FLOAT_HDR_CSP
+#if defined(IS_FLOAT_HDR_CSP)
 
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0,     counter_AP0);
     tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID, counter_invalid);
