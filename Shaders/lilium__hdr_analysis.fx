@@ -93,6 +93,12 @@ uniform int GLOBAL_SPACER_0
 
 
 // Active Area
+uniform bool ACTIVE_AREA_ENABLE
+<
+  ui_category = "Set Active Area for analysis";
+  ui_label    = "enable setting the active area";
+> = false;
+
 uniform float ACTIVE_AREA_CROP_LEFT
 <
   ui_category = "Set Active Area for analysis";
@@ -2864,19 +2870,25 @@ void PS_SetActiveArea(
   out float4 Output            : SV_Target0,
   in  float4 PercentagesToCrop : PercentagesToCrop)
 {
-  float pureXCoord = TexCoord.x * BUFFER_WIDTH;
-  float pureYCoord = TexCoord.y * BUFFER_HEIGHT;
-
-  if (pureXCoord > percentageToCropFromLeft
-   && pureYCoord > percentageToCropFromTop
-   && pureXCoord < percentageToCropFromRight
-   && pureYCoord < percentageToCropFromBottom)
+  if (ACTIVE_AREA_ENABLE)
   {
-    Output = tex2D(ReShade::BackBuffer, TexCoord).rgba;
+    float2 pureCoord = TexCoord * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+    if (pureCoord.x > percentageToCropFromLeft
+     && pureCoord.y > percentageToCropFromTop
+     && pureCoord.x < percentageToCropFromRight
+     && pureCoord.y < percentageToCropFromBottom)
+    {
+      discard;
+    }
+    else
+    {
+      Output = float4(0.f, 0.f, 0.f, 1.f);
+    }
   }
   else
   {
-    Output = float4(0.f, 0.f, 0.f, 1.f);
+    discard;
   }
 }
 
