@@ -669,6 +669,17 @@ static const float4x3 HeatmapSteps1 = float4x3(
   1000.f, 1500.f,  2000.f,
    600.f,  800.f,  1000.f);
 
+float HeatmapFadeIn(float Y, float CurrentStep, float NormaliseTo)
+{
+  return (Y - CurrentStep)
+       / (NormaliseTo - CurrentStep);
+}
+
+float HeatmapFadeOut(float Y, float CurrentStep, float NormaliseTo)
+{
+  return 1.f - HeatmapFadeIn(Y, CurrentStep, NormaliseTo);
+}
+
 float3 HeatmapRgbValues(
   float Y,
   uint  Mode,
@@ -703,12 +714,12 @@ float3 HeatmapRgbValues(
     //(blue+green) to green
     output.r = 0.f;
     output.g = 1.f;
-    output.b = 1.f - ((Y - HeatmapSteps0[Mode][0]) / (HeatmapSteps0[Mode][1] - HeatmapSteps0[Mode][0]));
+    output.b = HeatmapFadeOut(Y, HeatmapSteps0[Mode][0], HeatmapSteps0[Mode][1]);
   }
   else if (Y <= HeatmapSteps0[Mode][2]) // <= 400nits
   {
     //green to yellow
-    output.r = (Y - HeatmapSteps0[Mode][1]) / (HeatmapSteps0[Mode][2] - HeatmapSteps0[Mode][1]);
+    output.r = HeatmapFadeIn(Y, HeatmapSteps0[Mode][1], HeatmapSteps0[Mode][2]);
     output.g = 1.f;
     output.b = 0.f;
   }
@@ -716,7 +727,7 @@ float3 HeatmapRgbValues(
   {
     //yellow to red
     output.r = 1.f;
-    output.g = 1.f - ((Y - HeatmapSteps0[Mode][2]) / (HeatmapSteps1[Mode][0] - HeatmapSteps0[Mode][2]));
+    output.g = HeatmapFadeOut(Y, HeatmapSteps0[Mode][2], HeatmapSteps1[Mode][0]);
     output.b = 0.f;
   }
   else if (Y <= HeatmapSteps1[Mode][1]) // <= 4000nits
@@ -724,12 +735,12 @@ float3 HeatmapRgbValues(
     //red to pink
     output.r = 1.f;
     output.g = 0.f;
-    output.b = (Y - HeatmapSteps1[Mode][0]) / (HeatmapSteps1[Mode][1] - HeatmapSteps1[Mode][0]);
+    output.b = HeatmapFadeIn(Y, HeatmapSteps1[Mode][0], HeatmapSteps1[Mode][1]);
   }
   else if(Y <= HeatmapSteps1[Mode][2]) // <= 10000nits
   {
     //pink to blue
-    output.r = max(1.f - ((Y - HeatmapSteps1[Mode][1]) / (HeatmapSteps1[Mode][2] - HeatmapSteps1[Mode][1])), 0.f);
+    output.r = HeatmapFadeOut(Y, HeatmapSteps1[Mode][1], HeatmapSteps1[Mode][2]);
     output.g = 0.f;
     output.b = 1.f;
   }
