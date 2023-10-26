@@ -37,10 +37,6 @@
 
 namespace Itmos
 {
-  //gamma
-  static const float removeGamma = 2.4f;
-  static const float applyGamma  = 1.f / removeGamma;
-
   // outputs normalised values
   float3 Bt2446A(
     float3 Input,
@@ -54,7 +50,7 @@ namespace Itmos
     float3 sdr = saturate(Input / InputNitsFactor);
 
     //RGB->R'G'B' gamma compression
-    sdr = pow(sdr, 1.f / (removeGamma + GammaIn));
+    sdr = pow(sdr, 1.f / (Csp::Trc::RemoveGamma24 + GammaIn));
 
     // Rec. ITU-R BT.2020-2 Table 4
     //Y'C'bC'r,tmo
@@ -69,7 +65,7 @@ namespace Itmos
     float pSdr = 1.f + 32.f * pow(
                                   Lsdr /
                                   10000.f
-                              , applyGamma);
+                              , Csp::Trc::ApplyGamma24);
 
     //Y'c
     //if pSdr == 1 there is a division by zero
@@ -119,7 +115,7 @@ namespace Itmos
     float pHdr = 1.f + 32.f * pow(
                                   Lhdr /
                                   10000.f
-                              , applyGamma);
+                              , Csp::Trc::ApplyGamma24);
     //Y'hdr
     //if pHdr == 1 there is a division by zero
     //this happens when Lhdr == 0
@@ -154,7 +150,7 @@ namespace Itmos
 
     // Non-linear transfer function (inverse)
     // get RGB
-    hdr = pow(hdr, removeGamma + GammaIn + GammaOut);
+    hdr = pow(hdr, Csp::Trc::RemoveGamma24 + GammaIn + GammaOut);
 
     //expand to target luminance
     hdr *= (Lhdr / 10000.f);

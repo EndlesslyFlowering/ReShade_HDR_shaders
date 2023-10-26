@@ -382,15 +382,15 @@ namespace Csp
     }
 
     // accurate sRGB with no slope discontinuity
-    #define sRGB_X         asfloat(0x3D20EA0B) //  0.0392857
-    #define sRGB_Phi       asfloat(0x414EC578) // 12.92321
-    #define sRGB_X_div_Phi asfloat(0x3B4739A5) //  0.003039935
+    #define SrgbX       asfloat(0x3D20EA0B) //  0.0392857
+    #define SrgbPhi     asfloat(0x414EC578) // 12.92321
+    #define SrgbXDivPhi asfloat(0x3B4739A5) //  0.003039935
 
     float FromSrgbAccurate(float C)
     {
-      if (C <= sRGB_X)
+      if (C <= SrgbX)
       {
-        return C / sRGB_Phi;
+        return C / SrgbPhi;
       }
       else
       {
@@ -407,9 +407,9 @@ namespace Csp
 
     float ToSrgbAccurate(float C)
     {
-      if (C <= sRGB_X_div_Phi)
+      if (C <= SrgbXDivPhi)
       {
-        return C * sRGB_Phi;
+        return C * SrgbPhi;
       }
       else
       {
@@ -430,13 +430,13 @@ namespace Csp
       {
         return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
       }
-      else if (C < -sRGB_X)
+      else if (C < -SrgbX)
       {
         return -pow((-C + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C <= sRGB_X)
+      else if (C <= SrgbX)
       {
-        return C / sRGB_Phi;
+        return C / SrgbPhi;
       }
       else if (C <= 1.f)
       {
@@ -461,13 +461,13 @@ namespace Csp
       {
         return -pow((-C + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C < -sRGB_X_div_Phi)
+      else if (C < -SrgbXDivPhi)
       {
         return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
       }
-      else if (C <= sRGB_X_div_Phi)
+      else if (C <= SrgbXDivPhi)
       {
-        return C * sRGB_Phi;
+        return C * SrgbPhi;
       }
       else if (C <= 1.f)
       {
@@ -487,44 +487,44 @@ namespace Csp
     }
 
 
-    static const float Gamma22        = 2.2f;
-    static const float InverseGamma22 = 1.f / 2.2f;
+    static const float RemoveGamma22 = 2.2f;
+    static const float ApplyGamma22  = 1.f / RemoveGamma22;
     //#define X_22_1 1.20237927370128566986
     //#define X_22_x 0.0370133892172524
-    //#define X_22_y_adjust 1.5f - pow(X_22_x, InverseGamma22)
+    //#define X_22_y_adjust 1.5f - pow(X_22_x, ApplyGamma22)
     // extended gamma 2.2 including above 1 and below 0
     float FromExtendedGamma22(float C)
     {
       if (C < -1.f)
       {
-        return -pow(-C, InverseGamma22);
+        return -pow(-C, ApplyGamma22);
       }
       else if (C < 0.f)
       {
-        return -pow(-C, Gamma22);
+        return -pow(-C, RemoveGamma22);
       }
       else if (C <= 1.f)
       {
-        return pow(C, Gamma22);
+        return pow(C, RemoveGamma22);
       }
       else
       {
-        return pow(C, InverseGamma22);
+        return pow(C, ApplyGamma22);
       }
     }
     //{
     //  if (C < -X_22_1)
     //    return
-    //      -(pow(-C - X_22_1 + X_22_x, InverseGamma22) + X_22_y_adjust);
+    //      -(pow(-C - X_22_1 + X_22_x, ApplyGamma22) + X_22_y_adjust);
     //  else if (C < 0)
     //    return
-    //      -pow(-C, Gamma22);
+    //      -pow(-C, RemoveGamma22);
     //  else if (C <= X_22_1)
     //    return
-    //      pow(C, Gamma22);
+    //      pow(C, RemoveGamma22);
     //  else
     //    return
-    //      (pow(C - X_22_1 + X_22_x, InverseGamma22) + X_22_y_adjust);
+    //      (pow(C - X_22_1 + X_22_x, ApplyGamma22) + X_22_y_adjust);
     //}
 
     float3 FromExtendedGamma22(float3 Colour)
@@ -534,44 +534,44 @@ namespace Csp
                     FromExtendedGamma22(Colour.b));
     }
 
-    static const float Gamma24        = 2.4f;
-    static const float InverseGamma24 = 1.f / 2.4f;
+    static const float RemoveGamma24 = 2.4f;
+    static const float ApplyGamma24  = 1.f / RemoveGamma24;
     //#define X_24_1 1.1840535873752085849
     //#define X_24_x 0.033138075
-    //#define X_24_y_adjust 1.5f - pow(X_24_x, InverseGamma24)
+    //#define X_24_y_adjust 1.5f - pow(X_24_x, ApplyGamma24)
     // extended gamma 2.4 including above 1 and below 0
     float FromExtendedGamma24(float C)
     {
       if (C < -1.f)
       {
-        return -pow(-C, InverseGamma24);
+        return -pow(-C, ApplyGamma24);
       }
       else if (C < 0.f)
       {
-        return -pow(-C, Gamma24);
+        return -pow(-C, RemoveGamma24);
       }
       else if (C <= 1.f)
       {
-        return pow(C, Gamma24);
+        return pow(C, RemoveGamma24);
       }
       else
       {
-        return pow(C, InverseGamma24);
+        return pow(C, ApplyGamma24);
       }
     }
     //{
     //  if (C < -X_24_1)
     //    return
-    //      -(pow(-C - X_24_1 + X_24_x, InverseGamma24) + X_24_y_adjust);
+    //      -(pow(-C - X_24_1 + X_24_x, ApplyGamma24) + X_24_y_adjust);
     //  else if (C < 0)
     //    return
-    //      -pow(-C, Gamma24);
+    //      -pow(-C, RemoveGamma24);
     //  else if (C <= X_24_1)
     //    return
-    //      pow(C, Gamma24);
+    //      pow(C, RemoveGamma24);
     //  else
     //    return
-    //      (pow(C - X_24_1 + X_24_x, InverseGamma24) + X_24_y_adjust);
+    //      (pow(C - X_24_1 + X_24_x, ApplyGamma24) + X_24_y_adjust);
     //}
 
     float3 FromExtendedGamma24(float3 Colour)
@@ -650,110 +650,93 @@ namespace Csp
     #define _1_div_PQ_m2 asfloat(0x3C4FCDAC)
 
     // Rec. ITU-R BT.2100-2 Table 4
-    // (EOTF) takes PQ values as input
-    // outputs as 1 = 10000 nits
-    float FromPq(float E_)
-    {
-      E_ = max(E_, 0.f);
-
-      float E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);
-
-      //Y
-      return pow(
-                 (max(E_pow_1_div_m2 - PQ_c1, 0.f)) /
-                 (PQ_c2 - PQ_c3 * E_pow_1_div_m2)
-             , _1_div_PQ_m1);
-    }
-
-    // (EOTF) takes PQ values as input
-    // outputs as 1 = 10000 nits
-    float2 FromPq(float2 E_)
-    {
-      return float2(FromPq(E_.x),
-                    FromPq(E_.y));
-    }
+#define FROM_PQ(T)                                \
+  T FromPq(T E_)                                  \
+  {                                               \
+    E_ = max(E_, 0.f);                            \
+                                                  \
+    T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);     \
+                                                  \
+    /* Y */                                       \
+    return pow(                                   \
+               (max(E_pow_1_div_m2 - PQ_c1, 0.f)) \
+             / (PQ_c2 - PQ_c3 * E_pow_1_div_m2)   \
+           , _1_div_PQ_m1);                       \
+  }
 
     // (EOTF) takes PQ values as input
     // outputs as 1 = 10000 nits
-    float3 FromPq(float3 E_)
-    {
-      return float3(FromPq(E_.r),
-                    FromPq(E_.g),
-                    FromPq(E_.b));
-    }
+    FROM_PQ(float)
+
+    // (EOTF) takes PQ values as input
+    // outputs as 1 = 10000 nits
+    FROM_PQ(float2)
+
+    // (EOTF) takes PQ values as input
+    // outputs as 1 = 10000 nits
+    FROM_PQ(float3)
 
     // (EOTF) takes PQ values as input
     // outputs nits
-    float FromPqToNits(float E_)
-    {
-      return FromPq(E_) * 10000.f;
-    }
+#define FROM_PQ_TO_NITS(T)       \
+  T FromPqToNits(T E_)           \
+  {                              \
+    return FromPq(E_) * 10000.f; \
+  }
 
     // (EOTF) takes PQ values as input
     // outputs nits
-    float2 FromPqToNits(float2 E_)
-    {
-      return FromPq(E_) * 10000.f;
-    }
+    FROM_PQ_TO_NITS(float)
 
     // (EOTF) takes PQ values as input
     // outputs nits
-    float3 FromPqToNits(float3 E_)
-    {
-      return FromPq(E_) * 10000.f;
-    }
+    FROM_PQ_TO_NITS(float2)
+
+    // (EOTF) takes PQ values as input
+    // outputs nits
+    FROM_PQ_TO_NITS(float3)
 
     // Rec. ITU-R BT.2100-2 Table 4 (end)
-    // (inverse EOTF) takes normalised to 10000 nits values as input
-    float ToPq(float Y)
-    {
-      Y = max(Y, 0.f);
-
-      float Y_pow_m1 = pow(Y, PQ_m1);
-
-      //E'
-      return pow(
-                 (PQ_c1 + PQ_c2 * Y_pow_m1) /
-                 (  1.f + PQ_c3 * Y_pow_m1)
-             , PQ_m2);
-    }
-
-    // (inverse EOTF) takes normalised to 10000 nits values as input
-    float2 ToPq(float2 Y)
-    {
-      return float2(ToPq(Y.x),
-                    ToPq(Y.y));
-    }
+#define TO_PQ(T)                            \
+  T ToPq(T Y)                               \
+  {                                         \
+    Y = max(Y, 0.f);                        \
+                                            \
+    T Y_pow_m1 = pow(Y, PQ_m1);             \
+                                            \
+    /* E' */                                \
+    return pow(                             \
+               (PQ_c1 + PQ_c2 * Y_pow_m1) / \
+               (  1.f + PQ_c3 * Y_pow_m1)   \
+           , PQ_m2);                        \
+  }
 
     // (inverse EOTF) takes normalised to 10000 nits values as input
-    float3 ToPq(float3 Y)
-    {
-      return float3(ToPq(Y.r),
-                    ToPq(Y.g),
-                    ToPq(Y.b));
-    }
+    TO_PQ(float)
+
+    // (inverse EOTF) takes normalised to 10000 nits values as input
+    TO_PQ(float2)
+
+    // (inverse EOTF) takes normalised to 10000 nits values as input
+    TO_PQ(float3)
 
     // (OETF) takes nits as input
-    float ToPqFromNits(float Fd)
-    {
-      float Y = max(Fd / 10000.f, 0.f);
-
-      float Y_pow_m1 = pow(Y, PQ_m1);
-
-      //E'
-      return pow(
-                 (PQ_c1 + PQ_c2 * Y_pow_m1) /
-                 (  1.f + PQ_c3 * Y_pow_m1)
-             , PQ_m2);
-    }
+#define TO_PQ_FROM_NITS(T) \
+  T ToPqFromNits(T Fd)     \
+  {                        \
+    T Y = Fd / 10000.f;    \
+                           \
+    return ToPq(Y);        \
+  }
 
     // (OETF) takes nits as input
-    float3 ToPqFromNits(float3 Fd)
-    {
-      return float3(ToPqFromNits(Fd.r),
-                    ToPqFromNits(Fd.g),
-                    ToPqFromNits(Fd.b));
-    }
+    TO_PQ_FROM_NITS(float)
+
+    // (OETF) takes nits as input
+    TO_PQ_FROM_NITS(float2)
+
+    // (OETF) takes nits as input
+    TO_PQ_FROM_NITS(float3)
 
 
     // Rec. ITU-R BT.2100-2 Table 5
