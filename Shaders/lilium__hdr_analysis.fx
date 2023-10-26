@@ -50,7 +50,14 @@ uniform uint TEXT_SIZE
   ui_category = "Global";
   ui_label    = "text size";
   ui_type     = "combo";
-  ui_items    = "32\0"
+  ui_items    = "18\0"
+                "20\0"
+                "22\0"
+                "24\0"
+                "26\0"
+                "28\0"
+                "30\0"
+                "32\0"
                 "34\0"
                 "36\0"
                 "38\0"
@@ -58,7 +65,11 @@ uniform uint TEXT_SIZE
                 "42\0"
                 "44\0"
                 "46\0"
-                "48\0";
+                "48\0"
+                "50\0"
+                "52\0"
+                "54\0"
+                "56\0";
 > = 0;
 
 uniform float TEXT_BRIGHTNESS
@@ -719,49 +730,6 @@ void Testy(
 #endif //_TESTY
 
 
-uint2 GetCharSize()
-{
-  switch(TEXT_SIZE)
-  {
-    case 8:
-    {
-      return FONT_ATLAS_SIZE_48_CHAR_DIM;
-    }
-    case 7:
-    {
-      return FONT_ATLAS_SIZE_46_CHAR_DIM;
-    }
-    case 6:
-    {
-      return FONT_ATLAS_SIZE_44_CHAR_DIM;
-    }
-    case 5:
-    {
-      return FONT_ATLAS_SIZE_42_CHAR_DIM;
-    }
-    case 4:
-    {
-      return FONT_ATLAS_SIZE_40_CHAR_DIM;
-    }
-    case 3:
-    {
-      return FONT_ATLAS_SIZE_38_CHAR_DIM;
-    }
-    case 2:
-    {
-      return FONT_ATLAS_SIZE_36_CHAR_DIM;
-    }
-    case 1:
-    {
-      return FONT_ATLAS_SIZE_34_CHAR_DIM;
-    }
-    default:
-    {
-      return FONT_ATLAS_SIZE_32_CHAR_DIM;
-    }
-  }
-}
-
 #define SPACING_MULTIPLIER  0.3f
 #define OUTER_SPACING      15.f
 #define OUTER_SPACING_X2    2.f * OUTER_SPACING
@@ -902,10 +870,14 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                   (SHOW_CSP_FROM_CURSOR ? 18
                                         : 0));
 
-    uint2 charSize = GetCharSize();
+    static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+
+    uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+
     uint2 activeTextArea = charSize
                          * uint2(activeCharacters, activeLines);
     activeTextArea.x += OUTER_SPACING_X2;
+
     activeTextArea.y += (max(SHOW_CLL_VALUES
                            + SHOW_CLL_FROM_CURSOR
                            + SHOW_CSPS
@@ -948,9 +920,11 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
 void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
 {
-  uint2 charSize   = GetCharSize();
-  uint  fontSize   = 8 - TEXT_SIZE;
-  uint2 atlasXY    = uint2(fontSize % 3, fontSize / 3) * FONT_ATLAS_OFFSET;
+  static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+
+  uint2 charSize   = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+  uint  fontSize   = 19 - TEXT_SIZE;
+  uint2 atlasXY    = uint2(fontSize % 5, fontSize / 5) * uint2(FONT_ATLAS_OFFSET_X, FONT_ATLAS_OFFSET_Y);
   uint2 charOffset = Char * charSize + atlasXY;
   for (uint y = 0; y < charSize.y; y++)
   {
@@ -959,6 +933,26 @@ void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
       uint2 currentOffset = uint2(x, y);
       float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset).rgba;
       tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + OUTER_SPACING + currentOffset, pixel);
+    }
+  }
+}
+
+
+void DrawSpace(float2 DrawOffset, float2 Id)
+{
+  static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+
+  uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+  uint  fontSize = 19 - TEXT_SIZE;
+
+  float4 emptyPixel = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
+
+  for (uint y = 0; y < charSize.y; y++)
+  {
+    for (uint x = 0; x < charSize.x; x++)
+    {
+      uint2 currentOffset = uint2(x, y);
+      tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + OUTER_SPACING + currentOffset, emptyPixel);
     }
   }
 }
@@ -1896,7 +1890,7 @@ void DrawNumberAboveZero(precise uint CurNumber, float2 Offset, float2 Id)
   }
   else
   {
-    DrawChar(_space, Offset, Id);
+    DrawSpace(Offset, Id);
   }
 }
 
@@ -2669,7 +2663,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
         else //invalid
@@ -2709,7 +2703,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
         else //invalid
@@ -2749,7 +2743,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
         else //invalid
@@ -2769,12 +2763,12 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2789,7 +2783,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_space, currentCursorCspOffset, float2(ID.x, ID.y));
+          DrawSpace(currentCursorCspOffset, float2(ID.x, ID.y));
           return;
         }
         else //invalid
@@ -3015,9 +3009,13 @@ void VS_PrepareHdrAnalysis(
                   (SHOW_CSP_FROM_CURSOR ? 18
                                         : 0));
 
-    uint2 charSize = GetCharSize();
+    static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+
+    uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+
     uint2 currentOverlayDimensions = charSize
                                    * uint2(activeCharacters, activeLines);
+
     currentOverlayDimensions.x += OUTER_SPACING_X2;
     currentOverlayDimensions.y += (max(SHOW_CLL_VALUES
                                      + SHOW_CLL_FROM_CURSOR

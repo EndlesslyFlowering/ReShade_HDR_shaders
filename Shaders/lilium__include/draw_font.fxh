@@ -1,168 +1,221 @@
 #pragma once
 
 
-#define FONT_ATLAS_OFFSET uint(640)
+#define FONT_ATLAS_OFFSET_X uint(441)
+#define FONT_ATLAS_OFFSET_Y uint(277)
 
-#define NUMBER_OF_CHARS_X uint(14)
-#define NUMBER_OF_CHARS_Y uint( 7)
+#define NUMBER_OF_CHARS_X uint(10)
+#define NUMBER_OF_CHARS_Y uint( 4)
 
-#define FONT_ATLAS_SIZE_48_X_POS 0
-#define FONT_ATLAS_SIZE_48_Y_POS 0
-#define FONT_ATLAS_SIZE_48_WIDTH  uint(616)
-#define FONT_ATLAS_SIZE_48_HEIGHT uint(553)
-#define FONT_ATLAS_SIZE_48_CHAR_DIM uint2(44, 79)
 
-#define FONT_ATLAS_SIZE_46_X_POS FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_46_Y_POS 0
-#define FONT_ATLAS_SIZE_46_WIDTH  uint(588)
-#define FONT_ATLAS_SIZE_46_HEIGHT uint(525)
-#define FONT_ATLAS_SIZE_46_CHAR_DIM uint2(42, 75)
+#define COLUMN_0_OFFSET 0
+#define COLUMN_1_OFFSET     FONT_ATLAS_OFFSET_X
+#define COLUMN_2_OFFSET 2 * FONT_ATLAS_OFFSET_X
+#define COLUMN_3_OFFSET 3 * FONT_ATLAS_OFFSET_X
+#define COLUMN_4_OFFSET 4 * FONT_ATLAS_OFFSET_X
+#define COLUMN_5_OFFSET 5 * FONT_ATLAS_OFFSET_X
 
-#define FONT_ATLAS_SIZE_44_X_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_44_Y_POS 0
-#define FONT_ATLAS_SIZE_44_WIDTH  uint(574)
-#define FONT_ATLAS_SIZE_44_HEIGHT uint(504)
-#define FONT_ATLAS_SIZE_44_CHAR_DIM uint2(41, 72)
+#define ROW_0_OFFSET 0
+#define ROW_1_OFFSET     FONT_ATLAS_OFFSET_Y
+#define ROW_2_OFFSET 2 * FONT_ATLAS_OFFSET_Y
+#define ROW_3_OFFSET 3 * FONT_ATLAS_OFFSET_Y
 
-#define FONT_ATLAS_SIZE_42_X_POS 0
-#define FONT_ATLAS_SIZE_42_Y_POS FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_42_WIDTH  uint(546)
-#define FONT_ATLAS_SIZE_42_HEIGHT uint(483)
-#define FONT_ATLAS_SIZE_42_CHAR_DIM uint2(39, 69)
 
-#define FONT_ATLAS_SIZE_40_X_POS FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_40_Y_POS FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_40_WIDTH  uint(518)
-#define FONT_ATLAS_SIZE_40_HEIGHT uint(455)
-#define FONT_ATLAS_SIZE_40_CHAR_DIM uint2(37, 65)
+// row 0
+#define FONT_ATLAS_SIZE_56_X_POS COLUMN_0_OFFSET
+#define FONT_ATLAS_SIZE_56_Y_POS ROW_0_OFFSET
+#define FONT_ATLAS_SIZE_56_WIDTH  uint(440)
+#define FONT_ATLAS_SIZE_56_HEIGHT uint(276)
+#define FONT_ATLAS_SIZE_56_CHAR_DIM uint2(44, 69)
 
-#define FONT_ATLAS_SIZE_38_X_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_38_Y_POS     FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_38_WIDTH  uint(504)
-#define FONT_ATLAS_SIZE_38_HEIGHT uint(441)
-#define FONT_ATLAS_SIZE_38_CHAR_DIM uint2(36, 63)
+#define FONT_ATLAS_SIZE_54_X_POS COLUMN_1_OFFSET
+#define FONT_ATLAS_SIZE_54_Y_POS ROW_0_OFFSET
+#define FONT_ATLAS_SIZE_54_WIDTH  uint(430)
+#define FONT_ATLAS_SIZE_54_HEIGHT uint(268)
+#define FONT_ATLAS_SIZE_54_CHAR_DIM uint2(43, 67)
 
-#define FONT_ATLAS_SIZE_36_X_POS 0
-#define FONT_ATLAS_SIZE_36_Y_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_36_WIDTH  uint(476)
-#define FONT_ATLAS_SIZE_36_HEIGHT uint(413)
-#define FONT_ATLAS_SIZE_36_CHAR_DIM uint2(34, 59)
+#define FONT_ATLAS_SIZE_52_X_POS COLUMN_2_OFFSET
+#define FONT_ATLAS_SIZE_52_Y_POS ROW_0_OFFSET
+#define FONT_ATLAS_SIZE_52_WIDTH  uint(420)
+#define FONT_ATLAS_SIZE_52_HEIGHT uint(256)
+#define FONT_ATLAS_SIZE_52_CHAR_DIM uint2(42, 64)
 
-#define FONT_ATLAS_SIZE_34_X_POS     FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_34_Y_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_34_WIDTH  uint(448)
-#define FONT_ATLAS_SIZE_34_HEIGHT uint(392)
-#define FONT_ATLAS_SIZE_34_CHAR_DIM uint2(32, 56)
+#define FONT_ATLAS_SIZE_50_X_POS COLUMN_3_OFFSET
+#define FONT_ATLAS_SIZE_50_Y_POS ROW_0_OFFSET
+#define FONT_ATLAS_SIZE_50_WIDTH  uint(380)
+#define FONT_ATLAS_SIZE_50_HEIGHT uint(248)
+#define FONT_ATLAS_SIZE_50_CHAR_DIM uint2(38, 62)
 
-#define FONT_ATLAS_SIZE_32_X_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_32_Y_POS 2 * FONT_ATLAS_OFFSET
-#define FONT_ATLAS_SIZE_32_WIDTH  uint(434)
-#define FONT_ATLAS_SIZE_32_HEIGHT uint(371)
-#define FONT_ATLAS_SIZE_32_CHAR_DIM uint2(31, 53)
+#define FONT_ATLAS_SIZE_48_X_POS COLUMN_4_OFFSET
+#define FONT_ATLAS_SIZE_48_Y_POS ROW_0_OFFSET
+#define FONT_ATLAS_SIZE_48_WIDTH  uint(370)
+#define FONT_ATLAS_SIZE_48_HEIGHT uint(240)
+#define FONT_ATLAS_SIZE_48_CHAR_DIM uint2(37, 60)
 
-#define _0          uint2( 0, 0)
-#define _1          uint2( 1, 0)
-#define _2          uint2( 2, 0)
-#define _3          uint2( 3, 0)
-#define _4          uint2( 4, 0)
-#define _5          uint2( 5, 0)
-#define _6          uint2( 6, 0)
-#define _7          uint2( 7, 0)
-#define _8          uint2( 8, 0)
-#define _9          uint2( 9, 0)
-#define _plus       uint2(10, 0)
-#define _minus      uint2(11, 0)
-#define _dot        uint2(12, 0)
-#define _comma      uint2(13, 0)
-#define _cuBracktC  uint2( 0, 1)
-#define _roBracketC uint2( 1, 1)
-#define _colon      uint2( 2, 1)
-#define _sColon     uint2( 3, 1)
-#define _uScore     uint2( 4, 1)
-#define _apost      uint2( 5, 1)
-#define _hash       uint2( 6, 1)
-#define _star       uint2( 7, 1)
-#define _tilde      uint2( 8, 1)
-#define _exMark     uint2( 9, 1)
-#define _quoMarks   uint2(10, 1)
-#define _section    uint2(11, 1)
-#define _dollar     uint2(12, 1)
-#define _percent    uint2(13, 1)
-#define _A          uint2( 0, 2)
-#define _B          uint2( 1, 2)
-#define _C          uint2( 2, 2)
-#define _D          uint2( 3, 2)
-#define _E          uint2( 4, 2)
-#define _F          uint2( 5, 2)
-#define _G          uint2( 6, 2)
-#define _H          uint2( 7, 2)
-#define _I          uint2( 8, 2)
-#define _J          uint2( 9, 2)
-#define _K          uint2(10, 2)
-#define _L          uint2(11, 2)
-#define _M          uint2(12, 2)
-#define _N          uint2(13, 2)
-#define _O          uint2( 0, 3)
-#define _P          uint2( 1, 3)
-#define _Q          uint2( 2, 3)
-#define _R          uint2( 3, 3)
-#define _S          uint2( 4, 3)
-#define _T          uint2( 5, 3)
-#define _U          uint2( 6, 3)
-#define _V          uint2( 7, 3)
-#define _W          uint2( 8, 3)
-#define _X          uint2( 9, 3)
-#define _Y          uint2(10, 3)
-#define _Z          uint2(11, 3)
-#define _grtrThan   uint2(12, 3)
-#define _pipe       uint2(13, 3)
-#define _a          uint2( 0, 4)
-#define _b          uint2( 1, 4)
-#define _c          uint2( 2, 4)
-#define _d          uint2( 3, 4)
-#define _e          uint2( 4, 4)
-#define _f          uint2( 5, 4)
-#define _g          uint2( 6, 4)
-#define _h          uint2( 7, 4)
-#define _i          uint2( 8, 4)
-#define _j          uint2( 9, 4)
-#define _k          uint2(10, 4)
-#define _l          uint2(11, 4)
-#define _m          uint2(12, 4)
-#define _n          uint2(13, 4)
-#define _o          uint2( 0, 5)
-#define _p          uint2( 1, 5)
-#define _q          uint2( 2, 5)
-#define _r          uint2( 3, 5)
-#define _s          uint2( 4, 5)
-#define _t          uint2( 5, 5)
-#define _u          uint2( 6, 5)
-#define _v          uint2( 7, 5)
-#define _w          uint2( 8, 5)
-#define _x          uint2( 9, 5)
-#define _y          uint2(10, 5)
-#define _z          uint2(11, 5)
-#define _equals     uint2(12, 5)
-#define _questMark  uint2(13, 5)
-#define _and        uint2( 0, 6)
-#define _slash      uint2( 1, 6)
-#define _roBracketO uint2( 2, 6)
-#define _sqBracketO uint2( 3, 6)
-#define _degree     uint2( 4, 6)
-#define _bSlash     uint2( 5, 6)
-#define _smaThan    uint2( 6, 6)
-#define _cirFlex    uint2( 7, 6)
-#define _cuBracktO  uint2( 8, 6)
-#define _sqBracketC uint2( 9, 6)
-#define _space      uint2(10, 6)
+//row 1
+#define FONT_ATLAS_SIZE_46_X_POS COLUMN_0_OFFSET
+#define FONT_ATLAS_SIZE_46_Y_POS ROW_1_OFFSET
+#define FONT_ATLAS_SIZE_46_WIDTH  uint(360)
+#define FONT_ATLAS_SIZE_46_HEIGHT uint(228)
+#define FONT_ATLAS_SIZE_46_CHAR_DIM uint2(36, 57)
+
+#define FONT_ATLAS_SIZE_44_X_POS COLUMN_1_OFFSET
+#define FONT_ATLAS_SIZE_44_Y_POS ROW_1_OFFSET
+#define FONT_ATLAS_SIZE_44_WIDTH  uint(350)
+#define FONT_ATLAS_SIZE_44_HEIGHT uint(220)
+#define FONT_ATLAS_SIZE_44_CHAR_DIM uint2(35, 55)
+
+#define FONT_ATLAS_SIZE_42_X_POS COLUMN_2_OFFSET
+#define FONT_ATLAS_SIZE_42_Y_POS ROW_1_OFFSET
+#define FONT_ATLAS_SIZE_42_WIDTH  uint(340)
+#define FONT_ATLAS_SIZE_42_HEIGHT uint(208)
+#define FONT_ATLAS_SIZE_42_CHAR_DIM uint2(34, 52)
+
+#define FONT_ATLAS_SIZE_40_X_POS COLUMN_3_OFFSET
+#define FONT_ATLAS_SIZE_40_Y_POS ROW_1_OFFSET
+#define FONT_ATLAS_SIZE_40_WIDTH  uint(300)
+#define FONT_ATLAS_SIZE_40_HEIGHT uint(200)
+#define FONT_ATLAS_SIZE_40_CHAR_DIM uint2(30, 50)
+
+#define FONT_ATLAS_SIZE_38_X_POS COLUMN_4_OFFSET
+#define FONT_ATLAS_SIZE_38_Y_POS ROW_1_OFFSET
+#define FONT_ATLAS_SIZE_38_WIDTH  uint(290)
+#define FONT_ATLAS_SIZE_38_HEIGHT uint(188)
+#define FONT_ATLAS_SIZE_38_CHAR_DIM uint2(29, 47)
+
+//row 2
+#define FONT_ATLAS_SIZE_36_X_POS COLUMN_0_OFFSET
+#define FONT_ATLAS_SIZE_36_Y_POS ROW_2_OFFSET
+#define FONT_ATLAS_SIZE_36_WIDTH  uint(280)
+#define FONT_ATLAS_SIZE_36_HEIGHT uint(180)
+#define FONT_ATLAS_SIZE_36_CHAR_DIM uint2(28, 45)
+
+#define FONT_ATLAS_SIZE_34_X_POS COLUMN_1_OFFSET
+#define FONT_ATLAS_SIZE_34_Y_POS ROW_2_OFFSET
+#define FONT_ATLAS_SIZE_34_WIDTH  uint(270)
+#define FONT_ATLAS_SIZE_34_HEIGHT uint(168)
+#define FONT_ATLAS_SIZE_34_CHAR_DIM uint2(27, 42)
+
+#define FONT_ATLAS_SIZE_32_X_POS COLUMN_2_OFFSET
+#define FONT_ATLAS_SIZE_32_Y_POS ROW_2_OFFSET
+#define FONT_ATLAS_SIZE_32_WIDTH  uint(260)
+#define FONT_ATLAS_SIZE_32_HEIGHT uint(160)
+#define FONT_ATLAS_SIZE_32_CHAR_DIM uint2(26, 40)
+
+#define FONT_ATLAS_SIZE_30_X_POS COLUMN_3_OFFSET
+#define FONT_ATLAS_SIZE_30_Y_POS ROW_2_OFFSET
+#define FONT_ATLAS_SIZE_30_WIDTH  uint(220)
+#define FONT_ATLAS_SIZE_30_HEIGHT uint(148)
+#define FONT_ATLAS_SIZE_30_CHAR_DIM uint2(22, 37)
+
+#define FONT_ATLAS_SIZE_28_X_POS COLUMN_4_OFFSET
+#define FONT_ATLAS_SIZE_28_Y_POS ROW_2_OFFSET
+#define FONT_ATLAS_SIZE_28_WIDTH  uint(210)
+#define FONT_ATLAS_SIZE_28_HEIGHT uint(140)
+#define FONT_ATLAS_SIZE_28_CHAR_DIM uint2(21, 35)
+
+//row 3
+#define FONT_ATLAS_SIZE_26_X_POS COLUMN_0_OFFSET
+#define FONT_ATLAS_SIZE_26_Y_POS ROW_3_OFFSET
+#define FONT_ATLAS_SIZE_26_WIDTH  uint(200)
+#define FONT_ATLAS_SIZE_26_HEIGHT uint(128)
+#define FONT_ATLAS_SIZE_26_CHAR_DIM uint2(20, 32)
+
+#define FONT_ATLAS_SIZE_24_X_POS COLUMN_1_OFFSET
+#define FONT_ATLAS_SIZE_24_Y_POS ROW_3_OFFSET
+#define FONT_ATLAS_SIZE_24_WIDTH  uint(190)
+#define FONT_ATLAS_SIZE_24_HEIGHT uint(120)
+#define FONT_ATLAS_SIZE_24_CHAR_DIM uint2(19, 30)
+
+#define FONT_ATLAS_SIZE_22_X_POS COLUMN_2_OFFSET
+#define FONT_ATLAS_SIZE_22_Y_POS ROW_3_OFFSET
+#define FONT_ATLAS_SIZE_22_WIDTH  uint(180)
+#define FONT_ATLAS_SIZE_22_HEIGHT uint(112)
+#define FONT_ATLAS_SIZE_22_CHAR_DIM uint2(18, 28)
+
+#define FONT_ATLAS_SIZE_20_X_POS COLUMN_3_OFFSET
+#define FONT_ATLAS_SIZE_20_Y_POS ROW_3_OFFSET
+#define FONT_ATLAS_SIZE_20_WIDTH  uint(140)
+#define FONT_ATLAS_SIZE_20_HEIGHT uint(100)
+#define FONT_ATLAS_SIZE_20_CHAR_DIM uint2(14, 25)
+
+#define FONT_ATLAS_SIZE_18_X_POS COLUMN_4_OFFSET
+#define FONT_ATLAS_SIZE_18_Y_POS ROW_3_OFFSET
+#define FONT_ATLAS_SIZE_18_WIDTH  uint(130)
+#define FONT_ATLAS_SIZE_18_HEIGHT uint( 92)
+#define FONT_ATLAS_SIZE_18_CHAR_DIM uint2(13, 23)
+
+
+static const uint CharSize[40] = {
+  FONT_ATLAS_SIZE_18_CHAR_DIM.x, FONT_ATLAS_SIZE_18_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_20_CHAR_DIM.x, FONT_ATLAS_SIZE_20_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_22_CHAR_DIM.x, FONT_ATLAS_SIZE_22_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_24_CHAR_DIM.x, FONT_ATLAS_SIZE_24_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_26_CHAR_DIM.x, FONT_ATLAS_SIZE_26_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_28_CHAR_DIM.x, FONT_ATLAS_SIZE_28_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_30_CHAR_DIM.x, FONT_ATLAS_SIZE_30_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_32_CHAR_DIM.x, FONT_ATLAS_SIZE_32_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_34_CHAR_DIM.x, FONT_ATLAS_SIZE_34_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_36_CHAR_DIM.x, FONT_ATLAS_SIZE_36_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_38_CHAR_DIM.x, FONT_ATLAS_SIZE_38_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_40_CHAR_DIM.x, FONT_ATLAS_SIZE_40_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_42_CHAR_DIM.x, FONT_ATLAS_SIZE_42_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_44_CHAR_DIM.x, FONT_ATLAS_SIZE_44_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_46_CHAR_DIM.x, FONT_ATLAS_SIZE_46_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_48_CHAR_DIM.x, FONT_ATLAS_SIZE_48_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_50_CHAR_DIM.x, FONT_ATLAS_SIZE_50_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_52_CHAR_DIM.x, FONT_ATLAS_SIZE_52_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_54_CHAR_DIM.x, FONT_ATLAS_SIZE_54_CHAR_DIM.y,
+  FONT_ATLAS_SIZE_56_CHAR_DIM.x, FONT_ATLAS_SIZE_56_CHAR_DIM.y};
+
+#define _0       uint2(0, 0)
+#define _1       uint2(1, 0)
+#define _2       uint2(2, 0)
+#define _3       uint2(3, 0)
+#define _4       uint2(4, 0)
+#define _5       uint2(5, 0)
+#define _6       uint2(6, 0)
+#define _7       uint2(7, 0)
+#define _8       uint2(8, 0)
+#define _9       uint2(9, 0)
+#define _A       uint2(0, 1)
+#define _B       uint2(1, 1)
+#define _C       uint2(2, 1)
+#define _D       uint2(3, 1)
+#define _G       uint2(4, 1)
+#define _I       uint2(5, 1)
+#define _L       uint2(6, 1)
+#define _P       uint2(7, 1)
+#define _R       uint2(8, 1)
+#define _S       uint2(9, 1)
+#define _T       uint2(0, 2)
+#define _a       uint2(1, 2)
+#define _c       uint2(2, 2)
+#define _d       uint2(3, 2)
+#define _g       uint2(4, 2)
+#define _i       uint2(5, 2)
+#define _l       uint2(6, 2)
+#define _m       uint2(7, 2)
+#define _n       uint2(8, 2)
+#define _o       uint2(9, 2)
+#define _r       uint2(0, 3)
+#define _s       uint2(1, 3)
+#define _t       uint2(2, 3)
+#define _u       uint2(3, 3)
+#define _v       uint2(4, 3)
+#define _x       uint2(5, 3)
+#define _percent uint2(6, 3)
+#define _dot     uint2(7, 3)
+#define _colon   uint2(8, 3)
+#define _minus   uint2(9, 3)
 
 texture2D TextureFontAtlasConsolidated
 <
   source = "lilium__font_atlas_consolidated.png";
 >
 {
-  Width  = 1854;
-  Height = 1693;
+  Width  = 2204;
+  Height =  959;
   Format = RGBA8;
 };
 
