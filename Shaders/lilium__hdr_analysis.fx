@@ -696,7 +696,7 @@ void Testy(
                        TEST_THINGY_x / TEST_THINGY_y * TEST_THINGY_Y,
                        TEST_THINGY_Y,
                        (1.f - TEST_THINGY_x - TEST_THINGY_y) / TEST_THINGY_y * TEST_THINGY_Y);
-        Output = float4(mul(Csp::Mat::XYZToBt709, XYZ), 1.f);
+        Output = float4(mul(XYZToBt709, XYZ), 1.f);
         return;
       }
       else if (TEST_MODE == 2)

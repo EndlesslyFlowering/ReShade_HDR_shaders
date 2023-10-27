@@ -176,8 +176,8 @@ storage2D<float> StorageMaxCll0Dot01Percent
 
 #define CIE_1931_WIDTH     736
 #define CIE_1931_HEIGHT    837
-#define CIE_1931_BG_WIDTH  835
-#define CIE_1931_BG_HEIGHT 935
+#define CIE_1931_BG_WIDTH  836
+#define CIE_1931_BG_HEIGHT 937
 
 #if (CIE_DIAGRAM == CIE_1931)
 
@@ -1659,11 +1659,11 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
       // get xy
       precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
 
-      precise const int2 xy = int2(round(XYZ.x / xyz * 1000.f) - 1,  // 1000 is the original texture size
-             CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * 1000.f) - 1);
+      precise const int2 xy = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
+             CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * 1000.f));
 
       // adjust for the added borders
-      precise const int2 xyDiagramPos = int2(xy.x + CIE_BG_BORDER, xy.y + CIE_BG_BORDER);
+      precise const int2 xyDiagramPos = xy + CIE_BG_BORDER;
 
       tex2Dstore(StorageCie1931Current,
                  xyDiagramPos,
@@ -1676,11 +1676,11 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
                                  + 15.f * XYZ.y
                                  +  3.f * XYZ.z;
 
-      precise const int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f) - 1,  // 1000 is the original texture size
-             CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f) - 1);
+      precise const int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f),  // 1000 is the original texture size
+             CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f));
 
       // adjust for the added borders
-      precise const int2 uvDiagramPos = int2(uv.x + CIE_BG_BORDER, uv.y + CIE_BG_BORDER);
+      precise const int2 uvDiagramPos = uv + CIE_BG_BORDER;
 
       tex2Dstore(StorageCie1976Current,
                  uvDiagramPos,
