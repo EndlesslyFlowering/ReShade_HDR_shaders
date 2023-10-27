@@ -1697,12 +1697,12 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
   }
 }
 
-bool IsCSP(precise float3 RGB)
+bool IsCsp(precise float3 Rgb)
 {
   if ((SHOW_CSPS || SHOW_CSP_FROM_CURSOR || SHOW_CSP_MAP)
-   && RGB.r >= 0.f
-   && RGB.g >= 0.f
-   && RGB.b >= 0.f)
+   && Rgb.r >= 0.f
+   && Rgb.g >= 0.f
+   && Rgb.b >= 0.f)
   {
     return true;
   }
@@ -1726,17 +1726,17 @@ bool IsCSP(precise float3 RGB)
 
 #endif
 
-float GetCSP(precise float3 Rgb)
+float GetCsp(precise float3 Rgb)
 {
   if (SHOW_CSPS
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
   {
-    if (IsCSP(_IS_CSP_BT709(Rgb)))
+    if (IsCsp(_IS_CSP_BT709(Rgb)))
     {
       return IS_CSP_BT709;
     }
-    else if (IsCSP(_IS_CSP_DCI_P3(Rgb)))
+    else if (IsCsp(_IS_CSP_DCI_P3(Rgb)))
     {
       return IS_CSP_DCI_P3 / 255.f;
     }
@@ -1750,11 +1750,11 @@ float GetCSP(precise float3 Rgb)
 
 #else
 
-    else if (IsCSP(_IS_CSP_BT2020(Rgb)))
+    else if (IsCsp(_IS_CSP_BT2020(Rgb)))
     {
       return IS_CSP_BT2020 / 255.f;
     }
-    else if (IsCSP(_IS_CSP_AP0(Rgb)))
+    else if (IsCsp(_IS_CSP_AP0(Rgb)))
     {
       return IS_CSP_AP0 / 255.f;
     }
@@ -1771,7 +1771,7 @@ float GetCSP(precise float3 Rgb)
 void PS_CalcCsps(
               float4 VPos     : SV_Position,
               float2 TexCoord : TEXCOORD,
-  out precise float  curCSP   : SV_TARGET)
+  out precise float  curCsp   : SV_TARGET)
 {
   if (SHOW_CSPS
    || SHOW_CSP_FROM_CURSOR
@@ -1788,17 +1788,17 @@ void PS_CalcCsps(
      && absPixel.g > SMALLEST_FP16
      && absPixel.b > SMALLEST_FP16)
     {
-      curCSP = GetCSP(pixel);
+      curCsp = GetCsp(pixel);
     }
     else
     {
-      curCSP = IS_CSP_BT709 / 255.f;
+      curCsp = IS_CSP_BT709 / 255.f;
     }
     return;
 
 #else
 
-    curCSP = GetCSP(pixel);
+    curCsp = GetCsp(pixel);
 
     return;
 
@@ -1817,11 +1817,11 @@ void PS_CalcCsps(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
       precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
 #endif
-      curCSP = GetCSP(curPixel);
+      curCsp = GetCsp(curPixel);
     }
     else
     {
-      curCSP = IS_CSP_BT709 / 255.f;
+      curCsp = IS_CSP_BT709 / 255.f;
     }
     return;
 
@@ -1832,7 +1832,7 @@ void PS_CalcCsps(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
     precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
 #endif
-    curCSP = GetCSP(curPixel);
+    curCsp = GetCsp(curPixel);
 
     return;
 
@@ -1840,7 +1840,7 @@ void PS_CalcCsps(
 
 #else
 
-    curCSP = IS_CSP_INVALID / 255.f;
+    curCsp = IS_CSP_INVALID / 255.f;
 
     return;
 
@@ -1887,23 +1887,23 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 
       for (int y = 0; y < BUFFER_HEIGHT; y++)
       {
-        uint curCSP = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)).r * 255.f);
-        if (curCSP == IS_CSP_BT709)
+        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)).r * 255.f);
+        if (curCsp == IS_CSP_BT709)
         {
           counter_BT709++;
         }
-        else if (curCSP == IS_CSP_DCI_P3)
+        else if (curCsp == IS_CSP_DCI_P3)
         {
           counter_DCI_P3++;
         }
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-        else if (curCSP == IS_CSP_BT2020)
+        else if (curCsp == IS_CSP_BT2020)
         {
           counter_BT2020++;
         }
-        else if (curCSP == IS_CSP_AP0)
+        else if (curCsp == IS_CSP_AP0)
         {
           counter_AP0++;
         }
@@ -1976,8 +1976,8 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
   }
 }
 
-float3 Create_CSP_Map(
-  uint  CSP,
+float3 CreateCspMap(
+  uint  Csp,
   float Y)
 //  float WhitePoint)
 {
@@ -1985,12 +1985,12 @@ float3 Create_CSP_Map(
   {
     float3 output;
 
-    if (CSP != IS_CSP_BT709)
+    if (Csp != IS_CSP_BT709)
     {
       Y += 20.f;
     }
 
-    switch(CSP)
+    switch(Csp)
     {
       case IS_CSP_BT709:
       {
