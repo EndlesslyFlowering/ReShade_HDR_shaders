@@ -8,5 +8,6 @@ Shaders/ReShade.fxh
 Shaders/ReShadeUI.fxh
 
 Textures/_temp
+Textures/_old
 
 shadertoolsconfig.json
