@@ -1,8 +1,8 @@
 #pragma once
 
 
-#define FONT_ATLAS_OFFSET_X uint(441)
-#define FONT_ATLAS_OFFSET_Y uint(277)
+#define FONT_ATLAS_OFFSET_X uint(440)
+#define FONT_ATLAS_OFFSET_Y uint(276)
 
 #define NUMBER_OF_CHARS_X uint(10)
 #define NUMBER_OF_CHARS_Y uint( 4)
@@ -214,8 +214,8 @@ texture2D TextureFontAtlasConsolidated
   source = "lilium__font_atlas_consolidated.png";
 >
 {
-  Width  = 2204;
-  Height =  959;
+  Width  = 2130;
+  Height =  956;
   Format = RGBA8;
 };
 
