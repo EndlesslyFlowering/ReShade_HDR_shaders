@@ -304,25 +304,20 @@ namespace Csp
     // extended sRGB gamma including above 1 and below -1
     float FromExtendedSrgb(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (absC > 1.f)
       {
-        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
       }
-      else if (C < -0.04045f)
+      else if (absC > 0.04045f)
       {
-        return -pow((-C + 0.055f) / 1.055f, 2.4f);
-      }
-      else if (C <= 0.04045f)
-      {
-        return C / 12.92f;
-      }
-      else if (C <= 1.f)
-      {
-        return pow((C + 0.055f) / 1.055f, 2.4f);
+        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
       }
       else
       {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        return C / 12.92f;
       }
     }
     //{
@@ -352,25 +347,20 @@ namespace Csp
 
     float ToExtendedSrgb(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (absC > 1.f)
       {
-        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C < -0.0031308f)
+      else if (absC > 0.0031308f)
       {
-        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
-      }
-      else if (C <= 0.0031308f)
-      {
-        return C * 12.92f;
-      }
-      else if (C <= 1.f)
-      {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
       }
       else
       {
-        return pow((C + 0.055f) / 1.055f, 2.4f);
+        return C * 12.92f;
       }
     }
 
@@ -426,25 +416,20 @@ namespace Csp
 
     float FromExtendedSrgbAccurate(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (absC > 1.f)
       {
-        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
+        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
       }
-      else if (C < -SrgbX)
+      else if (C > SrgbX)
       {
-        return -pow((-C + 0.055f) / 1.055f, 2.4f);
-      }
-      else if (C <= SrgbX)
-      {
-        return C / SrgbPhi;
-      }
-      else if (C <= 1.f)
-      {
-        return pow((C + 0.055f) / 1.055f, 2.4f);
+        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
       }
       else
       {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        return C / SrgbPhi;
       }
     }
 
@@ -457,25 +442,20 @@ namespace Csp
 
     float ToExtendedSrgbAccurate(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (C > 1.f)
       {
-        return -pow((-C + 0.055f) / 1.055f, 2.4f);
+        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
       }
-      else if (C < -SrgbXDivPhi)
+      else if (C > SrgbXDivPhi)
       {
-        return -1.055f * pow(-C, (1.f / 2.4f)) + 0.055f;
-      }
-      else if (C <= SrgbXDivPhi)
-      {
-        return C * SrgbPhi;
-      }
-      else if (C <= 1.f)
-      {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
       }
       else
       {
-        return pow((C + 0.055f) / 1.055f, 2.4f);
+        return C * SrgbPhi;
       }
     }
 
@@ -495,21 +475,16 @@ namespace Csp
     // extended gamma 2.2 including above 1 and below 0
     float FromExtendedGamma22(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (C > 1.f)
       {
-        return -pow(-C, ApplyGamma22);
-      }
-      else if (C < 0.f)
-      {
-        return -pow(-C, RemoveGamma22);
-      }
-      else if (C <= 1.f)
-      {
-        return pow(C, RemoveGamma22);
+        return signC * pow(absC, ApplyGamma22);
       }
       else
       {
-        return pow(C, ApplyGamma22);
+        return signC * pow(absC, RemoveGamma22);
       }
     }
     //{
@@ -542,21 +517,16 @@ namespace Csp
     // extended gamma 2.4 including above 1 and below 0
     float FromExtendedGamma24(float C)
     {
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (absC > 1.f)
       {
-        return -pow(-C, ApplyGamma24);
-      }
-      else if (C < 0.f)
-      {
-        return -pow(-C, RemoveGamma24);
-      }
-      else if (C <= 1.f)
-      {
-        return pow(C, RemoveGamma24);
+        return signC * pow(absC, ApplyGamma24);
       }
       else
       {
-        return pow(C, ApplyGamma24);
+        return signC * pow(absC, RemoveGamma24);
       }
     }
     //{
@@ -613,21 +583,16 @@ namespace Csp
     {
       float inverseAdjust = 1.f / Adjust;
 
-      if (C < -1.f)
+      static const float absC = abs(C);
+      static const float signC = sign(C);
+
+      if (C > 1.f)
       {
-        return -pow(-C, inverseAdjust);
-      }
-      else if (C < 0.f)
-      {
-        return -pow(-C, Adjust);
-      }
-      else if (C <= 1.f)
-      {
-        return pow(C, Adjust);
+        return signC * pow(absC, inverseAdjust);
       }
       else
       {
-        return pow(C, inverseAdjust);
+        return signC * pow(absC, Adjust);
       }
     }
 
