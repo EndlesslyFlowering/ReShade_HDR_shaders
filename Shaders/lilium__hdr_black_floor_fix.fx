@@ -67,8 +67,8 @@ void PS_HdrBlackFloorFix(
   out float4 Output       : SV_Target0,
   in  float  FuncParms[5] : FuncParms)
 {
-  if (!(Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
-     && Ui::HdrBlackFloorFix::Lowering::EnableLowering))
+  if (!Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+   && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
     discard;
   }
