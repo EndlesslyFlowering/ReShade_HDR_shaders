@@ -114,7 +114,7 @@
     #define BACK_BUFFER_FORMAT_TEXT "RGB10A2_UNORM or BGR10A2_UNORM"
   #endif
 #elif (BUFFER_COLOR_BIT_DEPTH == 16)
-  #define BACK_BUFFER_FORMAT_TEXT "RGBA16_FLOAT"
+  #define BACK_BUFFER_FORMAT_TEXT "RGBA16_SFLOAT"
 #else
   #define BACK_BUFFER_FORMAT_TEXT "unknown"
 #endif
@@ -1188,6 +1188,12 @@ namespace Csp
         asfloat(0x3e1fc000), asfloat(0x3f3a4000), asfloat(0x3dee8000), \
         asfloat(0x3d100000), asfloat(0x3e208000), asfloat(0x3f4ed000)) \
 
+      //RGB DCI-P3->LMS
+      #define DciP3ToLms float3x3( \
+        asfloat(0x3eab2000), asfloat(0x3f139000), asfloat(0x3db68000), \
+        asfloat(0x3e224000), asfloat(0x3f36b000), asfloat(0x3e030000), \
+        asfloat(0x3ca80000), asfloat(0x3dbc0000), asfloat(0x3f632000)) \
+
       //RGB BT.2020->LMS
       #define Bt2020ToLms float3x3( \
         asfloat(0x3ed30000), asfloat(0x3f062000), asfloat(0x3d830000), \
@@ -1206,6 +1212,12 @@ namespace Csp
         asfloat(0x40c57ba5), asfloat(0xc0aa33fb), asfloat(0x3e171433), \
         asfloat(0xbfa92286), asfloat(0x4023ac35), asfloat(0xbe71be38), \
         asfloat(0xbc47d18b), asfloat(0xbe87882b), asfloat(0x3fa37be5)) \
+
+      //LMS->RGB DCI-P3
+      #define LmsToDciP3 float3x3( \
+        asfloat(0x409b273c), asfloat(0xc07b4bdf), asfloat(0x3da22dbf), \
+        asfloat(0xbf89c7ab), asfloat(0x40132ae0), asfloat(0xbe64d21d), \
+        asfloat(0xba37da3e), asfloat(0xbe16b154), asfloat(0x3f92ff84)) \
 
       //LMS->RGB BT.2020
       #define LmsToBt2020 float3x3( \
@@ -1246,6 +1258,15 @@ namespace Csp
         }
       } //Bt709To
 
+      namespace DciP3To
+      {
+        //RGB DCI-P3->LMS
+        float3 Lms(float3 Colour)
+        {
+          return mul(DciP3ToLms, Colour);
+        }
+      } //DciP3To
+
       namespace Bt2020To
       {
         //RGB BT.2020->LMS
@@ -1270,6 +1291,12 @@ namespace Csp
         float3 Bt709(float3 Colour)
         {
           return mul(LmsToBt709, Colour);
+        }
+
+        //LMS->RGB DCI-P3
+        float3 DciP3(float3 Colour)
+        {
+          return mul(LmsToDciP3, Colour);
         }
 
         //LMS->RGB BT.2020
