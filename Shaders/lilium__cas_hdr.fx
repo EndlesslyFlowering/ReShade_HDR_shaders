@@ -3,6 +3,14 @@
 
 //#define ATOMIC
 
+uniform int CasAbout
+<
+  ui_category = "About";
+  ui_label    = " ";
+  ui_type     = "radio";
+  ui_text     = "AMD FidelityFX Contrast Adaptive Sharpening 1.1"
+           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling. The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
+>;
 
 uniform bool SharpenOnly
 <
@@ -15,7 +23,7 @@ uniform bool SharpenOnly
 
 uniform float CasSharpness
 <
-  ui_label   = "sharpness";
+  ui_label   = "sharpness amount";
   ui_tooltip = "Even a value of 0 applies a bit of sharpness!";
   ui_type    = "drag";
   ui_min     = 0.f;
@@ -115,9 +123,9 @@ void PS_OutputCas(
 technique lilium__cas_hdr
 <
 #if defined(IS_POSSIBLE_HDR_CSP)
-  ui_label = "Lilium's HDR Contrast Adaptive Sharpening (CAS)";
+  ui_label = "Lilium's HDR Contrast Adaptive Sharpening (AMD FidelityFX CAS)";
 #else
-  ui_label = "Lilium's Contrast Adaptive Sharpening (CAS)";
+  ui_label = "Lilium's Contrast Adaptive Sharpening (AMD FidelityFX CAS)";
 #endif
 >
 {
