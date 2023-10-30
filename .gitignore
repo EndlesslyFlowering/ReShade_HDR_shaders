@@ -2,6 +2,9 @@ Shaders/lilium__include/_no.fxh
 
 Shaders/lilium__include/expand_gamut.fxh
 
+Shaders/lilium__include/cas/gpu/ffx_gpu_common_half.h
+Shaders/lilium__include/cas/gpu/ffx_core_portability.h
+
 Shaders/lilium__re_sdr_black_fix.fx
 
 Shaders/ReShade.fxh
