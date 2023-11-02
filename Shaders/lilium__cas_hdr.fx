@@ -1,5 +1,6 @@
 
-//#define ATOMIC
+#include "lilium__include/colour_space.fxh"
+
 
 uniform int CAS_ABOUT
 <
@@ -45,20 +46,18 @@ uniform bool WEIGH_BY_ALL_CHANNELS
 > = false;
 
 
-//#ifndef USE_32_BIT_FLOAT_BUFFER
-//  #define USE_32_BIT_FLOAT_BUFFER NO
-//#endif
-
-
 texture2D TextureCas
 {
 	Width  = BUFFER_WIDTH;
 	Height = BUFFER_HEIGHT;
 
-#if (USE_32_BIT_FLOAT_BUFFER == YES)
-  Format = RGBA32F;
-#else
+#if (BUFFER_COLOR_BIT_DEPTH == 16 \
+  || BUFFER_COLOR_BIT_DEPTH == 11)
   Format = RGBA16F;
+#elif (BUFFER_COLOR_BIT_DEPTH == 10)
+  Format = RGB10A2;
+#elif (BUFFER_COLOR_BIT_DEPTH == 8)
+  Format = RGBA8;
 #endif
 };
 
