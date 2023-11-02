@@ -69,47 +69,14 @@ float3 CasSharpenOnly(
   float3 minRgb = MIN3(MIN3(d, e, f), b, h);
   float3 maxRgb = MAX3(MAX3(d, e, f), b, h);
 
-  if (BETTER_DIAGONALS)
-  {
-    float3 minRgb2 = MIN3(MIN3(minRgb, a, c), g, i);
-    minRgb += + minRgb2;
-
-    float3 maxRgb2 = MAX3(MAX3(maxRgb, a, c), g, i);
-    maxRgb = maxRgb + maxRgb2;
-  }
-
-  float3 rcpMaxRgb;
+  minRgb += + MIN3(MIN3(minRgb, a, c), g, i);
+  maxRgb = maxRgb + MAX3(MAX3(maxRgb, a, c), g, i);
 
   // Smooth minimum distance to signal limit divided by smooth max.
-  if (USE_PRECISE_MATH)
-  {
-    rcpMaxRgb = rcp(maxRgb);
-  }
-  else
-  {
-    rcpMaxRgb = ApproximateReciprocal(maxRgb);
-  }
-
-  float3 amplifyRgb;
-
-  if (USE_PRECISE_MATH)
-  {
-    amplifyRgb = saturate(min(minRgb, 2.f - maxRgb) * rcpMaxRgb);
-  }
-  else
-  {
-    amplifyRgb = saturate(min(minRgb, 1.f - maxRgb) * rcpMaxRgb);
-  }
+  float3 rcpMaxRgb = rcp(maxRgb);
 
   // Shaping amount of sharpening.
-  if (USE_PRECISE_MATH)
-  {
-    amplifyRgb = sqrt(amplifyRgb);
-  }
-  else
-  {
-    amplifyRgb = ApproximateSqrt(amplifyRgb);
-  }
+  float3 amplifyRgb = sqrt(saturate(min(minRgb, 2.f - maxRgb) * rcpMaxRgb));
 
   // Filter shape.
   //  0 w 0
@@ -123,16 +90,7 @@ float3 CasSharpenOnly(
   {
     float3 weight = amplifyRgb * peak;
 
-    float3 rcpWeight = 1.f + 4.f * weight;
-
-    if (USE_PRECISE_MATH)
-    {
-      rcpWeight = rcp(rcpWeight);
-    }
-    else
-    {
-      rcpWeight = ApproximateReciprocalMedium(rcpWeight);
-    }
+    float3 rcpWeight = rcp(1.f + 4.f * weight);
 
     output = (b * weight
             + d * weight
@@ -143,19 +101,11 @@ float3 CasSharpenOnly(
   }
   else
   {
+    // Filter using green coef only, depending on dead code removal to strip out the extra overhead.
     float weight = amplifyRgb.g * peak;
 
-    float rcpWeight = 1.f + 4.f * weight;
+    float rcpWeight = rcp(1.f + 4.f * weight);
 
-    // Filter using green coef only, depending on dead code removal to strip out the extra overhead.
-    if (USE_PRECISE_MATH)
-    {
-      rcpWeight = rcp(rcpWeight);
-    }
-    else
-    {
-      rcpWeight = ApproximateReciprocalMedium(rcpWeight);
-    }
 
     output = (b * weight
             + d * weight
@@ -227,47 +177,14 @@ float3 CasSharpenAndUpscale(
   float3 minRgb = MIN3(MIN3(b, e, f), g, j);
   float3 mxfRgb = MAX3(MAX3(b, e, f), g, j);
 
-  if (BETTER_DIAGONALS)
-  {
-    float3 mnfRgb2 = MIN3(MIN3(minRgb, a, c), i, k);
-    minRgb += mnfRgb2;
-
-    float3 mxfRgb2 = MAX3(MAX3(mxfRgb, a, c), i, k);
-    mxfRgb += mxfRgb2;
-  }
-
-  float3 rcpMfRgb;
+  minRgb += MIN3(MIN3(minRgb, a, c), i, k);
+  mxfRgb += MAX3(MAX3(mxfRgb, a, c), i, k);
 
   // Smooth minimum distance to signal limit divided by smooth max.
-  if (USE_PRECISE_MATH)
-  {
-    rcpMfRgb = rcp(mxfRgb);
-  }
-  else
-  {
-    rcpMfRgb = ApproximateReciprocal(mxfRgb);
-  }
-
-  float3 ampfRgb;
-
-  if (BETTER_DIAGONALS)
-  {
-    ampfRgb = saturate(min(minRgb, 2.f - mxfRgb) * rcpMfRgb);
-  }
-  else
-  {
-    ampfRgb = saturate(min(minRgb, 1.f - mxfRgb) * rcpMfRgb);
-  }
+  float3 rcpMfRgb = rcp(mxfRgb);
 
   // Shaping amount of sharpening.
-  if (USE_PRECISE_MATH)
-  {
-    ampfRgb = sqrt(ampfRgb);
-  }
-  else
-  {
-    ampfRgb = ApproximateSqrt(ampfRgb);
-  }
+  float3 ampfRgb = sqrt(saturate(min(minRgb, 2.f - mxfRgb) * rcpMfRgb));
 
   // Filter shape.
   //  0 w 0
@@ -280,16 +197,7 @@ float3 CasSharpenAndUpscale(
   // Thin edges to hide bilinear interpolation (helps diagonals).
   static const float thinB = 1.f / 32.f;
 
-  float s = thinB + mxfRgb.g - minRgb.g;
-
-  if (USE_PRECISE_MATH)
-  {
-    s = rcp(s);
-  }
-  else
-  {
-    s = ApproximateReciprocal(s);
-  }
+  float s = rcp(thinB + mxfRgb.g - minRgb.g);
 
   // Final weighting.
   //    b c
@@ -316,16 +224,7 @@ float3 CasSharpenAndUpscale(
 
   if (WEIGH_BY_ALL_CHANNELS)
   {
-    float3 rcpWeight = 4.f * wfRgb_x_s + s;
-
-    if (USE_PRECISE_MATH)
-    {
-      rcpWeight = rcp(rcpWeight);
-    }
-    else
-    {
-      rcpWeight = ApproximateReciprocalMedium(rcpWeight);
-    }
+    float3 rcpWeight = rcp(4.f * wfRgb_x_s + s);
 
     output = saturate((b * wfRgb_x_s
                      + e * wfRgb_x_s
@@ -336,17 +235,8 @@ float3 CasSharpenAndUpscale(
   }
   else
   {
-    float rcpWeight = 4.f * wfRgb_x_s.g + s;
-
     // Using green coef only, depending on dead code removal to strip out the extra overhead.
-    if (USE_PRECISE_MATH)
-    {
-      rcpWeight = rcp(rcpWeight);
-    }
-    else
-    {
-      rcpWeight = ApproximateReciprocalMedium(rcpWeight);
-    }
+    float rcpWeight = rcp(4.f * wfRgb_x_s.g + s);
 
     output = saturate((b * wfRgb_x_s.g
                      + e * wfRgb_x_s.g

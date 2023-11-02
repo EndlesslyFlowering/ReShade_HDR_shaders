@@ -44,20 +44,6 @@ uniform bool WEIGH_BY_ALL_CHANNELS
   ui_label = "apply sharpen weight by all channels";
 > = false;
 
-uniform bool USE_PRECISE_MATH
-<
-  ui_label   = "use precise math";
-  ui_tooltip = "Leads to slightly better quality."
-          "\n" "At the cost of a bit of performance.";
-> = false;
-
-uniform bool BETTER_DIAGONALS
-<
-  ui_label   = "better diagonals";
-  ui_tooltip = "Leads to slightly better quality."
-          "\n" "At the cost of a bit of performance.";
-> = false;
-
 
 //#ifndef USE_32_BIT_FLOAT_BUFFER
 //  #define USE_32_BIT_FLOAT_BUFFER NO
