@@ -1,27 +1,25 @@
 
-#include "lilium__include/colour_space.fxh"
-
 //#define ATOMIC
 
-uniform int CasAbout
+uniform int CAS_ABOUT
 <
   ui_category = "About";
   ui_label    = " ";
   ui_type     = "radio";
   ui_text     = "AMD FidelityFX Contrast Adaptive Sharpening 1.1"
-           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling. The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
+           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling."
+                "The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
 >;
 
-uniform bool SharpenOnly
+uniform bool SHARPEN_ONLY
 <
   ui_label   = "sharpen only path";
   ui_tooltip = "If unchecked will use the upscale path of CAS."
-          "\n" "Which uses more samples and may lead to higher quality."
-          "\n" "While also costing a bit more performance."
+          "\n" "Which does processing a little different."
           "\n" "But does not do any upscaling at all!";
 > = true;
 
-uniform float CasSharpness
+uniform float SHARPEN_AMOUNT
 <
   ui_label   = "sharpness amount";
   ui_tooltip = "Even a value of 0 applies a bit of sharpness!";
@@ -31,14 +29,29 @@ uniform float CasSharpness
   ui_step    = 0.001f;
 > = 0.f;
 
-uniform bool FFX_CAS_USE_PRECISE_MATH
+uniform float APPLY_AMOUNT
+<
+  ui_label   = "amount of sharpness to apply";
+  ui_tooltip = "How much of the sharpness to apply to the final image.";
+  ui_type    = "drag";
+  ui_min     = 0.f;
+  ui_max     = 1.f;
+  ui_step    = 0.001f;
+> = 1.f;
+
+uniform bool WEIGH_BY_ALL_CHANNELS
+<
+  ui_label = "apply sharpen weight by all channels";
+> = false;
+
+uniform bool USE_PRECISE_MATH
 <
   ui_label   = "use precise math";
   ui_tooltip = "Leads to slightly better quality."
           "\n" "At the cost of a bit of performance.";
 > = false;
 
-uniform bool FFX_CAS_BETTER_DIAGONALS
+uniform bool BETTER_DIAGONALS
 <
   ui_label   = "better diagonals";
   ui_tooltip = "Leads to slightly better quality."
@@ -78,37 +91,62 @@ storage2D<float4> StorageCas
 };
 
 
-#define FFX_GPU  1
-#define FFX_HLSL 1
-
-#include "lilium__include/cas/gpu/cas/ffx_cas_callbacks_hlsl.h"
-#include "lilium__include/cas/gpu/cas/ffx_cas_sharpen.h"
+#include "lilium__include/cas.fxh"
 
 
-#ifdef ATOMIC
-groupshared int casPeak;
-#endif
 void CS_Cas(
-  uint3 LocalThreadId    : SV_GroupThreadID,
-  uint3 WorkGroupId      : SV_GroupID,
-  uint3 DispatchThreadID : SV_DispatchThreadID)
+  uint3 LocalThreadId : SV_GroupThreadID,
+  uint3 WorkGroupId   : SV_GroupID)
 {
-#ifdef ATOMIC
-  if (all(LocalThreadId == uint3(0, 0, 0)))
+  static const int2 coords = RemapForQuad(LocalThreadId.x)
+                           + uint2(WorkGroupId.x << 4u, WorkGroupId.y << 4u);
+
+  static const int2 coords8 = coords + 8;
+
+  static const float2 coordsEfhi  = GetEfhiCoords(coords);
+  static const float2 coordsEfhi8 = GetEfhiCoords(coords8);
+
+  if (SHARPEN_ONLY)
   {
-    casPeak = asint(-ffxReciprocal(ffxLerp(8.0, 5.0, CasSharpness)));
+    float4 sharpened = float4(CasSharpenOnly(coords, coordsEfhi), 1.f);
+    tex2Dstore(StorageCas, coords, sharpened);
+
+    int2 curCoords = int2(coords8.x, coords.y);
+    float2 curEfhiCoords = float2(coordsEfhi8.x, coordsEfhi.y);
+
+    sharpened.rgb = CasSharpenOnly(curCoords, curEfhiCoords);
+    tex2Dstore(StorageCas, curCoords, sharpened);
+
+    sharpened.rgb = CasSharpenOnly(coords8, coordsEfhi8);
+    tex2Dstore(StorageCas, coords8, sharpened);
+
+    curCoords = int2(coords.x, coords8.y);
+    curEfhiCoords = float2(coordsEfhi.x, coordsEfhi8.y);
+
+    sharpened.rgb = CasSharpenOnly(curCoords, curEfhiCoords);
+    tex2Dstore(StorageCas, curCoords, sharpened);
+  }
+  else
+  {
+    float4 sharpened = float4(CasSharpenAndUpscale(coords, coordsEfhi), 1.f);
+    tex2Dstore(StorageCas, coords, sharpened);
+
+    int2 curCoords = int2(coords8.x, coords.y);
+    float2 curEfhiCoords = float2(coordsEfhi8.x, coordsEfhi.y);
+
+    sharpened.rgb = CasSharpenAndUpscale(curCoords, curEfhiCoords);
+    tex2Dstore(StorageCas, curCoords, sharpened);
+
+    sharpened.rgb = CasSharpenAndUpscale(coords8, coordsEfhi8);
+    tex2Dstore(StorageCas, coords8, sharpened);
+
+    curCoords = int2(coords.x, coords8.y);
+    curEfhiCoords = float2(coordsEfhi.x, coordsEfhi8.y);
+
+    sharpened.rgb = CasSharpenAndUpscale(curCoords, curEfhiCoords);
+    tex2Dstore(StorageCas, curCoords, sharpened);
   }
 
-  barrier();
-  memoryBarrier();
-#endif
-
-#ifdef ATOMIC
-  Sharpen(LocalThreadId, WorkGroupId, DispatchThreadID, asfloat(casPeak));
-#else
-  Sharpen(LocalThreadId, WorkGroupId, DispatchThreadID);
-#endif
-  return;
 }
 
 
