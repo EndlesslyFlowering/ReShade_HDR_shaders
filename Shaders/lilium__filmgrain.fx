@@ -39,12 +39,12 @@ float Rand(inout float State)
 
 void PS_Filmgrain(
       float4 Vpos     : SV_Position,
-      float2 Texcoord : TEXCOORD,
-  out float4 Output   : SV_TARGET)
+      float2 TexCoord : TEXCOORD0,
+  out float4 Output   : SV_Target0)
 {
-  float3 input = tex2D(ReShade::BackBuffer, Texcoord).rgb;
+  float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 
-  float3 m     = float3(Texcoord, RANDOM / 100000.f) + 1.f;
+  float3 m     = float3(TexCoord, RANDOM / 100000.f) + 1.f;
   float  state = Permute(Permute(m.x) + m.y) + m.z;
 
   float p = 0.95f * Rand(state) + 0.025f;
