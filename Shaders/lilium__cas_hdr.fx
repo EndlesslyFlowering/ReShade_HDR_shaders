@@ -1,149 +1,53 @@
 
-#include "lilium__include/colour_space.fxh"
-
-
-uniform int CAS_ABOUT
-<
-  ui_category = "About";
-  ui_label    = " ";
-  ui_type     = "radio";
-  ui_text     = "AMD FidelityFX Contrast Adaptive Sharpening 1.1"
-           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling."
-                "The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
->;
-
-uniform bool SHARPEN_ONLY
-<
-  ui_label   = "sharpen only path";
-  ui_tooltip = "If unchecked will use the upscale path of CAS."
-          "\n" "Which does processing a little different."
-          "\n" "But does not do any upscaling at all!";
-> = true;
-
-uniform float SHARPEN_AMOUNT
-<
-  ui_label   = "sharpness amount";
-  ui_tooltip = "Even a value of 0 applies a bit of sharpness!";
-  ui_type    = "drag";
-  ui_min     = 0.f;
-  ui_max     = 1.f;
-  ui_step    = 0.001f;
-> = 0.f;
-
-uniform float APPLY_AMOUNT
-<
-  ui_label   = "amount of sharpness to apply";
-  ui_tooltip = "How much of the sharpness to apply to the final image.";
-  ui_type    = "drag";
-  ui_min     = 0.f;
-  ui_max     = 1.f;
-  ui_step    = 0.001f;
-> = 1.f;
-
-uniform bool WEIGH_BY_ALL_CHANNELS
-<
-  ui_label = "apply sharpen weight by all channels";
-> = false;
-
-
-texture2D TextureCas
-{
-	Width  = BUFFER_WIDTH;
-	Height = BUFFER_HEIGHT;
-
-#if (BUFFER_COLOR_BIT_DEPTH == 16 \
-  || BUFFER_COLOR_BIT_DEPTH == 11)
-  Format = RGBA16F;
-#elif (BUFFER_COLOR_BIT_DEPTH == 10)
-  Format = RGB10A2;
-#elif (BUFFER_COLOR_BIT_DEPTH == 8)
-  Format = RGBA8;
-#endif
-};
-
-sampler2D<float4> SamplerCas
-{
-  Texture = TextureCas;
-
-  AddressU = BORDER;
-  AddressV = BORDER;
-  AddressW = BORDER;
-};
-
-storage2D<float4> StorageCas
-{
-  Texture = TextureCas;
-};
-
-
 #include "lilium__include/cas.fxh"
 
 
-void CS_Cas(
-  uint3 LocalThreadId : SV_GroupThreadID,
-  uint3 WorkGroupId   : SV_GroupID)
+// Vertex shader generating a triangle covering the entire screen.
+// Calculate values only "once" (3 times because it's 3 vertices)
+// for the pixel shader.
+void VS_PrepareCas(
+  in                  uint   Id       : SV_VertexID,
+  out                 float4 VPos     : SV_Position,
+  out                 float2 TexCoord : TEXCOORD0,
+  out nointerpolation float  Peak     : Peak)
 {
-  static const int2 coords = RemapForQuad(LocalThreadId.x)
-                           + uint2(WorkGroupId.x << 4u, WorkGroupId.y << 4u);
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-  static const int2 coords8 = coords + 8;
+  Peak = -1.f / (-3.f * SHARPEN_AMOUNT + 8.f);
+}
 
-  static const float2 coordsEfhi  = GetEfhiCoords(coords);
-  static const float2 coordsEfhi8 = GetEfhiCoords(coords8);
+void PS_Cas(
+  in                 float4 VPos     : SV_Position,
+  in                 float2 TexCoord : TEXCOORD0,
+  in nointerpolation float  Peak     : Peak,
+  out                float4 Output   : SV_Target0)
+{
+  static const float2 coordsEfhi = GetEfhiCoords(TexCoord);
+
+  SPixelsToProcess ptp;
+
+  PSGetPixels(TexCoord, coordsEfhi, ptp);
 
   if (SHARPEN_ONLY)
   {
-    float4 sharpened = float4(CasSharpenOnly(coords, coordsEfhi), 1.f);
-    tex2Dstore(StorageCas, coords, sharpened);
+    Output = float4(CasSharpenOnly(ptp, Peak), 1.f);
 
-    int2 curCoords = int2(coords8.x, coords.y);
-    float2 curEfhiCoords = float2(coordsEfhi8.x, coordsEfhi.y);
-
-    sharpened.rgb = CasSharpenOnly(curCoords, curEfhiCoords);
-    tex2Dstore(StorageCas, curCoords, sharpened);
-
-    sharpened.rgb = CasSharpenOnly(coords8, coordsEfhi8);
-    tex2Dstore(StorageCas, coords8, sharpened);
-
-    curCoords = int2(coords.x, coords8.y);
-    curEfhiCoords = float2(coordsEfhi.x, coordsEfhi8.y);
-
-    sharpened.rgb = CasSharpenOnly(curCoords, curEfhiCoords);
-    tex2Dstore(StorageCas, curCoords, sharpened);
+    return;
   }
   else
   {
-    float4 sharpened = float4(CasSharpenAndUpscale(coords, coordsEfhi), 1.f);
-    tex2Dstore(StorageCas, coords, sharpened);
+    Output = float4(CasSharpenAndUpscale(ptp, Peak), 1.f);
 
-    int2 curCoords = int2(coords8.x, coords.y);
-    float2 curEfhiCoords = float2(coordsEfhi8.x, coordsEfhi.y);
-
-    sharpened.rgb = CasSharpenAndUpscale(curCoords, curEfhiCoords);
-    tex2Dstore(StorageCas, curCoords, sharpened);
-
-    sharpened.rgb = CasSharpenAndUpscale(coords8, coordsEfhi8);
-    tex2Dstore(StorageCas, coords8, sharpened);
-
-    curCoords = int2(coords.x, coords8.y);
-    curEfhiCoords = float2(coordsEfhi.x, coordsEfhi8.y);
-
-    sharpened.rgb = CasSharpenAndUpscale(curCoords, curEfhiCoords);
-    tex2Dstore(StorageCas, curCoords, sharpened);
+    return;
   }
-
 }
 
 
-void PS_OutputCas(
-  in  float4 VPos     : SV_Position,
-  in  float2 TexCoord : TEXCOORD0,
-  out float4 Output   : SV_Target0)
-{
-  Output = tex2D(SamplerCas, TexCoord);
-}
-
-technique lilium__cas_hdr
+technique lilium__cas_hdr_ps
 <
 #if defined(IS_POSSIBLE_HDR_CSP)
   ui_label = "Lilium's HDR Contrast Adaptive Sharpening (AMD FidelityFX CAS)";
@@ -152,29 +56,9 @@ technique lilium__cas_hdr
 #endif
 >
 {
-#if (BUFFER_WIDTH % 16 != 0)
-  #define CAS_DISPATCH_X (BUFFER_WIDTH / 16) + 1
-#else
-  #define CAS_DISPATCH_X BUFFER_WIDTH / 16
-#endif
-
-#if (BUFFER_HEIGHT % 16 != 0)
-  #define CAS_DISPATCH_Y (BUFFER_HEIGHT / 16) + 1
-#else
-  #define CAS_DISPATCH_Y BUFFER_HEIGHT / 16
-#endif
-
-  pass CS_Cas
+  pass PS_Cas
   {
-    ComputeShader = CS_Cas <64, 1, 1>;
-    DispatchSizeX = CAS_DISPATCH_X;
-    DispatchSizeY = CAS_DISPATCH_Y;
-    DispatchSizeZ = 1;
-  }
-
-  pass PS_OutputCas
-  {
-    VertexShader = VS_PostProcess;
-     PixelShader = PS_OutputCas;
+    VertexShader = VS_PrepareCas;
+     PixelShader = PS_Cas;
   }
 }

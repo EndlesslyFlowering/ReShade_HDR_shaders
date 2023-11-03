@@ -21,45 +21,66 @@
 // THE SOFTWARE.
 
 
-#include "colour_space.fxh"
 #include "cas_helpers.fxh"
 
 
+uniform int CAS_ABOUT
+<
+  ui_category = "About CAS";
+  ui_label    = " ";
+  ui_type     = "radio";
+  ui_text     = "AMD FidelityFX Contrast Adaptive Sharpening 1.1"
+           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling."
+                "The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
+>;
+
+uniform bool SHARPEN_ONLY
+<
+  ui_label   = "sharpen only path";
+  ui_tooltip = "If unchecked will use the upscale path of CAS."
+          "\n" "Which does processing a little different."
+          "\n" "But does not do any upscaling at all!";
+> = true;
+
+uniform float SHARPEN_AMOUNT
+<
+  ui_label   = "sharpness amount";
+  ui_tooltip = "Even a value of 0 applies a bit of sharpness!";
+  ui_type    = "drag";
+  ui_min     = 0.f;
+  ui_max     = 1.f;
+  ui_step    = 0.001f;
+> = 0.f;
+
+uniform float APPLY_AMOUNT
+<
+  ui_label   = "amount of sharpness to apply";
+  ui_tooltip = "How much of the sharpness to apply to the final image.";
+  ui_type    = "drag";
+  ui_min     = 0.f;
+  ui_max     = 1.f;
+  ui_step    = 0.001f;
+> = 1.f;
+
+
 float3 CasSharpenOnly(
-  const int2   Coords,
-  const float2 EfhiCoords)
+  const SPixelsToProcess Ptp,
+  const float            Peak)
 {
   // Load a collection of samples in a 3x3 neighorhood, where e is the current pixel.
   // a b c
   // d e f
   // g h i
 
-  float4 efhiR = tex2DgatherR(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiG = tex2DgatherG(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiB = tex2DgatherB(ReShade::BackBuffer, EfhiCoords);
-
-  float3 e = float3(efhiR.w, efhiG.w, efhiB.w);
-  float3 f = float3(efhiR.z, efhiG.z, efhiB.z);
-  float3 h = float3(efhiR.x, efhiG.x, efhiB.x);
-  float3 i = float3(efhiR.y, efhiG.y, efhiB.y);
-
-  float3 a = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1, -1)).rgb;
-  float3 b = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 0, -1)).rgb;
-  float3 c = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 1, -1)).rgb;
-  float3 d = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  0)).rgb;
-  float3 g = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  1)).rgb;
-
-
-  PrepareForProcessing(a);
-  PrepareForProcessing(b);
-  PrepareForProcessing(c);
-  PrepareForProcessing(d);
-  PrepareForProcessing(e);
-  PrepareForProcessing(f);
-  PrepareForProcessing(g);
-  PrepareForProcessing(h);
-  PrepareForProcessing(i);
-
+  static const float3 a = PrepareForProcessing(Ptp.a);
+  static const float3 b = PrepareForProcessing(Ptp.b);
+  static const float3 c = PrepareForProcessing(Ptp.c);
+  static const float3 d = PrepareForProcessing(Ptp.d);
+  static const float3 e = PrepareForProcessing(Ptp.e);
+  static const float3 f = PrepareForProcessing(Ptp.f);
+  static const float3 g = PrepareForProcessing(Ptp.g);
+  static const float3 h = PrepareForProcessing(Ptp.h);
+  static const float3 i = PrepareForProcessing(Ptp.i);
 
   // Soft min and max.
   //  a b c             b
@@ -69,8 +90,8 @@ float3 CasSharpenOnly(
   float3 minRgb = MIN3(MIN3(d, e, f), b, h);
   float3 maxRgb = MAX3(MAX3(d, e, f), b, h);
 
-  minRgb += + MIN3(MIN3(minRgb, a, c), g, i);
-  maxRgb = maxRgb + MAX3(MAX3(maxRgb, a, c), g, i);
+  minRgb += MIN3(MIN3(minRgb, a, c), g, i);
+  maxRgb += MAX3(MAX3(maxRgb, a, c), g, i);
 
   // Smooth minimum distance to signal limit divided by smooth max.
   float3 rcpMaxRgb = rcp(maxRgb);
@@ -82,50 +103,22 @@ float3 CasSharpenOnly(
   //  0 w 0
   //  w 1 w
   //  0 w 0
-  float peak = -rcp(lerp(8.f, 5.f, SHARPEN_AMOUNT));
 
-  float3 output;
+  float3 weight = amplifyRgb * Peak;
 
-  if (WEIGH_BY_ALL_CHANNELS)
-  {
-    float3 weight = amplifyRgb * peak;
+  float3 rcpWeight = rcp(1.f + 4.f * weight);
 
-    float3 rcpWeight = rcp(1.f + 4.f * weight);
-
-    output = (b * weight
-            + d * weight
-            + f * weight
-            + h * weight
-            + e)
-           * rcpWeight;
-  }
-  else
-  {
-    // Filter using green coef only, depending on dead code removal to strip out the extra overhead.
-    float weight = amplifyRgb.g * peak;
-
-    float rcpWeight = rcp(1.f + 4.f * weight);
-
-
-    output = (b * weight
-            + d * weight
-            + f * weight
-            + h * weight
-            + e)
-           * rcpWeight;
-  }
+  float3 output = saturate(((b + d + f + h) * weight + e) * rcpWeight);
 
   output = lerp(e, output, APPLY_AMOUNT);
 
-  PrepareForOutput(output);
-
-  return output;
+  return PrepareForOutput(output);
 }
 
 
 float3 CasSharpenAndUpscale(
-  const int2   Coords,
-  const float2 FgjkCoords)
+  const SPixelsToProcess Ptp,
+  const float            Peak)
 {
   //  a b c d
   //  e f g h
@@ -142,31 +135,15 @@ float3 CasSharpenAndUpscale(
   //  |     |     |
   //  +-----+-----+
 
-  float4 fgjkR = tex2DgatherR(ReShade::BackBuffer, FgjkCoords);
-  float4 fgjkG = tex2DgatherG(ReShade::BackBuffer, FgjkCoords);
-  float4 fgjkB = tex2DgatherB(ReShade::BackBuffer, FgjkCoords);
-
-  float3 f = float3(fgjkR.w, fgjkG.w, fgjkB.w);
-  float3 g = float3(fgjkR.z, fgjkG.z, fgjkB.z);
-  float3 j = float3(fgjkR.x, fgjkG.x, fgjkB.x);
-  float3 k = float3(fgjkR.y, fgjkG.y, fgjkB.y);
-
-  float3 a = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1, -1)).rgb;
-  float3 b = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 0, -1)).rgb;
-  float3 c = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 1, -1)).rgb;
-  float3 e = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  0)).rgb;
-  float3 i = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  1)).rgb;
-
-
-  PrepareForProcessing(a);
-  PrepareForProcessing(b);
-  PrepareForProcessing(c);
-  PrepareForProcessing(e);
-  PrepareForProcessing(f);
-  PrepareForProcessing(g);
-  PrepareForProcessing(i);
-  PrepareForProcessing(j);
-  PrepareForProcessing(k);
+  static const float3 a = PrepareForProcessing(Ptp.a);
+  static const float3 b = PrepareForProcessing(Ptp.b);
+  static const float3 c = PrepareForProcessing(Ptp.c);
+  static const float3 e = PrepareForProcessing(Ptp.d);
+  static const float3 f = PrepareForProcessing(Ptp.e);
+  static const float3 g = PrepareForProcessing(Ptp.f);
+  static const float3 i = PrepareForProcessing(Ptp.h);
+  static const float3 j = PrepareForProcessing(Ptp.i);
+  static const float3 k = PrepareForProcessing(Ptp.g);
 
 
   // Soft min and max.
@@ -190,9 +167,8 @@ float3 CasSharpenAndUpscale(
   //  0 w 0
   //  w 1 w
   //  0 w 0
-  float peak = -rcp(lerp(8.0, 5.0, SHARPEN_AMOUNT));
 
-  float3 wfRgb = ampfRgb * peak;
+  float3 wfRgb = ampfRgb * Peak;
 
   // Thin edges to hide bilinear interpolation (helps diagonals).
   static const float thinB = 1.f / 32.f;
@@ -219,43 +195,11 @@ float3 CasSharpenAndUpscale(
 
   float3 wfRgb_x_s = wfRgb * s;
 
+  float3 rcpWeight = rcp(4.f * wfRgb_x_s + s);
 
-  float3 output;
-
-  if (WEIGH_BY_ALL_CHANNELS)
-  {
-    float3 rcpWeight = rcp(4.f * wfRgb_x_s + s);
-
-    output = saturate((b * wfRgb_x_s
-                     + e * wfRgb_x_s
-                     + f * s
-                     + g * wfRgb_x_s
-                     + j * wfRgb_x_s)
-                    * rcpWeight);
-  }
-  else
-  {
-    // Using green coef only, depending on dead code removal to strip out the extra overhead.
-    float rcpWeight = rcp(4.f * wfRgb_x_s.g + s);
-
-    output = saturate((b * wfRgb_x_s.g
-                     + e * wfRgb_x_s.g
-                     + f * s
-                     + g * wfRgb_x_s.g
-                     + j * wfRgb_x_s.g)
-                    * rcpWeight);
-  }
+  float3 output = saturate(((b + e + g + j) * wfRgb_x_s.g + (f * s)) * rcpWeight);
 
   output = lerp(f, output, APPLY_AMOUNT);
 
-  PrepareForOutput(output);
-
-  return output;
-}
-
-
-float2 GetEfhiCoords(uint2 Coords)
-{
-  return (float2(Coords) + 0.5f)
-       / ReShade::ScreenSize;
+  return PrepareForOutput(output);
 }
