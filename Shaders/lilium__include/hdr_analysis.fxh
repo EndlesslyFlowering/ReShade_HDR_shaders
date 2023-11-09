@@ -762,12 +762,12 @@ float3 HeatmapRgbValues(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     output = Csp::Mat::Bt709To::Bt2020(output);
-    output = Csp::Trc::ToPqFromNits(output);
+    output = Csp::Trc::NitsTo::Pq(output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
     output = Csp::Mat::Bt709To::Bt2020(output);
-    output = Csp::Trc::ToHlgFromNits(output);
+    output = Csp::Trc::NitsTo::Hlg(output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
@@ -799,7 +799,7 @@ void CS_RenderBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
       float curPixelCLL = tex2Dfetch(SamplerCllValues, int2(ID.x, y)).x;
 
       int yCoord =
-        round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
+        round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
 
       tex2Dstore(StorageBrightnessHistogram,
                  int2(round(ID.x / TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR), yCoord),
@@ -834,7 +834,7 @@ void VS_PrepareRenderBrightnessHistogramToScale(
 
       int yPos =
         min(
-          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(minCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
+          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(minCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
         , 1023);
 
       minCllWhiteLineY = minCll > 0.f ? yPos
@@ -847,7 +847,7 @@ void VS_PrepareRenderBrightnessHistogramToScale(
 
       int yPos =
         max(
-          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::ToPqFromNits(maxCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
+          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(maxCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
         , 0);
 
       maxCllWhiteLineY = maxCll < 10000.f ? yPos
@@ -922,11 +922,11 @@ void PS_CalcCllPerPixel(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::FromPq(pixel)) * 10000.f;
+    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::FromHlg(pixel)) * 1000.f;
+    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
@@ -1639,11 +1639,11 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromPq(pixel));
+      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::FromHlg(pixel));
+      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
@@ -1824,9 +1824,9 @@ void PS_CalcCsps(
      && pixel.b > SMALLEST_UINT10)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      precise const float3 curPixel = Csp::Trc::FromPq(pixel);
+      precise const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-      precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
+      precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
       curCsp = GetCsp(curPixel);
     }
@@ -1839,9 +1839,9 @@ void PS_CalcCsps(
 #else
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    precise const float3 curPixel = Csp::Trc::FromPq(pixel);
+    precise const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-    precise const float3 curPixel = Csp::Trc::FromHlg(pixel);
+    precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
     curCsp = GetCsp(curPixel);
 
@@ -2047,11 +2047,11 @@ float3 CreateCspMap(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    output = Csp::Trc::ToPqFromNits(Csp::Mat::Bt709To::Bt2020(output));
+    output = Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    output = Csp::Trc::ToHlgFromNits(Csp::Mat::Bt709To::Bt2020(output));
+    output = Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 

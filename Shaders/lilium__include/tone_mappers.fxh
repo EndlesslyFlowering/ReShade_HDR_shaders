@@ -29,7 +29,7 @@ namespace Tmos
 
 #define ycbcr Colour
     //to Y'C'bC'r
-    ycbcr = Csp::Ycbcr::FromRgb::Bt2020(Colour);
+    ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
 
     // tone mapping step 1
     //pHDR
@@ -73,7 +73,7 @@ namespace Tmos
     //Y'tmo
     float yTmo = y - max(0.1f * crTmo, 0.f);
 
-    Colour = Csp::Ycbcr::ToRgb::Bt2020(float3(yTmo,
+    Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
                                               cbTmo,
                                               crTmo));
 
@@ -99,7 +99,7 @@ namespace Tmos
     Colour = pow(Colour, applyGamma);
 
     //to Y'C'bC'r
-    ycbcr = Csp::Ycbcr::FromRgb::Bt2020(Colour);
+    ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
 
     // tone mapping step 1
     //pHDR
@@ -144,7 +144,7 @@ namespace Tmos
     //Y'tmo
     float yTmo = y - max(0.1f * crTmo, 0.f);
 
-    Colour = Csp::Ycbcr::ToRgb::Bt2020(float3(yTmo,
+    Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
                                               cbTmo,
                                               crTmo));
 
@@ -197,7 +197,7 @@ namespace Tmos
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
         //to L'M'S'
-        Colour = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
+        Colour = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
 
         float i1 = 0.5f * Colour.x + 0.5f * Colour.y;
         //E1
@@ -230,7 +230,7 @@ namespace Tmos
                           dot(Colour, PqLmsToIctcp[2]) * minI));
 
         //to LMS
-        Colour = Csp::Trc::FromPq(Colour);
+        Colour = Csp::Trc::PqTo::Linear(Colour);
         //to RGB
         Colour = max(Csp::Ictcp::Mat::LmsTo::Bt2020(Colour), 0.f);
 
@@ -262,7 +262,7 @@ namespace Tmos
         float minY = min((y1 / y2), (y2 / y1));
 
         Colour = max(
-                   Csp::Ycbcr::ToRgb::Bt2020(
+                   Csp::Ycbcr::YcbcrTo::RgbBt2020(
                      float3(y2,
                             (Colour.b - y1) / KbBt2020 * minY,
                             (Colour.r - y1) / KrBt2020 * minY))
@@ -273,8 +273,8 @@ namespace Tmos
       {
         float y1 = dot(Colour, Bt2020ToXYZ[1].rgb);
         //E1
-        float y2 = (Csp::Trc::ToPq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
-        //float y2 = Csp::Trc::ToPq(y1) / SrcMaxPq;
+        float y2 = (Csp::Trc::LinearTo::Pq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
+        //float y2 = Csp::Trc::LinearTo::Pq(y1) / SrcMaxPq;
 
         //E2
         if (y2 >= KneeStart)
@@ -293,7 +293,7 @@ namespace Tmos
         y2 = y2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
         //y2 *= SrcMaxPq;
 
-        y2 = Csp::Trc::FromPq(y2);
+        y2 = Csp::Trc::PqTo::Linear(y2);
 
         Colour = max(y2 / y1 * Colour, 0.f);
 
@@ -414,10 +414,10 @@ namespace Tmos
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
         //to L'M'S'
-        Colour = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
+        Colour = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
 
 //        //to L'M'S'
-//        Colour = Csp::Trc::ToPq(mul(RgbToLms, Colour));
+//        Colour = Csp::Trc::LinearTo::Pq(mul(RgbToLms, Colour));
 
         //Intensity
         float i1 = 0.5f * Colour.x + 0.5f * Colour.y;
@@ -439,7 +439,7 @@ namespace Tmos
                            dot(Colour, PqLmsToIctcp[2]) * minI));
 
           //to LMS
-          Colour = Csp::Trc::FromPq(Colour);
+          Colour = Csp::Trc::PqTo::Linear(Colour);
           //to RGB
           Colour = max(Csp::Ictcp::Mat::LmsTo::Bt2020(Colour), 0.f);
 
@@ -465,7 +465,7 @@ namespace Tmos
 
           //to RGB
           Colour = max(
-                     Csp::Ycbcr::ToRgb::Bt2020(
+                     Csp::Ycbcr::YcbcrTo::RgbBt2020(
                        float3(y2,
                               (Colour.b - y1) / KbBt2020 * minY,
                               (Colour.r - y1) / KrBt2020 * minY))

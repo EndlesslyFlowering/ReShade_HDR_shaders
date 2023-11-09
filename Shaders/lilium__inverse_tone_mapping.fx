@@ -295,17 +295,17 @@ void PS_InverseToneMapping(
   {
     case CONTENT_TRC_SRGB:
     {
-      hdr = Csp::Trc::FromExtendedSrgb(hdr);
+      hdr = Csp::Trc::ExtendedSrgbTo::Linear(hdr);
     }
     break;
     case CONTENT_TRC_GAMMA_22:
     {
-      hdr = Csp::Trc::FromExtendedGamma22(hdr);
+      hdr = Csp::Trc::ExtendedGamma22To::Linear(hdr);
     }
     break;
     case CONTENT_TRC_GAMMA_24:
     {
-      hdr = Csp::Trc::FromExtendedGamma24(hdr);
+      hdr = Csp::Trc::ExtendedGamma24To::Linear(hdr);
     }
     break;
     default:
@@ -370,8 +370,8 @@ void PS_InverseToneMapping(
       float target_CLL_normalised = Ui::Itm::Global::TargetBrightness / 10000.f;
       hdr = Itmos::Dice::InverseToneMapper(
               hdr,
-              Csp::Trc::ToPqFromNits(Ui::Itm::Dice::DiceInputBrightness),
-              Csp::Trc::ToPqFromNits(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
+              Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::DiceInputBrightness),
+              Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
     } break;
 
 #endif //ENABLE_DICE
@@ -394,7 +394,7 @@ void PS_InverseToneMapping(
 
 #endif //ENABLE_DICE
 
-  hdr = Csp::Trc::ToPq(hdr);
+  hdr = Csp::Trc::LinearTo::Pq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

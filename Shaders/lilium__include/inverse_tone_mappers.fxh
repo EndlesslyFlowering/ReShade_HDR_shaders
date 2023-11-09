@@ -54,7 +54,7 @@ namespace Itmos
 
     // Rec. ITU-R BT.2020-2 Table 4
     //Y'C'bC'r,tmo
-    float3 ycbcrTmo = Csp::Ycbcr::FromRgb::Bt2020(sdr);
+    float3 ycbcrTmo = Csp::Ycbcr::RgbTo::YcbcrBt2020(sdr);
 
     // adjusted luma component (inverse)
     // get Y'sdr
@@ -144,7 +144,7 @@ namespace Itmos
     float cbHdr = ycbcrTmo.y / colourScale;
     float crHdr = ycbcrTmo.z / colourScale;
 
-    float3 hdr = Csp::Ycbcr::ToRgb::Bt2020(float3(yHdr, cbHdr, crHdr));
+    float3 hdr = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yHdr, cbHdr, crHdr));
 
     hdr = max(hdr, 0.f); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
@@ -656,7 +656,7 @@ namespace Itmos
 
       float3 LMS = mul(RgbToLms, Input);
 
-      LMS = Csp::Trc::ToPq(LMS);
+      LMS = Csp::Trc::LinearTo::Pq(LMS);
 
       float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 
@@ -676,7 +676,7 @@ namespace Itmos
         //to L'M'S'
         LMS = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
         //to LMS
-        LMS = Csp::Trc::FromPq(LMS);
+        LMS = Csp::Trc::PqTo::Linear(LMS);
         //to RGB
         return max(mul(LmsToRgb, LMS), 0.f);
       }

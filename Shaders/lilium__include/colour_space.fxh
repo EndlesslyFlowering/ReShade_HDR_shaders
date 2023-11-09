@@ -49,8 +49,7 @@
 
 #if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
   || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (                                   CSP_OVERRIDE == CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE == CSP_SRGB  && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
+  || (                                   CSP_OVERRIDE == CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_SCRGB
   #define FONT_BRIGHTNESS 2.5375f // 203.f / 80.f
@@ -274,297 +273,338 @@ namespace Csp
     //
     //gamma compressed->display (also linear) = EOTF -> ^(2.2)
 
-    // IEC 61966-2-1
-    float FromSrgb(float C)
+    namespace SrgbTo
     {
-      if (C <= 0.04045f)
+      // IEC 61966-2-1
+      float Linear(float C)
       {
-        return C / 12.92f;
+        if (C <= 0.04045f)
+        {
+          return C / 12.92f;
+        }
+        else
+        {
+          return pow(((C + 0.055f) / 1.055f), 2.4f);
+        }
       }
-      else
+
+      float3 Linear(float3 Colour)
       {
-        return pow(((C + 0.055f) / 1.055f), 2.4f);
+        return float3(Csp::Trc::SrgbTo::Linear(Colour.r),
+                      Csp::Trc::SrgbTo::Linear(Colour.g),
+                      Csp::Trc::SrgbTo::Linear(Colour.b));
+      }
+    } //SrgbTo
+
+
+    namespace LinearTo
+    {
+      float Srgb(float C)
+      {
+        if (C <= 0.0031308f)
+        {
+          return C * 12.92f;
+        }
+        else
+        {
+          return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        }
+      }
+
+      float3 Srgb(float3 Colour)
+      {
+        return float3(Csp::Trc::LinearTo::Srgb(Colour.r),
+                      Csp::Trc::LinearTo::Srgb(Colour.g),
+                      Csp::Trc::LinearTo::Srgb(Colour.b));
+      }
+    } //LinearTo
+
+
+    namespace ExtendedSrgbTo
+    {
+      //#define X_sRGB_1 1.19417654368084505707
+      //#define X_sRGB_x 0.039815307380813555
+      //#define X_sRGB_y_adjust 1.21290538811
+      // extended sRGB gamma including above 1 and below -1
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        if (absC > 1.f)
+        {
+          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+        }
+        else if (absC > 0.04045f)
+        {
+          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        }
+        else
+        {
+          return C / 12.92f;
+        }
+      }
+      //{
+      //  if (C < -X_sRGB_1)
+      //    return
+      //      -1.055f * (pow(-C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) + 0.055f;
+      //  else if (C < -0.04045f)
+      //    return
+      //      -pow((-C + 0.055f) / 1.055f, 2.4f);
+      //  else if (C <= 0.04045f)
+      //    return
+      //      C / 12.92f;
+      //  else if (C <= X_sRGB_1)
+      //    return
+      //      pow((C + 0.055f) / 1.055f, 2.4f);
+      //  else
+      //    return
+      //      1.055f * (pow(C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) - 0.055f;
+      //}
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedSrgbTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedSrgbTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedSrgbTo::Linear(Colour.b));
+      }
+    } //ExtendedSrgbTo
+
+
+    namespace LinearTo
+    {
+      float ExtendedSrgb(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        if (absC > 1.f)
+        {
+          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        }
+        else if (absC > 0.0031308f)
+        {
+          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+        }
+        else
+        {
+          return C * 12.92f;
+        }
+      }
+
+      float3 ExtendedSrgb(float3 Colour)
+      {
+        return float3(Csp::Trc::LinearTo::ExtendedSrgb(Colour.r),
+                      Csp::Trc::LinearTo::ExtendedSrgb(Colour.g),
+                      Csp::Trc::LinearTo::ExtendedSrgb(Colour.b));
       }
     }
 
-    float3 FromSrgb(float3 Colour)
+
+    namespace SrgbAccurateTo
     {
-      return float3(FromSrgb(Colour.r),
-                    FromSrgb(Colour.g),
-                    FromSrgb(Colour.b));
-    }
+      // accurate sRGB with no slope discontinuity
+      #define SrgbX       asfloat(0x3D20EA0B) //  0.0392857
+      #define SrgbPhi     asfloat(0x414EC578) // 12.92321
+      #define SrgbXDivPhi asfloat(0x3B4739A5) //  0.003039935
 
-    float ToSrgb(float C)
+      float Linear(float C)
+      {
+        if (C <= SrgbX)
+        {
+          return C / SrgbPhi;
+        }
+        else
+        {
+          return pow(((C + 0.055f) / 1.055f), 2.4f);
+        }
+      }
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::SrgbAccurateTo::Linear(Colour.r),
+                      Csp::Trc::SrgbAccurateTo::Linear(Colour.g),
+                      Csp::Trc::SrgbAccurateTo::Linear(Colour.b));
+      }
+    } //SrgbAccurateTo
+
+
+    namespace LinearTo
     {
-      if (C <= 0.0031308f)
+      float SrgbAccurate(float C)
       {
-        return C * 12.92f;
+        if (C <= SrgbXDivPhi)
+        {
+          return C * SrgbPhi;
+        }
+        else
+        {
+          return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+        }
       }
-      else
-      {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
-      }
-    }
 
-    float3 ToSrgb(float3 Colour)
+      float3 SrgbAccurate(float3 Colour)
+      {
+        return float3(Csp::Trc::LinearTo::SrgbAccurate(Colour.r),
+                      Csp::Trc::LinearTo::SrgbAccurate(Colour.g),
+                      Csp::Trc::LinearTo::SrgbAccurate(Colour.b));
+      }
+    } //LinearTo
+
+
+    namespace ExtendedSrgbAccurateTo
     {
-      return float3(ToSrgb(Colour.r),
-                    ToSrgb(Colour.g),
-                    ToSrgb(Colour.b));
-    }
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
 
-    //#define X_sRGB_1 1.19417654368084505707
-    //#define X_sRGB_x 0.039815307380813555
-    //#define X_sRGB_y_adjust 1.21290538811
-    // extended sRGB gamma including above 1 and below -1
-    float FromExtendedSrgb(float C)
+        if (absC > 1.f)
+        {
+          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+        }
+        else if (C > SrgbX)
+        {
+          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        }
+        else
+        {
+          return C / SrgbPhi;
+        }
+      }
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.b));
+      }
+    } //ExtendedSrgbAccurateTo
+
+
+    namespace LinearTo
     {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
-
-      if (absC > 1.f)
+      float ExtendedSrgbAccurate(float C)
       {
-        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-      }
-      else if (absC > 0.04045f)
-      {
-        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-      }
-      else
-      {
-        return C / 12.92f;
-      }
-    }
-    //{
-    //  if (C < -X_sRGB_1)
-    //    return
-    //      -1.055f * (pow(-C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) + 0.055f;
-    //  else if (C < -0.04045f)
-    //    return
-    //      -pow((-C + 0.055f) / 1.055f, 2.4f);
-    //  else if (C <= 0.04045f)
-    //    return
-    //      C / 12.92f;
-    //  else if (C <= X_sRGB_1)
-    //    return
-    //      pow((C + 0.055f) / 1.055f, 2.4f);
-    //  else
-    //    return
-    //      1.055f * (pow(C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) - 0.055f;
-    //}
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
 
-    float3 FromExtendedSrgb(float3 Colour)
-    {
-      return float3(FromExtendedSrgb(Colour.r),
-                    FromExtendedSrgb(Colour.g),
-                    FromExtendedSrgb(Colour.b));
-    }
-
-    float ToExtendedSrgb(float C)
-    {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
-
-      if (absC > 1.f)
-      {
-        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        if (C > 1.f)
+        {
+          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        }
+        else if (C > SrgbXDivPhi)
+        {
+          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+        }
+        else
+        {
+          return C * SrgbPhi;
+        }
       }
-      else if (absC > 0.0031308f)
-      {
-        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-      }
-      else
-      {
-        return C * 12.92f;
-      }
-    }
 
-    float3 ToExtendedSrgb(float3 Colour)
-    {
-      return float3(ToExtendedSrgb(Colour.r),
-                    ToExtendedSrgb(Colour.g),
-                    ToExtendedSrgb(Colour.b));
-    }
-
-    // accurate sRGB with no slope discontinuity
-    #define SrgbX       asfloat(0x3D20EA0B) //  0.0392857
-    #define SrgbPhi     asfloat(0x414EC578) // 12.92321
-    #define SrgbXDivPhi asfloat(0x3B4739A5) //  0.003039935
-
-    float FromSrgbAccurate(float C)
-    {
-      if (C <= SrgbX)
+      float3 ExtendedSrgbAccurate(float3 Colour)
       {
-        return C / SrgbPhi;
+        return float3(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.r),
+                      Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.g),
+                      Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.b));
       }
-      else
-      {
-        return pow(((C + 0.055f) / 1.055f), 2.4f);
-      }
-    }
-
-    float3 FromSrgbAccurate(float3 Colour)
-    {
-      return float3(FromSrgbAccurate(Colour.r),
-                    FromSrgbAccurate(Colour.g),
-                    FromSrgbAccurate(Colour.b));
-    }
-
-    float ToSrgbAccurate(float C)
-    {
-      if (C <= SrgbXDivPhi)
-      {
-        return C * SrgbPhi;
-      }
-      else
-      {
-        return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
-      }
-    }
-
-    float3 ToSrgbAccurate(float3 Colour)
-    {
-      return float3(ToSrgbAccurate(Colour.r),
-                    ToSrgbAccurate(Colour.g),
-                    ToSrgbAccurate(Colour.b));
-    }
-
-    float FromExtendedSrgbAccurate(float C)
-    {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
-
-      if (absC > 1.f)
-      {
-        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-      }
-      else if (C > SrgbX)
-      {
-        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-      }
-      else
-      {
-        return C / SrgbPhi;
-      }
-    }
-
-    float3 FromExtendedSrgbAccurate(float3 Colour)
-    {
-      return float3(FromExtendedSrgbAccurate(Colour.r),
-                    FromExtendedSrgbAccurate(Colour.g),
-                    FromExtendedSrgbAccurate(Colour.b));
-    }
-
-    float ToExtendedSrgbAccurate(float C)
-    {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
-
-      if (C > 1.f)
-      {
-        return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-      }
-      else if (C > SrgbXDivPhi)
-      {
-        return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-      }
-      else
-      {
-        return C * SrgbPhi;
-      }
-    }
-
-    float3 ToExtendedSrgbAccurate(float3 Colour)
-    {
-      return float3(ToExtendedSrgbAccurate(Colour.r),
-                    ToExtendedSrgbAccurate(Colour.g),
-                    ToExtendedSrgbAccurate(Colour.b));
-    }
+    } //LinearTo
 
 
     static const float RemoveGamma22 = 2.2f;
     static const float ApplyGamma22  = 1.f / RemoveGamma22;
-    //#define X_22_1 1.20237927370128566986
-    //#define X_22_x 0.0370133892172524
-    //#define X_22_y_adjust 1.5f - pow(X_22_x, ApplyGamma22)
-    // extended gamma 2.2 including above 1 and below 0
-    float FromExtendedGamma22(float C)
-    {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
 
-      if (C > 1.f)
-      {
-        return signC * pow(absC, ApplyGamma22);
-      }
-      else
-      {
-        return signC * pow(absC, RemoveGamma22);
-      }
-    }
-    //{
-    //  if (C < -X_22_1)
-    //    return
-    //      -(pow(-C - X_22_1 + X_22_x, ApplyGamma22) + X_22_y_adjust);
-    //  else if (C < 0)
-    //    return
-    //      -pow(-C, RemoveGamma22);
-    //  else if (C <= X_22_1)
-    //    return
-    //      pow(C, RemoveGamma22);
-    //  else
-    //    return
-    //      (pow(C - X_22_1 + X_22_x, ApplyGamma22) + X_22_y_adjust);
-    //}
-
-    float3 FromExtendedGamma22(float3 Colour)
+    namespace ExtendedGamma22To
     {
-      return float3(FromExtendedGamma22(Colour.r),
-                    FromExtendedGamma22(Colour.g),
-                    FromExtendedGamma22(Colour.b));
-    }
+      //#define X_22_1 1.20237927370128566986
+      //#define X_22_x 0.0370133892172524
+      //#define X_22_y_adjust 1.5f - pow(X_22_x, Csp::Trc::ApplyGamma22)
+      // extended gamma 2.2 including above 1 and below 0
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        if (C > 1.f)
+        {
+          return signC * pow(absC, Csp::Trc::ApplyGamma22);
+        }
+        else
+        {
+          return signC * pow(absC, Csp::Trc::RemoveGamma22);
+        }
+      }
+      //{
+      //  if (C < -X_22_1)
+      //    return
+      //      -(pow(-C - X_22_1 + X_22_x, Csp::Trc::ApplyGamma22) + X_22_y_adjust);
+      //  else if (C < 0)
+      //    return
+      //      -pow(-C, Csp::Trc::RemoveGamma22);
+      //  else if (C <= X_22_1)
+      //    return
+      //      pow(C, Csp::Trc::RemoveGamma22);
+      //  else
+      //    return
+      //      (pow(C - X_22_1 + X_22_x, Csp::Trc::ApplyGamma22) + X_22_y_adjust);
+      //}
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedGamma22To::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma22To::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma22To::Linear(Colour.b));
+      }
+    } //ExtendedGamma22To
+
 
     static const float RemoveGamma24 = 2.4f;
     static const float ApplyGamma24  = 1.f / RemoveGamma24;
-    //#define X_24_1 1.1840535873752085849
-    //#define X_24_x 0.033138075
-    //#define X_24_y_adjust 1.5f - pow(X_24_x, ApplyGamma24)
-    // extended gamma 2.4 including above 1 and below 0
-    float FromExtendedGamma24(float C)
-    {
-      static const float absC = abs(C);
-      static const float signC = sign(C);
 
-      if (absC > 1.f)
-      {
-        return signC * pow(absC, ApplyGamma24);
-      }
-      else
-      {
-        return signC * pow(absC, RemoveGamma24);
-      }
-    }
-    //{
-    //  if (C < -X_24_1)
-    //    return
-    //      -(pow(-C - X_24_1 + X_24_x, ApplyGamma24) + X_24_y_adjust);
-    //  else if (C < 0)
-    //    return
-    //      -pow(-C, RemoveGamma24);
-    //  else if (C <= X_24_1)
-    //    return
-    //      pow(C, RemoveGamma24);
-    //  else
-    //    return
-    //      (pow(C - X_24_1 + X_24_x, ApplyGamma24) + X_24_y_adjust);
-    //}
-
-    float3 FromExtendedGamma24(float3 Colour)
+    namespace ExtendedGamma24To
     {
-      return float3(FromExtendedGamma24(Colour.r),
-                    FromExtendedGamma24(Colour.g),
-                    FromExtendedGamma24(Colour.b));
-    }
+      //#define X_24_1 1.1840535873752085849
+      //#define X_24_x 0.033138075
+      //#define X_24_y_adjust 1.5f - pow(X_24_x, Csp::Trc::ApplyGamma24)
+      // extended gamma 2.4 including above 1 and below 0
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        if (absC > 1.f)
+        {
+          return signC * pow(absC, Csp::Trc::ApplyGamma24);
+        }
+        else
+        {
+          return signC * pow(absC, Csp::Trc::RemoveGamma24);
+        }
+      }
+      //{
+      //  if (C < -X_24_1)
+      //    return
+      //      -(pow(-C - X_24_1 + X_24_x, Csp::Trc::ApplyGamma24) + X_24_y_adjust);
+      //  else if (C < 0)
+      //    return
+      //      -pow(-C, Csp::Trc::RemoveGamma24);
+      //  else if (C <= X_24_1)
+      //    return
+      //      pow(C, Csp::Trc::RemoveGamma24);
+      //  else
+      //    return
+      //      (pow(C - X_24_1 + X_24_x, Csp::Trc::ApplyGamma24) + X_24_y_adjust);
+      //}
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedGamma24To::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma24To::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma24To::Linear(Colour.b));
+      }
+    } //ExtendedGamma24To
+
 
     //float X_power_TRC(float C, float pow_gamma)
     //{
@@ -629,168 +669,196 @@ namespace Csp
     #define _1_div_PQ_m1 asfloat(0x40C8E06B)
     #define _1_div_PQ_m2 asfloat(0x3C4FCDAC)
 
+
     // Rec. ITU-R BT.2100-2 Table 4
-#define FROM_PQ(T)                                \
-  T FromPq(T E_)                                  \
-  {                                               \
-    E_ = max(E_, 0.f);                            \
-                                                  \
-    T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);     \
-                                                  \
-    /* Y */                                       \
-    return pow(                                   \
-               (max(E_pow_1_div_m2 - PQ_c1, 0.f)) \
-             / (PQ_c2 - PQ_c3 * E_pow_1_div_m2)   \
-           , _1_div_PQ_m1);                       \
-  }
+    namespace PqTo
+    {
 
-    // (EOTF) takes PQ values as input
-    // outputs as 1 = 10000 nits
-    FROM_PQ(float)
+      #define PQ_TO_LINEAR(T)                           \
+        T Linear(T E_)                                  \
+        {                                               \
+          E_ = max(E_, 0.f);                            \
+                                                        \
+          T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);     \
+                                                        \
+          /* Y */                                       \
+          return pow(                                   \
+                     (max(E_pow_1_div_m2 - PQ_c1, 0.f)) \
+                   / (PQ_c2 - PQ_c3 * E_pow_1_div_m2)   \
+                 , _1_div_PQ_m1);                       \
+        }
 
-    // (EOTF) takes PQ values as input
-    // outputs as 1 = 10000 nits
-    FROM_PQ(float2)
+      // (EOTF) takes PQ values as input
+      // outputs as 1 = 10000 nits
+      PQ_TO_LINEAR(float)
 
-    // (EOTF) takes PQ values as input
-    // outputs as 1 = 10000 nits
-    FROM_PQ(float3)
+      // (EOTF) takes PQ values as input
+      // outputs as 1 = 10000 nits
+      PQ_TO_LINEAR(float2)
 
-    // (EOTF) takes PQ values as input
-    // outputs nits
-#define FROM_PQ_TO_NITS(T)       \
-  T FromPqToNits(T E_)           \
-  {                              \
-    return FromPq(E_) * 10000.f; \
-  }
+      // (EOTF) takes PQ values as input
+      // outputs as 1 = 10000 nits
+      PQ_TO_LINEAR(float3)
 
-    // (EOTF) takes PQ values as input
-    // outputs nits
-    FROM_PQ_TO_NITS(float)
+      // (EOTF) takes PQ values as input
+      // outputs nits
+      #define PQ_TO_NITS(T)                            \
+        T Nits(T E_)                                   \
+        {                                              \
+          return Csp::Trc::PqTo::Linear(E_) * 10000.f; \
+        }
 
-    // (EOTF) takes PQ values as input
-    // outputs nits
-    FROM_PQ_TO_NITS(float2)
+      // (EOTF) takes PQ values as input
+      // outputs nits
+      PQ_TO_NITS(float)
 
-    // (EOTF) takes PQ values as input
-    // outputs nits
-    FROM_PQ_TO_NITS(float3)
+      // (EOTF) takes PQ values as input
+      // outputs nits
+      PQ_TO_NITS(float2)
+
+      // (EOTF) takes PQ values as input
+      // outputs nits
+      PQ_TO_NITS(float3)
+
+    } //PqTo
+
 
     // Rec. ITU-R BT.2100-2 Table 4 (end)
-#define TO_PQ(T)                            \
-  T ToPq(T Y)                               \
-  {                                         \
-    Y = max(Y, 0.f);                        \
+    namespace LinearTo
+    {
+      #define LINEAR_TO_PQ(T)                     \
+        T Pq(T Y)                                 \
+        {                                         \
+          Y = max(Y, 0.f);                        \
+                                                  \
+          T Y_pow_m1 = pow(Y, PQ_m1);             \
+                                                  \
+          /* E' */                                \
+          return pow(                             \
+                     (PQ_c1 + PQ_c2 * Y_pow_m1) / \
+                     (  1.f + PQ_c3 * Y_pow_m1)   \
+                 , PQ_m2);                        \
+        }
+
+      // (inverse EOTF) takes normalised to 10000 nits values as input
+      LINEAR_TO_PQ(float)
+
+      // (inverse EOTF) takes normalised to 10000 nits values as input
+      LINEAR_TO_PQ(float2)
+
+      // (inverse EOTF) takes normalised to 10000 nits values as input
+      LINEAR_TO_PQ(float3)
+
+    } //LinearTo
+
+
+    // Rec. ITU-R BT.2100-2 Table 4 (end)
+    namespace NitsTo
+    {
+      // (OETF) takes nits as input
+      #define NITS_TO_PQ(T)                 \
+        T Pq(T Fd)                          \
+        {                                   \
+          T Y = Fd / 10000.f;               \
                                             \
-    T Y_pow_m1 = pow(Y, PQ_m1);             \
-                                            \
-    /* E' */                                \
-    return pow(                             \
-               (PQ_c1 + PQ_c2 * Y_pow_m1) / \
-               (  1.f + PQ_c3 * Y_pow_m1)   \
-           , PQ_m2);                        \
-  }
+          return Csp::Trc::LinearTo::Pq(Y); \
+        }
 
-    // (inverse EOTF) takes normalised to 10000 nits values as input
-    TO_PQ(float)
+      // (OETF) takes nits as input
+      NITS_TO_PQ(float)
 
-    // (inverse EOTF) takes normalised to 10000 nits values as input
-    TO_PQ(float2)
+      // (OETF) takes nits as input
+      NITS_TO_PQ(float2)
 
-    // (inverse EOTF) takes normalised to 10000 nits values as input
-    TO_PQ(float3)
-
-    // (OETF) takes nits as input
-#define TO_PQ_FROM_NITS(T) \
-  T ToPqFromNits(T Fd)     \
-  {                        \
-    T Y = Fd / 10000.f;    \
-                           \
-    return ToPq(Y);        \
-  }
-
-    // (OETF) takes nits as input
-    TO_PQ_FROM_NITS(float)
-
-    // (OETF) takes nits as input
-    TO_PQ_FROM_NITS(float2)
-
-    // (OETF) takes nits as input
-    TO_PQ_FROM_NITS(float3)
+      // (OETF) takes nits as input
+      NITS_TO_PQ(float3)
+    }
 
 
     // Rec. ITU-R BT.2100-2 Table 5
-    #define HLG_a asfloat(0x3E371FF0) //0.17883277
-    #define HLG_b asfloat(0x3E91C020) //0.28466892 = 1 - 4 * HLG_a
-    #define HLG_c asfloat(0x3F0F564F) //0.55991072952956202016 = 0.5 - HLG_a * ln(4 * HLG_a)
-
-    // Rec. ITU-R BT.2100-2 Table 5 (end)
-    // (EOTF) takes HLG values as input
-    float FromHlg(float X)
+    namespace HlgTo
     {
-      if (X <= 0.5f)
+      #define HLG_a asfloat(0x3E371FF0) //0.17883277
+      #define HLG_b asfloat(0x3E91C020) //0.28466892 = 1 - 4 * HLG_a
+      #define HLG_c asfloat(0x3F0F564F) //0.55991072952956202016 = 0.5 - HLG_a * ln(4 * HLG_a)
+
+      // Rec. ITU-R BT.2100-2 Table 5 (end)
+      // (EOTF) takes HLG values as input
+      float Linear(float X)
       {
-        return pow(X, 2.f) / 3.f;
+        if (X <= 0.5f)
+        {
+          return pow(X, 2.f) / 3.f;
+        }
+        else
+        {
+          return (exp((X - HLG_c) / HLG_a) + HLG_b) / 12.f;
+        }
       }
-      else
+
+      // (EOTF) takes HLG values as input
+      float3 Linear(float3 Rgb)
       {
-        return (exp((X - HLG_c) / HLG_a) + HLG_b) / 12.f;
+        return float3(Csp::Trc::HlgTo::Linear(Rgb.r),
+                      Csp::Trc::HlgTo::Linear(Rgb.g),
+                      Csp::Trc::HlgTo::Linear(Rgb.b));
+      }
+    } //HlgTo
+
+
+    namespace LinearTo
+    {
+      // Rec. ITU-R BT.2100-2 Table 5
+      // (inverse EOTF) takes normalised to 1000 nits values as input
+      float Hlg(float E)
+      {
+        if (E <= (1.f / 12.f))
+        {
+          return sqrt(3.f * E);
+        }
+        else
+        {
+          return HLG_a * log(12.f * E - HLG_b) + HLG_c;
+        }
+      }
+
+      // (inverse EOTF) takes normalised to 1000 nits values as input
+      float3 Hlg(float3 E)
+      {
+        return float3(Csp::Trc::LinearTo::Hlg(E.r),
+                      Csp::Trc::LinearTo::Hlg(E.g),
+                      Csp::Trc::LinearTo::Hlg(E.b));
+      }
+    } //LinearTo
+
+
+    namespace NitsTo
+    {
+      // Rec. ITU-R BT.2100-2 Table 5
+      // (OETF) takes nits as input
+      float Hlg(float E)
+      {
+        E = E / 1000.f;
+
+        if (E <= (1.f / 12.f))
+        {
+          return sqrt(3.f * E);
+        }
+        else
+        {
+          return HLG_a * log(12.f * E - HLG_b) + HLG_c;
+        }
+      }
+
+      // (OETF) takes nits as input
+      float3 Hlg(float3 E)
+      {
+        return float3(Csp::Trc::NitsTo::Hlg(E.r),
+                      Csp::Trc::NitsTo::Hlg(E.g),
+                      Csp::Trc::NitsTo::Hlg(E.b));
       }
     }
 
-    // (EOTF) takes HLG values as input
-    float3 FromHlg(float3 Rgb)
-    {
-      return float3(FromHlg(Rgb.r),
-                    FromHlg(Rgb.g),
-                    FromHlg(Rgb.b));
-    }
-
-    // Rec. ITU-R BT.2100-2 Table 5
-    // (inverse EOTF) takes normalised to 1000 nits values as input
-    float ToHlg(float E)
-    {
-      if (E <= (1.f / 12.f))
-      {
-        return sqrt(3.f * E);
-      }
-      else
-      {
-        return HLG_a * log(12.f * E - HLG_b) + HLG_c;
-      }
-    }
-
-    // (inverse EOTF) takes normalised to 1000 nits values as input
-    float3 ToHlg(float3 E)
-    {
-      return float3(ToHlg(E.r),
-                    ToHlg(E.g),
-                    ToHlg(E.b));
-    }
-
-    // Rec. ITU-R BT.2100-2 Table 5
-    // (OETF) takes nits as input
-    float ToHlgFromNits(float E)
-    {
-      E = E / 1000.f;
-
-      if (E <= (1.f / 12.f))
-      {
-        return sqrt(3.f * E);
-      }
-      else
-      {
-        return HLG_a * log(12.f * E - HLG_b) + HLG_c;
-      }
-    }
-
-    // (OETF) takes nits as input
-    float3 ToHlgFromNits(float3 E)
-    {
-      return float3(ToHlgFromNits(E.r),
-                    ToHlgFromNits(E.g),
-                    ToHlgFromNits(E.b));
-    }
 
   } //Trc
 
@@ -826,10 +894,11 @@ namespace Csp
       #define KrAp0D65 asfloat(0x3fa82ca7)
       #define KgAp0D65 float2(asfloat(0x3e69cd4c), asfloat(0xbf1d0be7))
 
-    namespace ToRgb
+
+    namespace YcbcrTo
     {
 
-      float3 Bt709(float3 Colour)
+      float3 RgbBt709(float3 Colour)
       {
         return float3(
           Colour.x + KrBt709    * Colour.z,
@@ -837,7 +906,7 @@ namespace Csp
           Colour.x + KbBt709    * Colour.y);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 RgbBt2020(float3 Colour)
       {
         return float3(
           Colour.x + KrBt2020    * Colour.z,
@@ -845,7 +914,7 @@ namespace Csp
           Colour.x + KbBt2020    * Colour.y);
       }
 
-      float3 Ap0D65(float3 Colour)
+      float3 RgbAp0D65(float3 Colour)
       {
         return float3(
           Colour.x + KrAp0D65    * Colour.z,
@@ -853,12 +922,13 @@ namespace Csp
           Colour.x + KbAp0D65    * Colour.y);
       }
 
-    } //ToRgb
+    } //YcbcrTo
 
-    namespace FromRgb
+
+    namespace RgbTo
     {
 
-      float3 Bt709(float3 Colour)
+      float3 YcbcrBt709(float3 Colour)
       {
         float Y = dot(Colour, KBt709);
         return float3(Y,
@@ -866,7 +936,7 @@ namespace Csp
                       (Colour.r - Y) / KrBt709);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 YcbcrBt2020(float3 Colour)
       {
         float Y = dot(Colour, KBt2020);
         return float3(Y,
@@ -874,7 +944,7 @@ namespace Csp
                       (Colour.r - Y) / KrBt2020);
       }
 
-      float3 Ap0D65(float3 Colour)
+      float3 YcbcrAp0D65(float3 Colour)
       {
         float Y = dot(Colour, KAp0D65);
         return float3(Y,
@@ -882,7 +952,7 @@ namespace Csp
                       (Colour.r - Y) / KrAp0D65);
       }
 
-    } //FromRgb
+    } //RgbTo
 
   } //Ycbcr
 
@@ -1310,12 +1380,12 @@ namespace Csp
 
       float3 Hdr10(float3 Input)
       {
-        return Csp::Trc::ToPqFromNits(Csp::Mat::Bt709To::Bt2020(Input));
+        return Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(Input));
       }
 
       float3 Hlg(float3 Input)
       {
-        return Csp::Trc::ToHlgFromNits(Csp::Mat::Bt709To::Bt2020(Input));
+        return Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(Input));
       }
 
       float3 Ps5(float3 Input)
@@ -1359,7 +1429,7 @@ float3 GetXYZfromxyY(Sxy xy, float Y)
 
   XYZ.y = Y;
 
-  XYZ.z = ((1.0 - xy.x - xy.y) / xy.y)
+  XYZ.z = ((1.f - xy.x - xy.y) / xy.y)
         * Y;
 
   return XYZ;

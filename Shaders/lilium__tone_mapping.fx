@@ -381,14 +381,14 @@ void VS_PrepareToneMapping(
 #define bt2390KneeStart             TmParms1.z
 
     // source min brightness (Lb) in PQ
-    bt2390SrcMinPq = Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::OldBlackPoint);
+    bt2390SrcMinPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Bt2390::OldBlackPoint);
     // source max brightness (Lw) in PQ
-    bt2390SrcMaxPq = Csp::Trc::ToPqFromNits(usedMaxCll);
+    bt2390SrcMaxPq = Csp::Trc::NitsTo::Pq(usedMaxCll);
 
     // target min brightness (Lmin) in PQ
-    float tgtMinPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Bt2390::NewBlackPoint);
+    float tgtMinPQ = Csp::Trc::NitsTo::Pq(Ui::Tm::Bt2390::NewBlackPoint);
     // target max brightness (Lmax) in PQ
-    float tgtMaxPQ = Csp::Trc::ToPqFromNits(Ui::Tm::Global::TargetBrightness);
+    float tgtMaxPQ = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetBrightness);
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -410,9 +410,9 @@ void VS_PrepareToneMapping(
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
-    diceTargetCllInPq = Csp::Trc::ToPqFromNits(Ui::Tm::Global::TargetBrightness);
+    diceTargetCllInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetBrightness);
     diceShoulderStartInPq =
-      Csp::Trc::ToPqFromNits(Ui::Tm::Dice::ShoulderStart
+      Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
                            / 100.f
                            * Ui::Tm::Global::TargetBrightness);
 
@@ -443,7 +443,7 @@ void PS_ToneMapping(
 
    || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
   {
-    hdr = Csp::Trc::FromPq(hdr);
+    hdr = Csp::Trc::PqTo::Linear(hdr);
   }
 
 //  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
@@ -451,7 +451,7 @@ void PS_ToneMapping(
 //    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
 //     || Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
 //    {
-//      hdr = Csp::Trc::FromPq(hdr);
+//      hdr = Csp::Trc::PqTo::Linear(hdr);
 //    }
 //
 //    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
@@ -460,7 +460,7 @@ void PS_ToneMapping(
 //
 //      if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
 //      {
-//        hdr = Csp::Trc::ToPq(hdr);
+//        hdr = Csp::Trc::LinearTo::Pq(hdr);
 //      }
 //    }
 //  }
@@ -469,7 +469,7 @@ void PS_ToneMapping(
 //        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
 //        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
 //  {
-//    hdr = Csp::Trc::FromPq(hdr);
+//    hdr = Csp::Trc::PqTo::Linear(hdr);
 //  }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -485,7 +485,7 @@ void PS_ToneMapping(
    || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
     && Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR))
   {
-    hdr = Csp::Trc::ToPq(hdr);
+    hdr = Csp::Trc::LinearTo::Pq(hdr);
   }
 
 //  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A
@@ -500,7 +500,7 @@ void PS_ToneMapping(
 //    if (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
 //     || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR)
 //    {
-//      hdr = Csp::Trc::ToPq(hdr);
+//      hdr = Csp::Trc::LinearTo::Pq(hdr);
 //    }
 //  }
 //  else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
@@ -516,7 +516,7 @@ void PS_ToneMapping(
 //
 //    if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
 //    {
-//      hdr = Csp::Trc::ToPq(hdr);
+//      hdr = Csp::Trc::LinearTo::Pq(hdr);
 //    }
 //  }
 
@@ -586,7 +586,7 @@ void PS_ToneMapping(
 
    || Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
   {
-    hdr = Csp::Trc::ToPq(hdr);
+    hdr = Csp::Trc::LinearTo::Pq(hdr);
   }
 
 //  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
@@ -595,18 +595,18 @@ void PS_ToneMapping(
 //    {
 //      if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
 //      {
-//        hdr = Csp::Trc::FromPq(hdr);
+//        hdr = Csp::Trc::PqTo::Linear(hdr);
 //        hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
 //      }
 //      else
 //      {
 //        hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
 //      }
-//      hdr = Csp::Trc::ToPq(hdr);
+//      hdr = Csp::Trc::LinearTo::Pq(hdr);
 //    }
 //    else if (Ui::Tm::Dice::ProcessingModeDice != DICE_PRO_MODE_YCBCR)
 //    {
-//      hdr = Csp::Trc::ToPq(hdr);
+//      hdr = Csp::Trc::LinearTo::Pq(hdr);
 //    }
 //  }
 //  else if(Ui::Tm::Global::TmMethod != TM_METHOD_BT2390
@@ -614,7 +614,7 @@ void PS_ToneMapping(
 //        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_RGB
 //        && Ui::Tm::Bt2390::ProcessingModeBt2390 != BT2390_PRO_MODE_YCBCR))
 //  {
-//    hdr = Csp::Trc::ToPq(hdr);
+//    hdr = Csp::Trc::LinearTo::Pq(hdr);
 //  }
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -626,7 +626,7 @@ void PS_ToneMapping(
    || (Ui::Tm::Global::TmMethod == TM_METHOD_DICE
     && Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR))
   {
-    hdr = Csp::Trc::FromPq(hdr);
+    hdr = Csp::Trc::PqTo::Linear(hdr);
   }
 
   hdr = Csp::Mat::Bt2020To::Bt709(hdr);
@@ -641,7 +641,7 @@ void PS_ToneMapping(
 //     && (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_RGB
 //      || Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_YCBCR))
 //    {
-//      hdr = Csp::Trc::FromPq(hdr);
+//      hdr = Csp::Trc::PqTo::Linear(hdr);
 //    }
 //    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
 //  }
@@ -649,7 +649,7 @@ void PS_ToneMapping(
 //  {
 //    if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_YCBCR)
 //    {
-//      hdr = Csp::Trc::FromPq(hdr);
+//      hdr = Csp::Trc::PqTo::Linear(hdr);
 //    }
 //
 //    if (Ui::Tm::Dice::WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_BT2020)
@@ -682,14 +682,14 @@ void PS_ToneMapping(
   float actualMaxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAXCLL_VALUE);
 
   float avgMaxCllInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAXCLL);
-  float avgMaxCll     = Csp::Trc::FromPqToNits(avgMaxCllInPq);
+  float avgMaxCll     = Csp::Trc::PqTo::Nits(avgMaxCllInPq);
 
   float adaptiveMaxCll     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_CLL);
-  float adaptiveMaxCllInPQ = Csp::Trc::ToPqFromNits(adaptiveMaxCll);
+  float adaptiveMaxCllInPQ = Csp::Trc::NitsTo::Pq(adaptiveMaxCll);
 
   float absDiff = abs(avgMaxCllInPq - adaptiveMaxCllInPQ);
 
-  float finalAdaptMode = 
+  float finalAdaptMode =
     absDiff < abs((avgMaxCllInPq - FINAL_ADAPT_STOP * avgMaxCllInPq))
   ? 2.f
   : absDiff < abs((avgMaxCllInPq - Ui::Tm::AdaptiveMode::FinalAdaptStart / 100.f * avgMaxCllInPq))
@@ -731,9 +731,9 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 #endif
 
   float currentMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE));
+    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_MAXCLL_VALUE));
   float currentAdaptiveMaxCllInPQ =
-    Csp::Trc::ToPqFromNits(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL));
+    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_CLL));
 
   int curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAXCLL_CUR);
   int newSlot = curSlot > 10 ? 1
@@ -775,7 +775,7 @@ void CS_AdaptiveCLL(uint3 ID : SV_DispatchThreadID)
 
   tex2Dstore(StorageConsolidated,
              COORDS_ADAPTIVE_CLL,
-             min(Csp::Trc::FromPqToNits(currentAdaptiveMaxCllInPQ + adapt),
+             min(Csp::Trc::PqTo::Nits(currentAdaptiveMaxCllInPQ + adapt),
                  Ui::Tm::AdaptiveMode::MaxCllCap));
 
 }

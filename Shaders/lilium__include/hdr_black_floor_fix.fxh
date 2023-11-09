@@ -162,7 +162,7 @@ void Gamma22Emulation(
     {
       if (dot(Colour, Bt709ToXYZ[1]) <= WhitePointNormalised)
       {
-        Colour = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
       return;
     }
@@ -170,7 +170,7 @@ void Gamma22Emulation(
     {
       if (dot(Colour, DciP3ToXYZ[1]) <= WhitePointNormalised)
       {
-        Colour = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
       return;
     }
@@ -180,9 +180,9 @@ void Gamma22Emulation(
       if (dot(Colour, Bt2020ToXYZ[1]) <= WhitePointNormalised)
       {
 #if defined(IS_FLOAT_HDR_CSP)
-        Colour = Csp::Trc::FromExtendedGamma22(Csp::Trc::ToExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
 #else
-        Colour = pow(Csp::Trc::ToSrgb(Colour / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+        Colour = pow(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 #endif
       }
       return;
@@ -193,15 +193,15 @@ void Gamma22Emulation(
 //
 //  if (Colour.r <= WhitePointNormalised)
 //  {
-//    Colour.r = pow(Csp::Trc::ToSrgb(RgbNormalised.r), 2.2f) * WhitePointNormalised;
+//    Colour.r = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.r), 2.2f) * WhitePointNormalised;
 //  }
 //  if (Colour.g <= WhitePointNormalised)
 //  {
-//    Colour.g = pow(Csp::Trc::ToSrgb(RgbNormalised.g), 2.2f) * WhitePointNormalised;
+//    Colour.g = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.g), 2.2f) * WhitePointNormalised;
 //  }
 //  if (Colour.b <= WhitePointNormalised)
 //  {
-//    Colour.b = pow(Csp::Trc::ToSrgb(RgbNormalised.b), 2.2f) * WhitePointNormalised;
+//    Colour.b = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.b), 2.2f) * WhitePointNormalised;
 //  }
 }
 
@@ -293,11 +293,11 @@ void ConvertToOutputCspAfterProcessing(inout float3 Colour)
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  Colour = Csp::Trc::ToPq(Colour);
+  Colour = Csp::Trc::LinearTo::Pq(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  Colour = Csp::Trc::ToHlg(Colour);
+  Colour = Csp::Trc::LinearTo::Hlg(Colour);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
@@ -337,11 +337,11 @@ void ConvertToOutputCspWithoutProcessing(inout float3 Colour)
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    Colour = Csp::Trc::ToPq(Colour);
+    Colour = Csp::Trc::LinearTo::Pq(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    Colour = Csp::Trc::ToHlg(Colour);
+    Colour = Csp::Trc::LinearTo::Hlg(Colour);
 
 #endif
     return;
@@ -357,11 +357,11 @@ void ConvertToOutputCspWithoutProcessing(inout float3 Colour)
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  Colour = Csp::Trc::ToPq(Colour);
+  Colour = Csp::Trc::LinearTo::Pq(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  Colour = Csp::Trc::ToHlg(Colour);
+  Colour = Csp::Trc::LinearTo::Hlg(Colour);
 
 #endif
 }
@@ -384,26 +384,26 @@ void LowerBlackFloor(
     {
       if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
       {
-        Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt709To::Lms(Colour));
+        Lms = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt709To::Lms(Colour));
       }
       else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
       {
-        Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::DciP3To::Lms(Colour));
+        Lms = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::DciP3To::Lms(Colour));
       }
       else //if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
       {
-        Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
+        Lms = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
       }
     }
     else
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt709To::Lms(Colour));
+      Lms = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt709To::Lms(Colour));
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-      Lms = Csp::Trc::ToPq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
+      Lms = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
 
 #endif
     }
@@ -423,7 +423,7 @@ void LowerBlackFloor(
                                                    dot(Lms, PqLmsToIctcp[1]),
                                                    dot(Lms, PqLmsToIctcp[2])));
       //to LMS
-      Lms = Csp::Trc::FromPq(Lms);
+      Lms = Csp::Trc::PqTo::Linear(Lms);
       //to RGB
       Colour = max(Csp::Ictcp::Mat::LmsTo::Bt2020(Lms), 0.f);
 
@@ -441,7 +441,7 @@ void LowerBlackFloor(
   {
     float3 inputInPq = Colour;
     ConvertToWorkingCsp(inputInPq);
-    inputInPq = Csp::Trc::ToPq(inputInPq);
+    inputInPq = Csp::Trc::LinearTo::Pq(inputInPq);
 
     float y1 = dot(inputInPq, KBt2020);
 
@@ -452,13 +452,13 @@ void LowerBlackFloor(
                                     RollOffMinusOldBlackPoint,
                                     MinLum);
 
-      Colour = Csp::Ycbcr::ToRgb::Bt2020(float3(y2,
+      Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(y2,
                                                 (inputInPq.b - y1) / KbBt2020,
                                                 (inputInPq.r - y1) / KrBt2020));
 
 #if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
 
-      Colour = Csp::Trc::FromPq(Colour);
+      Colour = Csp::Trc::PqTo::Linear(Colour);
       ConvertToOutputCspAfterProcessing(Colour);
 
 #else
@@ -479,7 +479,7 @@ void LowerBlackFloor(
   {
     float y1 = GetNits(Colour);
 
-    float y1InPq = Csp::Trc::ToPq(y1);
+    float y1InPq = Csp::Trc::LinearTo::Pq(y1);
 
     if (y1InPq <= RollOffStoppingPoint)
     {
@@ -490,7 +490,7 @@ void LowerBlackFloor(
                                     RollOffMinusOldBlackPoint,
                                     MinLum);
 
-      y2 = Csp::Trc::FromPq(y2);
+      y2 = Csp::Trc::PqTo::Linear(y2);
 
       Colour = max(y2 / y1 * Colour, 0.f);
 
@@ -512,7 +512,7 @@ void LowerBlackFloor(
     {
       float3 rgbInPq = Colour;
       ConvertToWorkingCsp(rgbInPq);
-      rgbInPq = Csp::Trc::ToPq(rgbInPq);
+      rgbInPq = Csp::Trc::LinearTo::Pq(rgbInPq);
 
       rgbInPq = BlackPointAdaption(rgbInPq,
                                    OldBlackPoint,
@@ -521,7 +521,7 @@ void LowerBlackFloor(
 
 #if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
 
-      Colour = Csp::Trc::FromPq(rgbInPq);
+      Colour = Csp::Trc::PqTo::Linear(rgbInPq);
       ConvertToOutputCspAfterProcessing(Colour);
 
 #else

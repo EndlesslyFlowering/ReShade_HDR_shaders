@@ -83,20 +83,20 @@ void PS_ScrgbTrcFix(
 
   if (INPUT_TRC == TRC_SRGB)
   {
-    fixedGamma = Csp::Trc::FromExtendedSrgb(fixedGamma);
+    fixedGamma = Csp::Trc::ExtendedSrgbTo::Linear(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_22)
   {
-    fixedGamma = Csp::Trc::FromExtendedGamma22(fixedGamma);
+    fixedGamma = Csp::Trc::ExtendedGamma22To::Linear(fixedGamma);
   }
   else if (INPUT_TRC == TRC_GAMMA_24)
   {
-    fixedGamma = Csp::Trc::FromExtendedGamma24(fixedGamma);
+    fixedGamma = Csp::Trc::ExtendedGamma24To::Linear(fixedGamma);
   }
 #if (CSP_OVERRIDE != CSP_PS5)
   else if (INPUT_TRC == TRC_PQ)
   {
-    fixedGamma = Csp::Mat::Bt2020To::Bt709(Csp::Trc::FromPq(fixedGamma)) * 125.f;
+    fixedGamma = Csp::Mat::Bt2020To::Bt709(Csp::Trc::PqTo::Linear(fixedGamma)) * 125.f;
   }
 #endif
 

@@ -46,7 +46,7 @@ float3 PrepareForProcessing(float3 Colour)
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::FromPq(Colour);
+  return Csp::Trc::PqTo::Linear(Colour);
 
 #else
 
@@ -65,7 +65,7 @@ float3 PrepareForOutput(float3 Colour)
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::ToPq(Colour);
+  return Csp::Trc::LinearTo::Pq(Colour);
 
 #else
 

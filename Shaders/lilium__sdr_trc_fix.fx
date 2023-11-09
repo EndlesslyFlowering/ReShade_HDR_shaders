@@ -95,7 +95,7 @@ void PS_SdrTrcFix(
 
   if (INPUT_TRC == 0)
   {
-    fixedGamma = Csp::Trc::FromSrgb(fixedGamma);
+    fixedGamma = Csp::Trc::SrgbTo::Linear(fixedGamma);
   }
   else
   {
@@ -115,7 +115,7 @@ void PS_SdrTrcFix(
   }
   else
   {
-    Csp::Trc::ToSrgb(fixedGamma);
+    Csp::Trc::LinearTo::Srgb(fixedGamma);
   }
 
   Output = float4(fixedGamma, 1.f);

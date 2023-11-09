@@ -43,20 +43,20 @@ void VS_PrepareHdrBlackFloorFix(
   }
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB_IN_PQ)
   {
-    oldBlackPoint = Csp::Trc::ToPq(oldBlackPoint);
+    oldBlackPoint = Csp::Trc::LinearTo::Pq(oldBlackPoint);
 
     newBlackPoint = sign(newBlackPoint)
-                  * Csp::Trc::ToPqFromNits(abs(newBlackPoint));
+                  * Csp::Trc::NitsTo::Pq(abs(newBlackPoint));
 
-    rollOffMinusOldBlackPoint = Csp::Trc::ToPq(rollOffStoppingPoint) - oldBlackPoint;
+    rollOffMinusOldBlackPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint) - oldBlackPoint;
   }
   else
   {
-    rollOffStoppingPoint = Csp::Trc::ToPq(rollOffStoppingPoint);
-    oldBlackPoint        = Csp::Trc::ToPq(oldBlackPoint);
+    rollOffStoppingPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint);
+    oldBlackPoint        = Csp::Trc::LinearTo::Pq(oldBlackPoint);
 
     newBlackPoint = sign(newBlackPoint)
-                  * Csp::Trc::ToPqFromNits(abs(newBlackPoint));
+                  * Csp::Trc::NitsTo::Pq(abs(newBlackPoint));
 
     rollOffMinusOldBlackPoint = rollOffStoppingPoint - oldBlackPoint;
   }
@@ -90,11 +90,11 @@ void PS_HdrBlackFloorFix(
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  hdr = Csp::Trc::FromPq(hdr);
+  hdr = Csp::Trc::PqTo::Linear(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  hdr = Csp::Trc::FromHlg(hdr);
+  hdr = Csp::Trc::HlgTo::Linear(hdr);
 
 #else //ACTUAL_COLOUR_SPACE ==
 
@@ -144,11 +144,11 @@ void PS_HdrBlackFloorFix(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      hdr = Csp::Trc::ToPq(hdr);
+      hdr = Csp::Trc::LinearTo::Pq(hdr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      hdr = Csp::Trc::ToHlg(hdr);
+      hdr = Csp::Trc::LinearTo::Hlg(hdr);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
