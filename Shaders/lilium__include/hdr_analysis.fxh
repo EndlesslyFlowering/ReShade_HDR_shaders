@@ -1655,6 +1655,17 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
+//ignore negative luminance in float based colour spaces
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+      if (XYZ.y < 0.f)
+      {
+        return;
+      }
+
+#endif
+
 #if (CIE_DIAGRAM == CIE_1931)
       // get xy
       precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
