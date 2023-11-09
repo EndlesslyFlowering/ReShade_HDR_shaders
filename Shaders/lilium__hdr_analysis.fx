@@ -50,7 +50,10 @@ uniform uint TEXT_SIZE
   ui_category = "Global";
   ui_label    = "text size";
   ui_type     = "combo";
-  ui_items    = "18\0"
+  ui_items    = "12\0"
+                "14\0"
+                "16\0"
+                "18\0"
                 "20\0"
                 "22\0"
                 "24\0"
@@ -69,8 +72,9 @@ uniform uint TEXT_SIZE
                 "50\0"
                 "52\0"
                 "54\0"
-                "56\0";
-> = 0;
+                "56\0"
+                "58\0";
+> = 15;
 
 uniform float TEXT_BRIGHTNESS
 <
@@ -933,8 +937,8 @@ void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
   static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
 
   uint2 charSize   = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
-  uint  fontSize   = 19 - TEXT_SIZE;
-  uint2 atlasXY    = uint2(fontSize % 5, fontSize / 5) * uint2(FONT_ATLAS_OFFSET_X, FONT_ATLAS_OFFSET_Y);
+  uint  fontSize   = 23 - TEXT_SIZE;
+  uint2 atlasXY    = uint2(fontSize % 4, fontSize / 4) * uint2(FONT_ATLAS_OFFSET_X, FONT_ATLAS_OFFSET_Y);
   uint2 charOffset = Char * charSize + atlasXY;
 
   for (uint y = 0; y < charSize.y; y++)

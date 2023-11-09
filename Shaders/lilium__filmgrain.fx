@@ -5,7 +5,7 @@
 
 uniform float INTENSITY
 <
-  ui_label = "grain INTENSITY";
+  ui_label = "grain intensity";
   ui_type  = "drag";
   ui_min   = 0.f;
   ui_max   = 0.1f;
@@ -38,8 +38,8 @@ float Rand(inout float State)
 #define b1 asfloat(0xBF42BF5D) // -0.7607324991323768
 
 void PS_Filmgrain(
-      float4 Vpos     : SV_Position,
-      float2 TexCoord : TEXCOORD0,
+  in  float4 Vpos     : SV_Position,
+  in  float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {
   float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
