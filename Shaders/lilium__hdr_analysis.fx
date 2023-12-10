@@ -281,13 +281,13 @@ uniform bool SHOW_CIE_CSP_DCI_P3_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show DCI-P3 colour space outline";
-> = false;
+> = true;
 
 uniform bool SHOW_CIE_CSP_BT2020_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.2020 colour space outline";
-> = false;
+> = true;
 
 #ifdef IS_FLOAT_HDR_CSP
 
@@ -295,7 +295,7 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show AP0 colour space outline";
-> = false;
+> = true;
 
 #endif
 
