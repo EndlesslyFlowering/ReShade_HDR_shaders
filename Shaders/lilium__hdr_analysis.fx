@@ -1448,7 +1448,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _5th(cursorCll);
         DrawNumberAboveZero(curNumber, float2(12, 3 + cursorCllYOffset));
       }
@@ -1458,7 +1458,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _4th(cursorCll);
         DrawNumberAboveZero(curNumber, float2(13, 3 + cursorCllYOffset));
       }
@@ -1468,7 +1468,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _3rd(cursorCll);
         DrawNumberAboveZero(curNumber, float2(14, 3 + cursorCllYOffset));
       }
@@ -1478,7 +1478,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _2nd(cursorCll);
         DrawNumberAboveZero(curNumber, float2(15, 3 + cursorCllYOffset));
       }
@@ -1488,7 +1488,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _1st(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(16, 3 + cursorCllYOffset));
       }
@@ -1498,7 +1498,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d1st(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(18, 3 + cursorCllYOffset));
       }
@@ -1508,7 +1508,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d2nd(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(19, 3 + cursorCllYOffset));
       }
@@ -1518,7 +1518,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d3rd(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(20, 3 + cursorCllYOffset));
       }
@@ -1528,7 +1528,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d4th(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(21, 3 + cursorCllYOffset));
       }
@@ -1538,7 +1538,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d5th(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(22, 3 + cursorCllYOffset));
       }
@@ -1548,7 +1548,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
-        precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
+        precise float cursorCll = tex2Dfetch(StorageCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d6th(cursorCll);
         DrawChar(uint2(curNumber, 0), float2(23, 3 + cursorCllYOffset));
       }

@@ -263,6 +263,9 @@ uniform int GLOBAL_INFO
   }
 
 
+#define FP32_MAX asfloat(0x7F7FFFFF)
+
+
 namespace Csp
 {
 
