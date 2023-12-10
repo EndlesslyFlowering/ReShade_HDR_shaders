@@ -758,9 +758,9 @@ void Testy(
 #endif //_TESTY
 
 
-#define SPACING_MULTIPLIER  0.3f
-#define OUTER_SPACING      15.f
-#define OUTER_SPACING_X2    2.f * OUTER_SPACING
+#define SPACING_MULTIPLIER   0.3f
+#define OUTER_SPACING       15.f
+#define OUTER_SPACING_X2    (2.f * OUTER_SPACING)
 
 static const float ShowCllValuesLineCount     = 3;
 static const float ShowCllFromCursorLineCount = 1;
@@ -896,9 +896,9 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                                              : 0);
 
     uint activeCharacters =
-      max(max(max((SHOW_CLL_VALUES ? 25
+      max(max(max((SHOW_CLL_VALUES ? 21
                                    : 0),
-                  (SHOW_CLL_FROM_CURSOR ? 28
+                  (SHOW_CLL_FROM_CURSOR ? 24
                                         : 0)),
                   (SHOW_CSPS ? 16
                              : 0)),
@@ -956,7 +956,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 }
 
 
-void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
+void DrawChar(uint2 Char, float2 DrawOffset)
 {
   static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
 
@@ -971,18 +971,17 @@ void DrawChar(uint2 Char, float2 DrawOffset, float2 Id)
     {
       uint2 currentOffset = uint2(x, y);
       float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset).rgba;
-      tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + OUTER_SPACING + currentOffset, pixel);
+      tex2Dstore(StorageTextOverlay, DrawOffset * charSize + OUTER_SPACING + currentOffset, pixel);
     }
   }
 }
 
 
-void DrawSpace(float2 DrawOffset, float2 Id)
+void DrawSpace(float2 DrawOffset)
 {
   static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
 
   uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
-  uint  fontSize = 19 - TEXT_SIZE;
 
   float4 emptyPixel = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
 
@@ -991,15 +990,10 @@ void DrawSpace(float2 DrawOffset, float2 Id)
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      tex2Dstore(StorageTextOverlay, (Id + DrawOffset) * charSize + OUTER_SPACING + currentOffset, emptyPixel);
+      tex2Dstore(StorageTextOverlay, DrawOffset * charSize + OUTER_SPACING + currentOffset, emptyPixel);
     }
   }
 }
-
-
-#define cursorCllOffset float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL))
-#define cspsOffset      float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS))
-#define cursorCspOffset float2(0.f, tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP))
 
 
 void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
@@ -1008,899 +1002,160 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
   if (tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW))
   {
 
+    static const float cursorCllYOffset = 3.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL);
+    static const float cspsYOffset0     = 4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS);
+    static const float cspsYOffset1     = 1.f + cspsYOffset0;
+    static const float cspsYOffset2     = 2.f + cspsYOffset0;
+#ifdef IS_FLOAT_HDR_CSP
+    static const float cspsYOffset3     = 3.f + cspsYOffset0;
+    static const float cspsYOffset4     = 4.f + cspsYOffset0;
+#endif
+    static const float cursorCspYOffset = 9.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP);
+
 #ifdef _DEBUG
 
-    if(ID.x == 0 && ID.y == 0 && ID.z == 0)
+    for (uint x = 0; x < 20; x++)
     {
-      for (uint x = 0; x < 20; x++)
+      for (uint y = 0; y < 20; y++)
       {
-        for (uint y = 0; y < 20; y++)
+        if ((x < 5 || x > 14)
+         || (y < 5 || y > 14))
         {
-          if ((x < 5 || x > 14)
-           || (y < 5 || y > 14))
-          {
-            tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
-          }
-          else
-          {
-            tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(0.f, 0.f, 0.f, 1.f));
-          }
+          tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
+        }
+        else
+        {
+          tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(0.f, 0.f, 0.f, 1.f));
         }
       }
     }
 
 #endif //_DEBUG
 
-    switch(ID.x)
+    // max/avg/min Nits
+    if (SHOW_CLL_VALUES)
     {
-      // max/avg/min CLL
-      // maxCLL:
-      case 0:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_m, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 1:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_a, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 2:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_x, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 3:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_C, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 4:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 5:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 6:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_colon, float2(0, 0), float2(ID.xy));
-        }
-        return;
-      }
-      case 7:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_dot, float2(6, 0), float2(ID.xy)); // five figure number
-        }
-        return;
-      }
-      case 8:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_n, float2(7 + 1, 0), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 9:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_i, float2(7 + 1, 0), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 10:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_t, float2(7 + 1, 0), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 11:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_s, float2(7 + 1, 0), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      // avgCLL:
-      case 12:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_a, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 13:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_v, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 14:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_g, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 15:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_C, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 16:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 17:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 18:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_colon, float2(-12, 1), float2(ID.xy));
-        }
-        return;
-      }
-      case 19:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_dot, float2(6 - 12, 1), float2(ID.xy)); // five figure number
-        }
-        return;
-      }
-      case 20:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_n, float2(7 + 2 - 12, 1), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 21:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_i, float2(7 + 2 - 12, 1), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 22:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_t, float2(7 + 2 - 12, 1), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 23:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_s, float2(7 + 2 - 12, 1), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      // minCLL:
-      case 24:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_m, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 25:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_i, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 26:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_n, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 27:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_C, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 28:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 29:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_L, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 30:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_colon, float2(-24, 2), float2(ID.xy));
-        }
-        return;
-      }
-      case 31:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_dot, float2(6 - 24, 2), float2(ID.xy)); // five figure number
-        }
-        return;
-      }
-      case 32:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_n, float2(7 + 6 - 24, 2), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 33:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_i, float2(7 + 6 - 24, 2), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 34:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_t, float2(7 + 6 - 24, 2), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 35:
-      {
-        if (SHOW_CLL_VALUES)
-        {
-          DrawChar(_s, float2(7 + 6 - 24, 2), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      // cursorCLL:
-      case 36:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_c, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 37:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_u, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 38:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_r, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 39:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_s, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 40:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_o, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 41:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_r, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 42:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_C, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 43:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_L, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 44:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_L, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 45:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_colon, cursorCllOffset + float2(-36, 3), float2(ID.xy));
-        }
-        return;
-      }
-      case 46:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_dot, cursorCllOffset + float2(6 - 36, 3), float2(ID.xy)); // five figure number
-        }
-        return;
-      }
-      case 47:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_n, cursorCllOffset + float2(7 + 6 - 36, 3), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 48:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_i, cursorCllOffset + float2(7 + 6 - 36, 3), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 49:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_t, cursorCllOffset + float2(7 + 6 - 36, 3), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
-      case 50:
-      {
-        if (SHOW_CLL_FROM_CURSOR)
-        {
-          DrawChar(_s, cursorCllOffset + float2(7 + 6 - 36, 3), float2(ID.xy)); // decimal places offset
-        }
-        return;
-      }
+      // maxNits:
+      DrawChar(_m,     float2( 0, 0));
+      DrawChar(_a,     float2( 1, 0));
+      DrawChar(_x,     float2( 2, 0));
+      DrawChar(_n,     float2( 3, 0));
+      DrawChar(_i,     float2( 4, 0));
+      DrawChar(_t,     float2( 5, 0));
+      DrawChar(_s,     float2( 6, 0));
+      DrawChar(_colon, float2( 7, 0));
+      DrawChar(_dot,   float2(14, 0)); // five figure number
+      // avgNits:
+      DrawChar(_a,     float2( 0, 1));
+      DrawChar(_v,     float2( 1, 1));
+      DrawChar(_g,     float2( 2, 1));
+      DrawChar(_n,     float2( 3, 1));
+      DrawChar(_i,     float2( 4, 1));
+      DrawChar(_t,     float2( 5, 1));
+      DrawChar(_s,     float2( 6, 1));
+      DrawChar(_colon, float2( 7, 1));
+      DrawChar(_dot,   float2(14, 1)); // five figure number
+      // minNits:
+      DrawChar(_m,     float2( 0, 2));
+      DrawChar(_i,     float2( 1, 2));
+      DrawChar(_n,     float2( 2, 2));
+      DrawChar(_n,     float2( 3, 2));
+      DrawChar(_i,     float2( 4, 2));
+      DrawChar(_t,     float2( 5, 2));
+      DrawChar(_s,     float2( 6, 2));
+      DrawChar(_colon, float2( 7, 2));
+      DrawChar(_dot,   float2(14, 2)); // five figure number
+    }
 
+    // cursorNits:
+    if (SHOW_CLL_FROM_CURSOR)
+    {
+      DrawChar(_c,     float2( 0, cursorCllYOffset));
+      DrawChar(_u,     float2( 1, cursorCllYOffset));
+      DrawChar(_r,     float2( 2, cursorCllYOffset));
+      DrawChar(_s,     float2( 3, cursorCllYOffset));
+      DrawChar(_o,     float2( 4, cursorCllYOffset));
+      DrawChar(_r,     float2( 5, cursorCllYOffset));
+      DrawChar(_n,     float2( 6, cursorCllYOffset));
+      DrawChar(_i,     float2( 7, cursorCllYOffset));
+      DrawChar(_t,     float2( 8, cursorCllYOffset));
+      DrawChar(_s,     float2( 9, cursorCllYOffset));
+      DrawChar(_colon, float2(10, cursorCllYOffset));
+      DrawChar(_dot,   float2(17, cursorCllYOffset)); // five figure number
+    }
 
-      // CSPs
+    // CSPs
+    if (SHOW_CSPS)
+    {
       // BT.709:
-      case 51:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_B, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 52:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_T, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 53:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 54:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_7, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 55:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_0, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 56:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_9, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 57:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_colon, cspsOffset + float2(-51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 58:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(5 - 51, 4), float2(ID.xy));
-        }
-        return;
-      }
-      case 59:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_percent, cspsOffset + float2(7 - 51, 4), float2(ID.xy));
-        }
-        return;
-      }
+      DrawChar(_B,       float2( 0, cspsYOffset0));
+      DrawChar(_T,       float2( 1, cspsYOffset0));
+      DrawChar(_dot,     float2( 2, cspsYOffset0));
+      DrawChar(_7,       float2( 3, cspsYOffset0));
+      DrawChar(_0,       float2( 4, cspsYOffset0));
+      DrawChar(_9,       float2( 5, cspsYOffset0));
+      DrawChar(_colon,   float2( 6, cspsYOffset0));
+      DrawChar(_dot,     float2(12, cspsYOffset0));
+      DrawChar(_percent, float2(15, cspsYOffset0));
       // DCI-P3:
-      case 60:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_D, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 61:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_C, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 62:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_I, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 63:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_minus, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 64:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_P, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 65:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_3, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 66:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_colon, cspsOffset + float2(-60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 67:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(5 - 60, 5), float2(ID.xy));
-        }
-        return;
-      }
-      case 68:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_percent, cspsOffset + float2(7 - 60, 5), float2(ID.xy));
-        }
-        return;
-      }
+      DrawChar(_D,       float2( 0, cspsYOffset1));
+      DrawChar(_C,       float2( 1, cspsYOffset1));
+      DrawChar(_I,       float2( 2, cspsYOffset1));
+      DrawChar(_minus,   float2( 3, cspsYOffset1));
+      DrawChar(_P,       float2( 4, cspsYOffset1));
+      DrawChar(_3,       float2( 5, cspsYOffset1));
+      DrawChar(_colon,   float2( 6, cspsYOffset1));
+      DrawChar(_dot,     float2(12, cspsYOffset1));
+      DrawChar(_percent, float2(15, cspsYOffset1));
       // BT.2020:
-      case 69:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_B, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 70:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_T, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 71:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 72:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_2, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 73:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_0, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 74:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_2, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 75:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_0, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 76:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_colon, cspsOffset + float2(-69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 77:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(4 - 69, 6), float2(ID.xy));
-        }
-        return;
-      }
-      case 78:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_percent, cspsOffset + float2(6 - 69, 6), float2(ID.xy));
-        }
-        return;
-      }
+      DrawChar(_B,       float2( 0, cspsYOffset2));
+      DrawChar(_T,       float2( 1, cspsYOffset2));
+      DrawChar(_dot,     float2( 2, cspsYOffset2));
+      DrawChar(_2,       float2( 3, cspsYOffset2));
+      DrawChar(_0,       float2( 4, cspsYOffset2));
+      DrawChar(_2,       float2( 5, cspsYOffset2));
+      DrawChar(_0,       float2( 6, cspsYOffset2));
+      DrawChar(_colon,   float2( 7, cspsYOffset2));
+      DrawChar(_dot,     float2(12, cspsYOffset2));
+      DrawChar(_percent, float2(15, cspsYOffset2));
 #ifdef IS_FLOAT_HDR_CSP
       // AP0:
-      case 79:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_A, cspsOffset + float2(-79, 7), float2(ID.xy));
-        }
-        return;
-      }
-      case 80:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_P, cspsOffset + float2(-79, 7), float2(ID.xy));
-        }
-        return;
-      }
-      case 81:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_0, cspsOffset + float2(-79, 7), float2(ID.xy));
-        }
-        return;
-      }
-      case 82:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_colon, cspsOffset + float2(-79, 7), float2(ID.xy));
-        }
-        return;
-      }
-      case 83:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(8 - 79, 7), float2(ID.xy));
-        }
-        return;
-      }
-      case 84:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_percent, cspsOffset + float2(10 - 79, 7), float2(ID.xy));
-        }
-        return;
-      }
+      DrawChar(_A,       float2( 0, cspsYOffset3));
+      DrawChar(_P,       float2( 1, cspsYOffset3));
+      DrawChar(_0,       float2( 2, cspsYOffset3));
+      DrawChar(_colon,   float2( 3, cspsYOffset3));
+      DrawChar(_dot,     float2(12, cspsYOffset3));
+      DrawChar(_percent, float2(15, cspsYOffset3));
       // invalid:
-      case 85:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_i, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 86:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_n, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 87:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_v, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 88:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_a, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 89:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_l, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 90:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_i, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 91:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_d, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 92:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_colon, cspsOffset + float2(-85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 93:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_dot, cspsOffset + float2(4 - 85, 8), float2(ID.xy));
-        }
-        return;
-      }
-      case 94:
-      {
-        if (SHOW_CSPS)
-        {
-          DrawChar(_percent, cspsOffset + float2(6 - 85, 8), float2(ID.xy));
-        }
-        return;
-      }
+      DrawChar(_i,       float2( 0, cspsYOffset4));
+      DrawChar(_n,       float2( 1, cspsYOffset4));
+      DrawChar(_v,       float2( 2, cspsYOffset4));
+      DrawChar(_a,       float2( 3, cspsYOffset4));
+      DrawChar(_l,       float2( 4, cspsYOffset4));
+      DrawChar(_i,       float2( 5, cspsYOffset4));
+      DrawChar(_d,       float2( 6, cspsYOffset4));
+      DrawChar(_colon,   float2( 7, cspsYOffset4));
+      DrawChar(_dot,     float2(12, cspsYOffset4));
+      DrawChar(_percent, float2(15, cspsYOffset4));
 #endif //IS_FLOAT_HDR_CSP
-
-      // cursorCSP:
-      case 95:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_c, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 96:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_u, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 97:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_r, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 98:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_s, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 99:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_o, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 100:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_r, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 101:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_C, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 102:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_S, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 103:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_P, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-      case 104:
-      {
-        if (SHOW_CSP_FROM_CURSOR)
-        {
-          DrawChar(_colon, cursorCspOffset + float2(-95, 9), float2(ID.xy));
-        }
-        return;
-      }
-
-      case 105:
-      {
-        tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0);
-        return;
-      }
-      default:
-      {
-        return;
-      }
     }
+
+    // cursorCSP:
+    if (SHOW_CSP_FROM_CURSOR)
+    {
+      DrawChar(_c,     float2(0, cursorCspYOffset));
+      DrawChar(_u,     float2(1, cursorCspYOffset));
+      DrawChar(_r,     float2(2, cursorCspYOffset));
+      DrawChar(_s,     float2(3, cursorCspYOffset));
+      DrawChar(_o,     float2(4, cursorCspYOffset));
+      DrawChar(_r,     float2(5, cursorCspYOffset));
+      DrawChar(_C,     float2(6, cursorCspYOffset));
+      DrawChar(_S,     float2(7, cursorCspYOffset));
+      DrawChar(_P,     float2(8, cursorCspYOffset));
+      DrawChar(_colon, float2(9, cursorCspYOffset));
+    }
+
+    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0);
   }
   return;
 }
@@ -1923,32 +1178,36 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 #define d7th(Val) Val % 1.f * 100000.f %  0.1f * 100.f
 
 
-void DrawNumberAboveZero(precise uint CurNumber, float2 Offset, float2 Id)
+void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
 {
   if (CurNumber > 0)
   {
-    DrawChar(uint2(CurNumber % 10, 0), Offset, Id);
+    DrawChar(uint2(CurNumber % 10, 0), Offset);
   }
   else
   {
-    DrawSpace(Offset, Id);
+    DrawSpace(Offset);
   }
 }
 
+
+#define cursorCllYOffset tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CLL)
+#define cspsYOffset      tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cursorCspYOffset tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP)
 
 void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 {
   switch(ID.x)
   {
-    // max/avg/min CLL
-    // maxCLL:
+    // max/avg/min Nits
+    // maxNits:
     case 0:
     {
       if (SHOW_CLL_VALUES)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = _5th(maxCllShow);
-        DrawNumberAboveZero(curNumber, float2(8, 0), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 0));
       }
       return;
     }
@@ -1958,7 +1217,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = _4th(maxCllShow);
-        DrawNumberAboveZero(curNumber, float2(8, 0), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 0));
       }
       return;
     }
@@ -1968,7 +1227,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = _3rd(maxCllShow);
-        DrawNumberAboveZero(curNumber, float2(8, 0), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(11, 0));
       }
       return;
     }
@@ -1978,7 +1237,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = _2nd(maxCllShow);
-        DrawNumberAboveZero(curNumber, float2(8, 0), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(12, 0));
       }
       return;
     }
@@ -1988,7 +1247,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = _1st(maxCllShow);
-        DrawChar(uint2(curNumber, 0), float2(8, 0), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 0));
       }
       return;
     }
@@ -1998,18 +1257,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAXCLL);
         precise uint  curNumber  = d1st(maxCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9, 0), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(15, 0));
       }
       return;
     }
-    // avgCLL:
+    // avgNits:
     case 6:
     {
       if (SHOW_CLL_VALUES)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = _5th(avgCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 6, 1), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 1));
       }
       return;
     }
@@ -2019,7 +1278,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = _4th(avgCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 6, 1), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 1));
       }
       return;
     }
@@ -2029,7 +1288,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = _3rd(avgCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 6, 1), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(11, 1));
       }
       return;
     }
@@ -2039,7 +1298,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = _2nd(avgCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 6, 1), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(12, 1));
       }
       return;
     }
@@ -2049,7 +1308,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = _1st(avgCllShow);
-        DrawChar(uint2(curNumber, 0), float2(8 - 6, 1), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 1));
       }
       return;
     }
@@ -2059,7 +1318,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = d1st(avgCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 6, 1), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(15, 1));
       }
       return;
     }
@@ -2069,18 +1328,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVGCLL);
         precise uint  curNumber  = d2nd(avgCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 6, 1), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(16, 1));
       }
       return;
     }
-    // minCLL:
+    // minNits:
     case 13:
     {
       if (SHOW_CLL_VALUES)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = _5th(minCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 13, 2), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 2));
       }
       return;
     }
@@ -2090,7 +1349,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = _4th(minCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 13, 2), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 2));
       }
       return;
     }
@@ -2100,7 +1359,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = _3rd(minCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 13, 2), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(11, 2));
       }
       return;
     }
@@ -2110,7 +1369,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = _2nd(minCllShow);
-        DrawNumberAboveZero(curNumber, float2(8 - 13, 2), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(12, 2));
       }
       return;
     }
@@ -2120,7 +1379,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = _1st(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(8 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 2));
       }
       return;
     }
@@ -2130,7 +1389,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d1st(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(15, 2));
       }
       return;
     }
@@ -2140,7 +1399,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d2nd(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(16, 2));
       }
       return;
     }
@@ -2150,7 +1409,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d3rd(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(17, 2));
       }
       return;
     }
@@ -2160,7 +1419,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d4th(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(18, 2));
       }
       return;
     }
@@ -2170,7 +1429,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d5th(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(19, 2));
       }
       return;
     }
@@ -2180,18 +1439,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minCllShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MINCLL);
         precise uint  curNumber  = d6th(minCllShow);
-        DrawChar(uint2(curNumber, 0), float2(9 - 13, 2), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(20, 2));
       }
       return;
     }
-    // cursorCLL:
+    // cursorNits:
     case 24:
     {
       if (SHOW_CLL_FROM_CURSOR)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _5th(cursorCll);
-        DrawNumberAboveZero(curNumber, cursorCllOffset + float2(11 - 24, 3), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(12, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2201,7 +1460,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _4th(cursorCll);
-        DrawNumberAboveZero(curNumber, cursorCllOffset + float2(11 - 24, 3), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(13, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2211,7 +1470,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _3rd(cursorCll);
-        DrawNumberAboveZero(curNumber, cursorCllOffset + float2(11 - 24, 3), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(14, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2221,7 +1480,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _2nd(cursorCll);
-        DrawNumberAboveZero(curNumber, cursorCllOffset + float2(11 - 24, 3), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(15, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2231,7 +1490,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = _1st(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(11 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(16, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2241,7 +1500,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d1st(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(18, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2251,7 +1510,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d2nd(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(19, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2261,7 +1520,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d3rd(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(20, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2271,7 +1530,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d4th(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(21, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2281,7 +1540,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d5th(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(22, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2291,7 +1550,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorCll = tex2Dfetch(SamplerCllValues, MOUSE_POSITION).r;
         precise uint  curNumber = d6th(cursorCll);
-        DrawChar(uint2(curNumber, 0), cursorCllOffset + float2(12 - 24, 3), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(23, 3 + cursorCllYOffset));
       }
       return;
     }
@@ -2305,7 +1564,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = _3rd(precentageBt709);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 35, 4), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 4 + cspsYOffset));
       }
       return;
     }
@@ -2315,7 +1574,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = _2nd(precentageBt709);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 35, 4), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 4 + cspsYOffset));
       }
       return;
     }
@@ -2325,7 +1584,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = _1st(precentageBt709);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(9 - 35, 4), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(11, 4 + cspsYOffset));
       }
       return;
     }
@@ -2335,7 +1594,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = d1st(precentageBt709);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 35, 4), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 4 + cspsYOffset));
       }
       return;
     }
@@ -2345,7 +1604,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = d2nd(precentageBt709);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 35, 4), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(14, 4 + cspsYOffset));
       }
       return;
     }
@@ -2356,7 +1615,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = _3rd(precentageDciP3);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 40, 5), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 5 + cspsYOffset));
       }
       return;
     }
@@ -2366,7 +1625,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = _2nd(precentageDciP3);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 40, 5), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 5 + cspsYOffset));
       }
       return;
     }
@@ -2376,7 +1635,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = _1st(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(9 - 40, 5), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(11, 5 + cspsYOffset));
       }
       return;
     }
@@ -2386,7 +1645,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = d1st(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 40, 5), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 5 + cspsYOffset));
       }
       return;
     }
@@ -2396,7 +1655,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = d2nd(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 40, 5), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(14, 5 + cspsYOffset));
       }
       return;
     }
@@ -2407,7 +1666,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = _3rd(precentageBt2020);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 45, 6), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 6 + cspsYOffset));
       }
       return;
     }
@@ -2417,7 +1676,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = _2nd(precentageBt2020);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 45, 6), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 6 + cspsYOffset));
       }
       return;
     }
@@ -2427,7 +1686,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = _1st(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(9 - 45, 6), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(11, 6 + cspsYOffset));
       }
       return;
     }
@@ -2437,7 +1696,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = d1st(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 45, 6), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 6 + cspsYOffset));
       }
       return;
     }
@@ -2447,7 +1706,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = d2nd(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 45, 6), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(14, 6 + cspsYOffset));
       }
       return;
     }
@@ -2459,7 +1718,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = _3rd(precentageAp0);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 50, 7), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 7 + cspsYOffset));
       }
       return;
     }
@@ -2469,7 +1728,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = _2nd(precentageAp0);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 50, 7), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 7 + cspsYOffset));
       }
       return;
     }
@@ -2479,7 +1738,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = _1st(precentageAp0);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(9 - 50, 7), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(11, 7 + cspsYOffset));
       }
       return;
     }
@@ -2489,7 +1748,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = d1st(precentageAp0);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 50, 7), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 7 + cspsYOffset));
       }
       return;
     }
@@ -2499,7 +1758,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = d2nd(precentageAp0);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 50, 7), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(14, 7 + cspsYOffset));
       }
       return;
     }
@@ -2510,7 +1769,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = _3rd(precentageInvalid);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 55, 8), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(9, 8 + cspsYOffset));
       }
       return;
     }
@@ -2520,7 +1779,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = _2nd(precentageInvalid);
-        DrawNumberAboveZero(curNumber, cspsOffset + float2(9 - 55, 8), float2(ID.xy));
+        DrawNumberAboveZero(curNumber, float2(10, 8 + cspsYOffset));
       }
       return;
     }
@@ -2530,7 +1789,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = _1st(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(9 - 55, 8), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(11, 8 + cspsYOffset));
       }
       return;
     }
@@ -2540,7 +1799,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = d1st(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 55, 8), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(13, 8 + cspsYOffset));
       }
       return;
     }
@@ -2550,7 +1809,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = d2nd(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), cspsOffset + float2(10 - 55, 8), float2(ID.xy));
+        DrawChar(uint2(curNumber, 0), float2(14, 8 + cspsYOffset));
       }
       return;
     }
@@ -2560,16 +1819,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(11, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_B, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_B, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_D, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_D, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2578,18 +1837,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_B, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_B, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_A, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_A, currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_i, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_i, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2600,16 +1859,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(12, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_T, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_T, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_C, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_C, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2618,18 +1877,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_T, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_T, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_P, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_P, currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_n, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_n, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2640,16 +1899,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(13, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_dot, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_dot, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_I, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_I, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2658,18 +1917,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_dot, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_dot, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawChar(_0, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_0, currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_v, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_v, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2680,16 +1939,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(14, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_7, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_7, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_minus, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_minus, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2698,18 +1957,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_2, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_2, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_a, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_a, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2720,16 +1979,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(15, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_0, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_0, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_P, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_P, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2738,18 +1997,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_0, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_0, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_l, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_l, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2760,16 +2019,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(16, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawChar(_9, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_9, currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawChar(_3, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_3, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2778,18 +2037,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_2, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_2, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_i, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_i, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2800,16 +2059,16 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
-        float2 currentCursorCspOffset = cursorCspOffset + float2(11 - 60, 9);
+        float2 currentCursorCspOffset = float2(17, 9 + cursorCspYOffset);
 
         if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
@@ -2818,18 +2077,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
         else
 #endif
         {
-          DrawChar(_0, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_0, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
         else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
         {
-          DrawSpace(currentCursorCspOffset, float2(ID.xy));
+          DrawSpace(currentCursorCspOffset);
           return;
         }
         else //invalid
         {
-          DrawChar(_d, currentCursorCspOffset, float2(ID.xy));
+          DrawChar(_d, currentCursorCspOffset);
           return;
         }
 #endif
@@ -2841,6 +2100,10 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
   }
   return;
 }
+
+#undef cursorCllYOffset
+#undef cspsYOffset
+#undef cursorCspYOffset
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -3039,9 +2302,9 @@ void VS_PrepareHdrAnalysis(
                       + (SHOW_CSP_FROM_CURSOR ? 1.f
                                               : 0.f);
 
-    float activeCharacters = max(max(max((SHOW_CLL_VALUES ? 25.f
+    float activeCharacters = max(max(max((SHOW_CLL_VALUES ? 21.f
                                                           :  0.f),
-                                         (SHOW_CLL_FROM_CURSOR ? 28.f
+                                         (SHOW_CLL_FROM_CURSOR ? 24.f
                                                                :  0.f)),
                                          (SHOW_CSPS ? 16.f
                                                     :  0.f)),
@@ -3505,7 +2768,7 @@ technique lilium__hdr_analysis
   pass CS_DrawTextToOverlay
   {
     ComputeShader = CS_DrawTextToOverlay <1, 1>;
-    DispatchSizeX = 106;
+    DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
 
