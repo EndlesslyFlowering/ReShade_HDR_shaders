@@ -99,12 +99,14 @@ uniform uint TEXT_POSITION
                 "top right\0";
 > = 0;
 
+#ifndef GAMESCOPE
 uniform int GLOBAL_SPACER_0
 <
   ui_category = "Global";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 
 // Active Area
@@ -158,12 +160,14 @@ uniform float ACTIVE_AREA_CROP_BOTTOM
   ui_step     = 0.1f;
 > = 0.f;
 
+#ifndef GAMESCOPE
 uniform int ACTIVE_AREA_SPACER_0
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 
 // CLL
@@ -180,12 +184,14 @@ uniform bool SHOW_CLL_FROM_CURSOR
   ui_label    = "show CLL value from cursor position";
 > = true;
 
+#ifndef GAMESCOPE
 uniform int CLL_SPACER_0
 <
   ui_category = "Content Light Level analysis";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 
 // TextureCsps
@@ -214,13 +220,14 @@ uniform bool SHOW_CSP_MAP
            "\n" "           pink: invalid";
 > = false;
 
+#ifndef GAMESCOPE
 uniform int CSP_SPACER_0
 <
   ui_category = "Colour Space analysis";
   ui_label    = " ";
   ui_type     = "radio";
 >;
-
+#endif
 
 // CIE
 uniform bool SHOW_CIE
@@ -255,12 +262,14 @@ uniform float CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = 100.f;
 
+#ifndef GAMESCOPE
 uniform int CIE_SPACER_0
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 uniform bool SHOW_CIE_CSP_BT709_OUTLINE
 <
@@ -290,13 +299,14 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 
 #endif
 
+#ifndef GAMESCOPE
 uniform int CIE_SPACER_1
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = " ";
   ui_type     = "radio";
 >;
-
+#endif
 
 // heatmap
 uniform bool SHOW_HEATMAP
@@ -340,12 +350,14 @@ uniform uint HEATMAP_CUTOFF_POINT
            "\n" "highly saturated blue: below 0 nits";
 > = 0;
 
+#ifndef GAMESCOPE
 uniform int HEATMAP_SPACER_0
 <
   ui_category = "Heatmap visualisation";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 uniform bool SHOW_BRIGHTNESS_HISTOGRAM
 <
@@ -376,12 +388,14 @@ uniform float BRIGHTNESS_HISTOGRAM_SIZE
   ui_step     = 0.1f;
 > = 70.f;
 
+#ifndef GAMESCOPE
 uniform int BRIGHTNESS_HISTOGRAM_SPACER_0
 <
   ui_category = "Brightness histogram";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE
 <
@@ -399,12 +413,14 @@ uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE
            "\n" "The line is invisible when maxCLL hits above 10000 nits.";
 > = true;
 
+#ifndef GAMESCOPE
 uniform int BRIGHTNESS_HISTOGRAM_SPACER_1
 <
   ui_category = "Brightness histogram";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 // highlight a certain nit range
 uniform bool HIGHLIGHT_NIT_RANGE
@@ -425,12 +441,14 @@ uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   ui_step     = 0.5f;
 > = 80.f;
 
+#ifndef GAMESCOPE
 uniform int HIGHLIGHT_NIT_RANGE_SPACER_0
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 <
@@ -456,12 +474,14 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_step     = 0.0000001f;
 > = 0.f;
 
+#ifndef GAMESCOPE
 uniform int HIGHLIGHT_NIT_RANGE_SPACER_1
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 // draw pixels as black depending on their nits
 uniform bool DRAW_ABOVE_NITS_AS_BLACK
@@ -481,12 +501,14 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_step     = 0.0000001f;
 > = 10000.f;
 
+#ifndef GAMESCOPE
 uniform int DRAW_AS_BLACK_SPACER_0
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
 <
@@ -505,12 +527,14 @@ uniform float BELOW_NITS_AS_BLACK
   ui_step     = 1.f;
 > = 0.f;
 
+#ifndef GAMESCOPE
 uniform int DRAW_AS_BLACK_SPACER_1
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = " ";
   ui_type     = "radio";
 >;
+#endif
 
 
 #define HDR_ANALYSIS_ENABLE
