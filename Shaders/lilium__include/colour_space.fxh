@@ -9,6 +9,13 @@
   #define BUFFER_COLOR_SPACE    2
 #endif
 
+#ifdef GAMESCOPE
+  #ifndef GAMESCOPE_SDR_ON_HDR_NITS
+    #define GAMESCOPE_SDR_ON_HDR_NITS 203.f
+  #endif
+#endif
+
+
 #define STRINGIFY(x) #x
 #define GET_UNKNOWN_NUMBER(x) "unknown (" STRINGIFY(x) ")"
 

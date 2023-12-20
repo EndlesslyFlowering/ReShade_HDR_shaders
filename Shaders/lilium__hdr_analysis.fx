@@ -85,7 +85,11 @@ uniform float TEXT_BRIGHTNESS
   ui_min      = 10.f;
   ui_max      = 250.f;
   ui_step     = 0.5f;
+#ifdef GAMESCOPE
+> = GAMESCOPE_SDR_ON_HDR_NITS;
+#else
 > = 140.f;
+#endif
 
 #define TEXT_POSITION_TOP_LEFT  0
 #define TEXT_POSITION_TOP_RIGHT 1
@@ -375,7 +379,11 @@ uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
   ui_min      = 10.f;
   ui_max      = 250.f;
   ui_step     = 0.5f;
+#ifdef GAMESCOPE
+> = GAMESCOPE_SDR_ON_HDR_NITS;
+#else
 > = 80.f;
+#endif
 
 uniform float BRIGHTNESS_HISTOGRAM_SIZE
 <
