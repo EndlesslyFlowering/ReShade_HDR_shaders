@@ -1445,6 +1445,21 @@ float3 GetXYZfromxyY(Sxy xy, float Y)
   return XYZ;
 }
 
+float3 GetXYZfromxyY(float2 xy, float Y)
+{
+  float3 XYZ;
+
+  XYZ.x = (xy.x / xy.y)
+        * Y;
+
+  XYZ.y = Y;
+
+  XYZ.z = ((1.f - xy.x - xy.y) / xy.y)
+        * Y;
+
+  return XYZ;
+}
+
 
 //static const float3x3 IDENTITY =
 //  float3x3(1.f, 0.f, 0.f,
