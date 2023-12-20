@@ -473,7 +473,7 @@ namespace Csp
         {
           return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
         }
-        else if (C > SrgbX)
+        else if (absC > SrgbX)
         {
           return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
         }
@@ -499,11 +499,11 @@ namespace Csp
         static const float absC  = abs(C);
         static const float signC = sign(C);
 
-        if (C > 1.f)
+        if (absC > 1.f)
         {
           return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
         }
-        else if (C > SrgbXDivPhi)
+        else if (absC > SrgbXDivPhi)
         {
           return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
         }
@@ -536,7 +536,7 @@ namespace Csp
         static const float absC  = abs(C);
         static const float signC = sign(C);
 
-        if (C > 1.f)
+        if (absC > 1.f)
         {
           return signC * pow(absC, Csp::Trc::ApplyGamma22);
         }
@@ -651,7 +651,7 @@ namespace Csp
       static const float absC = abs(C);
       static const float signC = sign(C);
 
-      if (C > 1.f)
+      if (absC > 1.f)
       {
         return signC * pow(absC, inverseAdjust);
       }
@@ -798,7 +798,7 @@ namespace Csp
       {
         if (X <= 0.5f)
         {
-          return pow(X, 2.f) / 3.f;
+          return (X * X) / 3.f;
         }
         else
         {
