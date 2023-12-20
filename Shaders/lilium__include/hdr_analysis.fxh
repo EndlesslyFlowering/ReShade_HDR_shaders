@@ -923,19 +923,19 @@ void PS_CalcCllPerPixel(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    precise float curPixelCll = dot(Bt709ToXYZ[1], pixel) * 80.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    precise float curPixelCll = dot(Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    precise float curPixelCll = dot(Bt2020ToXYZ[1], pixel) * 100.f;
+    precise float curPixelCll = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
 
 #else
 
@@ -1720,7 +1720,7 @@ bool IsCsp(precise float3 Rgb)
   #define _IS_CSP_BT709(Rgb)  Rgb
   #define _IS_CSP_DCI_P3(Rgb) Csp::Mat::Bt709To::DciP3(Rgb)
   #define _IS_CSP_BT2020(Rgb) Csp::Mat::Bt709To::Bt2020(Rgb)
-  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt709To::Ap0(Rgb)
+  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt709To::Ap0D65(Rgb)
 
 #elif (defined(IS_HDR10_LIKE_CSP) \
     || ACTUAL_COLOUR_SPACE == CSP_PS5)
@@ -1728,7 +1728,7 @@ bool IsCsp(precise float3 Rgb)
   #define _IS_CSP_BT709(Rgb)  Csp::Mat::Bt2020To::Bt709(Rgb)
   #define _IS_CSP_DCI_P3(Rgb) Csp::Mat::Bt2020To::DciP3(Rgb)
   #define _IS_CSP_BT2020(Rgb) Rgb
-  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt2020To::Ap0(Rgb)
+  #define _IS_CSP_AP0(Rgb)    Csp::Mat::Bt2020To::Ap0D65(Rgb)
 
 #endif
 

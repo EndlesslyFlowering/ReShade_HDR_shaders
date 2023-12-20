@@ -160,7 +160,7 @@ void Gamma22Emulation(
   {
     case HDR_BF_FIX_CSP_BT709:
     {
-      if (dot(Colour, Bt709ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Colour, Csp::Mat::Bt709ToXYZ[1]) <= WhitePointNormalised)
       {
         Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
@@ -168,7 +168,7 @@ void Gamma22Emulation(
     }
     case HDR_BF_FIX_CSP_DCI_P3:
     {
-      if (dot(Colour, DciP3ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Colour, Csp::Mat::DciP3ToXYZ[1]) <= WhitePointNormalised)
       {
         Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
@@ -177,7 +177,7 @@ void Gamma22Emulation(
     //BT.2020
     default:
     {
-      if (dot(Colour, Bt2020ToXYZ[1]) <= WhitePointNormalised)
+      if (dot(Colour, Csp::Mat::Bt2020ToXYZ[1]) <= WhitePointNormalised)
       {
 #if defined(IS_FLOAT_HDR_CSP)
         Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
@@ -234,26 +234,26 @@ float GetNits(float3 Colour)
   {
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
     {
-      return dot(Colour, Bt709ToXYZ[1].rgb);
+      return dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
     }
     else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
-      return dot(Colour, DciP3ToXYZ[1].rgb);
+      return dot(Colour, Csp::Mat::DciP3ToXYZ[1].rgb);
     }
     else //if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
     {
-      return dot(Colour, Bt2020ToXYZ[1].rgb);
+      return dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
     }
   }
   else
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    return dot(Colour, Bt709ToXYZ[1].rgb);
+    return dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-    return dot(Colour, Bt2020ToXYZ[1].rgb);
+    return dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
 
 #endif
   }

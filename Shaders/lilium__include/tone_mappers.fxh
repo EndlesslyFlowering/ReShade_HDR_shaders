@@ -271,7 +271,7 @@ namespace Tmos
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        float y1 = dot(Colour, Bt2020ToXYZ[1].rgb);
+        float y1 = dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
         //E1
         float y2 = (Csp::Trc::LinearTo::Pq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
         //float y2 = Csp::Trc::LinearTo::Pq(y1) / SrcMaxPq;
