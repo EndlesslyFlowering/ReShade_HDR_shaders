@@ -238,10 +238,13 @@ uniform int GLOBAL_INFO
 >;
 
 
-#if (__RENDERER__ & 0x10000 \
-  || __RENDERER__ < 0xB000)
-  #define ERROR_TEXT "Only DirectX 11, 12 and Vulkan are supported!"
+#if (!(__RENDERER__ & 0xB000)   \
+  && !(__RENDERER__ & 0xC000)   \
+  && !(__RENDERER__ & 0x10000)  \
+  && !(__RENDERER__ & 0x20000))
+  #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
 #else
+  #define IS_HDR_COMPATIBLE_API
   #define ERROR_TEXT "Only HDR colour spaces are supported!"
 #endif
 

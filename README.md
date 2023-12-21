@@ -2,7 +2,7 @@
 
 ## [Download](https://github.com/EndlesslyFlowering/ReShade_HDR_shaders/releases/latest)
 
-## The HDR analysis shader and other specific HDR shaders will only work in DirectX 11, 12 or the Vulkan API!
+## The HDR analysis shader and other specific HDR shaders will only work in DirectX 11, 12, OpenGL, or the Vulkan API!
 
 ## Important features of the HDR analysis shader
 Type in the possible values and hit ENTER to apply them. Clearing the input field and hitting ENTER again brings back the default value.

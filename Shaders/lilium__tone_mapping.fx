@@ -1,8 +1,7 @@
 #include "lilium__include/tone_mappers.fxh"
 
 
-#if (((__RENDERER__ >= 0xB000 && __RENDERER__ < 0x10000) \
-   || __RENDERER__ >= 0x20000)                           \
+#if (defined(IS_HDR_COMPATIBLE_API) \
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
