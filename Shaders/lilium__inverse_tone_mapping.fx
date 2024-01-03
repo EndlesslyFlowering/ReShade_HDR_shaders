@@ -5,7 +5,7 @@
   && defined(IS_POSSIBLE_HDR_CSP))
 
 
-#include "lilium__include/draw_text_fix.fxh"
+//#include "lilium__include/draw_text_fix.fxh"
 
 //#define ENABLE_DICE
 
@@ -366,7 +366,7 @@ void PS_InverseToneMapping(
 
     case ITM_METHOD_DICE_INVERSE:
     {
-      float target_CLL_normalised = Ui::Itm::Global::TargetBrightness / 10000.f;
+      float targetNitsNormalised = Ui::Itm::Global::TargetBrightness / 10000.f;
       hdr = Itmos::Dice::InverseToneMapper(
               hdr,
               Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::DiceInputBrightness),

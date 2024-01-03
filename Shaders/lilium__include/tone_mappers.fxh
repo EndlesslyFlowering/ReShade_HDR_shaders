@@ -15,13 +15,13 @@ namespace Tmos
 
   // Rep. ITU-R BT.2446-1 Table 2 & 3
   void Bt2446A(
-         inout float3 Colour,
-               float  MaxCll,
-               float  TargetCll,
-               float  GamutCompression)
+    inout float3 Colour,
+          float  MaxNits,
+          float  TargetNits,
+          float  GamutCompression)
   {
     // adjust the max of 1 according to maxCLL
-    Colour *= (10000.f / MaxCll);
+    Colour *= (10000.f / MaxNits);
 
     // non-linear transfer function RGB->R'G'B'
     Colour = pow(Colour, applyGamma);
@@ -32,35 +32,33 @@ namespace Tmos
 
     // tone mapping step 1
     //pHDR
-    float pHdr = 1.f + 32.f * pow(MaxCll /
+    float pHdr = 1.f + 32.f * pow(MaxNits /
                                   10000.f
                               , applyGamma);
 
     //Y'p
-    float y = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
-              log(pHdr);
+    float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
+               log(pHdr);
 
     // tone mapping step 2
     //Y'c
-    y = y <= 0.7399f
-      ? 1.0770f * y
-      : y > 0.7399f && y < 0.9909f
-      ? (-1.1510f * pow(y , 2)) + (2.7811f * y) - 0.6302f
-      : (0.5000f * y) + 0.5000f;
+    float yC = yP <= 0.7399f                ? 1.0770f * yP
+             : yP > 0.7399f && yP < 0.9909f ? (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f
+                                            : (0.5000f * yP) + 0.5000f;
 
     // tone mapping step 3
     //pSDR
     float pSdr = 1.f + 32.f * pow(
-                                  TargetCll /
+                                  TargetNits /
                                   10000.f
                               , applyGamma);
 
     //Y'SDR
-    y = (pow(pSdr, y) - 1.f) /
-        (pSdr - 1.f);
+    float ySdr = (pow(pSdr, yC) - 1.f) /
+                 (pSdr - 1.f);
 
     //f(Y'SDR)
-    float colourScaling = y /
+    float colourScaling = ySdr /
                           (GamutCompression * ycbcr.x);
 
     //C'b,tmo
@@ -70,29 +68,29 @@ namespace Tmos
     float crTmo = colourScaling * ycbcr.z;
 
     //Y'tmo
-    float yTmo = y - max(0.1f * crTmo, 0.f);
+    float yTmo = ySdr - max(0.1f * crTmo, 0.f);
 
     Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
-                                              cbTmo,
-                                              crTmo));
+                                                   cbTmo,
+                                                   crTmo));
 
     // avoid invalid colours
     Colour = max(Colour, 0.f);
 
-    // gamma decompression and adjust to TargetCll
-    Colour = pow(Colour, removeGamma) * (TargetCll / 10000.f);
+    // gamma decompression and adjust to TargetNits
+    Colour = pow(Colour, removeGamma) * (TargetNits / 10000.f);
   }
 
   void Bt2446A_MOD1(
          inout float3 Colour,
-               float  MaxCll,
-               float  TargetCll,
+               float  MaxNits,
+               float  TargetNits,
                float  GamutCompression,
                float  TestH,
                float  TestS)
   {
     // adjust the max of 1 according to maxCLL
-    Colour *= (10000.f / MaxCll);
+    Colour *= (10000.f / MaxNits);
 
     // non-linear transfer function RGB->R'G'B'
     Colour = pow(Colour, applyGamma);
@@ -150,8 +148,8 @@ namespace Tmos
     // avoid invalid colours
     Colour = max(Colour, 0.f);
 
-    // gamma decompression and adjust to TargetCll
-    Colour = pow(Colour, removeGamma) * (TargetCll / 10000.f);
+    // gamma decompression and adjust to TargetNits
+    Colour = pow(Colour, removeGamma) * (TargetNits / 10000.f);
   }
 
   namespace Bt2390
@@ -208,10 +206,12 @@ namespace Tmos
         {
           HermiteSpline(i2, KneeStart, MaxLum);
         }
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
         else if (MinLum == 0.f)
         {
           discard;
         }
+#endif
 
         //E3
         i2 += MinLum * pow((1.f - i2), 4.f);
@@ -246,10 +246,12 @@ namespace Tmos
         {
           HermiteSpline(y2, KneeStart, MaxLum);
         }
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
         else if (MinLum == 0.f)
         {
           discard;
         }
+#endif
 
         //E3
         y2 += MinLum * pow((1.f - y2), 4.f);
@@ -280,10 +282,12 @@ namespace Tmos
         {
           HermiteSpline(y2, KneeStart, MaxLum);
         }
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
         else if (MinLum == 0.f)
         {
           discard;
         }
+#endif
 
         //E3
         y2 += MinLum * pow((1.f - y2), 4.f);
@@ -354,7 +358,7 @@ namespace Tmos
 
 //      return Channel < ShoulderStartInPq
 //           ? Channel
-//           : (TargetCll - ShoulderStart)
+//           : (TargetNits - ShoulderStart)
 //           * RangeCompress((Channel       - ShoulderStartInPq) /
 //                           (TargetCllInPq - ShoulderStartInPq))
 //           + ShoulderStartInPq;
@@ -423,7 +427,9 @@ namespace Tmos
 
         if (i1 < ShoulderStartInPq)
         {
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
           discard;
+#endif
         }
         else
         {
@@ -454,7 +460,9 @@ namespace Tmos
 
         if (y1 < ShoulderStartInPq)
         {
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
           discard;
+#endif
         }
         else
         {
