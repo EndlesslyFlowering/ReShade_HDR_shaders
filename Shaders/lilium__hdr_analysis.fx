@@ -2173,29 +2173,6 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #undef cursorCspYOffset
 
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  #define MAP_INTO_CSP Scrgb
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-  #define MAP_INTO_CSP Hdr10
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  #define MAP_INTO_CSP Hlg
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-  #define MAP_INTO_CSP Ps5
-
-#else //ACTUAL_COLOUR_SPACE ==
-// FIX THIS someday...
-  #define MAP_INTO_CSP Scrgb
-
-#endif //ACTUAL_COLOUR_SPACE ==
-
-
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
@@ -2339,9 +2316,9 @@ void VS_PrepareHdrAnalysis(
         highlightNitRangeOut = float3(1.f, 0.f, NIT_PINGPONG2.x);
       }
 
-      highlightNitRangeOut *= breathing * HIGHLIGHT_NIT_RANGE_BRIGHTNESS;
+      highlightNitRangeOut *= breathing;
 
-      highlightNitRangeOut = Csp::Map::Bt709Into::MAP_INTO_CSP(highlightNitRangeOut);
+      highlightNitRangeOut = MapBt709IntoCurrentCsp(highlightNitRangeOut, HIGHLIGHT_NIT_RANGE_BRIGHTNESS);
     }
   }
 
@@ -2453,8 +2430,9 @@ void PS_HdrAnalysis(
     {
       Output.rgb = HeatmapRgbValues(pixelNits,
                                     HEATMAP_CUTOFF_POINT,
-                                    HEATMAP_BRIGHTNESS,
                                     false);
+
+      Output.rgb = MapBt709IntoCurrentCsp(Output.rgb, HEATMAP_BRIGHTNESS);
     }
 
     if (HIGHLIGHT_NIT_RANGE
@@ -2549,7 +2527,7 @@ void PS_HdrAnalysis(
 
       cspOutlineOverlay = min(cspOutlineOverlay, 1.25f);
 
-      currentPixelToDisplay = Csp::Map::Bt709Into::MAP_INTO_CSP((currentPixelToDisplay + cspOutlineOverlay) * CIE_DIAGRAM_BRIGHTNESS);
+      currentPixelToDisplay = MapBt709IntoCurrentCsp(currentPixelToDisplay + cspOutlineOverlay, CIE_DIAGRAM_BRIGHTNESS);
 
       Output.rgb = currentPixelToDisplay;
 
@@ -2574,7 +2552,7 @@ void PS_HdrAnalysis(
       float3 currentPixelToDisplay =
         tex2D(SamplerBrightnessHistogramFinal, currentSamplerCoords).rgb;
 
-      Output.rgb = Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay * BRIGHTNESS_HISTOGRAM_BRIGHTNESS);
+      Output.rgb = MapBt709IntoCurrentCsp(currentPixelToDisplay, BRIGHTNESS_HISTOGRAM_BRIGHTNESS);
 
     }
   }
@@ -2607,7 +2585,7 @@ void PS_HdrAnalysis(
 
     overlay = pow(overlay, 2.2f);
 
-    overlay = float4(Csp::Map::Bt709Into::MAP_INTO_CSP(overlay.rgb * TEXT_BRIGHTNESS),
+    overlay = float4(MapBt709IntoCurrentCsp(overlay.rgb, TEXT_BRIGHTNESS),
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
                      pow(overlay.a, 1.f / 2.6f)
 #else

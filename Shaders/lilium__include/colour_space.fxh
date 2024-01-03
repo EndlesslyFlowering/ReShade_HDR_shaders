@@ -2176,24 +2176,32 @@ namespace Csp
     namespace Bt709Into
     {
 
-      float3 Scrgb(float3 Input)
+      float3 Scrgb(
+        const float3 Colour,
+        const float  Brightness)
       {
-        return Input / 80.f;
+        return Colour / 80.f * Brightness;
       }
 
-      float3 Hdr10(float3 Input)
+      float3 Hdr10(
+        const float3 Colour,
+        const float  Brightness)
       {
-        return Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(Input));
+        return Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
       }
 
-      float3 Hlg(float3 Input)
+      float3 Hlg(
+        const float3 Colour,
+        const float  Brightness)
       {
-        return Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(Input));
+        return Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
       }
 
-      float3 Ps5(float3 Input)
+      float3 Ps5(
+        const float3 Colour,
+        const float  Brightness)
       {
-        return Csp::Mat::Bt709To::Bt2020(Input / 100.f);
+        return Csp::Mat::Bt709To::Bt2020(Colour / 100.f) * Brightness;
       }
 
     } //Bt709Into

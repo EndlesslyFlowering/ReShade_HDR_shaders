@@ -442,10 +442,34 @@ storage2D<float> StorageConsolidated
 
 #if defined(HDR_ANALYSIS_ENABLE)
 
-#define HEATMAP_MODE_10000 0
-#define HEATMAP_MODE_4000  1
-#define HEATMAP_MODE_2000  2
-#define HEATMAP_MODE_1000  3
+
+float3 MapBt709IntoCurrentCsp(
+  const float3 Colour,
+  const float  Brightness)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  return Csp::Map::Bt709Into::Scrgb(Colour, Brightness);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  return Csp::Map::Bt709Into::Hdr10(Colour, Brightness);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  return Csp::Map::Bt709Into::Hlg(Colour, Brightness);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  return Csp::Map::Bt709Into::Ps5(Colour, Brightness);
+
+#else
+
+  return 0.f;
+
+#endif
+}
+
 
 static const float4x3 HeatmapSteps0 = float4x3(
   100.f, 203.f, 400.f,
@@ -470,10 +494,14 @@ float HeatmapFadeOut(float Y, float CurrentStep, float NormaliseTo)
   return 1.f - HeatmapFadeIn(Y, CurrentStep, NormaliseTo);
 }
 
+#define HEATMAP_MODE_10000 0
+#define HEATMAP_MODE_4000  1
+#define HEATMAP_MODE_2000  2
+#define HEATMAP_MODE_1000  3
+
 float3 HeatmapRgbValues(
   float Y,
   uint  Mode,
-  float WhitePoint,
   bool  HistogramOutput)
 {
   float3 output;
@@ -495,9 +523,7 @@ float3 HeatmapRgbValues(
     //shades of grey
     float clamped = !HistogramOutput ? Y / HeatmapSteps0[Mode][0] * 0.25f
                                      : 0.666f;
-    output.r = clamped;
-    output.g = clamped;
-    output.b = clamped;
+    output.rgb = clamped;
   }
   else if (Y <= HeatmapSteps0[Mode][1]) // <= 203nits
   {
@@ -541,33 +567,6 @@ float3 HeatmapRgbValues(
     output.b = 0.f;
   }
 
-  if (HistogramOutput == false)
-  {
-    output *= WhitePoint;
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-    output /= 80.f;
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-    output = Csp::Mat::Bt709To::Bt2020(output);
-    output = Csp::Trc::NitsTo::Pq(output);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-    output = Csp::Mat::Bt709To::Bt2020(output);
-    output = Csp::Trc::NitsTo::Hlg(output);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-    output /= 100.f;
-    output =  Csp::Mat::Bt709To::Bt2020(output);
-
-#endif
-
-  }
-
   return output;
 }
 
@@ -593,7 +592,7 @@ void CS_RenderBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
 
       tex2Dstore(StorageBrightnessHistogram,
                  int2(round(ID.x / TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR), yCoord),
-                 float4(HeatmapRgbValues(curPixelCLL, HEATMAP_MODE_10000, 1.f, true), 1.f));
+                 float4(HeatmapRgbValues(curPixelCLL, HEATMAP_MODE_10000, true), 1.f));
     }
   }
 }
