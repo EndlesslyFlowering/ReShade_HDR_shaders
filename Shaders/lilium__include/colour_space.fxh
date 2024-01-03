@@ -273,6 +273,8 @@ uniform int GLOBAL_INFO
   }
 
 
+#define PI asfloat(0x40490FDB)
+
 #define FP32_MAX asfloat(0x7F7FFFFF)
 
 
@@ -1380,6 +1382,794 @@ namespace Csp
   } //ICtCp
 
 
+  namespace OkLab
+  {
+
+//  Copyright (c) 2021 Björn Ottosson
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of
+//  this software and associated documentation files (the "Software"), to deal in
+//  the Software without restriction, including without limitation the rights to
+//  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+//  of the Software, and to permit persons to whom the Software is furnished to do
+//  so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
+
+    //RGB BT.709->OKLMS
+    #define Bt709ToOkLms float3x3( \
+      asfloat(0x3ed2e753), asfloat(0x3f095229), asfloat(0x3d528e15), \
+      asfloat(0x3e58dc50), asfloat(0x3f2e4ed6), asfloat(0x3ddbcdc4), \
+      asfloat(0x3db4d16f), asfloat(0x3e905888), asfloat(0x3f213db6))
+
+    //RGB BT.2020->OKLMS
+    #define Bt2020ToOkLms float3x3( \
+      asfloat(0x3f1dd1c2), asfloat(0x3eb86f63), asfloat(0x3cbca825), \
+      asfloat(0x3e87b4d1), asfloat(0x3f22cf19), asfloat(0x3dcab10c), \
+      asfloat(0x3dcd0a32), asfloat(0x3e50f045), asfloat(0x3f3226d0))
+
+    //OKL'M'S'->OKLab
+    #define G3OkLmsToOkLab float3x3 ( \
+      0.2104542553f,  0.7936177850f, -0.0040720468f, \
+      1.9779984951f, -2.4285922050f,  0.4505937099f, \
+      0.0259040371f,  0.7827717662f, -0.8086757660f)
+
+    //OKLab->OKL'M'S'
+    #define OkLabToG3OkLms float3x3 ( \
+      1.f,  0.3963377774f,  0.2158037573f, \
+      1.f, -0.1055613458f, -0.0638541728f, \
+      1.f, -0.0894841775f, -1.2914855480f)
+
+    //OKLMS->RGB BT.709
+    #define OkLmsToBt709 float3x3 ( \
+      asfloat(0x40828d05), asfloat(0xc053d1ae), asfloat(0x3e6c8bde), \
+      asfloat(0xbfa2562d), asfloat(0x4026fa47), asfloat(0xbeaea0a2), \
+      asfloat(0xbb899b59), asfloat(0xbf3431b1), asfloat(0x3fda9ebe))
+
+    //OKLMS->RGB BT.2020
+    #define OkLmsToBt2020 float3x3 ( \
+      asfloat(0x400903cf), asfloat(0xbf9f9647), asfloat(0x3dda0b93), \
+      asfloat(0xbf6279cc), asfloat(0x400a6af4), asfloat(0xbe8e7ec1), \
+      asfloat(0xbd471993), asfloat(0xbee8d6fc), asfloat(0x3fc06aec))
+
+
+// provided matrices
+//
+//    //RGB BT.709->OKLMS
+//    #define  Bt709ToOkLms = float3x3(
+//      0.4122214708f, 0.5363325363f, 0.0514459929f, \
+//      0.2119034982f, 0.6806995451f, 0.1073969566f, \
+//      0.0883024619f, 0.2817188376f, 0.6299787005f) \
+//
+//    //OKLMS->RGB BT.709
+//    #define OkLmsToBt709 float3x3 ( \
+//       4.0767416621f, -3.3077115913f,  0.2309699292f, \
+//      -1.2684380046f,  2.6097574011f, -0.3413193965f, \
+//      -0.0041960863f, -0.7034186147f,  1.7076147010f) \
+
+    namespace OkLmsTo
+    {
+
+      //OKLMS->OKL'M'S'
+      float3 G3OkLms(float3 Lms)
+      {
+        //apply gamma 3
+        return sign(Lms) * pow(abs(Lms), 1.f / 3.f);
+      }
+
+    } //OkLmsTo
+
+    namespace G3OkLmsTo
+    {
+
+      //OKL'M'S'->OKLab
+      float3 OkLab(float3 G3Lms)
+      {
+        return mul(G3OkLmsToOkLab, G3Lms);
+      }
+
+      //OKL'M'S'->OKLMS
+      float3 OkLms(float3 G3Lms)
+      {
+        //remove gamma 3
+        return G3Lms * G3Lms * G3Lms;
+      }
+
+    } //G3OkLmsTo
+
+    namespace OkLabTo
+    {
+
+      //OKLab->OKL'M'S'
+      float3 G3OkLms(float3 Lab)
+      {
+        return mul(OkLabToG3OkLms, Lab);
+      }
+
+    } //OkLabTo
+
+    namespace Bt709To
+    {
+
+      //RGB BT.709->OKLab
+      float3 OkLab(float3 Rgb)
+      {
+        //to OKLMS
+        float3 OkLms = mul(Bt709ToOkLms, Rgb);
+
+        //to OKL'M'S'
+        //apply gamma 3
+        float3 g3OkLms = Csp::OkLab::OkLmsTo::G3OkLms(OkLms);
+
+        //to OKLab
+        return Csp::OkLab::G3OkLmsTo::OkLab(g3OkLms);
+      }
+
+    } //Bt709To
+
+    namespace Bt2020To
+    {
+
+      //RGB BT.2020->OKLab
+      float3 OkLab(float3 Rgb)
+      {
+        //to OKLMS
+        float3 OkLms = mul(Bt2020ToOkLms, Rgb);
+
+        //to OKL'M'S'
+        //apply gamma 3
+        float3 g3OkLms = Csp::OkLab::OkLmsTo::G3OkLms(OkLms);
+
+        //to OKLab
+        return Csp::OkLab::G3OkLmsTo::OkLab(g3OkLms);
+      }
+
+    } //Bt2020To
+
+    namespace OkLabTo
+    {
+
+      //OKLab->RGB BT.709
+      float3 Bt709(float3 Lab)
+      {
+        //to OKL'M'S'
+        float3 g3OkLms = mul(OkLabToG3OkLms, Lab);
+
+        //to OKLMS
+        //remove gamma 3
+        float3 okLms = Csp::OkLab::G3OkLmsTo::OkLms(g3OkLms);
+
+        //to RGB BT.709
+        return mul(OkLmsToBt709, okLms);
+      }
+
+      //OKLab->RGB BT.2020
+      float3 Bt2020(float3 Lab)
+      {
+        //to OKL'M'S'
+        float3 g3OkLms = mul(OkLabToG3OkLms, Lab);
+
+        //to OKLMS
+        //remove gamma 3
+        float3 okLms = Csp::OkLab::G3OkLmsTo::OkLms(g3OkLms);
+
+        //to RGB BT.2020
+        return mul(OkLmsToBt2020, okLms);
+      }
+
+    } //OkLabTo
+
+
+    // Finds the maximum saturation possible for a given hue that fits in sRGB
+    // Saturation here is defined as S = C/L
+    // a and b must be normalized so a^2 + b^2 == 1
+    float ComputeMaxSaturation(float2 ab)
+    {
+      // Max saturation will be when one of r, g or b goes below zero.
+
+      // Select different coefficients depending on which component goes below zero first
+      float k0, k1, k2, k3, k4;
+
+      float3 wLms;
+
+      if (-1.88170328f * ab.x - 0.80936493f * ab.y > 1)
+      {
+        // Red component
+        k0 = 1.19086277f;
+        k1 = 1.76576728f;
+        k2 = 0.59662641f;
+        k3 = 0.75515197f;
+        k4 = 0.56771245f;
+
+        wLms.rgb = OkLmsToBt709[0].rgb;
+      }
+      else if (1.81444104f * ab.x - 1.19445276f * ab.y > 1)
+      {
+        // Green component
+        k0 =  0.73956515f;
+        k1 = -0.45954404f;
+        k2 =  0.08285427f;
+        k3 =  0.12541070f;
+        k4 =  0.14503204f;
+
+        wLms.rgb = OkLmsToBt709[1].rgb;
+      }
+      else
+      {
+        // Blue component
+        k0 =  1.35733652f;
+        k1 = -0.00915799f;
+        k2 = -1.15130210f;
+        k3 = -0.50559606f;
+        k4 =  0.00692167f;
+
+        wLms.rgb = OkLmsToBt709[2].rgb;
+      }
+
+      // Approximate max saturation using a polynomial:
+      float s = k0
+              + k1 * ab.x
+              + k2 * ab.y
+              + k3 * ab.x * ab.x
+              + k4 * ab.x * ab.y;
+
+      // Do one step Halley's method to get closer
+      // this gives an error less than 10e6, except for some blue hues where the dS/dh is close to infinite
+      // this should be sufficient for most applications, otherwise do two/three steps
+
+      float3 kLms = mul(OkLabToG3OkLms, float3(0.f, ab));
+
+      {
+        float3 g3Lms = 1.f + s * kLms;
+
+        float3 intermediateLms = g3Lms * g3Lms;
+
+        float3 lms = intermediateLms * g3Lms;
+
+        float3 g3LmsdS  = 3.f * kLms * intermediateLms;
+        float3 g3LmsdS2 = 6.f * kLms * kLms * g3Lms;
+
+        float3 f = mul(float3x3(lms,
+                                g3LmsdS,
+                                g3LmsdS2), wLms);
+
+        s = s
+          - f.x * f.y
+          / (f.y * f.y - 0.5f * f.x * f.z);
+      }
+
+      return s;
+    }
+
+    // finds L_cusp and C_cusp for a given hue
+    // a and b must be normalized so a^2 + b^2 == 1
+    float2 FindCusp(float2 ab)
+    {
+      // First, find the maximum saturation (saturation S = C/L)
+      float sCusp = ComputeMaxSaturation(ab);
+
+      float2 lcCusp;
+
+      // Convert to linear sRGB to find the first point where at least one of r, g or b >= 1:
+      float3 rgbAtMax = Csp::OkLab::OkLabTo::Bt709(float3(1.f, sCusp * ab));
+
+      lcCusp.x = pow(1.f / max(max(rgbAtMax.r, rgbAtMax.g), rgbAtMax.b), 1.f / 3.f);
+      lcCusp.y = lcCusp.x * sCusp;
+
+      return lcCusp;
+    }
+
+    float2 ToSt(float2 LC)
+    {
+      return LC.y / float2(LC.x,
+                           1.f - LC.x);
+    }
+
+    static const float ToeK1 = 0.206f;
+    static const float ToeK2 = 0.03f;
+    static const float ToeK3 = (1.f + ToeK1) / (1.f + ToeK2);
+
+    // toe function for L_r
+    float Toe(float X)
+    {
+      float i0 = ToeK3 * X - ToeK1;
+      return 0.5f * (i0 + sqrt(i0 * i0 + 4.f * ToeK2 * ToeK3 * X));
+    }
+
+    // inverse toe function for L_r
+    float ToeInv(float X)
+    {
+      return (X * X     + ToeK1 * X)
+           / (X * ToeK3 + ToeK2 * ToeK3);
+    }
+
+    float2 GetStMid(float2 ab)
+    {
+
+      float s = 0.11516993f
+              + 1.f / (7.44778970f
+                     + 4.15901240f * ab.y
+                     + ab.x * (-2.19557347f
+                              + 1.75198401f * ab.y
+                              + ab.x * (-2.13704948f
+                                      - 10.02301043f * ab.y
+                                      + ab.x * (-4.24894561f
+                                               + 5.38770819f * ab.y
+                                               + 4.69891013f * ab.x))));
+
+      float t = 0.11239642f
+              + 1.f / (1.61320320f
+                     - 0.68124379f * ab.y
+                     + ab.x * (0.40370612f
+                             + 0.90148123f * ab.y
+                             + ab.x * (-0.27087943f
+                                      + 0.61223990f * ab.y
+                                      + ab.x * (0.00299215f
+                                              - 0.45399568f * ab.y
+                                              - 0.14661872f * ab.x))));
+
+      return float2(s, t);
+    }
+
+    float FindGamutIntersection(
+      float2 ab,
+      float  L1,
+      float  C1,
+      float  L0,
+      float2 cusp)
+    {
+      // Find the intersection for upper and lower half seprately
+      float t;
+
+      if (((L1 - L0) * cusp.y - (cusp.x - L0) * C1) <= 0.f)
+      {
+        // Lower half
+        t = cusp.y * L0 / (C1 * cusp.x + cusp.y * (L0 - L1));
+      }
+      else
+      {
+        // Upper half
+        // First intersect with triangle
+        t = cusp.y * (L0 - 1.f) / (C1 * (cusp.x - 1.f) + cusp.y * (L0 - L1));
+
+        // Then one step Halley's method
+        {
+          float dL = L1 - L0;
+          float dC = C1;
+
+          float3 kLms = mul(OkLabToG3OkLms, float3(0.f, ab));
+
+          float3 g3LmsDt = dL + dC * kLms;
+
+          // If higher accuracy is required, 2 or 3 iterations of the following block can be used:
+          {
+            float L = L0 * (1.f - t) + t * L1;
+            float C = t * C1;
+
+            float3 g3Lms = L + C * kLms;
+
+            float3 intermediateLms = g3Lms * g3Lms;
+
+            float3 lms = g3Lms * intermediateLms;
+
+            float3 lmsDt  = 3.f * g3LmsDt * intermediateLms;
+            float3 lmsDt2 = 6.f * g3LmsDt * g3LmsDt * g3Lms;
+
+            static const float3x3 iLms = float3x3(lms.xyz,
+                                                  lmsDt.xyz,
+                                                  lmsDt2.xyz);
+
+            static const float3 ir = OkLmsToBt709[0].rgb;
+
+            static const float3 ig = OkLmsToBt709[1].rgb;
+
+            static const float3 ib = OkLmsToBt709[2].rgb;
+
+            float3 r = mul(iLms, ir);
+
+            r.x -= 1.f;
+
+            float u_r = r.y / (r.y * r.y - 0.5f * r.x * r.z);
+            float t_r = -r.x * u_r;
+
+            float3 g = mul(iLms, ig);
+
+            g.x -= 1.f;
+
+            float u_g = g.y / (g.y * g.y - 0.5f * g.x * g.z);
+            float t_g = -g.x * u_g;
+
+            float3 b = mul(iLms, ib);
+
+            b.x -= 1.f;
+
+            float u_b = b.y / (b.y * b.y - 0.5f * b.x * b.z);
+            float t_b = -b.x * u_b;
+
+            t_r = u_r >= 0.f ? t_r : FP32_MAX;
+            t_g = u_g >= 0.f ? t_g : FP32_MAX;
+            t_b = u_b >= 0.f ? t_b : FP32_MAX;
+
+            t += min(t_r, min(t_g, t_b));
+          }
+        }
+      }
+
+      return t;
+    }
+
+    float3 GetCs(float3 Lab)
+    {
+      float2 cusp = FindCusp(Lab.yz);
+
+      float   C_max = FindGamutIntersection(Lab.yz, Lab.x, 1.f, Lab.x, cusp);
+      float2 ST_max = ToSt(cusp);
+
+      // Scale factor to compensate for the curved part of gamut shape:
+      float k = C_max / min((Lab.x * ST_max.x),
+                            (1.f - Lab.x) * ST_max.y);
+
+      float C_mid;
+      {
+        float2 ST_mid = GetStMid(Lab.yz);
+
+        // Use a soft minimum function, instead of a sharp triangle shape to get a smooth value for chroma.
+        float2 C_ab = Lab.x * ST_mid;
+
+        C_ab.y = ST_mid.y - C_ab.y;
+
+        C_mid = 0.9f * k * sqrt(sqrt(1.f
+                                   / (1.f / (C_ab.x * C_ab.x * C_ab.x * C_ab.x)
+                                    + 1.f / (C_ab.y * C_ab.y * C_ab.y * C_ab.y))));
+      }
+
+      float C_0;
+      {
+        // for C_0, the shape is independent of hue, so ST are constant. Values picked to roughly be the average values of ST.
+        float C_a = Lab.x * 0.4f;
+        float C_b = (1.f - Lab.x) * 0.8f;
+
+        // Use a soft minimum function, instead of a sharp triangle shape to get a smooth value for chroma.
+        C_0 = sqrt(1.f
+                 / (1.f / (C_a * C_a)
+                  + 1.f / (C_b * C_b)));
+      }
+
+      return float3(C_0, C_mid, C_max);
+    }
+
+    namespace OkLabTo
+    {
+
+      //OKLab->OKHSV
+      float3 OkHsv(float3 Lab)
+      {
+        float2 LC;
+
+        LC.x = Lab.x;
+        LC.y = sqrt(Lab.y * Lab.y
+                  + Lab.z * Lab.z);
+
+        float2 ab = Lab.yz / LC.y;
+
+        float3 hsv;
+
+        hsv.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) / PI;
+
+        float2 cusp = Csp::OkLab::FindCusp(ab);
+
+        float2 stMax = Csp::OkLab::ToSt(cusp);
+
+        float s0 = 0.5f;
+        float k = 1.f - s0 / stMax.x;
+
+        // first we find L_v, C_v, L_vt and C_vt
+
+        float t = stMax.y / (LC.y + LC.x * stMax.y);
+        float2 LC_v = LC * t;
+
+        float L_vt = ToeInv(LC_v.x);
+        float C_vt = LC_v.y * L_vt / LC_v.x;
+
+        // we can then use these to invert the step that compensates for the toe and the curved top part of the triangle:
+        float3 rgbScale = Csp::OkLab::OkLabTo::Bt709(float3(L_vt,
+                                                            ab * C_vt));
+
+        float scaleL = pow(1.f / max(max(rgbScale.r, rgbScale.g), max(rgbScale.b, 0.f)), 1.f / 3.f);
+
+        LC /= scaleL;
+
+        float toeL = Toe(LC.x);
+
+        LC.y = LC.y * toeL / LC.x;
+        LC.x = toeL;
+
+        // we can now compute v and s:
+
+        hsv.z = LC.x / LC_v.x;
+        hsv.y = (s0 + stMax.y) * LC_v.y / ((stMax.y * s0) + stMax.y * k * LC_v.y);
+
+        return hsv;
+      }
+
+      //OKLab->OKHSL
+      float3 OkHsl(float3 Lab)
+      {
+        float C;
+
+        float2 ab = Lab.yz;
+
+        C = sqrt(Lab.y * Lab.y
+               + Lab.z * Lab.z);
+
+        ab /= C;
+
+        float3 hsl;
+
+        hsl.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) / PI;
+
+        float3 cs = GetCs(float3(Lab.x, ab));
+
+        float C_0   = cs.x;
+        float C_mid = cs.y;
+        float C_max = cs.z;
+
+        // Inverse of the interpolation in okhsl_to_srgb:
+        float mid    = 0.8f;
+        float midInv = 1.25f;
+
+        float s;
+        if (C < C_mid)
+        {
+          float k1 = mid * C_0;
+
+          float k2 = 1.f
+                   - k1 / C_mid;
+
+          float t = C
+                  / (k1 + k2 * C);
+
+          hsl.y = t * mid;
+        }
+        else
+        {
+          float k0 = C_mid;
+
+          float k1 = (1.f - mid)
+                   * C_mid * C_mid
+                   * midInv * midInv / C_0;
+
+          float k2 = 1.f
+                   - k1 / (C_max - C_mid);
+
+          float t = (C - k0) / (k1 + k2 * (C - k0));
+
+          hsl.y = mid + (1.f - mid) * t;
+        }
+
+        hsl.z = Csp::OkLab::Toe(Lab.x);
+
+        return hsl;
+      }
+
+    }
+
+    namespace Bt709To
+    {
+
+      //RGB BT.709->OKHSV
+      float3 OkHsv(float3 Rgb)
+      {
+        float3 lab = Csp::OkLab::Bt709To::OkLab(Rgb);
+
+        return Csp::OkLab::OkLabTo::OkHsv(lab);
+      }
+
+      //RGB BT.709->OKHSL
+      float3 OkHsl(float3 Rgb)
+      {
+        float3 lab = Csp::OkLab::Bt709To::OkLab(Rgb);
+
+        return Csp::OkLab::OkLabTo::OkHsl(lab);
+      }
+
+    } //Bt709To
+
+    namespace Bt2020To
+    {
+
+      //RGB BT.2020->OKHSV
+      float3 OkHsv(float3 Rgb)
+      {
+        float3 lab = Csp::OkLab::Bt2020To::OkLab(Rgb);
+
+        return Csp::OkLab::OkLabTo::OkHsv(lab);
+      }
+
+      //RGB BT.2020->OKHSL
+      float3 OkHsl(float3 Rgb)
+      {
+        float3 lab = Csp::OkLab::Bt2020To::OkLab(Rgb);
+
+        return Csp::OkLab::OkLabTo::OkHsl(lab);
+      }
+
+    } //Bt2020To
+
+    namespace OkHsvTo
+    {
+      //OKHSV->OKLab
+      float3 OkLab(float3 Hsv)
+      {
+        float i_ab = 2.f * PI * Hsv.x;
+
+        float2 ab = float2(cos(i_ab),
+                           sin(i_ab));
+
+        float2 cusp = Csp::OkLab::FindCusp(ab);
+
+        float2 stMax = Csp::OkLab::ToSt(cusp);
+
+        float s0 = 0.5f;
+        float k = 1.f - s0 / stMax.x;
+
+        // first we compute L and V as if the gamut is a perfect triangle:
+
+        // L, C when v==1:
+        float i_num = Hsv.y * s0;
+        float i_den = s0 + stMax.y - stMax.y * k * Hsv.y;
+
+        float i_div = i_num / i_den;
+
+        float L_v =     1.f - i_div;
+        float C_v = stMax.y * i_div;
+
+        float2 LC = float2(L_v, C_v) * Hsv.z;
+
+        // then we compensate for both toe and the curved top part of the triangle:
+        float L_vt = Csp::OkLab::ToeInv(L_v);
+        float C_vt = C_v * L_vt / L_v;
+
+        float L_new = Csp::OkLab::ToeInv(LC.x);
+
+        LC.y = LC.y * L_new / LC.x;
+        LC.x = L_new;
+
+        float3 rgbScale = Csp::OkLab::OkLabTo::Bt709(float3(L_vt,
+                                                            ab * C_vt));
+
+        float scaleL = pow(1.f / max(max(rgbScale.r, rgbScale.g), max(rgbScale.b, 0.f)), 1.f / 3.f);
+
+        LC *= scaleL;
+
+        return float3(LC.x,
+                      ab * LC.y);
+      }
+
+      //OKHSV->BT.709
+      float3 Bt709(float3 Hsv)
+      {
+        float3 lab = Csp::OkLab::OkHsvTo::OkLab(Hsv);
+
+        return Csp::OkLab::OkLabTo::Bt709(lab);
+      }
+
+      //OKHSV->BT.2020
+      float3 Bt2020(float3 Hsv)
+      {
+        float3 lab = Csp::OkLab::OkHsvTo::OkLab(Hsv);
+
+        return Csp::OkLab::OkLabTo::Bt2020(lab);
+      }
+    } //OkHsvTo
+
+    namespace OkHslTo
+    {
+      //OKHSL->OKLab
+      float3 OkLab(float3 Hsl)
+      {
+        if (Hsl.z == 1.f)
+        {
+          return 1.f;
+        }
+        else if (Hsl.z == 0.f)
+        {
+          return 0.f;
+        }
+
+        float  L;
+        float2 ab;
+
+        float i_ab = 2.f * PI * Hsl.x;
+
+        L = Csp::OkLab::ToeInv(Hsl.z);
+        ab = float2(cos(i_ab),
+                    sin(i_ab));
+
+        float3 cs = Csp::OkLab::GetCs(float3(L, ab));
+
+        float C_0   = cs.x;
+        float C_mid = cs.y;
+        float C_max = cs.z;
+
+        // Interpolate the three values for C so that:
+        // At s=0: dC/ds = C_0, C=0
+        // At s=0.8: C=C_mid
+        // At s=1.0: C=C_max
+
+        float mid    = 0.8f;
+        float midInv = 1.25f;
+
+        float C,
+              t,
+              k0,
+              k1,
+              k2;
+
+        if (Hsl.y < mid)
+        {
+          t = midInv * Hsl.y;
+
+          k1 = mid * C_0;
+          k2 = 1.f
+             - k1 / C_mid;
+
+          C = t * k1 / (1.f - k2 * t);
+        }
+        else
+        {
+          float i0 = 1.f - mid;
+
+          t = (Hsl.y - mid) / i0;
+
+          k0 = C_mid;
+
+          k1 = i0
+             * C_mid * C_mid
+             * midInv * midInv
+             / C_0;
+
+          k2 = 1.f
+             - k1 / (C_max - C_mid);
+
+          C = k0
+            + t * k1
+            / (1.f - k2 * t);
+        }
+
+        return float3(L,
+                      ab * C);
+      }
+
+      //OKHSL->BT.709
+      float3 Bt709(float3 Hsl)
+      {
+        float3 lab = Csp::OkLab::OkHslTo::OkLab(Hsl);
+
+        return Csp::OkLab::OkLabTo::Bt709(lab);
+      }
+
+      //OKHSL->BT.2020
+      float3 Bt2020(float3 Hsl)
+      {
+        float3 lab = Csp::OkLab::OkHslTo::OkLab(Hsl);
+
+        return Csp::OkLab::OkLabTo::Bt2020(lab);
+      }
+    } //OkHslTo
+
+  } //OkLab
+
+
   namespace Map
   {
 
@@ -1464,74 +2254,6 @@ float3 GetXYZfromxyY(float2 xy, float Y)
 }
 
 
-//static const float3x3 IDENTITY =
-//  float3x3(1.f, 0.f, 0.f,
-//           0.f, 1.f, 0.f,
-//           0.f, 0.f, 1.f);
-//
-//struct colourspace
-//{
-//  bool     can_ycbcr;
-//
-//  float3   k;
-//  float    kb_helper;
-//  float    kr_helper;
-//  float2   kg_helper;
-//
-//  float3x3 to_xyz;
-//  float3x3 to_bt709;
-//  float3x3 to_dci_p3;
-//  float3x3 to_bt2020;
-//  float3x3 to_ap1;
-//  float3x3 to_ap1_d65;
-//  float3x3 to_ap0;
-//  float3x3 to_ap0_d65;
-//  float3x3 to_lms;
-//
-//  float3x3 from_xyz;
-//  float3x3 from_bt709;
-//  float3x3 from_dci_p3;
-//  float3x3 from_bt2020;
-//  float3x3 from_ap1;
-//  float3x3 from_ap1_d65;
-//  float3x3 from_ap0;
-//  float3x3 from_ap0_d65;
-//  float3x3 from_lms;
-//};
-
-/*
-default:
-struct colourspace
-{
-  can_ycbcr    = false;
-
-  k            = float3(0.f, 0.f, 0.f);
-  kb_helper    = 0.f;
-  kr_helper    = 0.f;
-  kg_helper    = float2(0.f, 0.f);
-
-  to_xyz       = IDENTITY;
-  to_bt709     = IDENTITY;
-  to_dci_p3    = IDENTITY;
-  to_bt2020    = IDENTITY;
-  to_ap1       = IDENTITY;
-  to_ap1_d65   = IDENTITY;
-  to_ap0       = IDENTITY;
-  to_ap0_d65   = IDENTITY;
-  to_lms       = IDENTITY;
-
-  from_xyz     = IDENTITY;
-  from_bt709   = IDENTITY;
-  from_dci_p3  = IDENTITY;
-  from_bt2020  = IDENTITY;
-  from_ap1     = IDENTITY;
-  from_ap1_d65 = IDENTITY;
-  from_ap0     = IDENTITY;
-  from_ap0_d65 = IDENTITY;
-  from_lms     = IDENTITY;
-};
-*/
-
 //float posPow(float x, float y)
 //{
 //  pow(abs(x), abs)
@@ -1576,202 +2298,6 @@ struct colourspace
 //
 //  return expandedColourInBT2020;
 //}
-
-//static const struct csp_bt709
-//{
-//  can_ycbcr    = true,
-//
-//  k            = float3(0.212636821677324, 0.715182981841251, 0.0721801964814255),
-//  kb_helper    = 1.85563960703715,
-//  kr_helper    = 1.57472635664535,
-//  kg_helper    = float2(0.187281345942859, 0.468194596334655),
-//
-//  to_xyz       = float3x3(0.412386563252992,  0.357591490920625, 0.180450491203564,
-//                          0.212636821677324,  0.715182981841251, 0.0721801964814255,
-//                          0.0193306201524840, 0.119197163640208, 0.950372587005435),
-//
-//  to_bt709     = IDENTITY,
-//
-//  to_dci_p3    = float3x3(0.822457548511777,  0.177542451488222,  0.000000000000000,
-//                          0.0331932273885255, 0.966806772611475,  0.000000000000000,
-//                          0.0170850449332782, 0.0724098641777013, 0.910505090889021),
-//
-//  to_bt2020    = float3x3(0.627401924722236,  0.329291971755002,  0.0433061035227622,
-//                          0.0690954897392608, 0.919544281267395,  0.0113602289933443,
-//                          0.0163937090881632, 0.0880281623979006, 0.895578128513936),
-//
-//  to_ap1       = IDENTITY,
-//  to_ap1_d65   = IDENTITY,
-//  to_ap0       = IDENTITY,
-//
-//  to_ap0_d65   = float3x3(0.433939666226453,  0.376270757528954, 0.189789576244594,
-//                          0.0886176490106605, 0.809293012830817, 0.102089338158523,
-//                          0.0177524231517299, 0.109465628662465, 0.872781948185805),
-//
-//  to_lms       = IDENTITY,
-//
-//
-//  from_xyz     = float3x3( 3.24100323297636,   -1.53739896948879,  -0.498615881996363,
-//                          -0.969224252202516,   1.87592998369518,   0.0415542263400847,
-//                           0.0556394198519755, -0.204011206123910,  1.05714897718753),
-//
-//  from_bt2020  = float3x3( 1.66049621914783,   -0.587656444131135, -0.0728397750166941,
-//                          -0.124547095586012,   1.13289510924730,  -0.00834801366128445,
-//                          -0.0181536813870718, -0.100597371685743,  1.11875105307281),
-//
-//  from_ap0_d65 = float3x3( 2.55243581004094,   -1.12951938115888,  -0.422916428882053,
-//                          -0.277330603707685,   1.37823643460965,  -0.100905830901963,
-//                          -0.0171334337475196, -0.149886019090529,  1.16701945283805),
-//};
-//
-//
-//static const colourspace csp_dci_p3 =
-//{
-//  can_ycbcr    = false;
-//
-//  k            = float3(0.f, 0.f, 0.f);
-//  kb_helper    = 0.f;
-//  kr_helper    = 0.f;
-//  kg_helper    = float2(0.f, 0.f);
-//
-//  to_xyz       = IDENTITY;
-//  to_bt709     = IDENTITY;
-//  to_dci_p3    = IDENTITY;
-//  to_bt2020    = IDENTITY;
-//  to_ap1       = IDENTITY;
-//  to_ap1_d65   = IDENTITY;
-//  to_ap0       = IDENTITY;
-//  to_ap0_d65   = IDENTITY;
-//  to_lms       = IDENTITY;
-//
-//  from_xyz     = float3x3( 2.49350912393461,   -0.931388179404778,  -0.402712756741651,
-//                          -0.829473213929555,   1.76263057960030,    0.0236242371055886,
-//                           0.0358512644339181, -0.0761839369220759,  0.957029586694311);
-//};
-//
-//
-//static const colourspace csp_bt2020 =
-//{
-//  can_ycbcr    = true;
-//
-//  k            = float3(0.262698338956556, 0.678008765772817, 0.0592928952706273);
-//  kb_helper    = 1.88141420945875;
-//  kr_helper    = 1.47460332208689;
-//  kg_helper    = float2(0.164532527178987, 0.571343414550845);
-//
-//  to_xyz       = float3x3(0.636953506785074,    0.144619184669233,  0.168855853922873,
-//                          0.262698338956556,    0.678008765772817,  0.0592928952706273,
-//                          4.99407096644439e-17, 0.0280731358475570, 1.06082723495057);
-//
-//  to_bt709     = bt709.from_bt2020;
-//
-//  to_dci_p3    = IDENTITY;
-//  to_bt2020    = IDENTITY;
-//  to_ap1       = IDENTITY;
-//  to_ap1_d65   = IDENTITY;
-//  to_ap0       = IDENTITY;
-//
-//  to_ap0_d65   = float3x3(0.670246365605384,    0.152175527191681,  0.177578107202935,
-//                          0.0445008795878928,   0.854497444583291,  0.101001675828816,
-//                          4.58634334267322e-17, 0.0257811794360767, 0.974218820563924);
-//
-//  to_lms       = float3x3(0.412109375,    0.52392578125,  0.06396484375,
-//                          0.166748046875, 0.720458984375, 0.11279296875,
-//                          0.024169921875, 0.075439453125, 0.900390625);
-//
-//
-//  from_xyz     = float3x3( 1.71666342779588,   -0.355673319730140, -0.253368087890248,
-//                          -0.666673836198887,   1.61645573982470,   0.0157682970961337,
-//                           0.0176424817849772, -0.0427769763827532, 0.942243281018431);
-//
-//  from_bt709   = bt709.to_bt2020;
-//
-//  from_ap0_d65 = float3x3( 1.98120359851493,   -0.484110148394926,  -0.267481115328003,
-//                          -1.49600189517300,    2.20017241853874,    0.171935552888793,
-//                           0.0395893535231033, -0.0582241265671916,  0.861149547243843);
-//
-//  from_lms     = float3x3( 3.43660669433308,   -2.50645211865627,    0.0698454243231915,
-//                          -0.791329555598929,   1.98360045179229,   -0.192270896193362,
-//                          -0.0259498996905927, -0.0989137147117265,  1.12486361440232);
-//};
-//
-//
-//static const colourspace csp_ap1 =
-//{
-//  can_ycbcr    = false;
-//
-//  k            = float3(0.f, 0.f, 0.f);
-//  kb_helper    = 0.f;
-//  kr_helper    = 0.f;
-//  kg_helper    = float2(0.f, 0.f);
-//
-//
-//  from_xyz     = float3x3( 1.64102337969433,   -0.324803294184790,   -0.236424695237612,
-//                          -0.663662858722983,   1.61533159165734,     0.0167563476855301,
-//                           0.0117218943283754, -0.00828444199623741,  0.988394858539022);
-//};
-//
-//
-//static const colourspace csp_ap1_d65 =
-//{
-//  can_ycbcr    = false;
-//
-//  k            = float3(0.f, 0.f, 0.f);
-//  kb_helper    = 0.f;
-//  kr_helper    = 0.f;
-//  kg_helper    = float2(0.f, 0.f);
-//
-//
-//  from_xyz     = float3x3( 0.647502080944762,   0.134381221854532,   0.168545242577887,
-//                           0.266084305353177,   0.675978267510674,   0.0579374271361486,
-//                          -0.00544882536559402, 0.00407215823801611, 1.09027703792571);
-//};
-//
-//static const colourspace csp_ap0 =
-//{
-//  can_ycbcr    = false;
-//
-//  k            = float3(0.f, 0.f, 0.f);
-//  kb_helper    = 0.f;
-//  kr_helper    = 0.f;
-//  kg_helper    = float2(0.f, 0.f);
-//
-//
-//  from_xyz     = float3x3( 1.04981101749797,  0.000000000000000, -0.0000974845405792529,
-//                          -0.495903023077320, 1.37331304581571,   0.0982400360573100,
-//                           0.000000000000000, 0.000000000000000,  0.991252018200499);
-//};
-//
-//
-//static const colourspace csp_ap0_d65 =
-//{
-//  can_ycbcr    = true;
-//
-//  k            = float3(0.343163015452697, 0.734695029446046, -0.0778580448987425);
-//  kb_helper    = 2.15571608979748;
-//  kr_helper    = 1.31367396909461;
-//  kg_helper    = float2(-0.228448313084334, 0.613593807618545);
-//
-//  to_xyz       = float3x3(0.950327431033156, 0.000000000000000,  0.000101114344024341,
-//                          0.343163015452697, 0.734695029446046, -0.0778580448987425,
-//                          0.000000000000000, 0.000000000000000,  1.08890037079813);
-//
-//  to_lms       = float3x3(0.580810546875, 0.512451171875, -0.09326171875,
-//                          0.195068359375, 0.808349609375, -0.00341796875,
-//                          0.0322265625,   0.054931640625,  0.91259765625);
-//
-//  from_lms     = float3x3( 2.17845648544721,   -1.39580019302982,    0.217396782969079,
-//                          -0.525889627357037,   1.57372643877619,   -0.0478484931801823,
-//                          -0.0452731647735950, -0.0454368173474335,  1.09097633376501);
-//};
-//
-//colourspace return_struct(float test)
-//{
-//  colourspace csp_bt709;
-//  csp_bt709.can_ycbcr = true;
-//  return csp_bt709;
-//}
-//
 
 
 bool IsNAN(float Input)
