@@ -7,8 +7,16 @@
 
 #undef TEXT_BRIGHTNESS
 
-//#define _DEBUG
-//#define _TESTY
+#ifndef GAMESCOPE
+  //#define _DEBUG
+  //#define _TESTY
+#endif
+
+#if (BUFFER_WIDTH  >= 2560) \
+ && (BUFFER_HEIGHT >= 1440)
+  #define IS_QHD_OR_HIGHER_RES
+#endif
+
 
 
 uniform int2 MOUSE_POSITION
@@ -237,11 +245,19 @@ uniform bool SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
-  ui_tooltip  = "Change diagram type via the \"Preprocessor definition\" 'CIE_DIAGRAM' below."
-           "\n" "Possible values are:"
-           "\n" "- 'CIE_1931' for the CIE 1931 xy diagram"
-           "\n" "- 'CIE_1976' for the CIE 1976 UCS u'v' diagram";
 > = true;
+
+#define CIE_1931 0
+#define CIE_1976 1
+
+uniform uint CIE_DIAGRAM_TYPE
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "CIE diagram type";
+  ui_type     = "combo";
+  ui_items    = "CIE 1931 xy\0"
+                "CIE 1976 UCS u'v'\0";
+> = CIE_1931;
 
 uniform float CIE_DIAGRAM_BRIGHTNESS
 <
@@ -252,7 +268,59 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_min      = 10.f;
   ui_max      = 250.f;
   ui_step     = 0.5f;
+#ifdef GAMESCOPE
+> = GAMESCOPE_SDR_ON_HDR_NITS;
+#else
 > = 80.f;
+#endif
+
+#ifdef IS_QHD_OR_HIGHER_RES
+  #define CIE_TEXTURE_FILE_NAME   "lilium__cie_1000x1000_consolidated.png"
+  #define CIE_TEXTURE_WIDTH       5016
+  #define CIE_TEXTURE_HEIGHT      1626
+  #define CIE_BG_BORDER             50
+
+  #define CIE_ORIGINAL_DIM        1000
+
+  #define CIE_1931_WIDTH           736
+  #define CIE_1931_HEIGHT          837
+  #define CIE_1931_BG_WIDTH        836
+  #define CIE_1931_BG_HEIGHT       937
+
+  #define CIE_1976_WIDTH           625
+  #define CIE_1976_HEIGHT          589
+  #define CIE_1976_BG_WIDTH        725
+  #define CIE_1976_BG_HEIGHT       689
+#else
+  #define CIE_TEXTURE_FILE_NAME   "lilium__cie_500x500_consolidated.png"
+  #define CIE_TEXTURE_WIDTH       2520
+  #define CIE_TEXTURE_HEIGHT       817
+  #define CIE_BG_BORDER             25
+
+  #define CIE_ORIGINAL_DIM         500
+
+  #define CIE_1931_WIDTH           370
+  #define CIE_1931_HEIGHT          420
+  #define CIE_1931_BG_WIDTH        420
+  #define CIE_1931_BG_HEIGHT       470
+
+  #define CIE_1976_WIDTH           314
+  #define CIE_1976_HEIGHT          297
+  #define CIE_1976_BG_WIDTH        364
+  #define CIE_1976_BG_HEIGHT       347
+#endif
+
+static const float2 CIE_CONSOLIDATED_TEXTURE_SIZE = float2(CIE_TEXTURE_WIDTH, CIE_TEXTURE_HEIGHT);
+
+static const int2 CIE_1931_SIZE = int2(CIE_1931_WIDTH, CIE_1931_HEIGHT);
+static const int2 CIE_1976_SIZE = int2(CIE_1976_WIDTH, CIE_1976_HEIGHT);
+
+static const float CIE_BG_WIDTH[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
+static const float CIE_BG_HEIGHT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+
+static const float CIE_DIAGRAM_DEFAULT_SIZE = (float(BUFFER_HEIGHT) * 0.375f)
+                                              / CIE_1931_BG_HEIGHT
+                                              * 100.f;
 
 uniform float CIE_DIAGRAM_SIZE
 <
@@ -263,7 +331,7 @@ uniform float CIE_DIAGRAM_SIZE
   ui_min      = 50.f;
   ui_max      = 100.f;
   ui_step     = 0.1f;
-> = 100.f;
+> = CIE_DIAGRAM_DEFAULT_SIZE;
 
 #ifndef GAMESCOPE
 uniform int CIE_SPACER_0
@@ -547,14 +615,6 @@ uniform int DRAW_AS_BLACK_SPACER_1
 #define HDR_ANALYSIS_ENABLE
 
 #include "lilium__include/hdr_analysis.fxh"
-
-#if (CIE_DIAGRAM == CIE_1931)
-  static const uint CIE_BG_WIDTH  = CIE_1931_BG_WIDTH;
-  static const uint CIE_BG_HEIGHT = CIE_1931_BG_HEIGHT;
-#else
-  static const uint CIE_BG_WIDTH  = CIE_1976_BG_WIDTH;
-  static const uint CIE_BG_HEIGHT = CIE_1976_BG_HEIGHT;
-#endif
 
 
 #ifdef _TESTY
@@ -2202,13 +2262,14 @@ void PS_SetActiveArea(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   Id                       : SV_VertexID,
-  out                 float4 VPos                     : SV_Position,
-  out                 float2 TexCoord                 : TEXCOORD0,
-  out nointerpolation bool   PingPongChecks[2]        : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange        : HighlightNitRange,
-  out nointerpolation float4 TextureDisplaySizes      : TextureDisplaySizes,
-  out nointerpolation float2 CurrentActiveOverlayArea : CurrentActiveOverlayArea)
+  in                  uint   Id                   : SV_VertexID,
+  out                 float4 VPos                 : SV_Position,
+  out                 float2 TexCoord             : TEXCOORD0,
+  out nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange    : HighlightNitRange,
+  out nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
+  out nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
+  out nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -2223,10 +2284,19 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
+  #define BrightnessHistogramTextureDisplaySize TextureDisplaySizes0.xy
+  #define CieDiagramTextureActiveSize           TextureDisplaySizes0.zw
+  #define CieDiagramTextureDisplaySize          TextureDisplaySizes1.xy
+  #define CieDiagramConsolidatedActiveSize      TextureDisplaySizes1.zw
+  #define CieOutlinesSamplerOffset              TextureDisplaySizes2.xy
+  #define CurrentActiveOverlayArea              TextureDisplaySizes2.zw
 
-  pingpong0Above1   = false;
-  breathingIsActive = false;
-
+  pingpong0Above1      = false;
+  breathingIsActive    = false;
+  HighlightNitRange    = 0.f;
+  TextureDisplaySizes0 = 0.f;
+  TextureDisplaySizes1 = 0.f;
+  TextureDisplaySizes2 = 0.f;
 
   if (HIGHLIGHT_NIT_RANGE)
   {
@@ -2275,8 +2345,6 @@ void VS_PrepareHdrAnalysis(
     }
   }
 
-#define BrightnessHistogramTextureDisplaySize TextureDisplaySizes.xy
-
   if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
     float brightnessHistogramSizeFrac = BRIGHTNESS_HISTOGRAM_SIZE / 100.f;
@@ -2286,13 +2354,22 @@ void VS_PrepareHdrAnalysis(
     * brightnessHistogramSizeFrac;
   }
 
-#define CieDiagramTextureDisplaySize TextureDisplaySizes.zw
 
   if (SHOW_CIE)
   {
     float cieDiagramSizeFrac = CIE_DIAGRAM_SIZE / 100.f;
 
-    CieDiagramTextureDisplaySize = float2(CIE_BG_WIDTH, CIE_BG_HEIGHT) * cieDiagramSizeFrac;
+    CieDiagramTextureActiveSize =
+      round(float2(CIE_BG_WIDTH[CIE_DIAGRAM_TYPE], CIE_BG_HEIGHT[CIE_DIAGRAM_TYPE]) * cieDiagramSizeFrac);
+
+    CieDiagramTextureDisplaySize =
+      float2(CIE_1931_BG_WIDTH, CIE_1931_BG_HEIGHT) * cieDiagramSizeFrac;
+
+    CieDiagramConsolidatedActiveSize = CIE_CONSOLIDATED_TEXTURE_SIZE * cieDiagramSizeFrac;
+
+    CieOutlinesSamplerOffset =
+      float2(CIE_BG_WIDTH[CIE_DIAGRAM_TYPE],
+             float(CIE_1931_BG_HEIGHT) * float(CIE_DIAGRAM_TYPE)) * cieDiagramSizeFrac;
   }
 
   if (SHOW_NITS_VALUES
@@ -2346,16 +2423,18 @@ void VS_PrepareHdrAnalysis(
 
 
 void PS_HdrAnalysis(
-  in                  float4 VPos                     : SV_Position,
-  in                  float2 TexCoord                 : TEXCOORD,
-  in  nointerpolation bool   PingPongChecks[2]        : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange        : HighlightNitRange,
-  in  nointerpolation float4 TextureDisplaySizes      : TextureDisplaySizes,
-  in  nointerpolation float2 CurrentActiveOverlayArea : CurrentActiveOverlayArea,
-  out                 float4 Output                   : SV_Target0)
+  in                  float4 VPos                 : SV_Position,
+  in                  float2 TexCoord             : TEXCOORD,
+  in  nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange    : HighlightNitRange,
+  in  nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
+  in  nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
+  in  nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2,
+  out                 float4 Output               : SV_Target0)
 {
   Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
 
+  const float2 pureCoord = VPos.xy - 0.5f;
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -2407,12 +2486,10 @@ void PS_HdrAnalysis(
 
   if (SHOW_CIE)
   {
-    float2 pureCoord = TexCoord * ReShade::ScreenSize; // expand to actual pixel values
-
-    float textureDisplayAreaYBegin = BUFFER_HEIGHT - CieDiagramTextureDisplaySize.y;
+    float textureDisplayAreaYBegin = BUFFER_HEIGHT - CieDiagramTextureActiveSize.y;
 
     // draw the diagram in the bottom left corner
-    if (pureCoord.x <  CieDiagramTextureDisplaySize.x
+    if (pureCoord.x <  CieDiagramTextureActiveSize.x
      && pureCoord.y >= textureDisplayAreaYBegin)
     {
       // get coords for the sampler
@@ -2420,61 +2497,67 @@ void PS_HdrAnalysis(
                                            pureCoord.y - textureDisplayAreaYBegin);
 
       currentSamplerCoords += 0.5f;
-      currentSamplerCoords /= CieDiagramTextureDisplaySize;
 
-#if (CIE_DIAGRAM == CIE_1931)
-  #define CIE_SAMPLER SamplerCie1931Current
-  #define CIE_TRIANGLE_SAMPLER_BT709  SamplerCie1931CspTriangleBt709
-  #define CIE_TRIANGLE_SAMPLER_DCI_P3 SamplerCie1931CspTriangleDciP3
-  #define CIE_TRIANGLE_SAMPLER_BT2020 SamplerCie1931CspTriangleBt2020
-  #define CIE_TRIANGLE_SAMPLER_AP0    SamplerCie1931CspTriangleAp0
-#else
-  #define CIE_SAMPLER SamplerCie1976Current
-  #define CIE_TRIANGLE_SAMPLER_BT709  SamplerCie1976CspTriangleBt709
-  #define CIE_TRIANGLE_SAMPLER_DCI_P3 SamplerCie1976CspTriangleDciP3
-  #define CIE_TRIANGLE_SAMPLER_BT2020 SamplerCie1976CspTriangleBt2020
-  #define CIE_TRIANGLE_SAMPLER_AP0    SamplerCie1976CspTriangleAp0
-#endif
+      float2 currentCieSamplerCoords = currentSamplerCoords / CieDiagramTextureDisplaySize;
 
-      float3 currentPixelToDisplay =
-        pow(tex2D(CIE_SAMPLER, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+      float3 currentPixelToDisplay = pow(tex2D(SamplerCieCurrent, currentCieSamplerCoords).rgb, 2.2f);
 
       float3 cspOutlineOverlay = float3(0.f, 0.f, 0.f);
 
       if (SHOW_CIE_CSP_BT709_OUTLINE)
       {
-        cspOutlineOverlay +=
-          pow(tex2D(CIE_TRIANGLE_SAMPLER_BT709, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+        float2 outlineSamplerCoords =
+          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
+                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
+
+        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
+
+        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
       }
       if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
       {
-        cspOutlineOverlay +=
-          pow(tex2D(CIE_TRIANGLE_SAMPLER_DCI_P3, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+        float2 outlineSamplerCoords =
+          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
+                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
+
+        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
+
+        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
       }
       if (SHOW_CIE_CSP_BT2020_OUTLINE)
       {
-        cspOutlineOverlay +=
-          pow(tex2D(CIE_TRIANGLE_SAMPLER_BT2020, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+        float2 outlineSamplerCoords =
+          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
+                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
+
+        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
+
+        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
       }
 #ifdef IS_FLOAT_HDR_CSP
       if (SHOW_CIE_CSP_AP0_OUTLINE)
       {
-        cspOutlineOverlay +=
-          pow(tex2D(CIE_TRIANGLE_SAMPLER_AP0, currentSamplerCoords).rgb, 2.2f) * CIE_DIAGRAM_BRIGHTNESS;
+        float2 outlineSamplerCoords =
+          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
+                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
+
+        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
+
+        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
       }
 #endif
 
-      Output.rgb = Csp::Map::Bt709Into::MAP_INTO_CSP(currentPixelToDisplay + cspOutlineOverlay);
+      cspOutlineOverlay = min(cspOutlineOverlay, 1.25f);
 
-#undef CIE_SAMPLER
-#undef CIE_TRIANGLE_SAMPLER
+      currentPixelToDisplay = Csp::Map::Bt709Into::MAP_INTO_CSP((currentPixelToDisplay + cspOutlineOverlay) * CIE_DIAGRAM_BRIGHTNESS);
+
+      Output.rgb = currentPixelToDisplay;
 
     }
   }
 
   if (SHOW_BRIGHTNESS_HISTOGRAM)
   {
-    float2 pureCoord = TexCoord * ReShade::ScreenSize; // expand to actual pixel values
 
     float2 textureDisplayAreaBegin = float2(BUFFER_WIDTH  - BrightnessHistogramTextureDisplaySize.x,
                                             BUFFER_HEIGHT - BrightnessHistogramTextureDisplaySize.y);
@@ -2708,23 +2791,12 @@ technique lilium__hdr_analysis
 
 
 //CIE
-#if (CIE_DIAGRAM == CIE_1931)
-  pass PS_CopyCie1931Bg
+  pass PS_CopyCieBg
   {
     VertexShader = VS_PostProcess;
-     PixelShader = PS_CopyCie1931Bg;
-    RenderTarget = TextureCie1931Current;
+     PixelShader = PS_CopyCieBg;
+    RenderTarget = TextureCieCurrent;
   }
-#endif //CIE_DIAGRAM == CIE_1931
-
-#if (CIE_DIAGRAM == CIE_1976)
-  pass PS_CopyCie1976Bg
-  {
-    VertexShader = VS_PostProcess;
-     PixelShader = PS_CopyCie1976Bg;
-    RenderTarget = TextureCie1976Current;
-  }
-#endif //CIE_DIAGRAM == CIE_1976
 
   pass CS_GenerateCieDiagram
   {

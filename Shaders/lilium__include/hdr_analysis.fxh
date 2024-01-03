@@ -169,268 +169,55 @@ storage2D<float> StorageMaxNits0Dot01Percent
 #endif
 
 
-#define CIE_1931 0
-#define CIE_1976 1
+#define CIE_TEXTURE_ENTRY_DIAGRAM_COLOUR   0
+#define CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG 1
+#define CIE_TEXTURE_ENTRY_BT709_OUTLINE    2
+#define CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE   3
+#define CIE_TEXTURE_ENTRY_BT2020_OUTLINE   4
+#define CIE_TEXTURE_ENTRY_AP0_OUTLINE      5
 
-#ifndef CIE_DIAGRAM
-  #define CIE_DIAGRAM CIE_1931
-#endif
+//width and height description are in lilium__hdr_analysis.fx
 
-#define CIE_BG_BORDER  50
-
-#define CIE_1931_WIDTH     736
-#define CIE_1931_HEIGHT    837
-#define CIE_1931_BG_WIDTH  836
-#define CIE_1931_BG_HEIGHT 937
-
-#if (CIE_DIAGRAM == CIE_1931)
-
-texture2D TextureCie1931
+texture2D TextureCieConsolidated
 <
-  source = "lilium__cie_1931.png";
+  source = CIE_TEXTURE_FILE_NAME;
   pooled = true;
 >
 {
-  Width  = CIE_1931_WIDTH;
-  Height = CIE_1931_HEIGHT;
+  Width  = CIE_TEXTURE_WIDTH;
+  Height = CIE_TEXTURE_HEIGHT;
   Format = RGBA8;
 };
 
-sampler2D SamplerCie1931
+sampler2D<float4> SamplerCieConsolidated
 {
-  Texture = TextureCie1931;
+  Texture = TextureCieConsolidated;
 };
 
-texture2D TextureCie1931BlackBg
-<
-  source = "lilium__cie_1931_black_bg.png";
-  pooled = true;
->
+storage2D<float4> StorageCieConsolidated
 {
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
+  Texture = TextureCieConsolidated;
 };
 
-sampler2D SamplerCie1931BlackBg
-{
-  Texture = TextureCie1931BlackBg;
-};
-
-texture2D TextureCie1931Current
+texture2D TextureCieCurrent
 <
   pooled = true;
 >
 {
   Width  = CIE_1931_BG_WIDTH;
   Height = CIE_1931_BG_HEIGHT;
-
   Format = RGBA8;
 };
 
-sampler2D SamplerCie1931Current
+sampler2D<float4> SamplerCieCurrent
 {
-  Texture   = TextureCie1931Current;
-  MagFilter = POINT;
+  Texture = TextureCieCurrent;
 };
 
-storage2D StorageCie1931Current
+storage2D<float4> StorageCieCurrent
 {
-  Texture = TextureCie1931Current;
+  Texture = TextureCieCurrent;
 };
-
-texture2D TextureCie1931CspTriangleBt709
-<
-  source = "lilium__cie_1931_csp_triangle_bt.709.png";
-  pooled = true;
->
-{
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1931CspTriangleBt709
-{
-  Texture = TextureCie1931CspTriangleBt709;
-};
-
-texture2D TextureCie1931CspTriangleDciP3
-<
-  source = "lilium__cie_1931_csp_triangle_dci-p3.png";
-  pooled = true;
->
-{
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1931CspTriangleDciP3
-{
-  Texture = TextureCie1931CspTriangleDciP3;
-};
-
-texture2D TextureCie1931CspTriangleBt2020
-<
-  source = "lilium__cie_1931_csp_triangle_bt.2020.png";
-  pooled = true;
->
-{
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1931CspTriangleBt2020
-{
-  Texture = TextureCie1931CspTriangleBt2020;
-};
-
-texture2D TextureCie1931CspTriangleAp0
-<
-  source = "lilium__cie_1931_csp_triangle_ap0.png";
-  pooled = true;
->
-{
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1931CspTriangleAp0
-{
-  Texture = TextureCie1931CspTriangleAp0;
-};
-
-#endif
-
-#define CIE_1976_WIDTH     625
-#define CIE_1976_HEIGHT    589
-#define CIE_1976_BG_WIDTH  725
-#define CIE_1976_BG_HEIGHT 689
-
-#if (CIE_DIAGRAM == CIE_1976)
-
-texture2D TextureCie1976
-<
-  source = "lilium__cie_1976_ucs.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_WIDTH;
-  Height = CIE_1976_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976
-{
-  Texture = TextureCie1976;
-};
-
-texture2D TextureCie1976BlackBg
-<
-  source = "lilium__cie_1976_ucs_black_bg.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976BlackBg
-{
-  Texture = TextureCie1976BlackBg;
-};
-
-texture2D TextureCie1976Current
-<
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976Current
-{
-  Texture   = TextureCie1976Current;
-  MagFilter = POINT;
-};
-
-storage2D StorageCie1976Current
-{
-  Texture  = TextureCie1976Current;
-};
-
-texture2D TextureCie1976CspTriangleBt709
-<
-  source = "lilium__cie_1976_ucs_csp_triangle_bt.709.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976CspTriangleBt709
-{
-  Texture = TextureCie1976CspTriangleBt709;
-};
-
-texture2D TextureCie1976CspTriangleDciP3
-<
-  source = "lilium__cie_1976_ucs_csp_triangle_dci-p3.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976CspTriangleDciP3
-{
-  Texture = TextureCie1976CspTriangleDciP3;
-};
-
-texture2D TextureCie1976CspTriangleBt2020
-<
-  source = "lilium__cie_1976_ucs_csp_triangle_bt.2020.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976CspTriangleBt2020
-{
-  Texture = TextureCie1976CspTriangleBt2020;
-};
-
-texture2D TextureCie1976CspTriangleAp0
-<
-  source = "lilium__cie_1976_ucs_csp_triangle_ap0.png";
-  pooled = true;
->
-{
-  Width  = CIE_1976_BG_WIDTH;
-  Height = CIE_1976_BG_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerCie1976CspTriangleAp0
-{
-  Texture = TextureCie1976CspTriangleAp0;
-};
-
-#endif
 
 
 texture2D TextureCsps
@@ -446,8 +233,7 @@ texture2D TextureCsps
 
 sampler2D SamplerCsps
 {
-  Texture    = TextureCsps;
-  MipLODBias = 0;
+  Texture = TextureCsps;
 };
 
 
@@ -1562,35 +1348,19 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 
 
 // copy over clean bg first every time
-#if (CIE_DIAGRAM == CIE_1931)
-void PS_CopyCie1931Bg(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 CIE_BG   : SV_TARGET)
+void PS_CopyCieBg(
+  in  float4 VPos     : SV_Position,
+  in  float2 TexCoord : TEXCOORD0,
+  out float4 Out      : SV_Target0)
 {
-  if (SHOW_CIE)
-  {
-    CIE_BG = tex2D(SamplerCie1931BlackBg, TexCoord).rgba;
-    return;
-  }
-  discard;
-}
-#endif
+  float2 samplerPos = float2(VPos.x + CIE_BG_WIDTH[CIE_DIAGRAM_TYPE] * float(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
+                             VPos.y + float(CIE_1931_BG_HEIGHT)      * float(CIE_DIAGRAM_TYPE));
 
-#if (CIE_DIAGRAM == CIE_1976)
-void PS_CopyCie1976Bg(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD,
-  out float4 CIE_BG   : SV_TARGET)
-{
-  if (SHOW_CIE)
-  {
-    CIE_BG = tex2D(SamplerCie1976BlackBg, TexCoord).rgba;
-    return;
-  }
-  discard;
+  samplerPos /= CIE_CONSOLIDATED_TEXTURE_SIZE;
+
+  Out = tex2D(SamplerCieConsolidated, samplerPos);
+  return;
 }
-#endif
 
 void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 {
@@ -1619,9 +1389,7 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
       precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, ID.xy).rgb;
 
-      if (pixel.r == 0.f
-       && pixel.g == 0.f
-       && pixel.b == 0.f)
+      if (all(pixel == 0.f))
       {
         return;
       }
@@ -1653,44 +1421,57 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      if (XYZ.y < 0.f)
+      if (XYZ.y <= 0.f)
       {
         return;
       }
 
 #endif
 
-#if (CIE_DIAGRAM == CIE_1931)
-      // get xy
-      precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
+      if (CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        // get xy
+        precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
 
-      precise const int2 xy = int2(round(XYZ.x / xyz * 1000.f),  // 1000 is the original texture size
-             CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * 1000.f));
+        precise int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
+         CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
 
-      // adjust for the added borders
-      precise const int2 xyDiagramPos = xy + CIE_BG_BORDER;
+        // adjust for the added borders
+        xy += CIE_BG_BORDER;
 
-      tex2Dstore(StorageCie1931Current,
-                 xyDiagramPos,
-                 tex2Dfetch(SamplerCie1931, xy).rgba);
-#endif
+        // clamp to to borders
+        xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
 
-#if (CIE_DIAGRAM == CIE_1976)
-      // get u'v'
-      precise const float X15Y3Z = XYZ.x
-                                 + 15.f * XYZ.y
-                                 +  3.f * XYZ.z;
+        const float4 xyColour = tex2Dfetch(StorageCieConsolidated, xy);
 
-      precise const int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * 1000.f),  // 1000 is the original texture size
-             CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * 1000.f));
+        tex2Dstore(StorageCieCurrent,
+                   xy,
+                   xyColour);
+      }
+      else if (CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        // get u'v'
+        precise const float X15Y3Z = XYZ.x
+                                   + 15.f * XYZ.y
+                                   +  3.f * XYZ.z;
 
-      // adjust for the added borders
-      precise const int2 uvDiagramPos = uv + CIE_BG_BORDER;
+        precise int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
+         CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
 
-      tex2Dstore(StorageCie1976Current,
-                 uvDiagramPos,
-                 tex2Dfetch(SamplerCie1976, uv).rgba);
-#endif
+        // adjust for the added borders
+        uv += CIE_BG_BORDER;
+
+        // clamp to to borders
+        uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
+
+        const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
+
+        const float4 uvColour = tex2Dfetch(StorageCieConsolidated, uvFetchPos);
+
+        tex2Dstore(StorageCieCurrent,
+                   uv,
+                   uvColour);
+      }
 
 #if (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  && !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \
  || (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  &&  defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \
