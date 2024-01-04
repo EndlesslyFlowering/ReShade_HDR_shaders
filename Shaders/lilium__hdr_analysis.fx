@@ -1328,8 +1328,28 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    // avgNits:
     case 6:
+    {
+      if (SHOW_NITS_VALUES)
+      {
+        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
+        precise uint  curNumber   = d2nd(maxNitsShow);
+        DrawChar(uint2(curNumber, 0), float2(16, 0));
+      }
+      return;
+    }
+    case 7:
+    {
+      if (SHOW_NITS_VALUES)
+      {
+        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
+        precise uint  curNumber   = d3rd(maxNitsShow);
+        DrawChar(uint2(curNumber, 0), float2(17, 0));
+      }
+      return;
+    }
+    // avgNits:
+    case 8:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1339,7 +1359,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 7:
+    case 9:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1349,7 +1369,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 8:
+    case 10:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1359,7 +1379,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 9:
+    case 11:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1369,7 +1389,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 10:
+    case 12:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1379,7 +1399,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 11:
+    case 13:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1389,7 +1409,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 12:
+    case 14:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1399,8 +1419,18 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
+    case 15:
+    {
+      if (SHOW_NITS_VALUES)
+      {
+        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
+        precise uint  curNumber   = d2nd(avgNitsShow);
+        DrawChar(uint2(curNumber, 0), float2(17, 1));
+      }
+      return;
+    }
     // minNits:
-    case 13:
+    case 16:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1410,7 +1440,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 14:
+    case 17:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1420,7 +1450,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 15:
+    case 18:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1430,7 +1460,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 16:
+    case 19:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1440,7 +1470,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 17:
+    case 20:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1450,7 +1480,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 18:
+    case 21:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1460,7 +1490,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 19:
+    case 22:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1470,7 +1500,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 20:
+    case 23:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1480,7 +1510,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 21:
+    case 24:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1490,7 +1520,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 22:
+    case 25:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1500,7 +1530,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 23:
+    case 26:
     {
       if (SHOW_NITS_VALUES)
       {
@@ -1511,7 +1541,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       return;
     }
     // cursorNits:
-    case 24:
+    case 27:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1521,7 +1551,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 25:
+    case 28:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1531,7 +1561,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 26:
+    case 29:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1541,7 +1571,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 27:
+    case 30:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1551,7 +1581,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 28:
+    case 31:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1561,7 +1591,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 29:
+    case 32:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1571,7 +1601,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 30:
+    case 33:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1581,7 +1611,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 31:
+    case 34:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1591,7 +1621,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 32:
+    case 35:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1601,7 +1631,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 33:
+    case 36:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1611,7 +1641,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 34:
+    case 37:
     {
       if (SHOW_NITS_FROM_CURSOR)
       {
@@ -1625,7 +1655,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 
     // show CSPs
     // BT.709:
-    case 35:
+    case 38:
     {
       if (SHOW_CSPS)
       {
@@ -1635,7 +1665,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 36:
+    case 39:
     {
       if (SHOW_CSPS)
       {
@@ -1645,7 +1675,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 37:
+    case 40:
     {
       if (SHOW_CSPS)
       {
@@ -1655,7 +1685,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 38:
+    case 41:
     {
       if (SHOW_CSPS)
       {
@@ -1665,7 +1695,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 39:
+    case 42:
     {
       if (SHOW_CSPS)
       {
@@ -1676,7 +1706,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       return;
     }
     // DCI-P3:
-    case 40:
+    case 43:
     {
       if (SHOW_CSPS)
       {
@@ -1686,7 +1716,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 41:
+    case 44:
     {
       if (SHOW_CSPS)
       {
@@ -1696,7 +1726,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 42:
+    case 45:
     {
       if (SHOW_CSPS)
       {
@@ -1706,7 +1736,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 43:
+    case 46:
     {
       if (SHOW_CSPS)
       {
@@ -1716,7 +1746,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 44:
+    case 47:
     {
       if (SHOW_CSPS)
       {
@@ -1727,7 +1757,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       return;
     }
     // BT.2020:
-    case 45:
+    case 48:
     {
       if (SHOW_CSPS)
       {
@@ -1737,7 +1767,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 46:
+    case 49:
     {
       if (SHOW_CSPS)
       {
@@ -1747,7 +1777,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 47:
+    case 50:
     {
       if (SHOW_CSPS)
       {
@@ -1757,7 +1787,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 48:
+    case 51:
     {
       if (SHOW_CSPS)
       {
@@ -1767,7 +1797,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 49:
+    case 52:
     {
       if (SHOW_CSPS)
       {
@@ -1779,7 +1809,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     }
 #ifdef IS_FLOAT_HDR_CSP
     // AP0:
-    case 50:
+    case 53:
     {
       if (SHOW_CSPS)
       {
@@ -1789,7 +1819,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 51:
+    case 54:
     {
       if (SHOW_CSPS)
       {
@@ -1799,7 +1829,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 52:
+    case 55:
     {
       if (SHOW_CSPS)
       {
@@ -1809,7 +1839,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 53:
+    case 56:
     {
       if (SHOW_CSPS)
       {
@@ -1819,7 +1849,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 54:
+    case 57:
     {
       if (SHOW_CSPS)
       {
@@ -1830,7 +1860,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       return;
     }
     // invalid:
-    case 55:
+    case 58:
     {
       if (SHOW_CSPS)
       {
@@ -1840,7 +1870,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 56:
+    case 59:
     {
       if (SHOW_CSPS)
       {
@@ -1850,7 +1880,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 57:
+    case 60:
     {
       if (SHOW_CSPS)
       {
@@ -1860,7 +1890,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 58:
+    case 61:
     {
       if (SHOW_CSPS)
       {
@@ -1870,7 +1900,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 59:
+    case 62:
     {
       if (SHOW_CSPS)
       {
@@ -1882,7 +1912,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
     }
 #endif
     //cursorCSP:
-    case 60:
+    case 63:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -1922,7 +1952,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 61:
+    case 64:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -1962,7 +1992,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 62:
+    case 65:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -2002,7 +2032,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 63:
+    case 66:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -2042,7 +2072,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 64:
+    case 67:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -2082,7 +2112,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 65:
+    case 68:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -2122,7 +2152,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
-    case 66:
+    case 69:
     {
       if (SHOW_CSP_FROM_CURSOR)
       {
@@ -2832,7 +2862,7 @@ technique lilium__hdr_analysis
   pass CS_DrawValuesToOverlay
   {
     ComputeShader = CS_DrawValuesToOverlay <1, 1>;
-    DispatchSizeX = 67;
+    DispatchSizeX = 70;
     DispatchSizeY = 1;
   }
 
