@@ -1484,10 +1484,7 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 bool IsCsp(precise float3 Rgb)
 {
-  if ((SHOW_CSPS || SHOW_CSP_FROM_CURSOR || SHOW_CSP_MAP)
-   && Rgb.r >= 0.f
-   && Rgb.g >= 0.f
-   && Rgb.b >= 0.f)
+  if (all(Rgb >= 0.f))
   {
     return true;
   }
@@ -1513,43 +1510,39 @@ bool IsCsp(precise float3 Rgb)
 
 float GetCsp(precise float3 Rgb)
 {
-  if (SHOW_CSPS
-   || SHOW_CSP_FROM_CURSOR
-   || SHOW_CSP_MAP)
+  if (IsCsp(_IS_CSP_BT709(Rgb)))
   {
-    if (IsCsp(_IS_CSP_BT709(Rgb)))
-    {
-      return IS_CSP_BT709;
-    }
-    else if (IsCsp(_IS_CSP_DCI_P3(Rgb)))
-    {
-      return IS_CSP_DCI_P3 / 255.f;
-    }
+    return IS_CSP_BT709;
+  }
+  else if (IsCsp(_IS_CSP_DCI_P3(Rgb)))
+  {
+    return IS_CSP_DCI_P3 / 255.f;
+  }
 
 #if defined(IS_HDR10_LIKE_CSP)
 
-    else
-    {
-      return IS_CSP_BT2020 / 255.f;
-    }
+  else
+  {
+    return IS_CSP_BT2020 / 255.f;
+  }
 
 #else
 
-    else if (IsCsp(_IS_CSP_BT2020(Rgb)))
-    {
-      return IS_CSP_BT2020 / 255.f;
-    }
-    else if (IsCsp(_IS_CSP_AP0(Rgb)))
-    {
-      return IS_CSP_AP0 / 255.f;
-    }
-    else
-    {
-      return IS_CSP_INVALID / 255.f;
-    }
+  else if (IsCsp(_IS_CSP_BT2020(Rgb)))
+  {
+    return IS_CSP_BT2020 / 255.f;
+  }
+  else if (IsCsp(_IS_CSP_AP0(Rgb)))
+  {
+    return IS_CSP_AP0 / 255.f;
+  }
+  else
+  {
+    return IS_CSP_INVALID / 255.f;
+  }
 
 #endif //IS_HDR10_LIKE_CSP
-  }
+
   return IS_CSP_INVALID / 255.f;
 }
 
