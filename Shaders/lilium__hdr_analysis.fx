@@ -2315,9 +2315,18 @@ void VS_PrepareHdrAnalysis(
   out                 float2 TexCoord             : TEXCOORD0,
   out nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
   out nointerpolation float4 HighlightNitRange    : HighlightNitRange,
+#ifndef GAMESCOPE
   out nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
   out nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
   out nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2)
+#else
+  out nointerpolation float2 LuminanceWaveformTextureDisplaySize : LuminanceWaveformTextureDisplaySize,
+  out nointerpolation float2 CieDiagramTextureActiveSize         : CieDiagramTextureActiveSize,
+  out nointerpolation float2 CieDiagramTextureDisplaySize        : CieDiagramTextureDisplaySize,
+  out nointerpolation float2 CieDiagramConsolidatedActiveSize    : CieDiagramConsolidatedActiveSize,
+  out nointerpolation float2 CieOutlinesSamplerOffset            : CieOutlinesSamplerOffset,
+  out nointerpolation float2 CurrentActiveOverlayArea            : CurrentActiveOverlayArea)
+#endif
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -2332,19 +2341,30 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
+#ifndef GAMESCOPE
   #define LuminanceWaveformTextureDisplaySize TextureDisplaySizes0.xy
   #define CieDiagramTextureActiveSize         TextureDisplaySizes0.zw
   #define CieDiagramTextureDisplaySize        TextureDisplaySizes1.xy
   #define CieDiagramConsolidatedActiveSize    TextureDisplaySizes1.zw
   #define CieOutlinesSamplerOffset            TextureDisplaySizes2.xy
   #define CurrentActiveOverlayArea            TextureDisplaySizes2.zw
+#endif
 
   pingpong0Above1      = false;
   breathingIsActive    = false;
   HighlightNitRange    = 0.f;
+#ifndef GAMESCOPE
   TextureDisplaySizes0 = 0.f;
   TextureDisplaySizes1 = 0.f;
   TextureDisplaySizes2 = 0.f;
+#else
+  LuminanceWaveformTextureDisplaySize = 0.f;
+  CieDiagramTextureActiveSize         = 0.f;
+  CieDiagramTextureDisplaySize        = 0.f;
+  CieDiagramConsolidatedActiveSize    = 0.f;
+  CieOutlinesSamplerOffset            = 0.f;
+  CurrentActiveOverlayArea            = 0.f;
+#endif
 
   if (HIGHLIGHT_NIT_RANGE)
   {
@@ -2471,9 +2491,18 @@ void PS_HdrAnalysis(
   in                  float2 TexCoord             : TEXCOORD,
   in  nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange    : HighlightNitRange,
+#ifndef GAMESCOPE
   in  nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
   in  nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
   in  nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2,
+#else
+  in  nointerpolation float2 LuminanceWaveformTextureDisplaySize : LuminanceWaveformTextureDisplaySize,
+  in  nointerpolation float2 CieDiagramTextureActiveSize         : CieDiagramTextureActiveSize,
+  in  nointerpolation float2 CieDiagramTextureDisplaySize        : CieDiagramTextureDisplaySize,
+  in  nointerpolation float2 CieDiagramConsolidatedActiveSize    : CieDiagramConsolidatedActiveSize,
+  in  nointerpolation float2 CieOutlinesSamplerOffset            : CieOutlinesSamplerOffset,
+  in  nointerpolation float2 CurrentActiveOverlayArea            : CurrentActiveOverlayArea,
+#endif
   out                 float4 Output               : SV_Target0)
 {
   Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
