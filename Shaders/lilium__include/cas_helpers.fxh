@@ -24,11 +24,6 @@
 #include "colour_space.fxh"
 
 
-#define MIN3(A, B, C) min(A, min(B, C))
-
-#define MAX3(A, B, C) max(A, max(B, C))
-
-
 // for pixel shader
 float2 GetEfhiCoords(float2 Coords)
 {

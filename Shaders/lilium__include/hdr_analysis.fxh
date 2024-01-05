@@ -90,11 +90,11 @@ uniform float FRAMETIME
 >;
 
 
-#define TEXTURE_OVERLAY_WIDTH FONT_ATLAS_SIZE_56_CHAR_DIM.x * 29
+#define TEXTURE_OVERLAY_WIDTH FONT_SIZE_56_CHAR_DIM.x * 29
 #if defined(IS_FLOAT_HDR_CSP)
-  #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_56_CHAR_DIM.y * 16
+  #define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * 16
 #else
-  #define TEXTURE_OVERLAY_HEIGHT FONT_ATLAS_SIZE_56_CHAR_DIM.y * 13
+  #define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * 13
 #endif //IS_FLOAT_HDR_CSP
 
 texture2D TextureTextOverlay
@@ -237,71 +237,89 @@ sampler2D SamplerCsps
 };
 
 
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  = 1820;
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT = 1024;
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = float(BUFFER_WIDTH)
+                                                                   / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
 
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR  =
-  (BUFFER_WIDTH  - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH - 1.f);
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_HEIGHT_FACTOR =
-  (BUFFER_HEIGHT - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (float(BUFFER_WIDTH)  / 3840.f
+                                                             + float(BUFFER_HEIGHT) / 2160.f)
+                                                            / 2.f;
 
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH  = 2130;
-static const uint TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT = 1150;
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f;
 
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_X =
-  (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH  - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH  - 1.f);
-static const float TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_FACTOR_Y =
-  (TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT - 1.f) / (TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - 1.f);
+//static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
+//  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
 
-texture2D TextureBrightnessHistogram
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
+                                                          + (WAVE_FONT_SIZE_32_CHAR_DIM.x * 8) //8 chars for 10000.00
+                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.x / 2.f + 0.5f)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT
+                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
+
+static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - 1.f)
+                                                             / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH  - 1);
+
+static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT     - 1.f)
+                                                             / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - 1);
+
+texture2D TextureLuminanceWaveform
 <
   pooled = true;
 >
 {
-  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH;
-  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT;
+  Width  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH;
+  Height = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT;
   Format = RGBA16;
 };
 
-sampler2D SamplerBrightnessHistogram
+sampler2D SamplerLuminanceWaveform
 {
-  Texture = TextureBrightnessHistogram;
+  Texture = TextureLuminanceWaveform;
 };
 
-storage2D StorageBrightnessHistogram
+storage2D StorageLuminanceWaveform
 {
-  Texture = TextureBrightnessHistogram;
+  Texture = TextureLuminanceWaveform;
 };
 
-texture2D TextureBrightnessHistogramScale
-<
-  source = "lilium__brightness_histogram_scale.png";
-  pooled = true;
->
-{
-  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH;
-  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT;
-  Format = RGBA8;
-};
-
-sampler2D SamplerBrightnessHistogramScale
-{
-  Texture = TextureBrightnessHistogramScale;
-};
-
-texture2D TextureBrightnessHistogramFinal
+texture2D TextureLuminanceWaveformScale
 <
   pooled = true;
 >
 {
-  Width  = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH;
-  Height = TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT;
+  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
+  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
   Format = RGBA16;
 };
 
-sampler2D SamplerBrightnessHistogramFinal
+sampler2D<float4> SamplerLuminanceWaveformScale
 {
-  Texture   = TextureBrightnessHistogramFinal;
+  Texture = TextureLuminanceWaveformScale;
+};
+
+storage2D<float4> StorageLuminanceWaveformScale
+{
+  Texture = TextureLuminanceWaveformScale;
+};
+
+texture2D TextureLuminanceWaveformFinal
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
+  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
+  Format = RGBA16;
+};
+
+sampler2D SamplerLuminanceWaveformFinal
+{
+  Texture   = TextureLuminanceWaveformFinal;
   MagFilter = POINT;
 };
 
@@ -414,6 +432,14 @@ static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP  = int2(2 + OVERLAY_TE
 static const int2 COORDS_UPDATE_OVERLAY_PERCENTAGES = int2(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET, UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET);
 
 
+// (3) luminance waveform variables
+#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET 54
+#define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 12
+static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X       = int2(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
+static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y       = int2(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
+static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT = int2(2 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
+
+
 #define CONSOLIDATED_TEXTURE_SIZE_WIDTH  BUFFER_WIDTH
 #define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 13
 
@@ -502,7 +528,7 @@ float HeatmapFadeOut(float Y, float CurrentStep, float NormaliseTo)
 float3 HeatmapRgbValues(
   float Y,
   uint  Mode,
-  bool  HistogramOutput)
+  bool  WaveformOutput)
 {
   float3 output;
 
@@ -521,8 +547,8 @@ float3 HeatmapRgbValues(
   else if (Y <= HeatmapSteps0[Mode][0]) // <= 100nits
   {
     //shades of grey
-    float clamped = !HistogramOutput ? Y / HeatmapSteps0[Mode][0] * 0.25f
-                                     : 0.666f;
+    float clamped = !WaveformOutput ? Y / HeatmapSteps0[Mode][0] * 0.25f
+                                    : 0.666f;
     output.rgb = clamped;
   }
   else if (Y <= HeatmapSteps0[Mode][1]) // <= 203nits
@@ -571,28 +597,572 @@ float3 HeatmapRgbValues(
 }
 
 
-void PS_ClearBrightnessHistogramTexture(
-      float4 VPos     : SV_Position,
-      float2 TexCoord : TEXCOORD0,
+// calls HeatmapRgbValues with predefined parameters
+float3 WaveformRgbValues(
+  const float Y)
+{
+  // LUMINANCE_WAVEFORM_CUTOFF_POINT values match heatmap modes 1:1
+  return HeatmapRgbValues(Y, LUMINANCE_WAVEFORM_CUTOFF_POINT, true);
+}
+
+namespace Waveform
+{
+
+  struct SWaveformData
+  {
+    int   borderSize;
+    int   frameSize;
+    int2  charDimensions;
+    int2  atlasOffset;
+    int2  waveformArea;
+    int   cutoffOffset;
+    int   tickPoints[16];
+    int   fontSpacer;
+    int2  offsetToFrame;
+    int2  textOffset;
+    int   tickXOffset;
+    int   lowerFrameStart;
+    int2  endXY;
+    int   endYminus1;
+  };
+
+  SWaveformData GetData()
+  {
+    SWaveformData waveDat;
+
+    const float2 waveformScaleFactorXY = saturate(LUMINANCE_WAVEFORM_SIZE / 100.f);
+
+    const float waveformScaleFactor = (waveformScaleFactorXY.x + waveformScaleFactorXY.y) / 2.f;
+
+    const float borderAndFrameSizeFactor = max(waveformScaleFactor, 0.75f);
+    const float fontSizeFactor           = max(waveformScaleFactor, 0.85f);
+
+    waveDat.borderSize = int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f * borderAndFrameSizeFactor + 0.5f);
+    waveDat.frameSize  = int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f * borderAndFrameSizeFactor + 0.5f);
+
+    const uint fontSize =
+      clamp(uint(((TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor + 0.5f)) * 2, 12, 32);
+
+    const uint charArrayEntry = 32 - fontSize;
+
+    const uint atlasEntry = charArrayEntry / 2;
+
+    waveDat.charDimensions = int2(WaveCharSize[charArrayEntry], WaveCharSize[charArrayEntry + 1]);
+
+    waveDat.atlasOffset = int2(WaveAtlasXOffset[atlasEntry], WAVE_TEXTURE_OFFSET.y);
+
+    const int maxChars = LUMINANCE_WAVEFORM_CUTOFF_POINT == 0 ? 8
+                                                              : 7;
+
+    const int textWidth  = waveDat.charDimensions.x * maxChars;
+    const int tickSpacer = int(float(waveDat.charDimensions.x) / 2.f + 0.5f);
+
+    waveDat.fontSpacer = int(float(waveDat.charDimensions.y) / 2.f - float(waveDat.frameSize) + 0.5f);
+
+    waveDat.offsetToFrame = int2(waveDat.borderSize + textWidth + tickSpacer + waveDat.frameSize,
+                                 waveDat.borderSize + waveDat.fontSpacer);
+
+    static const int cutoffPoints[16] = {
+      int(0),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(4000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(2000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(1000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 400.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 203.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 100.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  50.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  25.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  10.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   5.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   2.5f ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   1.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   0.25f) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   0.05f) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
+      int(                                                                            TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT   * waveformScaleFactorXY.y + 0.5f) };
+
+
+    waveDat.waveformArea =
+      int2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH * waveformScaleFactorXY.x,
+           cutoffPoints[15] - cutoffPoints[LUMINANCE_WAVEFORM_CUTOFF_POINT]);
+
+    if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 0)
+    {
+      waveDat.cutoffOffset = 0;
+
+      waveDat.tickPoints = {
+        int(0),
+        int(cutoffPoints[ 1]),
+        int(cutoffPoints[ 2]),
+        int(cutoffPoints[ 3]),
+        int(cutoffPoints[ 4]),
+        int(cutoffPoints[ 5]),
+        int(cutoffPoints[ 6]),
+        int(cutoffPoints[ 7]),
+        int(cutoffPoints[ 8]),
+        int(cutoffPoints[ 9]),
+        int(cutoffPoints[10]),
+        int(cutoffPoints[11]),
+        int(cutoffPoints[12]),
+        int(cutoffPoints[13]),
+        int(cutoffPoints[14]),
+        int(cutoffPoints[15]) };
+    }
+    else if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 1)
+    {
+      waveDat.cutoffOffset = cutoffPoints[1];
+
+      waveDat.tickPoints = {
+        int(-100),
+        int(0),
+        int(cutoffPoints[ 2] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 3] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
+        int(cutoffPoints[10] - waveDat.cutoffOffset),
+        int(cutoffPoints[11] - waveDat.cutoffOffset),
+        int(cutoffPoints[12] - waveDat.cutoffOffset),
+        int(cutoffPoints[13] - waveDat.cutoffOffset),
+        int(cutoffPoints[14] - waveDat.cutoffOffset),
+        int(cutoffPoints[15] - waveDat.cutoffOffset) };
+    }
+    else if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 2)
+    {
+      waveDat.cutoffOffset = cutoffPoints[2];
+
+      waveDat.tickPoints = {
+        int(-100),
+        int(-100),
+        int(0),
+        int(cutoffPoints[ 3] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
+        int(cutoffPoints[10] - waveDat.cutoffOffset),
+        int(cutoffPoints[11] - waveDat.cutoffOffset),
+        int(cutoffPoints[12] - waveDat.cutoffOffset),
+        int(cutoffPoints[13] - waveDat.cutoffOffset),
+        int(cutoffPoints[14] - waveDat.cutoffOffset),
+        int(cutoffPoints[15] - waveDat.cutoffOffset) };
+    }
+    else //if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 3)
+    {
+      waveDat.cutoffOffset = cutoffPoints[3];
+
+      waveDat.tickPoints = {
+        int(-100),
+        int(-100),
+        int(-100),
+        int(0),
+        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
+        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
+        int(cutoffPoints[10] - waveDat.cutoffOffset),
+        int(cutoffPoints[11] - waveDat.cutoffOffset),
+        int(cutoffPoints[12] - waveDat.cutoffOffset),
+        int(cutoffPoints[13] - waveDat.cutoffOffset),
+        int(cutoffPoints[14] - waveDat.cutoffOffset),
+        int(cutoffPoints[15] - waveDat.cutoffOffset) };
+    }
+
+    waveDat.textOffset = int2(0, int(float(waveDat.charDimensions.y) / 2.f + 0.5f));
+
+    waveDat.tickXOffset = waveDat.borderSize
+                        + textWidth
+                        + tickSpacer;
+
+    waveDat.lowerFrameStart = waveDat.frameSize
+                            + waveDat.waveformArea.y;
+
+    waveDat.endXY = waveDat.frameSize * 2
+                  + waveDat.waveformArea;
+
+    waveDat.endYminus1 = waveDat.endXY.y - 1;
+
+    return waveDat;
+  }
+
+  float2 GetActiveArea()
+  {
+    SWaveformData waveDat = GetData();
+
+    return waveDat.offsetToFrame
+         + waveDat.frameSize
+         + waveDat.waveformArea
+         + waveDat.frameSize
+         + int2(0, waveDat.fontSpacer)
+         + waveDat.borderSize;
+  }
+
+  int2 GetNitsOffset(
+    const int ActiveBorderSize,
+    const int ActiveFrameSize,
+    const int ActiveFontSpacer,
+    const int YOffset)
+  {
+    return int2(ActiveBorderSize,
+                ActiveBorderSize + ActiveFontSpacer + ActiveFrameSize + YOffset);
+  } //GetNitsOffset
+
+  void DrawCharToScale(
+    const int  Char,
+    const int2 CharDim,
+    const int2 AtlasOffset,
+    const int2 Pos,
+    const int  CharCount)
+  {
+    const int2 charOffset = int2(AtlasOffset.x,
+                                 AtlasOffset.y + (Char * CharDim.y));
+
+    const int2 currentPos = Pos + int2(CharCount * CharDim.x, 0);
+
+    for (int x = 0; x < CharDim.x; x++)
+    {
+      for (int y = 0; y < CharDim.y; y++)
+      {
+        int2 currentOffset = int2(x, y);
+        int2 currentDrawOffset = currentPos + currentOffset;
+
+        float4 currentPixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
+        currentPixel.rgb = pow(currentPixel.rgb, 2.2f);
+
+        tex2Dstore(StorageLuminanceWaveformScale, currentDrawOffset, currentPixel);
+      }
+    }
+    return;
+  } //DrawCharToScale
+
+}
+
+void CS_RenderLuminanceWaveformScale()
+{
+  if (tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X).x       != LUMINANCE_WAVEFORM_SIZE.x
+   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y).x       != LUMINANCE_WAVEFORM_SIZE.y
+   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT).x != LUMINANCE_WAVEFORM_CUTOFF_POINT)
+  {
+    //make background all black
+    for (int x = 0; x < TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH; x++)
+    {
+      for (int y = 0; y < TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT; y++)
+      {
+        tex2Dstore(StorageLuminanceWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 1.f));
+      }
+    }
+
+    Waveform::SWaveformData waveDat = Waveform::GetData();
+
+
+    const int2 nits10000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 0]);
+    const int2 nits_4000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 1]);
+    const int2 nits_2000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 2]);
+    const int2 nits_1000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 3]);
+    const int2 nits__400_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 4]);
+    const int2 nits__203_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 5]);
+    const int2 nits__100_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 6]);
+    const int2 nits___50_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 7]);
+    const int2 nits___25_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 8]);
+    const int2 nits___10_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 9]);
+    const int2 nits____5_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[10]);
+    const int2 nits____2_50Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[11]);
+    const int2 nits____1_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[12]);
+    const int2 nits____0_25Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[13]);
+    const int2 nits____0_05Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[14]);
+    const int2 nits____0_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[15]);
+
+
+    const int2 text10000_00Offset = nits10000_00Offset - waveDat.textOffset;
+    const int2 text_4000_00Offset = nits_4000_00Offset - waveDat.textOffset;
+    const int2 text_2000_00Offset = nits_2000_00Offset - waveDat.textOffset;
+    const int2 text_1000_00Offset = nits_1000_00Offset - waveDat.textOffset;
+    const int2 text__400_00Offset = nits__400_00Offset - waveDat.textOffset;
+    const int2 text__203_00Offset = nits__203_00Offset - waveDat.textOffset;
+    const int2 text__100_00Offset = nits__100_00Offset - waveDat.textOffset;
+    const int2 text___50_00Offset = nits___50_00Offset - waveDat.textOffset;
+    const int2 text___25_00Offset = nits___25_00Offset - waveDat.textOffset;
+    const int2 text___10_00Offset = nits___10_00Offset - waveDat.textOffset;
+    const int2 text____5_00Offset = nits____5_00Offset - waveDat.textOffset;
+    const int2 text____2_50Offset = nits____2_50Offset - waveDat.textOffset;
+    const int2 text____1_00Offset = nits____1_00Offset - waveDat.textOffset;
+    const int2 text____0_25Offset = nits____0_25Offset - waveDat.textOffset;
+    const int2 text____0_05Offset = nits____0_05Offset - waveDat.textOffset;
+    const int2 text____0_00Offset = nits____0_00Offset - waveDat.textOffset;
+
+    int charOffsets[8];
+
+    if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 0)
+    {
+      charOffsets = {
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7 };
+    }
+    else //if (LUMINANCE_WAVEFORM_CUTOFF_POINT > 0)
+    {
+      charOffsets = {
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6 };
+    }
+
+    if (LUMINANCE_WAVEFORM_CUTOFF_POINT == 0)
+    {
+      Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[0]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[1]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[2]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[3]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[4]);
+      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[5]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[6]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text10000_00Offset, charOffsets[7]);
+    }
+
+    if (LUMINANCE_WAVEFORM_CUTOFF_POINT <= 1)
+    {
+      Waveform::DrawCharToScale(  _4_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[1]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[2]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[3]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[4]);
+      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[5]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[6]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_4000_00Offset, charOffsets[7]);
+    }
+
+    if (LUMINANCE_WAVEFORM_CUTOFF_POINT <= 2)
+    {
+      Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[1]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[2]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[3]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[4]);
+      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[5]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[6]);
+      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_2000_00Offset, charOffsets[7]);
+    }
+
+    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[1]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[2]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text_1000_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _4_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[2]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__400_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[2]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _3_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__203_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[2]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text__100_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text___50_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___50_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text___50_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___50_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___50_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, waveDat.atlasOffset, text___25_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text___25_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text___25_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___25_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___25_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, waveDat.atlasOffset, text___10_00Offset, charOffsets[3]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___10_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text___10_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___10_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text___10_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text____5_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____5_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____5_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____5_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, waveDat.atlasOffset, text____2_50Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____2_50Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text____2_50Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____2_50Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, waveDat.atlasOffset, text____1_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____1_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____1_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____1_00Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_25Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_25Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_25Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_25Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_05Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_05Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_05Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_05Offset, charOffsets[7]);
+
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_00Offset, charOffsets[4]);
+    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_00Offset, charOffsets[5]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_00Offset, charOffsets[6]);
+    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, waveDat.atlasOffset, text____0_00Offset, charOffsets[7]);
+
+    // draw the frame, ticks and horizontal lines
+    for (int y = 0; y < waveDat.endXY.y; y++)
+    {
+      int2 curPos = waveDat.offsetToFrame + int2(0, y);
+
+      float curGrey = lerp(0.5f, 0.4f, (float(y + waveDat.cutoffOffset) / float(waveDat.endYminus1 + waveDat.cutoffOffset)));
+      curGrey = pow(curGrey, 2.2f);
+
+      float4 curColour = float4(curGrey.xxx, 1.f);
+
+      // draw top and bottom part of the frame
+      if (y <  waveDat.frameSize
+       || y >= waveDat.lowerFrameStart)
+      {
+        for (int x = 0; x < waveDat.endXY.x; x++)
+        {
+          int2 curXPos = int2(x + curPos.x, curPos.y);
+          tex2Dstore(StorageLuminanceWaveformScale, curXPos, curColour);
+        }
+      }
+      // draw left and right part of the frame
+      else
+      {
+        for (int x = 0; x < waveDat.frameSize; x++)
+        {
+          int2 curLeftPos  = int2(x + curPos.x, curPos.y);
+          int2 curRightPos = int2(curLeftPos.x + waveDat.waveformArea.x + waveDat.frameSize, curLeftPos.y);
+          tex2Dstore(StorageLuminanceWaveformScale, curLeftPos,  curColour);
+          tex2Dstore(StorageLuminanceWaveformScale, curRightPos, curColour);
+        }
+      }
+
+      // draw top tick and bottom tick
+#ifdef IS_QHD_OR_HIGHER_RES
+      if ((LUMINANCE_WAVEFORM_CUTOFF_POINT == 0 && ((nits10000_00Offset.y - 1) == curPos.y || nits10000_00Offset.y == curPos.y || (nits10000_00Offset.y + 1) == curPos.y))
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 1 && ((nits_4000_00Offset.y - 1) == curPos.y || nits_4000_00Offset.y == curPos.y || (nits_4000_00Offset.y + 1) == curPos.y))
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 2 && ((nits_2000_00Offset.y - 1) == curPos.y || nits_2000_00Offset.y == curPos.y || (nits_2000_00Offset.y + 1) == curPos.y))
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 3 && ((nits_1000_00Offset.y - 1) == curPos.y || nits_1000_00Offset.y == curPos.y || (nits_1000_00Offset.y + 1) == curPos.y))
+       || (nits____0_00Offset.y - 1) == curPos.y || nits____0_00Offset.y == curPos.y || (nits____0_00Offset.y + 1) == curPos.y)
+#else
+      if ((LUMINANCE_WAVEFORM_CUTOFF_POINT == 0 && nits10000_00Offset.y == curPos.y)
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 1 && nits_4000_00Offset.y == curPos.y)
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 2 && nits_2000_00Offset.y == curPos.y)
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT == 3 && nits_1000_00Offset.y == curPos.y)
+       || nits____0_00Offset.y == curPos.y)
+#endif
+      {
+        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.frameSize); x++)
+        {
+          int2 curTickPos = int2(x, curPos.y);
+          tex2Dstore(StorageLuminanceWaveformScale, curTickPos, curColour);
+        }
+      }
+
+      // draw ticks + draw horizontal lines
+#ifdef IS_QHD_OR_HIGHER_RES
+      if ((LUMINANCE_WAVEFORM_CUTOFF_POINT < 1 && ((nits_4000_00Offset.y - 1) == curPos.y || nits_4000_00Offset.y == curPos.y || (nits_4000_00Offset.y + 1) == curPos.y))
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT < 2 && ((nits_2000_00Offset.y - 1) == curPos.y || nits_2000_00Offset.y == curPos.y || (nits_2000_00Offset.y + 1) == curPos.y))
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT < 3 && ((nits_1000_00Offset.y - 1) == curPos.y || nits_1000_00Offset.y == curPos.y || (nits_1000_00Offset.y + 1) == curPos.y))
+       || (nits__400_00Offset.y - 1) == curPos.y || nits__400_00Offset.y == curPos.y || (nits__400_00Offset.y + 1) == curPos.y
+       || (nits__203_00Offset.y - 1) == curPos.y || nits__203_00Offset.y == curPos.y || (nits__203_00Offset.y + 1) == curPos.y
+       || (nits__100_00Offset.y - 1) == curPos.y || nits__100_00Offset.y == curPos.y || (nits__100_00Offset.y + 1) == curPos.y
+       || (nits___50_00Offset.y - 1) == curPos.y || nits___50_00Offset.y == curPos.y || (nits___50_00Offset.y + 1) == curPos.y
+       || (nits___25_00Offset.y - 1) == curPos.y || nits___25_00Offset.y == curPos.y || (nits___25_00Offset.y + 1) == curPos.y
+       || (nits___10_00Offset.y - 1) == curPos.y || nits___10_00Offset.y == curPos.y || (nits___10_00Offset.y + 1) == curPos.y
+       || (nits____5_00Offset.y - 1) == curPos.y || nits____5_00Offset.y == curPos.y || (nits____5_00Offset.y + 1) == curPos.y
+       || (nits____2_50Offset.y - 1) == curPos.y || nits____2_50Offset.y == curPos.y || (nits____2_50Offset.y + 1) == curPos.y
+       || (nits____1_00Offset.y - 1) == curPos.y || nits____1_00Offset.y == curPos.y || (nits____1_00Offset.y + 1) == curPos.y
+       || (nits____0_25Offset.y - 1) == curPos.y || nits____0_25Offset.y == curPos.y || (nits____0_25Offset.y + 1) == curPos.y
+       || (nits____0_05Offset.y - 1) == curPos.y || nits____0_05Offset.y == curPos.y || (nits____0_05Offset.y + 1) == curPos.y)
+#else
+      if ((LUMINANCE_WAVEFORM_CUTOFF_POINT < 1 && nits_4000_00Offset.y == curPos.y)
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT < 2 && nits_2000_00Offset.y == curPos.y)
+       || (LUMINANCE_WAVEFORM_CUTOFF_POINT < 3 && nits_1000_00Offset.y == curPos.y)
+       || nits__400_00Offset.y == curPos.y
+       || nits__203_00Offset.y == curPos.y
+       || nits__100_00Offset.y == curPos.y
+       || nits___50_00Offset.y == curPos.y
+       || nits___25_00Offset.y == curPos.y
+       || nits___10_00Offset.y == curPos.y
+       || nits____5_00Offset.y == curPos.y
+       || nits____2_50Offset.y == curPos.y
+       || nits____1_00Offset.y == curPos.y
+       || nits____0_25Offset.y == curPos.y
+       || nits____0_05Offset.y == curPos.y)
+#endif
+      {
+        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.endXY.x); x++)
+        {
+          int2 curTickPos = int2(x, curPos.y);
+          tex2Dstore(StorageLuminanceWaveformScale, curTickPos, curColour);
+        }
+      }
+    }
+
+    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X,       LUMINANCE_WAVEFORM_SIZE.x);
+    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y,       LUMINANCE_WAVEFORM_SIZE.y);
+    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT, LUMINANCE_WAVEFORM_CUTOFF_POINT);
+  }
+  return;
+}
+
+void PS_ClearLuminanceWaveformTexture(
+  in  float4 VPos     : SV_Position,
+  in  float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_TARGET)
 {
   discard;
 }
 
-void CS_RenderBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
+void CS_RenderLuminanceWaveform(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_BRIGHTNESS_HISTOGRAM)
+  if (SHOW_LUMINANCE_WAVEFORM)
   {
     for (uint y = 0; y < BUFFER_HEIGHT; y++)
     {
-      float curPixelCLL = tex2Dfetch(SamplerNitsValues, int2(ID.x, y)).x;
+      const float curPixelNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).x;
 
-      int yCoord =
-        round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(curPixelCLL) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT));
+      if (curPixelNits > 0.f)
+      {
+        const int2 coord = float2(float(ID.x)
+                                / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
+                                  TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT
+                                - (Csp::Trc::NitsTo::Pq(curPixelNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) + 0.5f;
 
-      tex2Dstore(StorageBrightnessHistogram,
-                 int2(round(ID.x / TEXTURE_BRIGHTNESS_HISTOGRAM_BUFFER_WIDTH_FACTOR), yCoord),
-                 float4(HeatmapRgbValues(curPixelCLL, HEATMAP_MODE_10000, true), 1.f));
+        tex2Dstore(StorageLuminanceWaveform,
+                   coord,
+                   float4(WaveformRgbValues(curPixelNits), 1.f));
+      }
     }
   }
 }
@@ -600,11 +1170,12 @@ void CS_RenderBrightnessHistogram(uint3 ID : SV_DispatchThreadID)
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void VS_PrepareRenderBrightnessHistogramToScale(
-  in                  uint   Id             : SV_VertexID,
-  out                 float4 VPos           : SV_Position,
-  out                 float2 TexCoord       : TEXCOORD0,
-  out nointerpolation int2   CllWhiteLinesY : CllWhiteLinesY)
+void VS_PrepareRenderLuminanceWaveformToScale(
+  in                  uint   Id       : SV_VertexID,
+  out                 float4 VPos     : SV_Position,
+  out                 float2 TexCoord : TEXCOORD0,
+  out nointerpolation int4   WaveDat0 : WaveDat0,
+  out nointerpolation int3   WaveDat1 : WaveDat1)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -612,73 +1183,101 @@ void VS_PrepareRenderBrightnessHistogramToScale(
                          : 0.f;
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-#define minCllWhiteLineY CllWhiteLinesY.x
-#define maxCllWhiteLineY CllWhiteLinesY.y
+#define WaveformActiveArea   WaveDat0.xy
+#define OffsetToWaveformArea WaveDat0.zw
+#define WaveformCutoffOffset WaveDat1.x
 
-  if (SHOW_BRIGHTNESS_HISTOGRAM)
+#define MinNitsLineY WaveDat1.y
+#define MaxNitsLineY WaveDat1.z
+
+  WaveDat0    = 0;
+  WaveDat1.x  = 0;
+  WaveDat1.yz = -100;
+
+  if (SHOW_LUMINANCE_WAVEFORM)
   {
-    if (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE)
+    Waveform::SWaveformData waveDat = Waveform::GetData();
+
+    WaveDat0 = int4(waveDat.waveformArea, waveDat.offsetToFrame
+                                         + waveDat.frameSize);
+
+    WaveformCutoffOffset = waveDat.cutoffOffset;
+
+    const float waveformScaleFactorY = saturate(LUMINANCE_WAVEFORM_SIZE.y / 100.f);
+
+    if (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
     {
-      float minCll = tex2Dfetch(SamplerConsolidated, COORDS_MIN_NITS_VALUE);
+      const float minNits = tex2Dfetch(SamplerConsolidated, COORDS_MIN_NITS_VALUE);
 
-      int yPos =
-        min(
-          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(minCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
-        , 1023);
-
-      minCllWhiteLineY = minCll > 0.f ? yPos
-                                      : -1;
+      if (minNits > 0.f
+       && minNits <= 10000.f)
+      {
+        MinNitsLineY =
+          int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(minNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorY + 0.5f)
+        - waveDat.cutoffOffset;
+      }
     }
 
-    if (BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)
+    if (LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)
     {
-      float maxCll = tex2Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
+      const float maxNits = tex2Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
 
-      int yPos =
-        max(
-          int(round(TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT - (Csp::Trc::NitsTo::Pq(maxCll) * TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)))
-        , 0);
-
-      maxCllWhiteLineY = maxCll < 10000.f ? yPos
-                                          : -1;
+      if (maxNits >  0.f
+       && maxNits <= 10000.f)
+      {
+        MaxNitsLineY =
+          int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(maxNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorY + 0.5f)
+        - waveDat.cutoffOffset;
+      }
     }
   }
 }
 
-void PS_RenderBrightnessHistogramToScale(
-  in                  float4 VPos           : SV_Position,
-  in                  float2 TexCoord       : TEXCOORD0,
-  in  nointerpolation int2   CllWhiteLinesY : CllWhiteLinesY,
-  out                 float4 Out            : SV_TARGET0)
+void PS_RenderLuminanceWaveformToScale(
+  in                  float4 VPos     : SV_Position,
+  in                  float2 TexCoord : TEXCOORD0,
+  in  nointerpolation int4   WaveDat0 : WaveDat0,
+  in  nointerpolation int3   WaveDat1 : WaveDat1,
+  out                 float4 Out      : SV_TARGET0)
 {
-  if (SHOW_BRIGHTNESS_HISTOGRAM)
+  if (SHOW_LUMINANCE_WAVEFORM)
   {
-    int2 histogramCoords = int2(round(TexCoord.x * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH  - 0.5f - 250.f),
-                                round(TexCoord.y * TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT - 0.5f -  64.f));
+    int2 waveformCoords = int2(VPos.xy) - OffsetToWaveformArea;
 
-    if (histogramCoords.x >= 0 && histogramCoords.x < TEXTURE_BRIGHTNESS_HISTOGRAM_WIDTH
-     && histogramCoords.y >= 0 && histogramCoords.y < TEXTURE_BRIGHTNESS_HISTOGRAM_HEIGHT)
+    if (all(waveformCoords >= 0)
+     && all(waveformCoords < WaveformActiveArea))
     {
-      if (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE && (histogramCoords.y == minCllWhiteLineY
-                                                 || histogramCoords.y == minCllWhiteLineY - 1))
+#ifdef IS_QHD_OR_HIGHER_RES
+      if (waveformCoords.y == MinNitsLineY
+       || waveformCoords.y == MinNitsLineY - 1)
+#else
+      if (waveformCoords.y == MinNitsLineY)
+#endif
       {
         Out = float4(1.f, 1.f, 1.f, 1.f);
         return;
       }
-      if (BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE && (histogramCoords.y == maxCllWhiteLineY
-                                                 || histogramCoords.y == maxCllWhiteLineY + 1
-                                                 || histogramCoords.y == maxCllWhiteLineY + 2))
+#ifdef IS_QHD_OR_HIGHER_RES
+      if (waveformCoords.y == MaxNitsLineY
+       || waveformCoords.y == MaxNitsLineY + 1)
+#else
+      if (waveformCoords.y == MaxNitsLineY)
+#endif
       {
         Out = float4(1.f, 1.f, 0.f, 1.f);
         return;
       }
-      Out = float4(tex2D(SamplerBrightnessHistogramScale, TexCoord).rgb
-                 + tex2Dfetch(SamplerBrightnessHistogram, histogramCoords).rgb
-            , 1.f);
+      float2 waveformSamplerCoords = (int2(waveformCoords.x, (waveformCoords.y >= MaxNitsLineY) * waveformCoords.y) + int2(0, WaveformCutoffOffset) + 0.5f)
+                                    * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
+                                    / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT);
+
+      Out = float4(tex2D(SamplerLuminanceWaveformScale, TexCoord).rgb
+                 + tex2D(SamplerLuminanceWaveform,      waveformSamplerCoords).rgb,
+                   1.f);
       return;
     }
     //else
-    Out = tex2D(SamplerBrightnessHistogramScale, TexCoord);
+    Out = tex2D(SamplerLuminanceWaveformScale, TexCoord);
     return;
   }
   discard;
@@ -695,7 +1294,7 @@ void PS_CalcNitsPerPixel(
   if (SHOW_NITS_VALUES
    || SHOW_NITS_FROM_CURSOR
    || SHOW_HEATMAP
-   || SHOW_BRIGHTNESS_HISTOGRAM
+   || SHOW_LUMINANCE_WAVEFORM
    || HIGHLIGHT_NIT_RANGE
    || DRAW_ABOVE_NITS_AS_BLACK
    || DRAW_BELOW_NITS_AS_BLACK
@@ -894,8 +1493,8 @@ void PS_CalcNitsPerPixel(
 void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 {
   if (SHOW_NITS_VALUES
-   || (SHOW_BRIGHTNESS_HISTOGRAM
-    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
+   || (SHOW_LUMINANCE_WAVEFORM
+    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 
@@ -966,8 +1565,8 @@ void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 void CS_GetMaxAvgMinNits1_NEW(uint3 ID : SV_DispatchThreadID)
 {
   if (SHOW_NITS_VALUES
-   || (SHOW_BRIGHTNESS_HISTOGRAM
-    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
+   || (SHOW_LUMINANCE_WAVEFORM
+    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
     if (ID.x == 0)
     {
@@ -1097,8 +1696,8 @@ void CS_GetMaxAvgMinNits1_NEW(uint3 ID : SV_DispatchThreadID)
 void CS_GetFinalMaxAvgMinNits_NEW(uint3 ID : SV_DispatchThreadID)
 {
   if (SHOW_NITS_VALUES
-   || (SHOW_BRIGHTNESS_HISTOGRAM
-    && (BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE || BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE)))
+   || (SHOW_LUMINANCE_WAVEFORM
+    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
     const float maxNits0 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAX_NITS_VALUE0);
     const float maxNits1 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAX_NITS_VALUE1);

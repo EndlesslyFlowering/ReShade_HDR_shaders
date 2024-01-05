@@ -430,17 +430,28 @@ uniform int HEATMAP_SPACER_0
 >;
 #endif
 
-uniform bool SHOW_BRIGHTNESS_HISTOGRAM
+uniform bool SHOW_LUMINANCE_WAVEFORM
 <
-  ui_category = "Brightness histogram";
-  ui_label    = "show brightness histogram";
-  ui_tooltip  = "Brightness histogram paid for by Aemony.";
+  ui_category = "Luminance waveform";
+  ui_label    = "show luminance waveform";
+  ui_tooltip  = "Luminance waveform paid for by Aemony.";
 > = true;
 
-uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
+uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
 <
-  ui_category = "Brightness histogram";
-  ui_label    = "brightness histogram brightness";
+  ui_category = "Luminance waveform";
+  ui_label    = "luminance waveform cutoff point";
+  ui_type     = "combo";
+  ui_items    = "10000 nits\0"
+                " 4000 nits\0"
+                " 2000 nits\0"
+                " 1000 nits\0";
+> = 0;
+
+uniform float LUMINANCE_WAVEFORM_BRIGHTNESS
+<
+  ui_category = "Luminance waveform";
+  ui_label    = "luminance waveform brightness";
   ui_type     = "slider";
   ui_units    = " nits";
   ui_min      = 10.f;
@@ -452,46 +463,62 @@ uniform float BRIGHTNESS_HISTOGRAM_BRIGHTNESS
 > = 80.f;
 #endif
 
-uniform float BRIGHTNESS_HISTOGRAM_SIZE
+static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 4.f) * 2;
+
+#if (BUFFER_HEIGHT <= (512 * 5 / 2))
+  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
+#elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
+  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
+#elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
+  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 2048;
+#elif (BUFFER_HEIGHT <= (4096 * 5 / 2))
+  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 4096;
+#else
+  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = (float(BUFFER_HEIGHT) / 2.f) + 0.5f;
+#endif
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
+
+uniform float2 LUMINANCE_WAVEFORM_SIZE
 <
-  ui_category = "Brightness histogram";
-  ui_label    = "brightness histogram size";
+  ui_category = "Luminance waveform";
+  ui_label    = "luminance waveform size";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      = 50.f;
   ui_max      = 100.f;
   ui_step     = 0.1f;
-> = 70.f;
+> = float2(70.f, 70.f);
 
 #ifndef GAMESCOPE
-uniform int BRIGHTNESS_HISTOGRAM_SPACER_0
+uniform int LUMINANCE_WAVEFORM_SPACER_0
 <
-  ui_category = "Brightness histogram";
+  ui_category = "Luminance waveform";
   ui_label    = " ";
   ui_type     = "radio";
 >;
 #endif
 
-uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MINCLL_LINE
+uniform bool LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
 <
-  ui_category = "Brightness histogram";
-  ui_label    = "show minCLL line";
-  ui_tooltip  = "Show a horizontal line where minCLL is on the histogram."
-           "\n" "The line is invisible when minCLL hits 0 nits.";
+  ui_category = "Luminance waveform";
+  ui_label    = "show the minimum nits line";
+  ui_tooltip  = "Show a horizontal line where the minimum nits is on the waveform."
+           "\n" "The line is invisible when the minimum nits hits 0 nits.";
 > = true;
 
-uniform bool BRIGHTNESS_HISTOGRAM_SHOW_MAXCLL_LINE
+uniform bool LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
 <
-  ui_category = "Brightness histogram";
-  ui_label    = "show maxCLL line";
-  ui_tooltip  = "Show a horizontal line where maxCLL is on the histogram."
-           "\n" "The line is invisible when maxCLL hits above 10000 nits.";
+  ui_category = "Luminance waveform";
+  ui_label    = "show max nits line";
+  ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
+           "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
 > = true;
 
 #ifndef GAMESCOPE
-uniform int BRIGHTNESS_HISTOGRAM_SPACER_1
+uniform int LUMINANCE_WAVEFORM_SPACER_1
 <
-  ui_category = "Brightness histogram";
+  ui_category = "Luminance waveform";
   ui_label    = " ";
   ui_type     = "radio";
 >;
@@ -877,7 +904,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3, showCspFromCursor);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, fontSize);
 
-    //calculate offset for the cursor Nits text in the overlay
+    //calculate offset for the cursor nits text in the overlay
     float cursorNitsYOffset = (!SHOW_NITS_VALUES
                              ? -ShowNitsValuesLineCount
                              : SPACING_MULTIPLIER);
@@ -951,7 +978,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                cursorCspYOffset);
 
 
-    float4 bgCol = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
+    float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
 
     uint activeLines = (SHOW_NITS_VALUES ? ShowNitsValuesLineCount
                                         : 0)
@@ -1023,21 +1050,21 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 }
 
 
-void DrawChar(uint2 Char, float2 DrawOffset)
+void DrawChar(uint Char, float2 DrawOffset)
 {
-  static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+  uint atlasEntry     = 23 - TEXT_SIZE;
+  uint charArrayEntry = atlasEntry * 2;
 
-  uint2 charSize   = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
-  uint  fontSize   = 23 - TEXT_SIZE;
-  uint2 atlasXY    = uint2(fontSize % 4, fontSize / 4) * uint2(FONT_ATLAS_OFFSET_X, FONT_ATLAS_OFFSET_Y);
-  uint2 charOffset = Char * charSize + atlasXY;
+  uint2 charSize     = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+  uint  atlasXOffset = AtlasXOffset[atlasEntry];
+  uint2 charOffset   = uint2(atlasXOffset, Char * charSize.y);
 
   for (uint y = 0; y < charSize.y; y++)
   {
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset).rgba;
+      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset).rgba;
       tex2Dstore(StorageTextOverlay, DrawOffset * charSize + OUTER_SPACING + currentOffset, pixel);
     }
   }
@@ -1046,11 +1073,11 @@ void DrawChar(uint2 Char, float2 DrawOffset)
 
 void DrawSpace(float2 DrawOffset)
 {
-  static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+  uint charArrayEntry = (23 - TEXT_SIZE) * 2;
 
-  uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+  uint2 charSize = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
 
-  float4 emptyPixel = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0)).rgba;
+  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
 
   for (uint y = 0; y < charSize.y; y++)
   {
@@ -1106,7 +1133,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_m,     float2( 0, 0));
       DrawChar(_a,     float2( 1, 0));
       DrawChar(_x,     float2( 2, 0));
-      DrawChar(_n,     float2( 3, 0));
+      DrawChar(_N,     float2( 3, 0));
       DrawChar(_i,     float2( 4, 0));
       DrawChar(_t,     float2( 5, 0));
       DrawChar(_s,     float2( 6, 0));
@@ -1116,7 +1143,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_a,     float2( 0, 1));
       DrawChar(_v,     float2( 1, 1));
       DrawChar(_g,     float2( 2, 1));
-      DrawChar(_n,     float2( 3, 1));
+      DrawChar(_N,     float2( 3, 1));
       DrawChar(_i,     float2( 4, 1));
       DrawChar(_t,     float2( 5, 1));
       DrawChar(_s,     float2( 6, 1));
@@ -1126,7 +1153,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_m,     float2( 0, 2));
       DrawChar(_i,     float2( 1, 2));
       DrawChar(_n,     float2( 2, 2));
-      DrawChar(_n,     float2( 3, 2));
+      DrawChar(_N,     float2( 3, 2));
       DrawChar(_i,     float2( 4, 2));
       DrawChar(_t,     float2( 5, 2));
       DrawChar(_s,     float2( 6, 2));
@@ -1143,7 +1170,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_s,     float2( 3, cursorNitsYOffset));
       DrawChar(_o,     float2( 4, cursorNitsYOffset));
       DrawChar(_r,     float2( 5, cursorNitsYOffset));
-      DrawChar(_n,     float2( 6, cursorNitsYOffset));
+      DrawChar(_N,     float2( 6, cursorNitsYOffset));
       DrawChar(_i,     float2( 7, cursorNitsYOffset));
       DrawChar(_t,     float2( 8, cursorNitsYOffset));
       DrawChar(_s,     float2( 9, cursorNitsYOffset));
@@ -1249,7 +1276,7 @@ void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
 {
   if (CurNumber > 0)
   {
-    DrawChar(uint2(CurNumber % 10, 0), Offset);
+    DrawChar(CurNumber % 10, Offset);
   }
   else
   {
@@ -1314,7 +1341,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
         precise uint  curNumber   = _1st(maxNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(13, 0));
+        DrawChar(curNumber, float2(13, 0));
       }
       return;
     }
@@ -1324,7 +1351,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
         precise uint  curNumber   = d1st(maxNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(15, 0));
+        DrawChar(curNumber, float2(15, 0));
       }
       return;
     }
@@ -1334,7 +1361,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
         precise uint  curNumber   = d2nd(maxNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(16, 0));
+        DrawChar(curNumber, float2(16, 0));
       }
       return;
     }
@@ -1344,7 +1371,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
         precise uint  curNumber   = d3rd(maxNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(17, 0));
+        DrawChar(curNumber, float2(17, 0));
       }
       return;
     }
@@ -1395,7 +1422,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
         precise uint  curNumber   = _1st(avgNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(13, 1));
+        DrawChar(curNumber, float2(13, 1));
       }
       return;
     }
@@ -1405,7 +1432,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
         precise uint  curNumber   = d1st(avgNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(15, 1));
+        DrawChar(curNumber, float2(15, 1));
       }
       return;
     }
@@ -1415,7 +1442,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
         precise uint  curNumber   = d2nd(avgNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(16, 1));
+        DrawChar(curNumber, float2(16, 1));
       }
       return;
     }
@@ -1425,7 +1452,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
         precise uint  curNumber   = d2nd(avgNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(17, 1));
+        DrawChar(curNumber, float2(17, 1));
       }
       return;
     }
@@ -1476,7 +1503,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = _1st(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(13, 2));
+        DrawChar(curNumber, float2(13, 2));
       }
       return;
     }
@@ -1486,7 +1513,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d1st(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(15, 2));
+        DrawChar(curNumber, float2(15, 2));
       }
       return;
     }
@@ -1496,7 +1523,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d2nd(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(16, 2));
+        DrawChar(curNumber, float2(16, 2));
       }
       return;
     }
@@ -1506,7 +1533,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d3rd(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(17, 2));
+        DrawChar(curNumber, float2(17, 2));
       }
       return;
     }
@@ -1516,7 +1543,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d4th(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(18, 2));
+        DrawChar(curNumber, float2(18, 2));
       }
       return;
     }
@@ -1526,7 +1553,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d5th(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(19, 2));
+        DrawChar(curNumber, float2(19, 2));
       }
       return;
     }
@@ -1536,7 +1563,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
         precise uint  curNumber   = d6th(minNitsShow);
-        DrawChar(uint2(curNumber, 0), float2(20, 2));
+        DrawChar(curNumber, float2(20, 2));
       }
       return;
     }
@@ -1587,7 +1614,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = _1st(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(16, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(16, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1597,7 +1624,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = d1st(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(18, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(18, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1607,7 +1634,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = d2nd(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(19, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(19, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1617,7 +1644,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = d3rd(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(20, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(20, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1627,7 +1654,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber = d4th(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(21, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(21, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1637,7 +1664,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = d5th(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(22, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(22, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1647,7 +1674,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
         precise uint  curNumber  = d6th(cursorNits);
-        DrawChar(uint2(curNumber, 0), float2(23, 3 + cursorNitsYOffset));
+        DrawChar(curNumber, float2(23, 3 + cursorNitsYOffset));
       }
       return;
     }
@@ -1681,7 +1708,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = _1st(precentageBt709);
-        DrawChar(uint2(curNumber, 0), float2(11, 4 + cspsYOffset));
+        DrawChar(curNumber, float2(11, 4 + cspsYOffset));
       }
       return;
     }
@@ -1691,7 +1718,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = d1st(precentageBt709);
-        DrawChar(uint2(curNumber, 0), float2(13, 4 + cspsYOffset));
+        DrawChar(curNumber, float2(13, 4 + cspsYOffset));
       }
       return;
     }
@@ -1701,7 +1728,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
         precise uint  curNumber       = d2nd(precentageBt709);
-        DrawChar(uint2(curNumber, 0), float2(14, 4 + cspsYOffset));
+        DrawChar(curNumber, float2(14, 4 + cspsYOffset));
       }
       return;
     }
@@ -1732,7 +1759,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = _1st(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), float2(11, 5 + cspsYOffset));
+        DrawChar(curNumber, float2(11, 5 + cspsYOffset));
       }
       return;
     }
@@ -1742,7 +1769,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = d1st(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), float2(13, 5 + cspsYOffset));
+        DrawChar(curNumber, float2(13, 5 + cspsYOffset));
       }
       return;
     }
@@ -1752,7 +1779,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
         precise uint  curNumber       = d2nd(precentageDciP3);
-        DrawChar(uint2(curNumber, 0), float2(14, 5 + cspsYOffset));
+        DrawChar(curNumber, float2(14, 5 + cspsYOffset));
       }
       return;
     }
@@ -1783,7 +1810,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = _1st(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), float2(11, 6 + cspsYOffset));
+        DrawChar(curNumber, float2(11, 6 + cspsYOffset));
       }
       return;
     }
@@ -1793,7 +1820,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = d1st(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), float2(13, 6 + cspsYOffset));
+        DrawChar(curNumber, float2(13, 6 + cspsYOffset));
       }
       return;
     }
@@ -1803,7 +1830,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
         precise uint  curNumber        = d2nd(precentageBt2020);
-        DrawChar(uint2(curNumber, 0), float2(14, 6 + cspsYOffset));
+        DrawChar(curNumber, float2(14, 6 + cspsYOffset));
       }
       return;
     }
@@ -1835,7 +1862,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = _1st(precentageAp0);
-        DrawChar(uint2(curNumber, 0), float2(11, 7 + cspsYOffset));
+        DrawChar(curNumber, float2(11, 7 + cspsYOffset));
       }
       return;
     }
@@ -1845,7 +1872,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = d1st(precentageAp0);
-        DrawChar(uint2(curNumber, 0), float2(13, 7 + cspsYOffset));
+        DrawChar(curNumber, float2(13, 7 + cspsYOffset));
       }
       return;
     }
@@ -1855,7 +1882,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
         precise uint  curNumber     = d2nd(precentageAp0);
-        DrawChar(uint2(curNumber, 0), float2(14, 7 + cspsYOffset));
+        DrawChar(curNumber, float2(14, 7 + cspsYOffset));
       }
       return;
     }
@@ -1886,7 +1913,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = _1st(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), float2(11, 8 + cspsYOffset));
+        DrawChar(curNumber, float2(11, 8 + cspsYOffset));
       }
       return;
     }
@@ -1896,7 +1923,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = d1st(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), float2(13, 8 + cspsYOffset));
+        DrawChar(curNumber, float2(13, 8 + cspsYOffset));
       }
       return;
     }
@@ -1906,7 +1933,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
         precise uint  curNumber         = d2nd(precentageInvalid);
-        DrawChar(uint2(curNumber, 0), float2(14, 8 + cspsYOffset));
+        DrawChar(curNumber, float2(14, 8 + cspsYOffset));
       }
       return;
     }
@@ -2291,12 +2318,12 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-  #define BrightnessHistogramTextureDisplaySize TextureDisplaySizes0.xy
-  #define CieDiagramTextureActiveSize           TextureDisplaySizes0.zw
-  #define CieDiagramTextureDisplaySize          TextureDisplaySizes1.xy
-  #define CieDiagramConsolidatedActiveSize      TextureDisplaySizes1.zw
-  #define CieOutlinesSamplerOffset              TextureDisplaySizes2.xy
-  #define CurrentActiveOverlayArea              TextureDisplaySizes2.zw
+  #define LuminanceWaveformTextureDisplaySize TextureDisplaySizes0.xy
+  #define CieDiagramTextureActiveSize         TextureDisplaySizes0.zw
+  #define CieDiagramTextureDisplaySize        TextureDisplaySizes1.xy
+  #define CieDiagramConsolidatedActiveSize    TextureDisplaySizes1.zw
+  #define CieOutlinesSamplerOffset            TextureDisplaySizes2.xy
+  #define CurrentActiveOverlayArea            TextureDisplaySizes2.zw
 
   pingpong0Above1      = false;
   breathingIsActive    = false;
@@ -2352,13 +2379,9 @@ void VS_PrepareHdrAnalysis(
     }
   }
 
-  if (SHOW_BRIGHTNESS_HISTOGRAM)
+  if (SHOW_LUMINANCE_WAVEFORM)
   {
-    float brightnessHistogramSizeFrac = BRIGHTNESS_HISTOGRAM_SIZE / 100.f;
-
-    BrightnessHistogramTextureDisplaySize =
-      float2(TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_WIDTH ,TEXTURE_BRIGHTNESS_HISTOGRAM_SCALE_HEIGHT)
-    * brightnessHistogramSizeFrac;
+    LuminanceWaveformTextureDisplaySize = Waveform::GetActiveArea();
   }
 
 
@@ -2402,9 +2425,9 @@ void VS_PrepareHdrAnalysis(
                                          (SHOW_CSP_FROM_CURSOR ? 18.f
                                                                :  0.f));
 
-    static const uint charSizeArrayOffsetX = TEXT_SIZE * 2;
+    static const uint charArrayEntry = (23 - TEXT_SIZE) * 2;
 
-    float2 charSize = float2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+    float2 charSize = float2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
 
     float2 currentOverlayDimensions = charSize
                                     * float2(activeCharacters, activeLines);
@@ -2564,25 +2587,23 @@ void PS_HdrAnalysis(
     }
   }
 
-  if (SHOW_BRIGHTNESS_HISTOGRAM)
+  if (SHOW_LUMINANCE_WAVEFORM)
   {
+    float2 textureDisplayAreaBegin = ReShade::ScreenSize - LuminanceWaveformTextureDisplaySize;
 
-    float2 textureDisplayAreaBegin = float2(BUFFER_WIDTH  - BrightnessHistogramTextureDisplaySize.x,
-                                            BUFFER_HEIGHT - BrightnessHistogramTextureDisplaySize.y);
-
-    // draw the histogram in the bottom right corner
+    // draw the waveform in the bottom right corner
     if (all(pureCoord >= textureDisplayAreaBegin))
     {
       // get coords for the sampler
-      float2 currentSamplerCoords = float2(pureCoord - textureDisplayAreaBegin);
+      float2 currentSamplerCoords = pureCoord - textureDisplayAreaBegin;
 
       currentSamplerCoords += 0.5f;
-      currentSamplerCoords /= BrightnessHistogramTextureDisplaySize;
+      currentSamplerCoords /= float2(TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT);
 
       float3 currentPixelToDisplay =
-        tex2D(SamplerBrightnessHistogramFinal, currentSamplerCoords).rgb;
+        tex2D(SamplerLuminanceWaveformFinal, currentSamplerCoords).rgb;
 
-      Output.rgb = MapBt709IntoCurrentCsp(currentPixelToDisplay, BRIGHTNESS_HISTOGRAM_BRIGHTNESS);
+      Output.rgb = MapBt709IntoCurrentCsp(currentPixelToDisplay, LUMINANCE_WAVEFORM_BRIGHTNESS);
 
     }
   }
@@ -2703,15 +2724,16 @@ technique lilium__hdr_analysis_TESTY
   ui_label = "Lilium's TESTY";
 >
 {
-  pass TESTY
+  pass PS_Testy
   {
-    VertexShader = VS_PostProcess;
-     PixelShader = Testy;
+    VertexShader       = VS_Testy;
+     PixelShader       = PS_Testy;
+    ClearRenderTargets = true;
   }
 }
 #endif //_TESTY
 
-void CS_MakeOverlayBgRedraw(uint3 ID : SV_DispatchThreadID)
+void CS_MakeOverlayBgRedraw()
 {
   tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
   return;
@@ -2775,26 +2797,33 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
-  pass PS_ClearBrightnessHistogramTexture
+  pass CS_RenderLuminanceWaveformScale
+  {
+    ComputeShader = CS_RenderLuminanceWaveformScale <1, 1>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+
+  pass PS_ClearLuminanceWaveformTexture
   {
     VertexShader       = VS_PostProcess;
-     PixelShader       = PS_ClearBrightnessHistogramTexture;
-    RenderTarget       = TextureBrightnessHistogram;
+     PixelShader       = PS_ClearLuminanceWaveformTexture;
+    RenderTarget       = TextureLuminanceWaveform;
     ClearRenderTargets = true;
   }
 
-  pass CS_RenderBrightnessHistogram
+  pass CS_RenderLuminanceWaveform
   {
-    ComputeShader = CS_RenderBrightnessHistogram <THREAD_SIZE0, 1>;
+    ComputeShader = CS_RenderLuminanceWaveform <THREAD_SIZE0, 1>;
     DispatchSizeX = DISPATCH_X0;
     DispatchSizeY = 1;
   }
 
-  pass PS_RenderBrightnessHistogramToScale
+  pass PS_RenderLuminanceWaveformToScale
   {
-    VertexShader = VS_PrepareRenderBrightnessHistogramToScale;
-     PixelShader = PS_RenderBrightnessHistogramToScale;
-    RenderTarget = TextureBrightnessHistogramFinal;
+    VertexShader = VS_PrepareRenderLuminanceWaveformToScale;
+     PixelShader = PS_RenderLuminanceWaveformToScale;
+    RenderTarget = TextureLuminanceWaveformFinal;
   }
 
 

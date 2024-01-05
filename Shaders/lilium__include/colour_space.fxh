@@ -277,6 +277,12 @@ uniform int GLOBAL_INFO
 
 #define FP32_MAX asfloat(0x7F7FFFFF)
 
+#define MIN3(A, B, C) min(A, min(B, C))
+
+#define MAX3(A, B, C) max(A, max(B, C))
+
+#define MAXRGB(Rgb) max(Rgb.r, max(Rgb.g, Rgb.b))
+
 
 namespace Csp
 {
