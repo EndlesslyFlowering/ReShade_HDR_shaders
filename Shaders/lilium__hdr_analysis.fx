@@ -51,13 +51,23 @@ uniform float2 NIT_PINGPONG2
   smoothing = 0.f;
 >;
 
+#if (defined(GAMESCOPE) \
+  && BUFFER_HEIGHT <= 800)
+  static const uint TEXT_SIZE_DEFAULT = 0;
+#else
+  // 2160 height gives 42
+  //  800 height gives 16
+  //  720 height gives 14
+  static const uint TEXT_SIZE_DEFAULT = (uint((BUFFER_HEIGHT / 2160.f) * 42.f + 0.5f) - 12) / 2;
+#endif
+
 
 uniform uint TEXT_SIZE
 <
   ui_category = "Global";
   ui_label    = "text size";
   ui_type     = "combo";
-  ui_items    = "12\0"
+  ui_items    = "13\0"
                 "14\0"
                 "16\0"
                 "18\0"
@@ -81,7 +91,7 @@ uniform uint TEXT_SIZE
                 "54\0"
                 "56\0"
                 "58\0";
-> = 15;
+> = TEXT_SIZE_DEFAULT;
 
 uniform float TEXT_BRIGHTNESS
 <
@@ -479,6 +489,10 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
 
+static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (float(BUFFER_HEIGHT) * 0.35f)
+                                                       / TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT
+                                                       * 100.f;
+
 uniform float2 LUMINANCE_WAVEFORM_SIZE
 <
   ui_category = "Luminance waveform";
@@ -488,7 +502,7 @@ uniform float2 LUMINANCE_WAVEFORM_SIZE
   ui_min      = 50.f;
   ui_max      = 100.f;
   ui_step     = 0.1f;
-> = float2(70.f, 70.f);
+> = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
 #ifndef GAMESCOPE
 uniform int LUMINANCE_WAVEFORM_SPACER_0
