@@ -18,6 +18,11 @@
 #endif
 
 
+#if defined(IS_POSSIBLE_HDR_CSP)
+  #define DEFAULT_ALPHA_LEVEL 80.f
+#else
+  #define DEFAULT_ALPHA_LEVEL 50.f
+#endif
 
 uniform int2 MOUSE_POSITION
 <
@@ -107,6 +112,17 @@ uniform float TEXT_BRIGHTNESS
 #else
 > = 140.f;
 #endif
+
+uniform float TEXT_BG_ALPHA
+<
+  ui_category = "Global";
+  ui_label    = "text background transparency";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.5f;
+> = DEFAULT_ALPHA_LEVEL;
 
 #define TEXT_POSITION_TOP_LEFT  0
 #define TEXT_POSITION_TOP_RIGHT 1
@@ -283,6 +299,17 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
 #else
 > = 80.f;
 #endif
+
+uniform float CIE_DIAGRAM_ALPHA
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "CIE diagram transparency";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.5f;
+> = DEFAULT_ALPHA_LEVEL;
 
 #ifdef IS_QHD_OR_HIGHER_RES
   #define CIE_TEXTURE_FILE_NAME   "lilium__cie_1000x1000_consolidated.png"
@@ -472,6 +499,17 @@ uniform float LUMINANCE_WAVEFORM_BRIGHTNESS
 #else
 > = 80.f;
 #endif
+
+uniform float LUMINANCE_WAVEFORM_ALPHA
+<
+  ui_category = "Luminance waveform";
+  ui_label    = "luminance waveform transparency";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.5f;
+> = DEFAULT_ALPHA_LEVEL;
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 4.f) * 2;
 
@@ -2486,6 +2524,60 @@ void VS_PrepareHdrAnalysis(
 }
 
 
+void ExtendedReinhardTmo(
+  inout float3 Colour,
+  in    float  WhitePoint)
+{
+  float maxWhite = 10000.f / WhitePoint;
+
+  Colour =  (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
+         / (1.f + Colour);
+}
+
+void MergeOverlay(
+  inout float3 Output,
+  in    float3 Overlay,
+  in    float  OverlayBrightness,
+  in    float  Alpha)
+{
+  Overlay = Csp::Mat::Bt709To::Bt2020(Overlay);
+
+  // tone map pixels below the overlay area
+  //
+  // first set 1.0 to be equal to OverlayBrightness
+  float adjustFactor;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  adjustFactor = OverlayBrightness / 80.f;
+
+  Output.rgb = Csp::Mat::Bt709To::Bt2020(Output.rgb / adjustFactor);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  adjustFactor = OverlayBrightness / 10000.f;
+
+  Output =  Csp::Trc::PqTo::Linear(Output);
+  Output /= adjustFactor;
+
+#endif
+
+  // then tone map to 1.0 at max
+  ExtendedReinhardTmo(Output, OverlayBrightness);
+
+  // apply the overlay
+  Output = lerp(Output, Overlay, Alpha);
+
+  // map everything back to the used colour space
+  Output *= adjustFactor;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  Output = Csp::Mat::Bt2020To::Bt709(Output);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Output = Csp::Trc::LinearTo::Pq(Output);
+#endif
+}
+
+
 void PS_HdrAnalysis(
   in                  float4 VPos                 : SV_Position,
   in                  float2 TexCoord             : TEXCOORD,
@@ -2623,9 +2715,14 @@ void PS_HdrAnalysis(
 
       cspOutlineOverlay = min(cspOutlineOverlay, 1.25f);
 
-      currentPixelToDisplay = MapBt709IntoCurrentCsp(currentPixelToDisplay + cspOutlineOverlay, CIE_DIAGRAM_BRIGHTNESS);
+      currentPixelToDisplay = currentPixelToDisplay + cspOutlineOverlay;
 
-      Output.rgb = currentPixelToDisplay;
+      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+
+      MergeOverlay(Output.rgb,
+                   currentPixelToDisplay,
+                   CIE_DIAGRAM_BRIGHTNESS,
+                   alpha);
 
     }
   }
@@ -2646,7 +2743,12 @@ void PS_HdrAnalysis(
       float3 currentPixelToDisplay =
         tex2D(SamplerLuminanceWaveformFinal, currentSamplerCoords).rgb;
 
-      Output.rgb = MapBt709IntoCurrentCsp(currentPixelToDisplay, LUMINANCE_WAVEFORM_BRIGHTNESS);
+      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + LUMINANCE_WAVEFORM_ALPHA / 100.f, 1.f);
+
+      MergeOverlay(Output.rgb,
+                   currentPixelToDisplay,
+                   LUMINANCE_WAVEFORM_BRIGHTNESS,
+                   alpha);
 
     }
   }
@@ -2656,14 +2758,22 @@ void PS_HdrAnalysis(
    || SHOW_CSPS
    || SHOW_CSP_FROM_CURSOR)
   {
-    float4 overlay;
     if (TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
     {
       if (all(TexCoord <= CurrentActiveOverlayArea))
       {
-        overlay = tex2D(SamplerTextOverlay, (TexCoord
-                                          * ReShade::ScreenSize
-                                          / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT))).rgba;
+        float4 overlay = tex2D(SamplerTextOverlay, (TexCoord
+                                                  * ReShade::ScreenSize
+                                                  / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT))).rgba;
+
+        overlay.rgb = Csp::Mat::Bt709To::Bt2020(overlay.rgb);
+
+        float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
+
+        MergeOverlay(Output.rgb,
+                     overlay.rgb,
+                     TEXT_BRIGHTNESS,
+                     alpha);
       }
     }
     else
@@ -2671,23 +2781,20 @@ void PS_HdrAnalysis(
       if (TexCoord.x >= CurrentActiveOverlayArea.x
        && TexCoord.y <= CurrentActiveOverlayArea.y)
       {
-        overlay = tex2D(SamplerTextOverlay, float2(TexCoord.x - CurrentActiveOverlayArea.x, TexCoord.y)
-                                          * ReShade::ScreenSize
-                                          / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT)).rgba;
+        float4 overlay = tex2D(SamplerTextOverlay, float2(TexCoord.x - CurrentActiveOverlayArea.x, TexCoord.y)
+                                                 * ReShade::ScreenSize
+                                                 / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT)).rgba;
+
+        overlay = float4(MapBt709IntoCurrentCsp(overlay.rgb, TEXT_BRIGHTNESS), overlay.a);
+
+        float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
+
+        MergeOverlay(Output.rgb,
+                     overlay.rgb,
+                     TEXT_BRIGHTNESS,
+                     alpha);
       }
     }
-
-    overlay = pow(overlay, 2.2f);
-
-    overlay = float4(MapBt709IntoCurrentCsp(overlay.rgb, TEXT_BRIGHTNESS),
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-                     pow(overlay.a, 1.f / 2.6f)
-#else
-                     overlay.a
-#endif
-                    );
-
-    Output.rgb = lerp(Output.rgb, overlay.rgb, overlay.a);
   }
 
 }
