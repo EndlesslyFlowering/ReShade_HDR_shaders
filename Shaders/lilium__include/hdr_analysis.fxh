@@ -1141,6 +1141,7 @@ void PS_ClearLuminanceWaveformTexture(
   in  float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_TARGET)
 {
+  Out = 0.f;
   discard;
 }
 
@@ -1240,6 +1241,8 @@ void PS_RenderLuminanceWaveformToScale(
   in  nointerpolation int3   WaveDat1 : WaveDat1,
   out                 float4 Out      : SV_TARGET0)
 {
+  Out = 0.f;
+
   if (SHOW_LUMINANCE_WAVEFORM)
   {
     int2 waveformCoords = int2(VPos.xy) - OffsetToWaveformArea;
@@ -1290,6 +1293,8 @@ void PS_CalcNitsPerPixel(
               float2 TexCoord : TEXCOORD,
   out precise float  CurNits   : SV_TARGET)
 {
+  CurNits = 0.f;
+
 #if defined(HDR_ANALYSIS_ENABLE)
   if (SHOW_NITS_VALUES
    || SHOW_NITS_FROM_CURSOR
@@ -1326,9 +1331,10 @@ void PS_CalcNitsPerPixel(
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-    CurNits = curPixelNits >= 0.f ? curPixelNits
-                                  : 0.f;
-
+    if (curPixelNits >= 0.f)
+    {
+      CurNits = curPixelNits;
+    }
     return;
 
 #if defined(HDR_ANALYSIS_ENABLE)
@@ -2148,8 +2154,10 @@ float GetCsp(precise float3 Rgb)
 void PS_CalcCsps(
               float4 VPos     : SV_Position,
               float2 TexCoord : TEXCOORD,
-  out precise float  curCsp   : SV_TARGET)
+  out precise float  CurCsp   : SV_TARGET)
 {
+  CurCsp = 0.f;
+
   if (SHOW_CSPS
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
@@ -2165,17 +2173,17 @@ void PS_CalcCsps(
      && absPixel.g > SMALLEST_FP16
      && absPixel.b > SMALLEST_FP16)
     {
-      curCsp = GetCsp(pixel);
+      CurCsp = GetCsp(pixel);
     }
     else
     {
-      curCsp = IS_CSP_BT709 / 255.f;
+      CurCsp = IS_CSP_BT709 / 255.f;
     }
     return;
 
 #else
 
-    curCsp = GetCsp(pixel);
+    CurCsp = GetCsp(pixel);
 
     return;
 
@@ -2194,11 +2202,11 @@ void PS_CalcCsps(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
       precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
-      curCsp = GetCsp(curPixel);
+      CurCsp = GetCsp(curPixel);
     }
     else
     {
-      curCsp = IS_CSP_BT709 / 255.f;
+      CurCsp = IS_CSP_BT709 / 255.f;
     }
     return;
 
@@ -2209,7 +2217,7 @@ void PS_CalcCsps(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
     precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
-    curCsp = GetCsp(curPixel);
+    CurCsp = GetCsp(curPixel);
 
     return;
 
@@ -2217,7 +2225,7 @@ void PS_CalcCsps(
 
 #else
 
-    curCsp = IS_CSP_INVALID / 255.f;
+    CurCsp = IS_CSP_INVALID / 255.f;
 
     return;
 

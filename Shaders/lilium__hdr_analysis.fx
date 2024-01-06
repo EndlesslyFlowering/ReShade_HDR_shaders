@@ -848,6 +848,8 @@ void Testy(
   in          float2 TexCoord : TEXCOORD,
   out precise float4 Output   : SV_Target0)
 {
+  Output = 0.f;
+
   if(ENABLE_TEST_THINGY == true)
   {
     float xxx = BUFFER_WIDTH  / 2.f - 100.f;
@@ -2321,6 +2323,8 @@ void PS_SetActiveArea(
   in  nointerpolation float4 PercentagesToCrop : PercentagesToCrop,
   out                 float4 Output            : SV_Target0)
 {
+  Output = 0.f;
+
   if (ACTIVE_AREA_ENABLE)
   {
     float2 pureCoord = TexCoord * ReShade::ScreenSize;
@@ -2337,10 +2341,8 @@ void PS_SetActiveArea(
       Output = float4(0.f, 0.f, 0.f, 1.f);
     }
   }
-  else
-  {
-    discard;
-  }
+
+  discard;
 }
 
 
