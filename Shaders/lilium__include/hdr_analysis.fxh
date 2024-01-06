@@ -2046,7 +2046,12 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
         // clamp to to borders
         xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
 
-        const float4 xyColour = tex2Dfetch(StorageCieConsolidated, xy);
+        // leave this as sampler and not storage
+        // otherwise d3d about the resource still being bound in input
+        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+        const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
 
         tex2Dstore(StorageCieCurrent,
                    xy,
@@ -2070,7 +2075,12 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
         const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
 
-        const float4 uvColour = tex2Dfetch(StorageCieConsolidated, uvFetchPos);
+        // leave this as sampler and not storage
+        // otherwise d3d about the resource still being bound in input
+        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+        const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
 
         tex2Dstore(StorageCieCurrent,
                    uv,
