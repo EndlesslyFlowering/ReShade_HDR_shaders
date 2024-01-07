@@ -38,7 +38,7 @@ float Rand(inout float State)
 #define b1 asfloat(0xBF42BF5D) // -0.7607324991323768
 
 void PS_Filmgrain(
-  in  float4 Vpos     : SV_Position,
+  in  float4 VPos     : SV_Position,
   in  float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {

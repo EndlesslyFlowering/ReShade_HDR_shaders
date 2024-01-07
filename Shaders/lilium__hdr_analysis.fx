@@ -780,72 +780,11 @@ precise uniform float TEST_THINGY_Y
   ui_max      = 125.f;
   ui_step     = 0.001f;
 > = 0.f;
-#endif //_TESTY
 
 
-//void draw_maxCLL(float4 position : POSITION, float2 txcoord : TEXCOORD) : COLOR
-//void draw_maxCLL(float4 VPos : SV_Position, float2 TexCoord : TEXCOORD, out float4 fragment : SV_Target0)
-//{
-//  uint int_maxCLL = int(round(maxCLL));
-//  uint digit1;
-//  uint digit2;
-//  uint digit3;
-//  uint digit4;
-//  uint digit5;
-//
-//  if (maxCLL < 10)
-//  {
-//    digit1 = 0;
-//    digit2 = 0;
-//    digit3 = 0;
-//    digit4 = 0;
-//    digit5 = int_maxCLL;
-//  }
-//  else if (maxCLL < 100)
-//  {
-//    digit1 = 0;
-//    digit2 = 0;
-//    digit3 = 0;
-//    digit4 = int_maxCLL / 10;
-//    digit5 = int_maxCLL % 10;
-//  }
-//  else if (maxCLL < 1000)
-//  {
-//    digit1 = 0;
-//    digit2 = 0;
-//    digit3 = int_maxCLL / 100;
-//    digit4 = (int_maxCLL % 100) / 10;
-//    digit5 = (int_maxCLL % 10);
-//  }
-//  else if (maxCLL < 10000)
-//  {
-//    digit1 = 0;
-//    digit2 = int_maxCLL / 1000;
-//    digit3 = (int_maxCLL % 1000) / 100;
-//    digit4 = (int_maxCLL % 100) / 10;
-//    digit5 = (int_maxCLL % 10);
-//  }
-//  else
-//  {
-//    digit1 = int_maxCLL / 10000;
-//    digit2 = (int_maxCLL % 10000) / 1000;
-//    digit3 = (int_maxCLL % 1000) / 100;
-//    digit4 = (int_maxCLL % 100) / 10;
-//    digit5 = (int_maxCLL % 10);
-//  }
-
-  //res += tex2D(samplerText, (frac(uv) + float2(index % 14.0, trunc(index / 14.0))) /
-  //            float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
-
-//  float4 hud = tex2D(samplerNumbers, TexCoord);
-//  fragment = lerp(tex2Dfetch(ReShade::BackBuffer, TexCoord), hud, 1.f);
-//
-//}
-
-#ifdef _TESTY
 void Testy(
   in          float4 VPos     : SV_Position,
-  in          float2 TexCoord : TEXCOORD,
+  in          float2 TexCoord : TEXCOORD0,
   out precise float4 Output   : SV_Target0)
 {
   Output = 0.f;
@@ -2319,7 +2258,7 @@ void VS_PrepareSetActiveArea(
 
 void PS_SetActiveArea(
   in                  float4 VPos              : SV_Position,
-  in                  float2 TexCoord          : TEXCOORD,
+  in                  float2 TexCoord          : TEXCOORD0,
   in  nointerpolation float4 PercentagesToCrop : PercentagesToCrop,
   out                 float4 Output            : SV_Target0)
 {
@@ -2582,7 +2521,7 @@ void MergeOverlay(
 
 void PS_HdrAnalysis(
   in                  float4 VPos                 : SV_Position,
-  in                  float2 TexCoord             : TEXCOORD,
+  in                  float2 TexCoord             : TEXCOORD0,
   in  nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange    : HighlightNitRange,
 #ifndef GAMESCOPE

@@ -1139,7 +1139,7 @@ void CS_RenderLuminanceWaveformScale()
 void PS_ClearLuminanceWaveformTexture(
   in  float4 VPos     : SV_Position,
   in  float2 TexCoord : TEXCOORD0,
-  out float4 Out      : SV_TARGET)
+  out float4 Out      : SV_Target0)
 {
   Out = 0.f;
   discard;
@@ -1239,7 +1239,7 @@ void PS_RenderLuminanceWaveformToScale(
   in                  float2 TexCoord : TEXCOORD0,
   in  nointerpolation int4   WaveDat0 : WaveDat0,
   in  nointerpolation int3   WaveDat1 : WaveDat1,
-  out                 float4 Out      : SV_TARGET0)
+  out                 float4 Out      : SV_Target0)
 {
   Out = 0.f;
 
@@ -1290,8 +1290,8 @@ void PS_RenderLuminanceWaveformToScale(
 
 void PS_CalcNitsPerPixel(
               float4 VPos     : SV_Position,
-              float2 TexCoord : TEXCOORD,
-  out precise float  CurNits   : SV_TARGET)
+              float2 TexCoord : TEXCOORD0,
+  out precise float  CurNits  : SV_Target0)
 {
   CurNits = 0.f;
 
@@ -2043,11 +2043,11 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
         // adjust for the added borders
         xy += CIE_BG_BORDER;
 
-        // clamp to to borders
+        // clamp to borders
         xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
 
         // leave this as sampler and not storage
-        // otherwise d3d about the resource still being bound in input
+        // otherwise d3d complains about the resource still being bound on input
         // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
         // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
         // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
@@ -2070,13 +2070,13 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
         // adjust for the added borders
         uv += CIE_BG_BORDER;
 
-        // clamp to to borders
+        // clamp to borders
         uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
 
         const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
 
         // leave this as sampler and not storage
-        // otherwise d3d about the resource still being bound in input
+        // otherwise d3d complains about the resource still being bound on input
         // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
         // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
         // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
@@ -2163,8 +2163,8 @@ float GetCsp(precise float3 Rgb)
 
 void PS_CalcCsps(
               float4 VPos     : SV_Position,
-              float2 TexCoord : TEXCOORD,
-  out precise float  CurCsp   : SV_TARGET)
+              float2 TexCoord : TEXCOORD0,
+  out precise float  CurCsp   : SV_Target0)
 {
   CurCsp = 0.f;
 
