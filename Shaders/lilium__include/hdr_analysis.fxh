@@ -1245,7 +1245,9 @@ void PS_RenderLuminanceWaveformToScale(
 
   if (SHOW_LUMINANCE_WAVEFORM)
   {
-    int2 waveformCoords = int2(VPos.xy) - OffsetToWaveformArea;
+    const int2 pureCoordAsInt = int2(VPos.xy);
+
+    int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
 
     if (all(waveformCoords >= 0)
      && all(waveformCoords < WaveformActiveArea))
@@ -1280,7 +1282,7 @@ void PS_RenderLuminanceWaveformToScale(
       return;
     }
     //else
-    Out = tex2D(SamplerLuminanceWaveformScale, TexCoord);
+    Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
     return;
   }
   discard;
@@ -1307,7 +1309,7 @@ void PS_CalcNitsPerPixel(
   {
 #endif //HDR_ANALYSIS_ENABLE
 
-    precise const float3 pixel = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy)).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
@@ -2172,7 +2174,7 @@ void PS_CalcCsps(
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
   {
-    precise const float3 pixel = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy)).rgb;
 
 #if defined(IS_FLOAT_HDR_CSP)
 

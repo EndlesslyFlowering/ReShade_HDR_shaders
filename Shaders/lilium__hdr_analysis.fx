@@ -2266,7 +2266,7 @@ void PS_SetActiveArea(
 
   if (ACTIVE_AREA_ENABLE)
   {
-    float2 pureCoord = TexCoord * ReShade::ScreenSize;
+    const float2 pureCoord = VPos.xy - 0.5f;
 
     if (pureCoord.x > percentageToCropFromLeft
      && pureCoord.y > percentageToCropFromTop
@@ -2538,9 +2538,11 @@ void PS_HdrAnalysis(
 #endif
   out                 float4 Output               : SV_Target0)
 {
-  Output = float4(tex2D(ReShade::BackBuffer, TexCoord).rgb, 1.f);
-
   const float2 pureCoord = VPos.xy - 0.5f;
+
+  const int2 pureCoordAsInt = int2(VPos.xy);
+
+  Output = tex2D(ReShade::BackBuffer, TexCoord);
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -2548,11 +2550,11 @@ void PS_HdrAnalysis(
    || DRAW_ABOVE_NITS_AS_BLACK
    || DRAW_BELOW_NITS_AS_BLACK)
   {
-    const float pixelNits = tex2D(SamplerNitsValues, TexCoord).r;
+    const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt).r;
 
     if (SHOW_CSP_MAP)
     {
-      Output.rgb = CreateCspMap(tex2D(SamplerCsps, TexCoord).r * 255.f, pixelNits);
+      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt).x * 255.f, pixelNits);
     }
 
     if (SHOW_HEATMAP)
