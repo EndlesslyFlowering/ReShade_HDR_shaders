@@ -1959,12 +1959,12 @@ void PS_CopyCieBg(
   in  float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_Target0)
 {
-  float2 samplerPos = float2(VPos.x + CIE_BG_WIDTH[CIE_DIAGRAM_TYPE] * float(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
-                             VPos.y + float(CIE_1931_BG_HEIGHT)      * float(CIE_DIAGRAM_TYPE));
+  int2 vPosAsInt2 = int2(VPos.xy);
 
-  samplerPos /= CIE_CONSOLIDATED_TEXTURE_SIZE;
+  int2 fetchPos = int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
+                       vPosAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(CIE_DIAGRAM_TYPE));
 
-  Out = tex2D(SamplerCieConsolidated, samplerPos);
+  Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
   return;
 }
 

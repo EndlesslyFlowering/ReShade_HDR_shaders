@@ -355,6 +355,9 @@ static const int2 CIE_1976_SIZE = int2(CIE_1976_WIDTH, CIE_1976_HEIGHT);
 static const float CIE_BG_WIDTH[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
 static const float CIE_BG_HEIGHT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
 
+static const int CIE_BG_WIDTH_AS_INT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
+static const int CIE_BG_HEIGHT_AS_INT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+
 static const float CIE_DIAGRAM_DEFAULT_SIZE = (float(BUFFER_HEIGHT) * 0.375f)
                                               / CIE_1931_BG_HEIGHT
                                               * 100.f;
