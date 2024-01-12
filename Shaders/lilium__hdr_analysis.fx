@@ -2278,6 +2278,7 @@ void PS_SetActiveArea(
     else
     {
       Output = float4(0.f, 0.f, 0.f, 1.f);
+      return;
     }
   }
 
