@@ -211,8 +211,7 @@ uniform int ACTIVE_AREA_SPACER_0
 uniform bool SHOW_NITS_VALUES
 <
   ui_category = "Luminance analysis";
-  ui_label    = "show luminance values";
-  ui_tooltip  = "Shows max/avg/min Luminance Levels.";
+  ui_label    = "show max/avg/min luminance values";
 > = true;
 
 uniform bool SHOW_NITS_FROM_CURSOR
@@ -893,7 +892,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
    || fontSizeLast       != fontSize)
   {
     //store all current UI values
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW,  1);
+    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW,  1.f);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, showNitsValues);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, showNitsFromCrusor);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2, showCsps);
@@ -1089,7 +1088,7 @@ void DrawSpace(float2 DrawOffset)
 void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 {
 
-  if (tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW))
+  if (tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW) != 0.f)
   {
 
     static const float cursorNitsYOffset = 3.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS);
@@ -1245,7 +1244,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_colon, float2(9, cursorCspYOffset));
     }
 
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0);
+    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0.f);
   }
   return;
 }
@@ -2844,9 +2843,10 @@ technique lilium__hdr_analysis_TESTY
 }
 #endif //_TESTY
 
-void CS_MakeOverlayBgRedraw()
+void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
   tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
+  tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
   return;
 }
 
@@ -2857,9 +2857,9 @@ technique lilium__make_overlay_bg_redraw
   timeout = 1;
 >
 {
-  pass CS_MakeOverlayBgRedraw
+  pass CS_MakeOverlayBgAndWaveformScaleRedraw
   {
-    ComputeShader = CS_MakeOverlayBgRedraw <1, 1>;
+    ComputeShader = CS_MakeOverlayBgAndWaveformScaleRedraw <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
