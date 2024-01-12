@@ -2475,7 +2475,7 @@ void ExtendedReinhardTmo(
 {
   float maxWhite = 10000.f / WhitePoint;
 
-  Colour =  (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
+  Colour = (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
          / (1.f + Colour);
 }
 
@@ -2498,6 +2498,9 @@ void MergeOverlay(
 
   Output.rgb = Csp::Mat::Bt709To::Bt2020(Output.rgb / adjustFactor);
 
+  // safety clamp colours outside of BT.2020
+  Output.rgb = max(Output.rgb, 0.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   adjustFactor = OverlayBrightness / 10000.f;
@@ -2510,14 +2513,25 @@ void MergeOverlay(
   // then tone map to 1.0 at max
   ExtendedReinhardTmo(Output, OverlayBrightness);
 
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  // safety clamp for the case that there are values that represent above 10000 nits
+  Output.rgb = min(Output.rgb, 1.f);
+
+#endif
+
   // apply the overlay
   Output = lerp(Output, Overlay, Alpha);
 
   // map everything back to the used colour space
   Output *= adjustFactor;
+
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
   Output = Csp::Mat::Bt2020To::Bt709(Output);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
   Output = Csp::Trc::LinearTo::Pq(Output);
 #endif
 }
