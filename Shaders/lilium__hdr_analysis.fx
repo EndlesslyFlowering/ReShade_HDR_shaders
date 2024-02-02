@@ -33,7 +33,7 @@ uniform float2 NIT_PINGPONG0
 <
   source    = "pingpong";
   min       = 0.f;
-  max       = 1.75f;
+  max       = 2.f;
   step      = 1.f;
   smoothing = 0.f;
 >;
@@ -2264,7 +2264,7 @@ void VS_PrepareHdrAnalysis(
 
   if (HIGHLIGHT_NIT_RANGE)
   {
-    float pingpong0 = NIT_PINGPONG0.x + 0.25f;
+    float pingpong0 = NIT_PINGPONG0.x + 0.5f;
 
     pingpong0Above1 = pingpong0 >= 1.f;
 
@@ -2313,7 +2313,6 @@ void VS_PrepareHdrAnalysis(
   {
     LuminanceWaveformTextureDisplayAreaBegin = int2(BUFFER_WIDTH, BUFFER_HEIGHT) - Waveform::GetActiveArea();
   }
-
 
   if (SHOW_CIE)
   {
