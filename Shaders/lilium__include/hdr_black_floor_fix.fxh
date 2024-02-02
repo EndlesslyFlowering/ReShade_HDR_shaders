@@ -4,7 +4,7 @@
 
 
 #if (defined(IS_HDR_COMPATIBLE_API) \
-  && defined(IS_POSSIBLE_HDR_CSP))
+  && defined(IS_HDR_CSP))
 
 
 // TODO:

@@ -2,7 +2,7 @@
 
 
 #if (defined(IS_HDR_COMPATIBLE_API) \
-  && defined(IS_POSSIBLE_HDR_CSP))
+  && defined(IS_HDR_CSP))
 
 
 //#include "lilium__include/draw_text_fix.fxh"

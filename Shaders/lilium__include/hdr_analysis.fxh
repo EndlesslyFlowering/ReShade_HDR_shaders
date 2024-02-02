@@ -4,7 +4,7 @@
 
 
 #if (defined(IS_HDR_COMPATIBLE_API) \
-  && defined(IS_POSSIBLE_HDR_CSP))
+  && defined(IS_HDR_CSP))
 
 //max is 32
 //#ifndef THREAD_SIZE0

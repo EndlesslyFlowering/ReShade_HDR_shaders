@@ -49,7 +49,7 @@ void PS_Cas(
 
 technique lilium__cas_hdr_ps
 <
-#if defined(IS_POSSIBLE_HDR_CSP)
+#if defined(IS_HDR_CSP)
   ui_label = "Lilium's HDR Contrast Adaptive Sharpening (AMD FidelityFX CAS)";
 #else
   ui_label = "Lilium's Contrast Adaptive Sharpening (AMD FidelityFX CAS)";

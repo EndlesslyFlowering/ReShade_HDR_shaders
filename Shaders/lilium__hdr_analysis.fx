@@ -2,7 +2,7 @@
 
 
 #if (defined(IS_HDR_COMPATIBLE_API) \
-  && defined(IS_POSSIBLE_HDR_CSP))
+  && defined(IS_HDR_CSP))
 
 
 #undef TEXT_BRIGHTNESS
@@ -18,7 +18,7 @@
 #endif
 
 
-#if defined(IS_POSSIBLE_HDR_CSP)
+#if defined(IS_HDR_CSP)
   #define DEFAULT_ALPHA_LEVEL 80.f
 #else
   #define DEFAULT_ALPHA_LEVEL 50.f
