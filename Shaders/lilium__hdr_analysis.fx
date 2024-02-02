@@ -492,7 +492,7 @@ uniform bool LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
 uniform bool LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
 <
   ui_category = "Luminance waveform";
-  ui_label    = "show max nits line";
+  ui_label    = "show the maximum nits line";
   ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
            "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
 > = true;
