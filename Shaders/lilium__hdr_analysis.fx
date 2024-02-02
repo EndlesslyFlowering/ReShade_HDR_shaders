@@ -576,11 +576,6 @@ uniform float BELOW_NITS_AS_BLACK
 > = 0.f;
 
 
-#define HDR_ANALYSIS_ENABLE
-
-#include "lilium__include/hdr_analysis.fxh"
-
-
 #ifdef _TESTY
 uniform bool ENABLE_TEST_THINGY
 <
@@ -744,6 +739,14 @@ void Testy(
 
 #endif //IS_HDR10_LIKE_CSP
 
+#define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
+
+
+
+#define HDR_ANALYSIS_ENABLE
+
+#include "lilium__include/hdr_analysis.fxh"
+
 
 // outer spacing is half the size of a character rounded up
 uint GetOuterSpacing(const uint CharXDimension)
@@ -761,7 +764,7 @@ uint GetActiveLines()
                                 : 0)
        + (SHOW_CSPS ? SHOW_CSPS_LINE_COUNT
                     : 0)
-       + (SHOW_CSP_FROM_CURSOR ? 1
+       + (SHOW_CSP_FROM_CURSOR ? SHOW_CSP_FROM_CURSOR_LINE_COUNT
                                : 0);
 }
 
