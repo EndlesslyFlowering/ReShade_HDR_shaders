@@ -31,18 +31,18 @@ float Rand(inout float State)
   return frac(State * 1.f / 41.f);
 }
 
-#define a0 asfloat(0x3E1AA3CF) //  0.151015505647689
-#define a1 asfloat(0xBF07C57E) // -0.5303572634357367
-#define a2 asfloat(0x3FAEB8FB) //  1.365020122861334
-#define b0 asfloat(0x3E074281) //  0.132089632343748
-#define b1 asfloat(0xBF42BF5D) // -0.7607324991323768
+static const float a0 =  0.151015505647689f;
+static const float a1 = -0.5303572634357367f;
+static const float a2 =  1.365020122861334f;
+static const float b0 =  0.132089632343748f;
+static const float b1 = -0.7607324991323768f;
 
 void PS_Filmgrain(
   in  float4 VPos     : SV_Position,
   in  float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {
-  float3 input = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  float4 input = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
 
   float3 m     = float3(TexCoord, RANDOM / 100000.f) + 1.f;
   float  state = Permute(Permute(m.x) + m.y) + m.z;
@@ -52,23 +52,23 @@ void PS_Filmgrain(
   float r = q * q;
 
   float Grain = q * (a2 + (a1 * r + a0) / (r*r + b1*r + b0));
-  Grain *= asfloat(0x3E829F54); // 0.255121822830526; normalize to (-1, 1)
+  Grain *= 0.255121822830526f; // normalize to (-1, 1)
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::LinearTo::Pq(Csp::Mat::Bt709To::Bt2020(input / 125.f)));
+  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::LinearTo::Pq(Csp::Mat::Bt709To::Bt2020(input.rgb / 125.f)));
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(input);
+  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(input.rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::LinearTo::Pq(input / 100.f));
+  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::LinearTo::Pq(input.rgb / 100.f));
 
 #else //ACTUAL_COLOUR_SPACE == CSP_SRGB
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt709(input);
+  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt709(input.rgb);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
@@ -100,12 +100,12 @@ void PS_Filmgrain(
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-  Output = float4(rgb, 1.f);
+  Output = float4(rgb, input.a);
 }
 
 technique lilium__filmgrain
 <
-  ui_label = "Lilium's filmgrain";
+  ui_label = "Lilium's luma filmgrain";
 >
 {
   pass PS_Filmgrain
