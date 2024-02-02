@@ -2303,14 +2303,10 @@ void VS_PrepareHdrAnalysis(
     CieDiagramTextureActiveSize =
       round(float2(CIE_BG_WIDTH[CIE_DIAGRAM_TYPE], CIE_BG_HEIGHT[CIE_DIAGRAM_TYPE]) * cieDiagramSizeFrac);
 
+    CieDiagramTextureActiveSize.y = float(BUFFER_HEIGHT) - CieDiagramTextureActiveSize.y;
+
     CieDiagramTextureDisplaySize =
       float2(CIE_1931_BG_WIDTH, CIE_1931_BG_HEIGHT) * cieDiagramSizeFrac;
-
-    CieDiagramConsolidatedActiveSize = CIE_CONSOLIDATED_TEXTURE_SIZE * cieDiagramSizeFrac;
-
-    CieOutlinesSamplerOffset =
-      float2(CIE_BG_WIDTH[CIE_DIAGRAM_TYPE],
-             float(CIE_1931_BG_HEIGHT) * float(CIE_DIAGRAM_TYPE)) * cieDiagramSizeFrac;
   }
 
   if (SHOW_NITS_VALUES
@@ -2507,70 +2503,17 @@ void PS_HdrAnalysis(
 
   if (SHOW_CIE)
   {
-    float textureDisplayAreaYBegin = BUFFER_HEIGHT - CieDiagramTextureActiveSize.y;
-
     // draw the diagram in the bottom left corner
-    if (pureCoord.x <  CieDiagramTextureActiveSize.x
-     && pureCoord.y >= textureDisplayAreaYBegin)
+    if (VPos.x <  CieDiagramTextureActiveSize.x
+     && VPos.y >= CieDiagramTextureActiveSize.y)
     {
       // get coords for the sampler
-      float2 currentSamplerCoords = float2(pureCoord.x,
-                                           pureCoord.y - textureDisplayAreaYBegin);
-
-      currentSamplerCoords += 0.5f;
+      float2 currentSamplerCoords = float2(VPos.x,
+                                           VPos.y - CieDiagramTextureActiveSize.y);
 
       float2 currentCieSamplerCoords = currentSamplerCoords / CieDiagramTextureDisplaySize;
 
       float3 currentPixelToDisplay = pow(tex2D(SamplerCieCurrent, currentCieSamplerCoords).rgb, 2.2f);
-
-      float3 cspOutlineOverlay = float3(0.f, 0.f, 0.f);
-
-      if (SHOW_CIE_CSP_BT709_OUTLINE)
-      {
-        float2 outlineSamplerCoords =
-          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
-                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
-
-        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
-
-        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
-      }
-      if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
-      {
-        float2 outlineSamplerCoords =
-          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
-                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
-
-        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
-
-        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
-      }
-      if (SHOW_CIE_CSP_BT2020_OUTLINE)
-      {
-        float2 outlineSamplerCoords =
-          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
-                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
-
-        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
-
-        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
-      }
-#ifdef IS_FLOAT_HDR_CSP
-      if (SHOW_CIE_CSP_AP0_OUTLINE)
-      {
-        float2 outlineSamplerCoords =
-          float2(currentSamplerCoords.x + CieOutlinesSamplerOffset.x * float(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
-                 currentSamplerCoords.y + CieOutlinesSamplerOffset.y);
-
-        outlineSamplerCoords /= CieDiagramConsolidatedActiveSize;
-
-        cspOutlineOverlay += pow(tex2D(SamplerCieConsolidated, outlineSamplerCoords).rgb, 2.2f);
-      }
-#endif
-
-      cspOutlineOverlay = min(cspOutlineOverlay, 1.25f);
-
-      currentPixelToDisplay = currentPixelToDisplay + cspOutlineOverlay;
 
       float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + CIE_DIAGRAM_ALPHA / 100.f, 1.f);
 
@@ -2578,7 +2521,6 @@ void PS_HdrAnalysis(
                    currentPixelToDisplay,
                    CIE_DIAGRAM_BRIGHTNESS,
                    alpha);
-
     }
   }
 
@@ -2834,10 +2776,10 @@ technique lilium__hdr_analysis
 
 
 //CIE
-  pass PS_CopyCieBg
+  pass PS_CopyCieBgAndOutlines
   {
     VertexShader = VS_PostProcess;
-     PixelShader = PS_CopyCieBg;
+     PixelShader = PS_CopyCieBgAndOutlines;
     RenderTarget = TextureCieCurrent;
   }
 

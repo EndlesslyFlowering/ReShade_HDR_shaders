@@ -1953,8 +1953,8 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //}
 
 
-// copy over clean bg first every time
-void PS_CopyCieBg(
+// copy over clean bg and the outlines first every time
+void PS_CopyCieBgAndOutlines(
   in  float4 VPos     : SV_Position,
   in  float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_Target0)
@@ -1965,6 +1965,46 @@ void PS_CopyCieBg(
                        vPosAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(CIE_DIAGRAM_TYPE));
 
   Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
+
+  Out.rgb = pow(Out.rgb, 2.2f);
+
+  if (SHOW_CIE_CSP_BT709_OUTLINE)
+  {
+    int2 bt709FetchPos =
+      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
+           fetchPos.y);
+
+    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, bt709FetchPos).rgb, 2.2f);
+  }
+  if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
+  {
+    int2 dciP3FetchPos =
+      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
+           fetchPos.y);
+
+    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, dciP3FetchPos).rgb, 2.2f);
+  }
+  if (SHOW_CIE_CSP_BT2020_OUTLINE)
+  {
+    int2 bt2020FetchPos =
+      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
+           fetchPos.y);
+
+    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, bt2020FetchPos).rgb, 2.2f);
+  }
+#ifdef IS_FLOAT_HDR_CSP
+  if (SHOW_CIE_CSP_AP0_OUTLINE)
+  {
+    int2 ap0FetchPos =
+      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
+           fetchPos.y);
+
+    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, ap0FetchPos).rgb, 2.2f);
+  }
+#endif
+
+  Out.rgb = pow(Out.rgb, 1.f / 2.2f);
+
   return;
 }
 
