@@ -238,10 +238,20 @@ uniform int GLOBAL_INFO
 >;
 
 
-#if (!(__RENDERER__ & 0xB000)   \
-  && !(__RENDERER__ & 0xC000)   \
-  && !(__RENDERER__ & 0x10000)  \
-  && !(__RENDERER__ & 0x20000))
+#if (!(__RENDERER__ & 0xB000 == 0xB000))
+  #define API_IS_D3D11
+#elif (!(__RENDERER__ & 0xC000 == 0xC000))
+  #define API_IS_D3D12
+#elif (!(__RENDERER__ & 0x10000 == 0x10000))
+  #define API_IS_OPENGL
+#elif (!(__RENDERER__ & 0x20000 == 0x20000))
+  #define API_IS_VULKAN
+#endif
+
+#if (defined(API_IS_D3D11)   \
+  && defined(API_IS_D3D12)   \
+  && defined(API_IS_OPENGL)  \
+  && defined(API_IS_VULKAN))
   #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
 #else
   #define IS_HDR_COMPATIBLE_API
@@ -273,7 +283,7 @@ uniform int GLOBAL_INFO
   }
 
 
-#define PI asfloat(0x40490FDB)
+#define PI 3.1415927410125732421875f
 
 #define FP32_MAX asfloat(0x7F7FFFFF)
 
