@@ -55,6 +55,11 @@ static const uint CharSize[48] = {
   FONT_SIZE_14_CHAR_DIM.x, FONT_SIZE_14_CHAR_DIM.y,
   FONT_SIZE_13_CHAR_DIM.x, FONT_SIZE_13_CHAR_DIM.y };
 
+uint2 GetCharSize(const uint CharArrayEntry)
+{
+  return uint2(CharSize[CharArrayEntry], CharSize[CharArrayEntry + 1]);
+}
+
 #define ATLAS_X_OFFSET_58 0
 #define ATLAS_X_OFFSET_56 (FONT_SIZE_58_CHAR_DIM.x)
 #define ATLAS_X_OFFSET_54 (ATLAS_X_OFFSET_56 + FONT_SIZE_56_CHAR_DIM.x)

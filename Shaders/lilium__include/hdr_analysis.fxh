@@ -90,7 +90,7 @@ uniform float FRAMETIME
 >;
 
 
-#define TEXTURE_OVERLAY_WIDTH FONT_SIZE_56_CHAR_DIM.x * 29
+#define TEXTURE_OVERLAY_WIDTH FONT_SIZE_56_CHAR_DIM.x * 27
 #if defined(IS_FLOAT_HDR_CSP)
   #define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * 16
 #else
@@ -791,7 +791,7 @@ namespace Waveform
     return waveDat;
   }
 
-  float2 GetActiveArea()
+  int2 GetActiveArea()
   {
     SWaveformData waveDat = GetData();
 

@@ -729,24 +729,63 @@ void Testy(
 }
 #endif //_TESTY
 
+#define SPACING_MULTIPLIER 0.3f
 
-#define SPACING_MULTIPLIER   0.3f
-#define OUTER_SPACING       15.f
-#define OUTER_SPACING_X2    (2.f * OUTER_SPACING)
-
-static const float ShowNitsValuesLineCount     = 3;
-static const float ShowNitsFromCursorLineCount = 1;
+#define SHOW_NITS_VALUES_LINE_COUNT      3
+#define SHOW_NITS_FROM_CURSOR_LINE_COUNT 1
 
 #if defined(IS_HDR10_LIKE_CSP)
 
-  static const float ShowCspsLineCount = 3;
+  #define SHOW_CSPS_LINE_COUNT 3
 
 #else //IS_HDR10_LIKE_CSP
 
-  static const float ShowCspsLineCount = 5;
+  #define SHOW_CSPS_LINE_COUNT 5
 
 #endif //IS_HDR10_LIKE_CSP
 
+
+// outer spacing is half the size of a character rounded up
+uint GetOuterSpacing(const uint CharXDimension)
+{
+  float charXDimAsFloat = float(CharXDimension);
+
+  return uint(charXDimAsFloat / 2.f + 0.5f);
+}
+
+uint GetActiveLines()
+{
+  return (SHOW_NITS_VALUES ? SHOW_NITS_VALUES_LINE_COUNT
+                           : 0)
+       + (SHOW_NITS_FROM_CURSOR ? SHOW_NITS_FROM_CURSOR_LINE_COUNT
+                                : 0)
+       + (SHOW_CSPS ? SHOW_CSPS_LINE_COUNT
+                    : 0)
+       + (SHOW_CSP_FROM_CURSOR ? 1
+                               : 0);
+}
+
+uint GetActiveCharacters()
+{
+  return max(max(max((SHOW_NITS_VALUES ? 21
+                                       : 0),
+                      (SHOW_NITS_FROM_CURSOR ? 24
+                                            : 0)),
+                      (SHOW_CSPS ? 16
+                                 : 0)),
+                      (SHOW_CSP_FROM_CURSOR ? 18
+                                            : 0));
+}
+
+uint GetAtlasEntry()
+{
+  return 23 - TEXT_SIZE;
+}
+
+uint GetCharArrayEntry()
+{
+  return GetAtlasEntry() * 2;
+}
 
 void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 {
@@ -784,7 +823,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     //calculate offset for the cursor nits text in the overlay
     float cursorNitsYOffset = (!SHOW_NITS_VALUES
-                             ? -ShowNitsValuesLineCount
+                             ? -SHOW_NITS_VALUES_LINE_COUNT
                              : SPACING_MULTIPLIER);
 
     tex2Dstore(StorageConsolidated,
@@ -794,16 +833,16 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     //calculate offset for the colour spaces text in the overlay
     float cspsYOffset = ((!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR)
-                       ? -(ShowNitsValuesLineCount
+                       ? -(SHOW_NITS_VALUES_LINE_COUNT
                          - SPACING_MULTIPLIER)
 
                        : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR)
-                       ? -(ShowNitsFromCursorLineCount
+                       ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
                          - SPACING_MULTIPLIER)
 
                        : (!SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR)
-                       ? -(ShowNitsValuesLineCount
-                         + ShowNitsFromCursorLineCount)
+                       ? -(SHOW_NITS_VALUES_LINE_COUNT
+                         + SHOW_NITS_FROM_CURSOR_LINE_COUNT)
 
                        : SPACING_MULTIPLIER * 2);
 
@@ -814,36 +853,36 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     //calculate offset for the cursorCSP text in the overlay
     float cursorCspYOffset = ((!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR  && SHOW_CSPS)
-                            ? -(ShowNitsValuesLineCount
+                            ? -(SHOW_NITS_VALUES_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
                             : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR && SHOW_CSPS)
-                            ? -(ShowNitsFromCursorLineCount
+                            ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
                             : (SHOW_NITS_VALUES  && SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS)
-                            ? -(ShowCspsLineCount
+                            ? -(SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
                             : (!SHOW_NITS_VALUES && !SHOW_NITS_FROM_CURSOR && SHOW_CSPS)
-                            ? -(ShowNitsValuesLineCount
-                              + ShowNitsFromCursorLineCount
+                            ? -(SHOW_NITS_VALUES_LINE_COUNT
+                              + SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
                             : (!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS)
-                            ? -(ShowNitsValuesLineCount
-                              + ShowCspsLineCount
+                            ? -(SHOW_NITS_VALUES_LINE_COUNT
+                              + SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
                             : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR && !SHOW_CSPS)
-                            ? -(ShowNitsFromCursorLineCount
-                              + ShowCspsLineCount
+                            ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
+                              + SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
                             : (!SHOW_NITS_VALUES && !SHOW_NITS_FROM_CURSOR && !SHOW_CSPS)
-                            ? -(ShowNitsValuesLineCount
-                              + ShowNitsFromCursorLineCount
-                              + ShowCspsLineCount)
+                            ? -(SHOW_NITS_VALUES_LINE_COUNT
+                              + SHOW_NITS_FROM_CURSOR_LINE_COUNT
+                              + SHOW_CSPS_LINE_COUNT)
 
 #if defined(IS_HDR10_LIKE_CSP)
                             : SPACING_MULTIPLIER * 3) - 2;
@@ -858,39 +897,27 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
 
-    uint activeLines = (SHOW_NITS_VALUES ? ShowNitsValuesLineCount
-                                        : 0)
-                     + (SHOW_NITS_FROM_CURSOR ? ShowNitsFromCursorLineCount
-                                             : 0)
-                     + (SHOW_CSPS ? ShowCspsLineCount
-                                  : 0)
-                     + (SHOW_CSP_FROM_CURSOR ? 1
-                                             : 0);
+    uint activeLines = GetActiveLines();
 
-    uint activeCharacters =
-      max(max(max((SHOW_NITS_VALUES ? 21
-                                   : 0),
-                  (SHOW_NITS_FROM_CURSOR ? 24
-                                        : 0)),
-                  (SHOW_CSPS ? 16
-                             : 0)),
-                  (SHOW_CSP_FROM_CURSOR ? 18
-                                        : 0));
+    uint activeCharacters = GetActiveCharacters();
 
-    static const uint charSizeArrayOffsetX = (23 - TEXT_SIZE) * 2;
+    static const uint charArrayEntry = GetCharArrayEntry();
 
-    uint2 charSize = uint2(CharSize[charSizeArrayOffsetX], CharSize[charSizeArrayOffsetX + 1]);
+    uint2 charSize = GetCharSize(charArrayEntry);
+
+    uint outerSpacing = GetOuterSpacing(charSize.x);
 
     uint2 activeTextArea = charSize
                          * uint2(activeCharacters, activeLines);
 
-    activeTextArea.y += (max(SHOW_NITS_VALUES
-                           + SHOW_NITS_FROM_CURSOR
-                           + SHOW_CSPS
-                           + SHOW_CSP_FROM_CURSOR
-                           - 1, 0) * charSize.y * SPACING_MULTIPLIER);
+    activeTextArea.y += uint(max(SHOW_NITS_VALUES
+                               + SHOW_NITS_FROM_CURSOR
+                               + SHOW_CSPS
+                               + SHOW_CSP_FROM_CURSOR
+                               - 1, 0)
+                           * charSize.y * SPACING_MULTIPLIER);
 
-    activeTextArea += OUTER_SPACING_X2;
+    activeTextArea += outerSpacing + outerSpacing;
 
     //draw active background for the overlay
     for (int y = 0; y < TEXTURE_OVERLAY_HEIGHT; y++)
@@ -930,12 +957,14 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
 void DrawChar(uint Char, float2 DrawOffset)
 {
-  uint atlasEntry     = 23 - TEXT_SIZE;
+  uint atlasEntry     = GetAtlasEntry();
   uint charArrayEntry = atlasEntry * 2;
 
   uint2 charSize     = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
   uint  atlasXOffset = AtlasXOffset[atlasEntry];
   uint2 charOffset   = uint2(atlasXOffset, Char * charSize.y);
+
+  uint outerSpacing = GetOuterSpacing(charSize.x);
 
   for (uint y = 0; y < charSize.y; y++)
   {
@@ -943,7 +972,7 @@ void DrawChar(uint Char, float2 DrawOffset)
     {
       uint2 currentOffset = uint2(x, y);
       float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset).rgba;
-      tex2Dstore(StorageTextOverlay, DrawOffset * charSize + OUTER_SPACING + currentOffset, pixel);
+      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
     }
   }
 }
@@ -951,9 +980,11 @@ void DrawChar(uint Char, float2 DrawOffset)
 
 void DrawSpace(float2 DrawOffset)
 {
-  uint charArrayEntry = (23 - TEXT_SIZE) * 2;
+  uint charArrayEntry = GetCharArrayEntry();
 
   uint2 charSize = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+
+  uint outerSpacing = GetOuterSpacing(charSize.x);
 
   float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
 
@@ -962,7 +993,7 @@ void DrawSpace(float2 DrawOffset)
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      tex2Dstore(StorageTextOverlay, DrawOffset * charSize + OUTER_SPACING + currentOffset, emptyPixel);
+      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, emptyPixel);
     }
   }
 }
@@ -2187,23 +2218,15 @@ void PS_SetActiveArea(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   Id                   : SV_VertexID,
-  out                 float4 VPos                 : SV_Position,
-  out                 float2 TexCoord             : TEXCOORD0,
-  out nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange    : HighlightNitRange,
-#ifndef GAMESCOPE
-  out nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
-  out nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
-  out nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2)
-#else
-  out nointerpolation float2 LuminanceWaveformTextureDisplaySize : LuminanceWaveformTextureDisplaySize,
-  out nointerpolation float2 CieDiagramTextureActiveSize         : CieDiagramTextureActiveSize,
-  out nointerpolation float2 CieDiagramTextureDisplaySize        : CieDiagramTextureDisplaySize,
-  out nointerpolation float2 CieDiagramConsolidatedActiveSize    : CieDiagramConsolidatedActiveSize,
-  out nointerpolation float2 CieOutlinesSamplerOffset            : CieOutlinesSamplerOffset,
-  out nointerpolation float2 CurrentActiveOverlayArea            : CurrentActiveOverlayArea)
-#endif
+  in                  uint   Id                                       : SV_VertexID,
+  out                 float4 VPos                                     : SV_Position,
+  out                 float2 TexCoord                                 : TEXCOORD0,
+  out nointerpolation bool   PingPongChecks[2]                        : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  out nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
+  out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
+  out nointerpolation float2 CieDiagramTextureActiveSize              : CieDiagramTextureActiveSize,
+  out nointerpolation float2 CieDiagramTextureDisplaySize             : CieDiagramTextureDisplaySize)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -2218,30 +2241,26 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-#ifndef GAMESCOPE
-  #define LuminanceWaveformTextureDisplaySize TextureDisplaySizes0.xy
-  #define CieDiagramTextureActiveSize         TextureDisplaySizes0.zw
-  #define CieDiagramTextureDisplaySize        TextureDisplaySizes1.xy
-  #define CieDiagramConsolidatedActiveSize    TextureDisplaySizes1.zw
-  #define CieOutlinesSamplerOffset            TextureDisplaySizes2.xy
-  #define CurrentActiveOverlayArea            TextureDisplaySizes2.zw
-#endif
+//#ifndef GAMESCOPE
+//  #define CurrentActiveOverlayArea                 TextureDisplaySizes2.xy
+//  #define LuminanceWaveformTextureDisplayAreaBegin TextureDisplaySizes0.xy
+//  #define CieDiagramTextureActiveSize              TextureDisplaySizes0.zw
+//  #define CieDiagramTextureDisplaySize             TextureDisplaySizes1.xy
+//#endif
 
   pingpong0Above1      = false;
   breathingIsActive    = false;
   HighlightNitRange    = 0.f;
-#ifndef GAMESCOPE
-  TextureDisplaySizes0 = 0.f;
-  TextureDisplaySizes1 = 0.f;
-  TextureDisplaySizes2 = 0.f;
-#else
-  LuminanceWaveformTextureDisplaySize = 0.f;
-  CieDiagramTextureActiveSize         = 0.f;
-  CieDiagramTextureDisplaySize        = 0.f;
-  CieDiagramConsolidatedActiveSize    = 0.f;
-  CieOutlinesSamplerOffset            = 0.f;
-  CurrentActiveOverlayArea            = 0.f;
-#endif
+//#ifndef GAMESCOPE
+//  TextureDisplaySizes0 = 0.f;
+//  TextureDisplaySizes1 = 0.f;
+//  TextureDisplaySizes2 = 0.f;
+//#else
+  CurrentActiveOverlayArea                 = 0;
+  LuminanceWaveformTextureDisplayAreaBegin = 0;
+  CieDiagramTextureActiveSize              = 0.f;
+  CieDiagramTextureDisplaySize             = 0.f;
+//#endif
 
   if (HIGHLIGHT_NIT_RANGE)
   {
@@ -2292,7 +2311,7 @@ void VS_PrepareHdrAnalysis(
 
   if (SHOW_LUMINANCE_WAVEFORM)
   {
-    LuminanceWaveformTextureDisplaySize = Waveform::GetActiveArea();
+    LuminanceWaveformTextureDisplayAreaBegin = int2(BUFFER_WIDTH, BUFFER_HEIGHT) - Waveform::GetActiveArea();
   }
 
 
@@ -2314,45 +2333,33 @@ void VS_PrepareHdrAnalysis(
    || SHOW_CSPS
    || SHOW_CSP_FROM_CURSOR)
   {
-    float activeLines = (SHOW_NITS_VALUES ? ShowNitsValuesLineCount
-                                         : 0.f)
-                      + (SHOW_NITS_FROM_CURSOR ? ShowNitsFromCursorLineCount
-                                              : 0.f)
-                      + (SHOW_CSPS ? ShowCspsLineCount
-                                   : 0.f)
-                      + (SHOW_CSP_FROM_CURSOR ? 1.f
-                                              : 0.f);
+    uint activeLines = GetActiveLines();
 
-    float activeCharacters = max(max(max((SHOW_NITS_VALUES ? 21.f
-                                                          :  0.f),
-                                         (SHOW_NITS_FROM_CURSOR ? 24.f
-                                                               :  0.f)),
-                                         (SHOW_CSPS ? 16.f
-                                                    :  0.f)),
-                                         (SHOW_CSP_FROM_CURSOR ? 18.f
-                                                               :  0.f));
+    uint activeCharacters = GetActiveCharacters();
 
-    static const uint charArrayEntry = (23 - TEXT_SIZE) * 2;
+    static const uint charArrayEntry = GetCharArrayEntry();
 
-    float2 charSize = float2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+    uint2 charSize = GetCharSize(charArrayEntry);
 
-    float2 currentOverlayDimensions = charSize
-                                    * float2(activeCharacters, activeLines);
+    uint outerSpacing = GetOuterSpacing(charSize.x);
 
-    currentOverlayDimensions.y += (max(SHOW_NITS_VALUES
-                                     + SHOW_NITS_FROM_CURSOR
-                                     + SHOW_CSPS
-                                     + SHOW_CSP_FROM_CURSOR
-                                     - 1, 0) * charSize.y * SPACING_MULTIPLIER);
+    uint2 currentOverlayDimensions = charSize
+                                   * uint2(activeCharacters, activeLines);
 
-    currentOverlayDimensions += OUTER_SPACING_X2;
+    currentOverlayDimensions.y += uint(max(SHOW_NITS_VALUES
+                                         + SHOW_NITS_FROM_CURSOR
+                                         + SHOW_CSPS
+                                         + SHOW_CSP_FROM_CURSOR
+                                         - 1, 0)
+                                     * charSize.y * SPACING_MULTIPLIER);
 
-    CurrentActiveOverlayArea = (currentOverlayDimensions - 1.f + 0.5f)
-                             / ReShade::ScreenSize;
+    currentOverlayDimensions += outerSpacing + outerSpacing;
+
+    CurrentActiveOverlayArea = int2(currentOverlayDimensions);
 
     if (TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
     {
-      CurrentActiveOverlayArea.x = 1.f - CurrentActiveOverlayArea.x;
+      CurrentActiveOverlayArea.x = int(BUFFER_WIDTH) - CurrentActiveOverlayArea.x;
     }
   }
 
@@ -2428,29 +2435,19 @@ void MergeOverlay(
 
 
 void PS_HdrAnalysis(
-  in                  float4 VPos                 : SV_Position,
-  in                  float2 TexCoord             : TEXCOORD0,
-  in  nointerpolation bool   PingPongChecks[2]    : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange    : HighlightNitRange,
-#ifndef GAMESCOPE
-  in  nointerpolation float4 TextureDisplaySizes0 : TextureDisplaySizes0,
-  in  nointerpolation float4 TextureDisplaySizes1 : TextureDisplaySizes1,
-  in  nointerpolation float4 TextureDisplaySizes2 : TextureDisplaySizes2,
-#else
-  in  nointerpolation float2 LuminanceWaveformTextureDisplaySize : LuminanceWaveformTextureDisplaySize,
-  in  nointerpolation float2 CieDiagramTextureActiveSize         : CieDiagramTextureActiveSize,
-  in  nointerpolation float2 CieDiagramTextureDisplaySize        : CieDiagramTextureDisplaySize,
-  in  nointerpolation float2 CieDiagramConsolidatedActiveSize    : CieDiagramConsolidatedActiveSize,
-  in  nointerpolation float2 CieOutlinesSamplerOffset            : CieOutlinesSamplerOffset,
-  in  nointerpolation float2 CurrentActiveOverlayArea            : CurrentActiveOverlayArea,
-#endif
-  out                 float4 Output               : SV_Target0)
+  in                  float4 VPos                                     : SV_Position,
+  in                  float2 TexCoord                                 : TEXCOORD0,
+  in  nointerpolation bool   PingPongChecks[2]                        : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  in  nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
+  in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
+  in  nointerpolation float2 CieDiagramTextureActiveSize              : CieDiagramTextureActiveSize,
+  in  nointerpolation float2 CieDiagramTextureDisplaySize             : CieDiagramTextureDisplaySize,
+  out                 float4 Output                                   : SV_Target0)
 {
-  const float2 pureCoord = VPos.xy - 0.5f;
-
   const int2 pureCoordAsInt = int2(VPos.xy);
 
-  Output = tex2D(ReShade::BackBuffer, TexCoord);
+  Output = tex2Dfetch(ReShade::BackBuffer, pureCoordAsInt);
 
   if (SHOW_CSP_MAP
    || SHOW_HEATMAP
@@ -2526,19 +2523,14 @@ void PS_HdrAnalysis(
 
   if (SHOW_LUMINANCE_WAVEFORM)
   {
-    float2 textureDisplayAreaBegin = ReShade::ScreenSize - LuminanceWaveformTextureDisplaySize;
-
     // draw the waveform in the bottom right corner
-    if (all(pureCoord >= textureDisplayAreaBegin))
+    if (all(pureCoordAsInt.xy >= LuminanceWaveformTextureDisplayAreaBegin))
     {
-      // get coords for the sampler
-      float2 currentSamplerCoords = pureCoord - textureDisplayAreaBegin;
-
-      currentSamplerCoords += 0.5f;
-      currentSamplerCoords /= float2(TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT);
+      // get fetch coords
+      int2 currentFetchCoords = pureCoordAsInt.xy - LuminanceWaveformTextureDisplayAreaBegin;
 
       float3 currentPixelToDisplay =
-        tex2D(SamplerLuminanceWaveformFinal, currentSamplerCoords).rgb;
+        tex2Dfetch(SamplerLuminanceWaveformFinal, currentFetchCoords).rgb;
 
       float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + LUMINANCE_WAVEFORM_ALPHA / 100.f, 1.f);
 
@@ -2557,13 +2549,9 @@ void PS_HdrAnalysis(
   {
     if (TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
     {
-      if (all(TexCoord <= CurrentActiveOverlayArea))
+      if (all(pureCoordAsInt <= CurrentActiveOverlayArea))
       {
-        float4 overlay = tex2D(SamplerTextOverlay, (TexCoord
-                                                  * ReShade::ScreenSize
-                                                  / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT))).rgba;
-
-        overlay.rgb = Csp::Mat::Bt709To::Bt2020(overlay.rgb);
+        float4 overlay = tex2Dfetch(SamplerTextOverlay, pureCoordAsInt);
 
         float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 
@@ -2575,14 +2563,11 @@ void PS_HdrAnalysis(
     }
     else
     {
-      if (TexCoord.x >= CurrentActiveOverlayArea.x
-       && TexCoord.y <= CurrentActiveOverlayArea.y)
+      if (pureCoordAsInt.x >= CurrentActiveOverlayArea.x
+       && pureCoordAsInt.y <= CurrentActiveOverlayArea.y)
       {
-        float4 overlay = tex2D(SamplerTextOverlay, float2(TexCoord.x - CurrentActiveOverlayArea.x, TexCoord.y)
-                                                 * ReShade::ScreenSize
-                                                 / float2(TEXTURE_OVERLAY_WIDTH, TEXTURE_OVERLAY_HEIGHT)).rgba;
-
-        overlay = float4(MapBt709IntoCurrentCsp(overlay.rgb, TEXT_BRIGHTNESS), overlay.a);
+        float4 overlay = tex2Dfetch(SamplerTextOverlay,
+                                    int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y));
 
         float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 
