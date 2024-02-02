@@ -69,7 +69,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 10000.f;
         ui_step     = 10.f;
-      > = 1000.f;
+      > = 600.f;
     }
 
     namespace Bt2446A
