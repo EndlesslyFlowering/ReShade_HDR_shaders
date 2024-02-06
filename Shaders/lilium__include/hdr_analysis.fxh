@@ -90,14 +90,13 @@ uniform float FRAMETIME
 >;
 
 
-#define TEXTURE_OVERLAY_WIDTH  FONT_SIZE_56_CHAR_DIM.x * 27
-#define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * (SHOW_NITS_VALUES_LINE_COUNT      \
+#define TEXTURE_OVERLAY_WIDTH  FONT_SIZE_56_CHAR_DIM.x * 26
+#define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * (1                                \
+                                                        + SHOW_NITS_VALUES_LINE_COUNT      \
                                                         + SHOW_NITS_FROM_CURSOR_LINE_COUNT \
                                                         + SHOW_CSPS_LINE_COUNT             \
                                                         + SHOW_CSP_FROM_CURSOR_LINE_COUNT  \
-                                                        + 3                                \
-                                                        + 1                                \
-                                                        + 1)
+                                                        + 3)
 
 texture2D TextureTextOverlay
 <
