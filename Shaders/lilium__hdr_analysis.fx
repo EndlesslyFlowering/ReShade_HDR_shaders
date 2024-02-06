@@ -2652,16 +2652,15 @@ void PS_HdrAnalysis(
       // get fetch coords
       int2 currentFetchCoords = pureCoordAsInt.xy - LuminanceWaveformTextureDisplayAreaBegin;
 
-      float3 currentPixelToDisplay =
-        tex2Dfetch(SamplerLuminanceWaveformFinal, currentFetchCoords).rgb;
+      float4 currentPixelToDisplay =
+        tex2Dfetch(SamplerLuminanceWaveformFinal, currentFetchCoords);
 
-      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + LUMINANCE_WAVEFORM_ALPHA / 100.f, 1.f);
+      float alpha = min(LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
 
       MergeOverlay(Output.rgb,
-                   currentPixelToDisplay,
+                   currentPixelToDisplay.rgb,
                    LUMINANCE_WAVEFORM_BRIGHTNESS,
                    alpha);
-
     }
   }
 

@@ -614,6 +614,7 @@ namespace Waveform
     int   borderSize;
     int   frameSize;
     int2  charDimensions;
+    int   charDimensionXForPercent;
     int2  atlasOffset;
     int2  waveformArea;
     int   cutoffOffset;
@@ -648,7 +649,9 @@ namespace Waveform
 
     const uint atlasEntry = charArrayEntry / 2;
 
-    waveDat.charDimensions = int2(WaveCharSize[charArrayEntry], WaveCharSize[charArrayEntry + 1]);
+    waveDat.charDimensionXForPercent = WaveCharSize[charArrayEntry];
+
+    waveDat.charDimensions = int2(waveDat.charDimensionXForPercent - 2, WaveCharSize[charArrayEntry + 1]);
 
     waveDat.atlasOffset = int2(WaveAtlasXOffset[atlasEntry], WAVE_TEXTURE_OFFSET.y);
 
@@ -826,7 +829,16 @@ namespace Waveform
 
     const int2 currentPos = Pos + int2(CharCount * CharDim.x, 0);
 
-    for (int x = 0; x < CharDim.x; x++)
+    int startX = 1;
+    int stopX  = CharDim.x + 1;
+
+    if (Char == _percent_w)
+    {
+      startX = 0;
+      stopX  = CharDim.x;
+    }
+
+    for (int x = startX; x < stopX; x++)
     {
       for (int y = 0; y < CharDim.y; y++)
       {
@@ -855,7 +867,7 @@ void CS_RenderLuminanceWaveformScale()
     {
       for (int y = 0; y < TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT; y++)
       {
-        tex2Dstore(StorageLuminanceWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 1.f));
+        tex2Dstore(StorageLuminanceWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
       }
     }
 
@@ -1201,7 +1213,7 @@ void VS_PrepareRenderLuminanceWaveformToScale(
     Waveform::SWaveformData waveDat = Waveform::GetData();
 
     WaveDat0 = int4(waveDat.waveformArea, waveDat.offsetToFrame
-                                         + waveDat.frameSize);
+                                        + waveDat.frameSize);
 
     WaveformCutoffOffset = waveDat.cutoffOffset;
 
@@ -1277,9 +1289,8 @@ void PS_RenderLuminanceWaveformToScale(
                                     * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
                                     / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT);
 
-      Out = float4(tex2D(SamplerLuminanceWaveformScale, TexCoord).rgb
-                 + tex2D(SamplerLuminanceWaveform,      waveformSamplerCoords).rgb,
-                   1.f);
+      Out = float4(tex2D(SamplerLuminanceWaveformScale, TexCoord)
+                 + tex2D(SamplerLuminanceWaveform,      waveformSamplerCoords));
       return;
     }
     //else
