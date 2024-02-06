@@ -291,6 +291,10 @@ uniform int GLOBAL_INFO
 
 #define MAX3(A, B, C) max(A, max(B, C))
 
+#define MAX4(A, B, C, D) max(A, max(B, max(C, D)))
+
+#define MAX5(A, B, C, D, E) max(A, max(B, max(C, max(D, E))))
+
 #define MAXRGB(Rgb) max(Rgb.r, max(Rgb.g, Rgb.b))
 
 
