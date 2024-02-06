@@ -2339,15 +2339,19 @@ void PS_SetActiveArea(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   Id                                       : SV_VertexID,
-  out                 float4 VPos                                     : SV_Position,
-  out                 float2 TexCoord                                 : TEXCOORD0,
-  out nointerpolation bool   PingPongChecks[2]                        : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  in                  uint   Id                : SV_VertexID,
+  out                 float4 VPos              : SV_Position,
+  out                 float2 TexCoord          : TEXCOORD0,
+  out nointerpolation bool2  PingPongChecks    : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange : HighlightNitRange,
+#ifndef GAMESCOPE
+  out nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
+#else
   out nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
   out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-  out nointerpolation float2 CieDiagramTextureActiveSize              : CieDiagramTextureActiveSize,
-  out nointerpolation float2 CieDiagramTextureDisplaySize             : CieDiagramTextureDisplaySize)
+#endif
+  out nointerpolation float2 CieDiagramTextureActiveSize  : CieDiagramTextureActiveSize,
+  out nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize)
 {
   TexCoord.x = (Id == 2) ? 2.f
                          : 0.f;
@@ -2355,33 +2359,24 @@ void VS_PrepareHdrAnalysis(
                          : 0.f;
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-
 #define pingpong0Above1   PingPongChecks[0]
 #define breathingIsActive PingPongChecks[1]
 
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-//#ifndef GAMESCOPE
-//  #define CurrentActiveOverlayArea                 TextureDisplaySizes2.xy
-//  #define LuminanceWaveformTextureDisplayAreaBegin TextureDisplaySizes0.xy
-//  #define CieDiagramTextureActiveSize              TextureDisplaySizes0.zw
-//  #define CieDiagramTextureDisplaySize             TextureDisplaySizes1.xy
-//#endif
+#ifndef GAMESCOPE
+  #define CurrentActiveOverlayArea                 TextureDisplaySizes.xy
+  #define LuminanceWaveformTextureDisplayAreaBegin TextureDisplaySizes.zw
+#endif
 
-  pingpong0Above1      = false;
-  breathingIsActive    = false;
-  HighlightNitRange    = 0.f;
-//#ifndef GAMESCOPE
-//  TextureDisplaySizes0 = 0.f;
-//  TextureDisplaySizes1 = 0.f;
-//  TextureDisplaySizes2 = 0.f;
-//#else
+  pingpong0Above1                          = false;
+  breathingIsActive                        = false;
+  HighlightNitRange                        = 0.f;
   CurrentActiveOverlayArea                 = 0;
   LuminanceWaveformTextureDisplayAreaBegin = 0;
   CieDiagramTextureActiveSize              = 0.f;
   CieDiagramTextureDisplaySize             = 0.f;
-//#endif
 
   if (HIGHLIGHT_NIT_RANGE)
   {
@@ -2559,15 +2554,19 @@ void MergeOverlay(
 
 
 void PS_HdrAnalysis(
-  in                  float4 VPos                                     : SV_Position,
-  in                  float2 TexCoord                                 : TEXCOORD0,
-  in  nointerpolation bool   PingPongChecks[2]                        : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  in                  float4 VPos              : SV_Position,
+  in                  float2 TexCoord          : TEXCOORD0,
+  in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
+#ifndef GAMESCOPE
+  in  nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
+#else
   in  nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
   in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-  in  nointerpolation float2 CieDiagramTextureActiveSize              : CieDiagramTextureActiveSize,
-  in  nointerpolation float2 CieDiagramTextureDisplaySize             : CieDiagramTextureDisplaySize,
-  out                 float4 Output                                   : SV_Target0)
+#endif
+  in  nointerpolation float2 CieDiagramTextureActiveSize  : CieDiagramTextureActiveSize,
+  in  nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize,
+  out                 float4 Output                       : SV_Target0)
 {
   const int2 pureCoordAsInt = int2(VPos.xy);
 
