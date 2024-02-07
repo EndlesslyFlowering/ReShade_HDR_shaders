@@ -1290,8 +1290,16 @@ void PS_RenderLuminanceWaveformToScale(
         Out = float4(1.f, 1.f, 0.f, 1.f);
         return;
       }
-      if ((waveformCoords.y >= MaxNitsLineY && LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)
-       && (waveformCoords.y <= MinNitsLineY && LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE))
+      const bool waveformCoordsGTEMaxNitsLine = waveformCoords.y >= MaxNitsLineY;
+      const bool waveformCoordsSTEMinNitsLine = waveformCoords.y <= MinNitsLineY;
+
+      const bool showMaxNitsLineActive = waveformCoordsGTEMaxNitsLine && LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE;
+      const bool showMinNitsLineActive = waveformCoordsSTEMinNitsLine && LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE;
+
+      if (( showMaxNitsLineActive                 &&  showMinNitsLineActive)
+       || (!LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinNitsLineActive)
+       || ( showMaxNitsLineActive                 && !LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
+       || (!LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE && !LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE))
       {
         float2 waveformSamplerCoords = (float2(waveformCoords + int2(0, WaveformCutoffOffset)) + 0.5f)
                                       * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
