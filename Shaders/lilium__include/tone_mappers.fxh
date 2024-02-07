@@ -347,6 +347,7 @@ namespace Tmos
   {
 #define DICE_PRO_MODE_ICTCP 0
 #define DICE_PRO_MODE_YCBCR 1
+#define DICE_PRO_MODE_YRGB  2
 
 #define DICE_WORKING_COLOUR_SPACE_BT2020  0
 #define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
@@ -425,7 +426,7 @@ namespace Tmos
 //        KgHelper = Csp::KHelpers::Ap0D65::Kg;
 //      }
 
-      // ICtCp and YCbCr method copied from BT.2390
+      // ICtCp, YCbCr and YRGB method copied from BT.2390
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
         //to L'M'S'
@@ -470,7 +471,7 @@ namespace Tmos
 //          Colour = max(mul(LmsToRgb, Colour), 0.f);
         }
       }
-      else
+      else if (ProcessingMode == DICE_PRO_MODE_YCBCR)
       {
         float y1 = dot(Colour, KBt2020);
 
@@ -507,6 +508,27 @@ namespace Tmos
 //          return max(float3(y2 + KrHelper    * cr2,
 //                            y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
 //                            y2 + KbHelper    * cb2), 0.f);
+        }
+      }
+      else // if (ProcessingMode == DICE_PRO_MODE_YRGB)
+      {
+        float y1 = dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
+
+        float y2 = Csp::Trc::LinearTo::Pq(y1);
+
+        if (y2 < ShoulderStartInPq)
+        {
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
+          discard;
+#endif
+        }
+        else
+        {
+          y2 = LuminanceCompress(y2, TargetCllInPq, ShoulderStartInPq);
+
+          y2 = Csp::Trc::PqTo::Linear(y2);
+
+          Colour = max(y2 / y1 * Colour, 0.f);
         }
       }
 

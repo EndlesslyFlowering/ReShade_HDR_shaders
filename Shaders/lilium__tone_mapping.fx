@@ -197,10 +197,12 @@ namespace Ui
         ui_category = "Dice";
         ui_label    = "processing mode";
         ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YCbCr: process in YCbCr space";
+                 "\n" "YCbCr: process in YCbCr space"
+                 "\n" "YRGB:  process RGB according to brightness";
         ui_type     = "combo";
         ui_items    = "ICtCp\0"
-                      "YCbCr\0";
+                      "YCbCr\0"
+                      "YRGB\0";
       > = 0;
 
       uniform bool EnableBlowingOutHighlightsDice
