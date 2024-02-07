@@ -146,6 +146,14 @@ namespace Ui
                       "RGB\0";
       > = 0;
 
+      uniform bool EnableBlowingOutHighlightsBt2390
+      <
+        ui_category = "BT.2390 EETF";
+        ui_label    = "enable blowing out highlights";
+        ui_tooltip  = "Enables blowing out highlights for"
+                 "\n" "ICtCp and YCbCr";
+      > = false;
+
       uniform float OldBlackPoint
       <
         ui_category = "BT.2390 EETF";
@@ -184,6 +192,14 @@ namespace Ui
 
     namespace Dice
     {
+      uniform bool EnableBlowingOutHighlightsDice
+      <
+        ui_category = "Dice";
+        ui_label    = "enable blowing out highlights";
+        ui_tooltip  = "Enables blowing out highlights for"
+                 "\n" "ICtCp and YCbCr";
+      > = false;
+
       uniform float ShoulderStart
       <
         ui_category = "Dice";
@@ -545,7 +561,8 @@ void PS_ToneMapping(
                          bt2390SrcMaxPqMinusSrcMinPq,
                          bt2390MinLum,
                          bt2390MaxLum,
-                         bt2390KneeStart);
+                         bt2390KneeStart,
+                         Ui::Tm::Bt2390::EnableBlowingOutHighlightsBt2390);
     }
     break;
     case TM_METHOD_DICE:
@@ -553,7 +570,8 @@ void PS_ToneMapping(
       Tmos::Dice::ToneMapper(hdr,
                              Ui::Tm::Dice::ProcessingModeDice,
                              diceTargetNitsInPq,
-                             diceShoulderStartInPq);
+                             diceShoulderStartInPq,
+                             Ui::Tm::Dice::EnableBlowingOutHighlightsDice);
     }
     break;
 

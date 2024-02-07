@@ -182,12 +182,13 @@ namespace Tmos
     void Eetf(
            inout float3 Colour,
                  uint   ProcessingMode,
-                 float  SrcMinPq, // Lb in PQ
-                 float  SrcMaxPq, // Lw in PQ
+                 float  SrcMinPq,  // Lb in PQ
+                 float  SrcMaxPq,  // Lw in PQ
                  float  SrcMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
-                 float  MinLum,   // minLum
-                 float  MaxLum,   // maxLum
-                 float  KneeStart // KS
+                 float  MinLum,    // minLum
+                 float  MaxLum,    // maxLum
+                 float  KneeStart, // KS
+                 bool   EnableBlowingOutHighlights
     )
     {
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
@@ -219,14 +220,20 @@ namespace Tmos
         i2 = i2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
         //i2 *= SrcMaxPq;
 
-        float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // max to avoid invalid colours
+        float3 ictcp = float3(i2,
+                              dot(Colour, PqLmsToIctcp[1]),
+                              dot(Colour, PqLmsToIctcp[2]));
+
+        if (EnableBlowingOutHighlights)
+        {
+          float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // max to avoid invalid colours
+
+          ictcp = float3(ictcp.x,
+                         ictcp.yz * minI);
+        }
 
         //to L'M'S'
-        Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(
-                   float3(i2,
-                          dot(Colour, PqLmsToIctcp[1]) * minI,
-                          dot(Colour, PqLmsToIctcp[2]) * minI));
-
+        Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(ictcp);
         //to LMS
         Colour = Csp::Trc::PqTo::Linear(Colour);
         //to RGB
@@ -259,14 +266,19 @@ namespace Tmos
         y2 = max(y2 * SrcMaxPqMinusSrcMinPq + SrcMinPq, 0.f); // max to avoid invalid colours
         //y2 *= SrcMaxPq;
 
-        float minY = min((y1 / y2), (y2 / y1));
+        float3 ycbcr = float3(y2,
+                              (Colour.b - y1) / KbBt2020,
+                              (Colour.r - y1) / KrBt2020);
 
-        Colour = max(
-                   Csp::Ycbcr::YcbcrTo::RgbBt2020(
-                     float3(y2,
-                            (Colour.b - y1) / KbBt2020 * minY,
-                            (Colour.r - y1) / KrBt2020 * minY))
-                 , 0.f);
+        if (EnableBlowingOutHighlights)
+        {
+          float minY = min((y1 / y2), (y2 / y1));
+
+          ycbcr = float3(ycbcr.x,
+                         ycbcr.yz * minY);
+        }
+
+        Colour = max(Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr), 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
@@ -369,7 +381,8 @@ namespace Tmos
            inout float3 Colour,
                  uint   ProcessingMode,
                  float  TargetCllInPq,
-                 float  ShoulderStartInPq)
+                 float  ShoulderStartInPq,
+                 bool   EnableBlowingOutHighlights)
     {
 
     // why does this not work?!
@@ -434,14 +447,20 @@ namespace Tmos
         {
           float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
-          float minI = min(min((i1 / i2), (i2 / i1)) * 1.1f, 1.f);
+          float3 ictcp = float3(i2,
+                                dot(Colour, PqLmsToIctcp[1]),
+                                dot(Colour, PqLmsToIctcp[2]));
+
+          if (EnableBlowingOutHighlights)
+          {
+            float minI = clamp(min((i1 / i2), (i2 / i1)) * 1.1f, 0.f, 1.f); // max to avoid invalid colours
+
+            ictcp = float3(ictcp.x,
+                           ictcp.yz * minI);
+          }
 
           //to L'M'S'
-          Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(
-                    float3(i2,
-                           dot(Colour, PqLmsToIctcp[1]) * minI,
-                           dot(Colour, PqLmsToIctcp[2]) * minI));
-
+          Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(ictcp);
           //to LMS
           Colour = Csp::Trc::PqTo::Linear(Colour);
           //to RGB
@@ -467,15 +486,20 @@ namespace Tmos
         {
           float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
 
-          float minY = min(min((y1 / y2), (y2 / y1)) * 1.1f, 1.f);
+          float3 ycbcr = float3(y2,
+                                (Colour.b - y1) / KbBt2020,
+                                (Colour.r - y1) / KrBt2020);
+
+          if (EnableBlowingOutHighlights)
+          {
+            float minY = clamp(min((y1 / y2), (y2 / y1)) * 1.1f, 0.f, 1.f); // max to avoid invalid colours
+
+            ycbcr = float3(ycbcr.x,
+                           ycbcr.yz * minY);
+          }
 
           //to RGB
-          Colour = max(
-                     Csp::Ycbcr::YcbcrTo::RgbBt2020(
-                       float3(y2,
-                              (Colour.b - y1) / KbBt2020 * minY,
-                              (Colour.r - y1) / KrBt2020 * minY))
-                   , 0.f);
+          Colour = max(Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr), 0.f);
 
 //          float cb2 = (Colour.b - y1) / KbHelper * minY;
 //          float cr2 = (Colour.r - y1) / KrHelper * minY;
