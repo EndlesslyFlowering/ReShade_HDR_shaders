@@ -474,7 +474,7 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
 
 static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (float(BUFFER_HEIGHT) * 0.35f)
-                                                       / TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT
+                                                       / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
                                                        * 100.f;
 
 uniform float2 LUMINANCE_WAVEFORM_SIZE

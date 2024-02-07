@@ -668,21 +668,21 @@ namespace Waveform
 
     static const int cutoffPoints[16] = {
       int(0),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(4000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(2000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(1000.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 400.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 203.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq( 100.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  50.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  25.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(  10.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   5.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   2.5f ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   1.f  ) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   0.25f) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(   0.05f) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorXY.y + 0.5f),
-      int(                                                                            TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT   * waveformScaleFactorXY.y + 0.5f) };
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 400.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 203.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 100.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  50.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  25.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  10.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   5.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   2.5f ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   1.f  ) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.25f) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.05f) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      int(                                                                                   float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f) };
 
 
     waveDat.waveformArea =
@@ -1170,8 +1170,8 @@ void CS_RenderLuminanceWaveform(uint3 ID : SV_DispatchThreadID)
       {
         const int2 coord = float2(float(ID.x)
                                 / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
-                                  TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT
-                                - (Csp::Trc::NitsTo::Pq(curPixelNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) + 0.5f;
+                                  float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+                                - (Csp::Trc::NitsTo::Pq(curPixelNits) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
 
         tex2Dstore(StorageLuminanceWaveform,
                    coord,
@@ -1204,16 +1204,19 @@ void VS_PrepareRenderLuminanceWaveformToScale(
 #define MinNitsLineY WaveDat1.y
 #define MaxNitsLineY WaveDat1.z
 
-  WaveDat0    = 0;
-  WaveDat1.x  = 0;
-  WaveDat1.yz = -100;
+  WaveDat0     = 0;
+  WaveDat1.x   = 0;
+  MinNitsLineY = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT;
+  MaxNitsLineY = -100;
 
   if (SHOW_LUMINANCE_WAVEFORM)
   {
     Waveform::SWaveformData waveDat = Waveform::GetData();
 
-    WaveDat0 = int4(waveDat.waveformArea, waveDat.offsetToFrame
-                                        + waveDat.frameSize);
+    WaveformActiveArea = waveDat.waveformArea;
+
+    OffsetToWaveformArea = waveDat.offsetToFrame
+                         + waveDat.frameSize;
 
     WaveformCutoffOffset = waveDat.cutoffOffset;
 
@@ -1227,7 +1230,8 @@ void VS_PrepareRenderLuminanceWaveformToScale(
        && minNits <= 10000.f)
       {
         MinNitsLineY =
-          int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(minNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorY + 0.5f)
+          int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+             - (Csp::Trc::NitsTo::Pq(minNits) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorY + 0.5f)
         - waveDat.cutoffOffset;
       }
     }
@@ -1240,7 +1244,8 @@ void VS_PrepareRenderLuminanceWaveformToScale(
        && maxNits <= 10000.f)
       {
         MaxNitsLineY =
-          int((TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - (Csp::Trc::NitsTo::Pq(maxNits) * TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)) * waveformScaleFactorY + 0.5f)
+          int((float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+             - (Csp::Trc::NitsTo::Pq(maxNits) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorY + 0.5f)
         - waveDat.cutoffOffset;
       }
     }
@@ -1285,13 +1290,17 @@ void PS_RenderLuminanceWaveformToScale(
         Out = float4(1.f, 1.f, 0.f, 1.f);
         return;
       }
-      float2 waveformSamplerCoords = (int2(waveformCoords.x, (waveformCoords.y >= MaxNitsLineY) * waveformCoords.y) + int2(0, WaveformCutoffOffset) + 0.5f)
-                                    * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
-                                    / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT);
+      if ((waveformCoords.y >= MaxNitsLineY && LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)
+       && (waveformCoords.y <= MinNitsLineY && LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE))
+      {
+        float2 waveformSamplerCoords = (float2(waveformCoords + int2(0, WaveformCutoffOffset)) + 0.5f)
+                                      * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
+                                      / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
 
-      Out = float4(tex2D(SamplerLuminanceWaveformScale, TexCoord)
-                 + tex2D(SamplerLuminanceWaveform,      waveformSamplerCoords));
-      return;
+        Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt)
+            + tex2D(SamplerLuminanceWaveform, waveformSamplerCoords);
+        return;
+      }
     }
     //else
     Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
