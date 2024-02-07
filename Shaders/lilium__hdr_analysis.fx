@@ -590,71 +590,58 @@ uniform bool ENABLE_TEST_THINGY
   ui_label    = "enable test thingy";
 > = false;
 
+uniform float2 TEST_AREA_SIZE
+<
+  ui_category = "TESTY";
+  ui_label    = "test area size";
+  ui_type     = "drag";
+  ui_min      = 0.f;
+  ui_max      = BUFFER_WIDTH;
+  ui_step     = 1.f;
+> = float2(100.f, 100.f);
+
+#define TESTY_MODE_RGB_BT709     0
+#define TESTY_MODE_RGB_DCI_P3    1
+#define TESTY_MODE_RGB_BT2020    2
+#define TESTY_MODE_RGB_AP0D65    3
+#define TESTY_MODE_xyY           4
+#define TESTY_MODE_POS_INF_ON_R  5
+#define TESTY_MODE_NEG_INF_ON_G  6
+#define TESTY_MODE_NAN_ON_B      7
+
 uniform uint TEST_MODE
 <
   ui_category = "TESTY";
   ui_label    = "mode";
   ui_type     = "combo";
-  ui_items    = " RGB\0"
+  ui_items    = " RGB BT.709\0"
+                " RGB DCI-P3\0"
+                " RGB BT.2020\0"
+                " ACES AP0 (D65 white point)\0"
                 " xyY\0"
                 "+Inf (0x7F800000) on R (else is 0)\0"
                 "-Inf (0xFF800000) on G (else is 0)\0"
                 " NaN (0xFFFFFFFF) on B (else is 0)\0";
-> = 0;
+> = TESTY_MODE_RGB_BT709;
 
-precise uniform float TEST_THINGY_R
+precise uniform float3 TEST_THINGY_RGB
 <
   ui_category = "TESTY";
-  ui_label    = "R";
+  ui_label    = "RGB (linear)";
   ui_type     = "drag";
-  ui_units    = " R";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.00000001f;
-> = 0.f;
+  ui_min      = -10000.f;
+  ui_max      =  10000.f;
+  ui_step     =      0.000001f;
+> = 80.f;
 
-precise uniform float TEST_THINGY_G
+precise uniform float2 TEST_THINGY_xy
 <
   ui_category = "TESTY";
-  ui_label    = "G";
+  ui_label    = "xy";
   ui_type     = "drag";
-  ui_units    = " G";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.00000001f;
-> = 0.f;
-
-precise uniform float TEST_THINGY_B
-<
-  ui_category = "TESTY";
-  ui_label    = "B";
-  ui_type     = "drag";
-  ui_units    = " B";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.00000001f;
-> = 0.f;
-
-precise uniform float TEST_THINGY_x
-<
-  ui_category = "TESTY";
-  ui_label    = "x";
-  ui_type     = "drag";
-  ui_units    = " x";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.001f;
-> = 0.f;
-
-precise uniform float TEST_THINGY_y
-<
-  ui_category = "TESTY";
-  ui_label    = "y";
-  ui_type     = "drag";
-  ui_units    = " y";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.001f;
+  ui_min      = 0.f;
+  ui_max      = 1.f;
+  ui_step     = 0.0001f;
 > = 0.f;
 
 precise uniform float TEST_THINGY_Y
@@ -662,72 +649,126 @@ precise uniform float TEST_THINGY_Y
   ui_category = "TESTY";
   ui_label    = "Y";
   ui_type     = "drag";
-  ui_units    = " Y";
-  ui_min      = -125.f;
-  ui_max      = 125.f;
-  ui_step     = 0.001f;
-> = 0.f;
+  ui_units    = " nits";
+  ui_min      =     0.f;
+  ui_max      = 10000.f;
+  ui_step     =     0.000001f;
+> = 80.f;
 
 
-void Testy(
-  in          float4 VPos     : SV_Position,
-  in          float2 TexCoord : TEXCOORD0,
-  out precise float4 Output   : SV_Target0)
+void VS_Testy(
+  in                  uint   Id         : SV_VertexID,
+  out                 float4 VPos       : SV_Position,
+  out                 float2 TexCoord   : TEXCOORD0,
+  out nointerpolation float4 TestyStuff : TestyStuff)
 {
-  Output = 0.f;
+  TexCoord.x = (Id == 2) ? 2.f
+                         : 0.f;
+  TexCoord.y = (Id == 1) ? 2.f
+                         : 0.f;
+  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
-  if(ENABLE_TEST_THINGY == true)
+  float2 testAreaSizeDiv2 = TEST_AREA_SIZE / 2.f;
+
+  TestyStuff.x = BUFFER_WIDTH  / 2.f - testAreaSizeDiv2.x - 1.f;
+  TestyStuff.y = BUFFER_HEIGHT / 2.f - testAreaSizeDiv2.y - 1.f;
+  TestyStuff.z = BUFFER_WIDTH  - TestyStuff.x;
+  TestyStuff.w = BUFFER_HEIGHT - TestyStuff.y;
+}
+
+void PS_Testy(
+  in                          float4 VPos       : SV_Position,
+  in                          float2 TexCoord   : TEXCOORD0,
+  in  nointerpolation         float4 TestyStuff : TestyStuff,
+  out                 precise float4 Output     : SV_Target0)
+{
+  const float2 pureCoord = floor(VPos.xy);
+
+  if(ENABLE_TEST_THINGY
+  && pureCoord.x > TestyStuff.x
+  && pureCoord.x < TestyStuff.z
+  && pureCoord.y > TestyStuff.y
+  && pureCoord.y < TestyStuff.w)
   {
-    float xxx = BUFFER_WIDTH  / 2.f - 100.f;
-    float xxe = (BUFFER_WIDTH  - xxx);
-    float yyy = BUFFER_HEIGHT / 2.f - 100.f;
-    float yye = (BUFFER_HEIGHT - yyy);
-    if (TexCoord.x > xxx / BUFFER_WIDTH
-     && TexCoord.x < xxe / BUFFER_WIDTH
-     && TexCoord.y > yyy / BUFFER_HEIGHT
-     && TexCoord.y < yye / BUFFER_HEIGHT)
+#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB) \
+ && (ACTUAL_COLOUR_SPACE != CSP_HDR10)
+  Output = float4(0.f, 0.f, 0.f, 1.f);
+  return;
+#endif
+    if (TEST_MODE == TESTY_MODE_RGB_BT709)
     {
-      if (TEST_MODE == 0)
-      {
-        Output = float4(TEST_THINGY_R, TEST_THINGY_G, TEST_THINGY_B, 1.f);
-        return;
-      }
-      else if (TEST_MODE == 1)
-      {
-        precise float3 XYZ = float3(
-                       TEST_THINGY_x / TEST_THINGY_y * TEST_THINGY_Y,
-                       TEST_THINGY_Y,
-                       (1.f - TEST_THINGY_x - TEST_THINGY_y) / TEST_THINGY_y * TEST_THINGY_Y);
-        Output = float4(mul(XYZToBt709, XYZ), 1.f);
-        return;
-      }
-      else if (TEST_MODE == 2)
-      {
-        precise float asFloat = asfloat(0x7F800000);
-        Output = float4(asFloat, 0.f, 0.f, 1.f);
-        return;
-      }
-      else if (TEST_MODE == 3)
-      {
-        precise float asFloat = asfloat(0xFF800000);
-        Output = float4(0.f, asFloat, 0.f, 1.f);
-        return;
-      }
-      else if (TEST_MODE == 4)
-      {
-        precise float asFloat = asfloat(0xFFFFFFFF);
-        Output = float4(0.f, 0.f, asFloat, 1.f);
-        return;
-      }
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(TEST_THINGY_RGB / 80.f, 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::Bt709To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+#endif
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_RGB_DCI_P3)
+    {
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(Csp::Mat::DciP3To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::DciP3To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+#endif
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_RGB_BT2020)
+    {
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(Csp::Mat::Bt2020To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      Output = float4(Csp::Trc::LinearTo::Pq(TEST_THINGY_RGB / 10000.f), 1.f);
+#endif
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_RGB_AP0D65)
+    {
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      Output = float4(Csp::Mat::Ap0D65To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::Ap0D65To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+#endif
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_xyY)
+    {
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 125.f);
+      Output = float4(Csp::Mat::XYZTo::Bt709(XYZ), 1.f);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 10000.f);
+      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::XYZTo::Bt2020(XYZ)), 1.f);
+#endif
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_POS_INF_ON_R)
+    {
+      static const precise float asFloat = asfloat(0x7F800000);
+      Output = float4(asFloat, 0.f, 0.f, 1.f);
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_NEG_INF_ON_G)
+    {
+      static const precise float asFloat = asfloat(0xFF800000);
+      Output = float4(0.f, asFloat, 0.f, 1.f);
+      return;
+    }
+    else if (TEST_MODE == TESTY_MODE_NAN_ON_B)
+    {
+      static const precise float asFloat = asfloat(0xFFFFFFFF);
+      Output = float4(0.f, 0.f, asFloat, 1.f);
+      return;
     }
     else
     {
-      Output = float4(0.f, 0.f, 0.f, 0.f);
+      Output = float4(0.f, 0.f, 0.f, 1.f);
       return;
     }
   }
-  // else
-  discard;
+  Output = float4(0.f, 0.f, 0.f, 1.f);
+  return;
 }
 #endif //_TESTY
 
