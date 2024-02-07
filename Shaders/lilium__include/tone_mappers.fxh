@@ -26,9 +26,8 @@ namespace Tmos
     // non-linear transfer function RGB->R'G'B'
     Colour = pow(Colour, applyGamma);
 
-#define ycbcr Colour
     //to Y'C'bC'r
-    ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
+    float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
 
     // tone mapping step 1
     //pHDR
@@ -96,7 +95,7 @@ namespace Tmos
     Colour = pow(Colour, applyGamma);
 
     //to Y'C'bC'r
-    ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
+    float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
 
     // tone mapping step 1
     //pHDR
@@ -162,8 +161,8 @@ namespace Tmos
     {
       float oneMinusKneeStart = 1.f - KneeStart;
       float t = (E1 - KneeStart) / oneMinusKneeStart;
-      float tPow2 = pow(t, 2.f);
-      float tPow3 = pow(t, 3.f);
+      float tPow2 = t * t;
+      float tPow3 = tPow2 * t;
       //float tPow2 = t >= 0.f ?  pow( t, 2.f)
       //                       : -pow(-t, 2.f);
       //float tPow3 = t >= 0.f ?  pow( t, 3.f)
