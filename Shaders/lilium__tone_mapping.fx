@@ -46,7 +46,7 @@ namespace Ui
         ui_tooltip  = "BT.2390 EETF:"
                  "\n" "  Is a highlight compressor."
                  "\n" "  It only compresses the highlights according to \"knee start\"."
-                 "\n" "  Which dictate where the highlight compression starts."
+                 "\n" "  Which dictates where the highlight compression starts."
                  "\n" "BT.2446 Method A:"
                  "\n" "  Compared to other tone mappers this one tries to compress the whole brightness range"
                  "\n" "  the image has rather than just compressing the highlights."
@@ -95,7 +95,7 @@ namespace Ui
         ui_min      = 0.f;
         ui_max      = 10000.f;
         ui_step     = 5.f;
-      > = 1000.f;
+      > = 600.f;
     } //Global
 
     namespace StaticMode
@@ -192,6 +192,17 @@ namespace Ui
 
     namespace Dice
     {
+      uniform uint ProcessingModeDice
+      <
+        ui_category = "Dice";
+        ui_label    = "processing mode";
+        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
+                 "\n" "YCbCr: process in YCbCr space";
+        ui_type     = "combo";
+        ui_items    = "ICtCp\0"
+                      "YCbCr\0";
+      > = 0;
+
       uniform bool EnableBlowingOutHighlightsDice
       <
         ui_category = "Dice";
@@ -215,17 +226,6 @@ namespace Ui
         ui_max      = 90.f;
         ui_step     = 0.1f;
       > = 50.f;
-
-      uniform uint ProcessingModeDice
-      <
-        ui_category = "Dice";
-        ui_label    = "processing mode";
-        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YCbCr: process in YCbCr space";
-        ui_type     = "combo";
-        ui_items    = "ICtCp\0"
-                      "YCbCr\0";
-      > = 0;
 
 //      uniform uint WorkingColourSpace
 //      <
@@ -446,7 +446,7 @@ void PS_ToneMapping(
   in  nointerpolation float3 TmParms1 : TmParms1,
   out                 float4 Output   : SV_Target0)
 {
-  float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  float3 hdr = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy)).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
