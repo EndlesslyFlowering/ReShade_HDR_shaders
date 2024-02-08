@@ -152,7 +152,7 @@ namespace Ui
         ui_label    = "enable blowing out highlights";
         ui_tooltip  = "Enables blowing out highlights for"
                  "\n" "ICtCp and YCbCr";
-      > = false;
+      > = true;
 
       uniform float OldBlackPoint
       <
@@ -211,7 +211,7 @@ namespace Ui
         ui_label    = "enable blowing out highlights";
         ui_tooltip  = "Enables blowing out highlights for"
                  "\n" "ICtCp and YCbCr";
-      > = false;
+      > = true;
 
       uniform float ShoulderStart
       <
