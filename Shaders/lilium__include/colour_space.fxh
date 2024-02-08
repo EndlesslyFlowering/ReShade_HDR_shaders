@@ -249,13 +249,13 @@ uniform int GLOBAL_INFO
 #endif
 
 #if (defined(API_IS_D3D11)   \
-  && defined(API_IS_D3D12)   \
-  && defined(API_IS_OPENGL)  \
-  && defined(API_IS_VULKAN))
-  #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
-#else
+  || defined(API_IS_D3D12)   \
+  || defined(API_IS_OPENGL)  \
+  || defined(API_IS_VULKAN))
   #define IS_HDR_COMPATIBLE_API
   #define ERROR_TEXT "Only HDR colour spaces are supported!"
+#else
+  #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
 #endif
 
 #define ERROR_STUFF           \
