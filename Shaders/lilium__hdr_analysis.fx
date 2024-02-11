@@ -984,7 +984,51 @@ uint GetCharArrayEntry()
   return GetAtlasEntry() * 2;
 }
 
-void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
+
+void DrawChar(uint Char, float2 DrawOffset)
+{
+  uint atlasEntry     = GetAtlasEntry();
+  uint charArrayEntry = atlasEntry * 2;
+
+  uint2 charSize     = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+  uint  atlasXOffset = AtlasXOffset[atlasEntry];
+  uint2 charOffset   = uint2(atlasXOffset, Char * charSize.y);
+
+  uint outerSpacing = GetOuterSpacing(charSize.x);
+
+  for (uint y = 0; y < charSize.y; y++)
+  {
+    for (uint x = 0; x < charSize.x; x++)
+    {
+      uint2 currentOffset = uint2(x, y);
+      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset).rgba;
+      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
+    }
+  }
+}
+
+void DrawSpace(float2 DrawOffset)
+{
+  uint charArrayEntry = GetCharArrayEntry();
+
+  uint2 charSize = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+
+  uint outerSpacing = GetOuterSpacing(charSize.x);
+
+  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
+
+  for (uint y = 0; y < charSize.y; y++)
+  {
+    for (uint x = 0; x < charSize.x; x++)
+    {
+      uint2 currentOffset = uint2(x, y);
+      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, emptyPixel);
+    }
+  }
+}
+
+
+void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 {
   //convert UI inputs into floats for comparisons
   const float showNitsValues     = SHOW_NITS_VALUES;
@@ -1017,7 +1061,6 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
    || fontSizeLast       != fontSize)
   {
     //store all current UI values
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW,  1.f);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, showNitsValues);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, showNitsFromCrusor);
 #ifdef IS_HDR_CSP
@@ -1149,89 +1192,21 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
         }
       }
     }
-  }
-
-#ifdef _DEBUG
-
-  else
-  {
-    for (uint x = 0; x < 20; x++)
-    {
-      for (uint y = 0; y < 20; y++)
-      {
-        tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
-      }
-    }
-  }
-
-#endif //_DEBUG
-}
-
-
-void DrawChar(uint Char, float2 DrawOffset)
-{
-  uint atlasEntry     = GetAtlasEntry();
-  uint charArrayEntry = atlasEntry * 2;
-
-  uint2 charSize     = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
-  uint  atlasXOffset = AtlasXOffset[atlasEntry];
-  uint2 charOffset   = uint2(atlasXOffset, Char * charSize.y);
-
-  uint outerSpacing = GetOuterSpacing(charSize.x);
-
-  for (uint y = 0; y < charSize.y; y++)
-  {
-    for (uint x = 0; x < charSize.x; x++)
-    {
-      uint2 currentOffset = uint2(x, y);
-      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
-      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
-    }
-  }
-}
-
-
-void DrawSpace(float2 DrawOffset)
-{
-  uint charArrayEntry = GetCharArrayEntry();
-
-  uint2 charSize = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
-
-  uint outerSpacing = GetOuterSpacing(charSize.x);
-
-  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0));
-
-  for (uint y = 0; y < charSize.y; y++)
-  {
-    for (uint x = 0; x < charSize.x; x++)
-    {
-      uint2 currentOffset = uint2(x, y);
-      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, emptyPixel);
-    }
-  }
-}
-
-
-void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
-{
-
-  if (tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW) != 0.f)
-  {
 
     static const float showMaxNitsValueYOffset      =  1.f + CSP_DESC_SPACING_MULTIPLIER;
     static const float showAvgNitsValueYOffset      =  2.f + CSP_DESC_SPACING_MULTIPLIER;
     static const float showMinNitsValueYOffset      =  3.f + CSP_DESC_SPACING_MULTIPLIER;
-    static const float cursorNitsYOffset            =  4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS);
+                       cursorNitsYOffset            =  4.f + cursorNitsYOffset;
 #ifdef IS_HDR_CSP
-    static const float cspsBt709PercentageYOffset   =  5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS);
-    static const float cspsDciP3PercentageYOffset   =  1.f + cspsBt709PercentageYOffset;
-    static const float cspsBt2020PercentageYOffset  =  2.f + cspsBt709PercentageYOffset;
+    static const float cspsBt709PercentageYOffset   =  5.f + cspsYOffset;
+    static const float cspsDciP3PercentageYOffset   =  6.f + cspsYOffset;
+    static const float cspsBt2020PercentageYOffset  =  7.f + cspsYOffset;
 #ifdef IS_FLOAT_HDR_CSP
-    static const float cspsAp0PercentageYOffset     =  3.f + cspsBt709PercentageYOffset;
-    static const float cspsInvalidPercentageYOffset =  4.f + cspsBt709PercentageYOffset;
+    static const float cspsAp0PercentageYOffset     =  8.f + cspsYOffset;
+    static const float cspsInvalidPercentageYOffset =  9.f + cspsYOffset;
 #endif
+                       cursorCspYOffset             = 10.f + cursorCspYOffset;
 #endif
-    static const float cursorCspYOffset             = 10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP);
 
 #ifdef _DEBUG
 
@@ -1475,8 +1450,20 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
     }
 #endif
 
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0.f);
   }
+#ifdef _DEBUG
+  else
+  {
+    for (uint x = 0; x < 20; x++)
+    {
+      for (uint y = 0; y < 20; y++)
+      {
+        tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
+      }
+    }
+  }
+#endif //_DEBUG
+
   return;
 }
 
@@ -2893,13 +2880,6 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
-
-  pass CS_PrepareOverlay
-  {
-    ComputeShader = CS_PrepareOverlay <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
 
   pass CS_DrawTextToOverlay
   {
