@@ -275,7 +275,7 @@ texture2D TextureLuminanceWaveform
 {
   Width  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH;
   Height = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT;
-  Format = RGBA16;
+  Format = RGBA8;
 };
 
 sampler2D SamplerLuminanceWaveform
@@ -295,7 +295,7 @@ texture2D TextureLuminanceWaveformScale
 {
   Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
   Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-  Format = RGBA16;
+  Format = RGBA8;
 };
 
 sampler2D<float4> SamplerLuminanceWaveformScale
@@ -315,7 +315,7 @@ texture2D TextureLuminanceWaveformFinal
 {
   Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
   Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-  Format = RGBA16;
+  Format = RGBA8;
 };
 
 sampler2D SamplerLuminanceWaveformFinal
@@ -846,7 +846,6 @@ namespace Waveform
         int2 currentDrawOffset = currentPos + currentOffset;
 
         float4 currentPixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
-        currentPixel.rgb *= currentPixel.rgb;
 
         tex2Dstore(StorageLuminanceWaveformScale, currentDrawOffset, currentPixel);
       }
@@ -1054,6 +1053,8 @@ void CS_RenderLuminanceWaveformScale()
 
       float curGrey = lerp(0.5f, 0.4f, (float(y + waveDat.cutoffOffset) / float(waveDat.endYminus1 + waveDat.cutoffOffset)));
       curGrey = pow(curGrey, 2.2f);
+      // using gamma 2 as intermediate gamma space
+      curGrey = sqrt(curGrey);
 
       float4 curColour = float4(curGrey.xxx, 1.f);
 
@@ -1173,9 +1174,12 @@ void CS_RenderLuminanceWaveform(uint3 ID : SV_DispatchThreadID)
                                   float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
                                 - (Csp::Trc::NitsTo::Pq(curPixelNits) * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
 
+        float3 waveformColour = WaveformRgbValues(curPixelNits);
+        waveformColour = sqrt(waveformColour);
+
         tex2Dstore(StorageLuminanceWaveform,
                    coord,
-                   float4(WaveformRgbValues(curPixelNits), 1.f));
+                   float4(waveformColour, 1.f));
       }
     }
   }
@@ -1305,8 +1309,19 @@ void PS_RenderLuminanceWaveformToScale(
                                       * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, 1.f, 2.f))
                                       / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
 
-        Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt)
-            + tex2D(SamplerLuminanceWaveform, waveformSamplerCoords);
+        float4 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
+        // using gamma 2 as intermediate gamma space
+        scaleColour.rgb *= scaleColour.rgb;
+
+        float4 waveformColour = tex2D(SamplerLuminanceWaveform, waveformSamplerCoords);
+        // using gamma 2 as intermediate gamma space
+        waveformColour.rgb *= waveformColour.rgb;
+
+        Out = scaleColour
+            + waveformColour;
+
+        // using gamma 2 as intermediate gamma space
+        Out.rgb = sqrt(Out.rgb);
         return;
       }
     }

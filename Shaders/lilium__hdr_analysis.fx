@@ -2699,6 +2699,9 @@ void PS_HdrAnalysis(
       float4 currentPixelToDisplay =
         tex2Dfetch(SamplerLuminanceWaveformFinal, currentFetchCoords);
 
+      // using gamma 2 as intermediate gamma space
+      currentPixelToDisplay.rgb *= currentPixelToDisplay.rgb;
+
       float alpha = min(LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
 
       MergeOverlay(Output.rgb,
