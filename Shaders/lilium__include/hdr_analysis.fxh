@@ -2569,6 +2569,9 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     float avgNits = tex2Dfetch(StorageConsolidated, COORDS_AVG_NITS_VALUE);
     float minNits = tex2Dfetch(StorageConsolidated, COORDS_MIN_NITS_VALUE);
 
+    // avoid average being higher than max in extreme edge cases
+    avgNits = min(avgNits, maxNits);
+
     precise float counter_BT709  = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709)
 #if (__VENDOR__ == 0x1002)
                                  * 100.0001f;
