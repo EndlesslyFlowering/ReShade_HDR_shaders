@@ -108,12 +108,12 @@ texture2D TextureTextOverlay
   Format = RGBA8;
 };
 
-sampler2D SamplerTextOverlay
+sampler2D<float4> SamplerTextOverlay
 {
   Texture = TextureTextOverlay;
 };
 
-storage2D StorageTextOverlay
+storage2D<float4> StorageTextOverlay
 {
   Texture = TextureTextOverlay;
 };
@@ -232,7 +232,7 @@ texture2D TextureCsps
   Format = R8;
 };
 
-sampler2D SamplerCsps
+sampler2D<float> SamplerCsps
 {
   Texture = TextureCsps;
 };
@@ -278,12 +278,12 @@ texture2D TextureLuminanceWaveform
   Format = RGBA8;
 };
 
-sampler2D SamplerLuminanceWaveform
+sampler2D<float4> SamplerLuminanceWaveform
 {
   Texture = TextureLuminanceWaveform;
 };
 
-storage2D StorageLuminanceWaveform
+storage2D<float4> StorageLuminanceWaveform
 {
   Texture = TextureLuminanceWaveform;
 };
@@ -318,7 +318,7 @@ texture2D TextureLuminanceWaveformFinal
   Format = RGBA8;
 };
 
-sampler2D SamplerLuminanceWaveformFinal
+sampler2D<float4> SamplerLuminanceWaveformFinal
 {
   Texture   = TextureLuminanceWaveformFinal;
   MagFilter = POINT;
@@ -1165,7 +1165,7 @@ void CS_RenderLuminanceWaveform(uint3 ID : SV_DispatchThreadID)
   {
     for (uint y = 0; y < BUFFER_HEIGHT; y++)
     {
-      const float curPixelNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).x;
+      const float curPixelNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 
       if (curPixelNits > 0.f)
       {
@@ -1416,7 +1416,7 @@ void PS_CalcNitsPerPixel(
 //
 //    for (uint y = 0; y < BUFFER_HEIGHT; y++)
 //    {
-//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 //
 //      if (curNits > maxNits)
 //        maxNits = curNits;
@@ -1489,7 +1489,7 @@ void PS_CalcNitsPerPixel(
 //
 //    for (uint y = 0; y < BUFFER_HEIGHT; y++)
 //    {
-//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 //
 //      if (curNits > maxNits)
 //        maxNits = curNits;
@@ -1563,7 +1563,7 @@ void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 
         for (uint y = 0; y < HEIGHT0; y++)
         {
-          const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+          const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 
           maxNits = max(maxNits, curNits);
 
@@ -1588,7 +1588,7 @@ void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 
         for (uint y = HEIGHT0; y < BUFFER_HEIGHT; y++)
         {
-          const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+          const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 
           maxNits = max(maxNits, curNits);
 
@@ -1799,7 +1799,7 @@ void CS_GetMaxNits0_NEW(uint3 ID : SV_DispatchThreadID)
 
       for (uint y = 0; y < HEIGHT0; y++)
       {
-        const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+        const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 
         maxNits = max(maxNits, curNits);
       }
@@ -1814,7 +1814,7 @@ void CS_GetMaxNits0_NEW(uint3 ID : SV_DispatchThreadID)
 
       for (uint y = HEIGHT0; y < BUFFER_HEIGHT; y++)
       {
-        const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+        const float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 
         maxNits = max(maxNits, curNits);
       }
@@ -1934,7 +1934,7 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //
 //    for(uint y = 0; y < BUFFER_HEIGHT; y++)
 //    {
-//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 //
 //      avgNits += curNits;
 //    }
@@ -1951,7 +1951,7 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //
 //  for(uint x = 0; x < BUFFER_WIDTH; x++)
 //  {
-//    float curNits = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1)).r;
+//    float curNits = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 1));
 //
 //    avgNits += curNits;
 //  }
@@ -1971,7 +1971,7 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //
 //    for(uint y = 0; y < BUFFER_HEIGHT; y++)
 //    {
-//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y)).r;
+//      float curNits = tex2Dfetch(StorageNitsValues, int2(ID.x, y));
 //
 //      if (curNits < minNits)
 //        minNits = curNits;
@@ -1987,7 +1987,7 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //
 //  for(uint x = 0; x < BUFFER_WIDTH; x++)
 //  {
-//    float curNits = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 2)).r;
+//    float curNits = tex2Dfetch(Sampler_Intermediate_CLL_Values, int2(x, 2));
 //
 //    if (curNits < minNits)
 //      minNits = curNits;
@@ -2390,7 +2390,7 @@ void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
 
       for (int y = 0; y < BUFFER_HEIGHT; y++)
       {
-        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)).r * 255.f);
+        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)) * 255.f);
         if (curCsp == IS_CSP_BT709)
         {
           counter_BT709++;

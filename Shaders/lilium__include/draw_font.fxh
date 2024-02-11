@@ -239,7 +239,7 @@ texture2D TextureFontAtlasConsolidated
   Format = RGBA8;
 };
 
-storage2D StorageFontAtlasConsolidated
+storage2D<float4> StorageFontAtlasConsolidated
 {
   Texture = TextureFontAtlasConsolidated;
 };

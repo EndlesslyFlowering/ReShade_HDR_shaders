@@ -970,7 +970,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                cursorCspYOffset);
 
 
-    float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
+    float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0));
 
     uint activeLines = GetActiveLines();
 
@@ -1048,7 +1048,7 @@ void DrawChar(uint Char, float2 DrawOffset)
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset).rgba;
+      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
       tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
     }
   }
@@ -1063,7 +1063,7 @@ void DrawSpace(float2 DrawOffset)
 
   uint outerSpacing = GetOuterSpacing(charSize.x);
 
-  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
+  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0));
 
   for (uint y = 0; y < charSize.y; y++)
   {
@@ -2619,11 +2619,11 @@ void PS_HdrAnalysis(
    || DRAW_ABOVE_NITS_AS_BLACK
    || DRAW_BELOW_NITS_AS_BLACK)
   {
-    const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt).r;
+    const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
 
     if (SHOW_CSP_MAP)
     {
-      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt).x * 255.f, pixelNits);
+      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt) * 255.f, pixelNits);
     }
 
     if (SHOW_HEATMAP)
