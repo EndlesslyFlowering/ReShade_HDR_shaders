@@ -2674,7 +2674,10 @@ void PS_HdrAnalysis(
 
       float2 currentCieSamplerCoords = currentSamplerCoords / CieDiagramTextureDisplaySize;
 
-      float3 currentPixelToDisplay = pow(tex2D(SamplerCieCurrent, currentCieSamplerCoords).rgb, 2.2f);
+      float3 currentPixelToDisplay = tex2D(SamplerCieCurrent, currentCieSamplerCoords).rgb;
+
+      // using gamma 2 as intermediate gamma space
+      currentPixelToDisplay *= currentPixelToDisplay;
 
       float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + CIE_DIAGRAM_ALPHA / 100.f, 1.f);
 
@@ -2712,6 +2715,9 @@ void PS_HdrAnalysis(
       {
         float4 overlay = tex2Dfetch(SamplerTextOverlay, pureCoordAsInt);
 
+        // using gamma 2 as intermediate gamma space
+        overlay.rgb *= overlay.rgb;
+
         float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 
         MergeOverlay(Output.rgb,
@@ -2727,6 +2733,9 @@ void PS_HdrAnalysis(
       {
         float4 overlay = tex2Dfetch(SamplerTextOverlay,
                                     int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y));
+
+        // using gamma 2 as intermediate gamma space
+        overlay.rgb *= overlay.rgb;
 
         float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 

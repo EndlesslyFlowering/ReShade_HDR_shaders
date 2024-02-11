@@ -846,7 +846,7 @@ namespace Waveform
         int2 currentDrawOffset = currentPos + currentOffset;
 
         float4 currentPixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
-        currentPixel.rgb = pow(currentPixel.rgb, 2.2f);
+        currentPixel.rgb *= currentPixel.rgb;
 
         tex2Dstore(StorageLuminanceWaveformScale, currentDrawOffset, currentPixel);
       }
@@ -1982,6 +1982,22 @@ void CS_GetFinalMaxNits_NEW(uint3 ID : SV_DispatchThreadID)
 //}
 
 
+float3 FetchCspOutline(
+  const int OutlineTextureOffset,
+  const int CieBgWidth,
+  const int VPosXAsInt,
+  const int FetchPosY) // already calculated
+{
+  int2 fetchPos =
+    int2(VPosXAsInt + (CieBgWidth * OutlineTextureOffset),
+         FetchPosY);
+
+  float3 fetchedPixel = tex2Dfetch(SamplerCieConsolidated, fetchPos).rgb;
+
+  // using gamma 2 as intermediate gamma space
+  return fetchedPixel * fetchedPixel;
+}
+
 // copy over clean bg and the outlines first every time
 void PS_CopyCieBgAndOutlines(
   in  float4 VPos     : SV_Position,
@@ -1995,44 +2011,50 @@ void PS_CopyCieBgAndOutlines(
 
   Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
 
-  Out.rgb = pow(Out.rgb, 2.2f);
+  // using gamma 2 as intermediate gamma space
+  Out.rgb *= Out.rgb;
 
   if (SHOW_CIE_CSP_BT709_OUTLINE)
   {
-    int2 bt709FetchPos =
-      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
-           fetchPos.y);
+    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
+                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          vPosAsInt2.x,
+                                          fetchPos.y);
 
-    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, bt709FetchPos).rgb, 2.2f);
+    Out.rgb += fetchedPixel;
   }
   if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
   {
-    int2 dciP3FetchPos =
-      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
-           fetchPos.y);
+    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
+                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          vPosAsInt2.x,
+                                          fetchPos.y);
 
-    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, dciP3FetchPos).rgb, 2.2f);
+    Out.rgb += fetchedPixel;
   }
   if (SHOW_CIE_CSP_BT2020_OUTLINE)
   {
-    int2 bt2020FetchPos =
-      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
-           fetchPos.y);
+    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
+                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          vPosAsInt2.x,
+                                          fetchPos.y);
 
-    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, bt2020FetchPos).rgb, 2.2f);
+    Out.rgb += fetchedPixel;
   }
 #ifdef IS_FLOAT_HDR_CSP
   if (SHOW_CIE_CSP_AP0_OUTLINE)
   {
-    int2 ap0FetchPos =
-      int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
-           fetchPos.y);
+    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
+                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          vPosAsInt2.x,
+                                          fetchPos.y);
 
-    Out.rgb += pow(tex2Dfetch(SamplerCieConsolidated, ap0FetchPos).rgb, 2.2f);
+    Out.rgb += fetchedPixel;
   }
 #endif
 
-  Out.rgb = pow(Out.rgb, 1.f / 2.2f);
+  // using gamma 2 as intermediate gamma space
+  Out.rgb = sqrt(Out.rgb);
 
   return;
 }
