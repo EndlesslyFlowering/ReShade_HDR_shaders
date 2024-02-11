@@ -129,11 +129,24 @@
   #define IS_HDR10_LIKE_CSP
 #endif
 
+#define GAMMA_UNSET 0
+#define GAMMA_SRGB  1
+#define GAMMA_22    2
+#define GAMMA_24    3
 
-#define CSP_SRGB_TEXT  "sRGB (sRGB transfer function / gamma 2.2 + BT.709 primaries)"
-#define CSP_SCRGB_TEXT "scRGB (linear + BT.709 primaries)"
-#define CSP_HDR10_TEXT "HDR10 (PQ + BT.2020 primaries)"
-#define CSP_HLG_TEXT   "HLG (HLG + BT.2020 primaries)"
+#ifndef IS_HDR_CSP
+  #ifndef OVERWRITE_SDR_GAMMA
+    #define OVERWRITE_SDR_GAMMA GAMMA_UNSET
+  #endif
+#endif
+
+#define CSP_SRGB_DEFAULT_TEXT "sRGB (gamma 2.2 or sRGB transfer function + BT.709 primaries)"
+#define CSP_GAMMA22_TEXT      "Gamma 2.2 (2.2 power gamma + BT.709 primaries)"
+#define CSP_GAMMA24_TEXT      "Gamma 2.4 (2.4 power gamma + BT.709 primaries)"
+#define CSP_SRGB_TEXT         "sRGB (sRGB transfer function + BT.709 primaries)"
+#define CSP_SCRGB_TEXT        "scRGB (linear + BT.709 primaries)"
+#define CSP_HDR10_TEXT        "HDR10 (PQ + BT.2020 primaries)"
+#define CSP_HLG_TEXT          "HLG (HLG + BT.2020 primaries)"
 
 #if (BUFFER_COLOR_BIT_DEPTH == 8)
   #define BACK_BUFFER_FORMAT_TEXT "RGBA8_UNORM or BGRA8_UNORM"
@@ -171,27 +184,40 @@
     && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
 #elif (BUFFER_COLOR_SPACE == CSP_SRGB)
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_TEXT
+  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_DEFAULT_TEXT
 #else
   #define BACK_BUFFER_COLOUR_SPACE_TEXT GET_UNKNOWN_NUMBER(BUFFER_COLOR_SPACE)
 #endif
 
 
-#if (CSP_OVERRIDE == CSP_SRGB)
-  #define CSP_OVERRIDE_TEXT CSP_SRGB_TEXT
-#elif (CSP_OVERRIDE == CSP_SCRGB)
+#if (CSP_OVERRIDE == CSP_SCRGB)
   #define CSP_OVERRIDE_TEXT CSP_SCRGB_TEXT
 #elif (CSP_OVERRIDE == CSP_HDR10)
   #define CSP_OVERRIDE_TEXT CSP_HDR10_TEXT
 #elif (CSP_OVERRIDE == CSP_HLG)
   #define CSP_OVERRIDE_TEXT CSP_HLG_TEXT
+#elif ((CSP_OVERRIDE == CSP_SRGB || ACTUAL_COLOUR_SPACE == CSP_SRGB) \
+    && OVERWRITE_SDR_GAMMA != GAMMA_UNSET)
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
+    #define CSP_OVERRIDE_TEXT CSP_GAMMA24_TEXT
+  #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
+    #define CSP_OVERRIDE_TEXT CSP_SRGB_TEXT
+  #else
+    #define CSP_OVERRIDE_TEXT CSP_GAMMA22_TEXT
+  #endif
 #else
   #define CSP_OVERRIDE_TEXT "unset"
 #endif
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-  #define ACTUAL_CSP_TEXT CSP_SRGB_TEXT
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
+    #define ACTUAL_CSP_TEXT CSP_GAMMA24_TEXT
+  #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
+    #define ACTUAL_CSP_TEXT CSP_SRGB_TEXT
+  #else
+    #define ACTUAL_CSP_TEXT CSP_GAMMA22_TEXT
+  #endif
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   #define ACTUAL_CSP_TEXT CSP_SCRGB_TEXT
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
@@ -232,9 +258,10 @@
   #define INFO_TEXT_ALLOWED_CSP_OVERRIDE "none!"
 #endif
 
-#if (HIDE_CSP_OVERRIDE_EXPLANATION == YES \
-  || defined(IS_FLOAT_HDR_CSP)            \
-  || defined(IS_HDR10_LIKE_CSP))
+#if ((HIDE_CSP_OVERRIDE_EXPLANATION == YES) \
+  || defined(IS_FLOAT_HDR_CSP)              \
+  || defined(IS_HDR10_LIKE_CSP)             \
+  || (BUFFER_COLOR_BIT_DEPTH <= 8))
   #define INFO_TEXT INFO_TEXT_BACK_BUFFER
 #else
   #define INFO_TEXT INFO_TEXT_BACK_BUFFER          \
@@ -290,6 +317,8 @@ uniform int GLOBAL_INFO
 #define PI 3.1415927410125732421875f
 
 #define FP32_MAX asfloat(0x7F7FFFFF)
+
+#define INT_MAX 2147483647
 
 #define MIN3(A, B, C) min(A, min(B, C))
 
@@ -2725,6 +2754,33 @@ float3 GetXYZfromxyY(float2 xy, float Y)
 
   return XYZ;
 }
+
+
+#if (OVERWRITE_SDR_GAMMA == GAMMA_24)
+
+  #define ENCODE_SDR(COLOUR) \
+    pow(COLOUR, 1.f / 2.4f)
+
+  #define DECODE_SDR(COLOUR) \
+    pow(COLOUR, 2.4f)
+
+#elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
+
+  #define ENCODE_SDR(COLOUR) \
+    Csp::Trc::LinearTo::Srgb(COLOUR)
+
+  #define DECODE_SDR(COLOUR) \
+    Csp::Trc::SrgbTo::Linear(COLOUR)
+
+#else
+
+  #define ENCODE_SDR(COLOUR) \
+    pow(COLOUR, 1.f / 2.2f)
+
+  #define DECODE_SDR(COLOUR) \
+    pow(COLOUR, 2.2f)
+
+#endif
 
 
 //float posPow(float x, float y)

@@ -1,15 +1,10 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if (defined(IS_HDR_COMPATIBLE_API) \
-  && defined(IS_HDR_CSP))
+#if defined(IS_HDR_COMPATIBLE_API)
 
-#define GAMMA_SRGB 0
-#define GAMMA_22   1
-#define GAMMA_24   2
-
-#ifndef OVERWRITE_SDR_GAMMA
-  #define OVERWRITE_SDR_GAMMA GAMMA_22
+#ifndef IS_HDR_CSP
+  #define LUMINANCE_WAVEFORM_CUTOFF_POINT 0 //FIX ME
 #endif
 
 #undef TEXT_BRIGHTNESS
@@ -25,11 +20,9 @@
 #endif
 
 
-#if defined(IS_HDR_CSP)
-  #define DEFAULT_ALPHA_LEVEL 80.f
-#else
-  #define DEFAULT_ALPHA_LEVEL 50.f
-#endif
+#define DEFAULT_BRIGHTNESS 80.f
+
+#define DEFAULT_ALPHA_LEVEL 75.f
 
 uniform int2 MOUSE_POSITION
 <
@@ -110,14 +103,23 @@ uniform float TEXT_BRIGHTNESS
   ui_category = "Global";
   ui_label    = "text brightness";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 10.f;
   ui_max      = 250.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+#endif
   ui_step     = 0.5f;
-#ifdef GAMESCOPE
+#if defined(IS_HDR_CSP)
+> = 140.f;
+#elif (defined(GAMESCOPE) \
+    && defined(IS_HDR_CSP))
 > = GAMESCOPE_SDR_ON_HDR_NITS;
 #else
-> = 140.f;
+> = DEFAULT_BRIGHTNESS;
 #endif
 
 uniform float TEXT_BG_ALPHA
@@ -211,6 +213,7 @@ uniform bool SHOW_NITS_FROM_CURSOR
 
 
 // TextureCsps
+#ifdef IS_HDR_CSP
 uniform bool SHOW_CSPS
 <
   ui_category = "Colour Space analysis";
@@ -235,6 +238,7 @@ uniform bool SHOW_CSP_MAP
            "\n" "            red: AP0"
            "\n" "           pink: invalid";
 > = false;
+#endif
 
 // CIE
 uniform bool SHOW_CIE
@@ -260,14 +264,21 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
   ui_category = "CIE diagram visualisation";
   ui_label    = "CIE diagram brightness";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 10.f;
   ui_max      = 250.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+#endif
   ui_step     = 0.5f;
-#ifdef GAMESCOPE
+#if (defined(GAMESCOPE) \
+  && defined(IS_HDR_CSP))
 > = GAMESCOPE_SDR_ON_HDR_NITS;
 #else
-> = 80.f;
+> = DEFAULT_BRIGHTNESS;
 #endif
 
 uniform float CIE_DIAGRAM_ALPHA
@@ -349,6 +360,7 @@ uniform bool SHOW_CIE_CSP_BT709_OUTLINE
   ui_label    = "show BT.709 colour space outline";
 > = true;
 
+#ifdef IS_HDR_CSP
 uniform bool SHOW_CIE_CSP_DCI_P3_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
@@ -362,20 +374,34 @@ uniform bool SHOW_CIE_CSP_BT2020_OUTLINE
 > = true;
 
 #ifdef IS_FLOAT_HDR_CSP
-
 uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show AP0 colour space outline";
 > = true;
-
-#endif
+#endif //IS_FLOAT_HDR_CSP
+#endif //IS_HDR_CSP
 
 // heatmap
 uniform bool SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
+#ifndef IS_HDR_CSP
+  ui_tooltip  = "         colours: |     % nits:"
+           "\n" "------------------|------------"
+           "\n" " black to white:  |   0.0-  1.0"
+           "\n" "  teal to green:  |   1.0- 18.0"
+           "\n" " green to yellow: |  18.0- 50.0"
+           "\n" "yellow to red:    |  50.0- 75.0"
+           "\n" "   red to pink:   |  75.0- 87.5"
+           "\n" "  pink to blue:   |  87.5-100.0"
+           "\n" "-------------------------------"
+           "\n"
+           "\n" "extra cases:"
+           "\n" "highly saturated red:  above the cutoff point"
+           "\n" "highly saturated blue: below 0 nits";
+#endif
 > = false;
 
 uniform float HEATMAP_BRIGHTNESS
@@ -383,12 +409,19 @@ uniform float HEATMAP_BRIGHTNESS
   ui_category = "Heatmap visualisation";
   ui_label    = "heatmap brightness";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 10.f;
   ui_max      = 250.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+#endif
   ui_step     = 0.5f;
-> = 80.f;
+> = DEFAULT_BRIGHTNESS;
 
+#ifdef IS_HDR_CSP
 uniform uint HEATMAP_CUTOFF_POINT
 <
   ui_category = "Heatmap visualisation";
@@ -412,6 +445,7 @@ uniform uint HEATMAP_CUTOFF_POINT
            "\n" "highly saturated red:  above the cutoff point"
            "\n" "highly saturated blue: below 0 nits";
 > = 0;
+#endif //IS_HDR_CSP
 
 uniform bool SHOW_LUMINANCE_WAVEFORM
 <
@@ -420,6 +454,7 @@ uniform bool SHOW_LUMINANCE_WAVEFORM
   ui_tooltip  = "Luminance waveform paid for by Aemony.";
 > = true;
 
+#ifdef IS_HDR_CSP
 uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
 <
   ui_category = "Luminance waveform";
@@ -430,20 +465,28 @@ uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
                 " 2000 nits\0"
                 " 1000 nits\0";
 > = 0;
+#endif //IS_HDR_CSP
 
 uniform float LUMINANCE_WAVEFORM_BRIGHTNESS
 <
   ui_category = "Luminance waveform";
   ui_label    = "luminance waveform brightness";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 10.f;
   ui_max      = 250.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+#endif
   ui_step     = 0.5f;
-#ifdef GAMESCOPE
+#if (defined(GAMESCOPE) \
+  && defined(IS_HDR_CSP))
 > = GAMESCOPE_SDR_ON_HDR_NITS;
 #else
-> = 80.f;
+> = DEFAULT_BRIGHTNESS;
 #endif
 
 uniform float LUMINANCE_WAVEFORM_ALPHA
@@ -459,23 +502,52 @@ uniform float LUMINANCE_WAVEFORM_ALPHA
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 4.f) * 2;
 
-#if (BUFFER_HEIGHT <= (512 * 5 / 2))
-  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
-#elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
-  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
-#elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
-  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 2048;
-#elif (BUFFER_HEIGHT <= (4096 * 5 / 2))
-  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 4096;
+#ifdef IS_HDR_CSP
+  #if (BUFFER_HEIGHT <= (512 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
+  #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 768;
+  #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
+  #elif (BUFFER_HEIGHT <= (1536 * 5 / 2) \
+      || defined(IS_HDR10_LIKE_CSP))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1536;
+  #elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 2048;
+  #elif (BUFFER_HEIGHT <= (3072 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 3072;
+  #else //(BUFFER_HEIGHT <= (4096 * 5 / 2))
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 4096;
+  #endif
 #else
-  static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = (float(BUFFER_HEIGHT) / 2.f) + 0.5f;
+  #if (BUFFER_COLOR_BIT_DEPTH == 10)
+    #if (BUFFER_HEIGHT <= (512 * 5 / 2))
+      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
+    #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
+      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 768;
+    #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
+      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
+    #elif (BUFFER_HEIGHT <= (1280 * 5 / 2))
+      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1280;
+    #else //(BUFFER_HEIGHT <= (1536 * 5 / 2))
+      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1536;
+    #endif
+  #else
+    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 384;
+  #endif
 #endif
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
 
-static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (float(BUFFER_HEIGHT) * 0.35f)
-                                                       / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
-                                                       * 100.f;
+static const int UGH = uint(float(BUFFER_HEIGHT) * 0.35f
+                          / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+                          * 10000.f);
+// "minimum of 2 variables" without using functions...
+// https://guru.multimedia.cx/category/optimization/
+static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31));
+
+static const precise float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = UGH2
+                                                             / 100.f;
 
 uniform float2 LUMINANCE_WAVEFORM_SIZE
 <
@@ -483,9 +555,9 @@ uniform float2 LUMINANCE_WAVEFORM_SIZE
   ui_label    = "luminance waveform size";
   ui_type     = "slider";
   ui_units    = "%%";
-  ui_min      = 50.f;
-  ui_max      = 100.f;
-  ui_step     = 0.1f;
+  ui_min      =  50.f;
+  ui_max      = 200.f;
+  ui_step     =   0.1f;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
 uniform bool LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
@@ -517,11 +589,16 @@ uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "highlighted range brightness";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 10.f;
   ui_max      = 250.f;
-  ui_step     = 0.5f;
-> = 80.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 10.f;
+  ui_max      = 100.f;
+#endif
+> = DEFAULT_BRIGHTNESS;
 
 uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 <
@@ -529,10 +606,17 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
   ui_label    = "range starting point";
   ui_tooltip  = "CTRL + LEFT CLICK on the value to input an exact value.";
   ui_type     = "drag";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
   ui_step     = 0.0000001f;
+#else
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.00001f;
+#endif
 > = 0.f;
 
 uniform float HIGHLIGHT_NIT_RANGE_END_POINT
@@ -541,10 +625,17 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
   ui_label    = "range end point";
   ui_tooltip  = "CTRL + LEFT CLICK on the value to input an exact value.";
   ui_type     = "drag";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
   ui_step     = 0.0000001f;
+#else
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.00001f;
+#endif
 > = 0.f;
 
 // draw pixels as black depending on their nits
@@ -559,11 +650,22 @@ uniform float ABOVE_NITS_AS_BLACK
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "draw above this brightness as black";
   ui_type     = "slider";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
   ui_step     = 0.0000001f;
+#else
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.00001f;
+#endif
+#ifdef IS_HDR_CSP
 > = 10000.f;
+#else
+> = 100.f;
+#endif
 
 uniform bool DRAW_BELOW_NITS_AS_BLACK
 <
@@ -576,11 +678,22 @@ uniform float BELOW_NITS_AS_BLACK
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "draw below this brightness as black";
   ui_type     = "drag";
+#ifdef IS_HDR_CSP
   ui_units    = " nits";
   ui_min      = 0.f;
   ui_max      = 10000.f;
   ui_step     = 1.f;
-> = 0.f;
+#else
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 100.f;
+  ui_step     = 0.5f;
+#endif
+#ifdef IS_HDR_CSP
+> = 10000.f;
+#else
+> = 100.f;
+#endif
 
 
 #ifdef _TESTY
@@ -782,17 +895,25 @@ void PS_Testy(
 
   #define SHOW_CSPS_LINE_COUNT 3
 
-#else //IS_HDR10_LIKE_CSP
+#elif defined(IS_HDR_CSP)
 
   #define SHOW_CSPS_LINE_COUNT 5
 
+#else
+
+  #define SHOW_CSPS_LINE_COUNT 0
+
 #endif //IS_HDR10_LIKE_CSP
 
-#define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
+#if defined(IS_HDR_CSP)
+  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
+#else
+  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 0
+#endif
 
 
 
-#define HDR_ANALYSIS_ENABLE
+#define ANALYSIS_ENABLE
 
 #include "lilium__include/hdr_analysis.fxh"
 
@@ -812,16 +933,20 @@ uint GetActiveLines()
                            : 0)
        + (SHOW_NITS_FROM_CURSOR ? SHOW_NITS_FROM_CURSOR_LINE_COUNT
                                 : 0)
+#ifdef IS_HDR_CSP
        + (SHOW_CSPS ? SHOW_CSPS_LINE_COUNT
                     : 0)
        + (SHOW_CSP_FROM_CURSOR ? SHOW_CSP_FROM_CURSOR_LINE_COUNT
-                               : 0);
+                               : 0)
+#endif
+                                   ;
 }
 
 #ifdef IS_HDR_CSP
   #define CSP_DESC_TEXT_LENGTH 20
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-  #if (OVERWRITE_SDR_GAMMA == GAMMA_22 \
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+    || OVERWRITE_SDR_GAMMA == GAMMA_22    \
     || OVERWRITE_SDR_GAMMA == GAMMA_24)
     #define CSP_DESC_TEXT_LENGTH 24
   #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
@@ -865,8 +990,10 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
   const float showNitsValues     = SHOW_NITS_VALUES;
   const float showNitsFromCrusor = SHOW_NITS_FROM_CURSOR;
 
+#ifdef IS_HDR_CSP
   const float showCsps          = SHOW_CSPS;
   const float showCspFromCursor = SHOW_CSP_FROM_CURSOR;
+#endif
 
   const float fontSize          = TEXT_SIZE;
 
@@ -874,23 +1001,29 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
   const float showNitsLast       = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0);
   const float showCursorNitsLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1);
 
+#ifdef IS_HDR_CSP
   const float showCspsLast      = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2);
   const float showCursorCspLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3);
+#endif
 
   const float fontSizeLast      = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4);
 
   if (showNitsLast       != showNitsValues
    || showCursorNitsLast != showNitsFromCrusor
+#ifdef IS_HDR_CSP
    || showCspsLast       != showCsps
    || showCursorCspLast  != showCspFromCursor
+#endif
    || fontSizeLast       != fontSize)
   {
     //store all current UI values
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW,  1.f);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, showNitsValues);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, showNitsFromCrusor);
+#ifdef IS_HDR_CSP
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2, showCsps);
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3, showCspFromCursor);
+#endif
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, fontSize);
 
     //calculate offset for the cursor nits text in the overlay
@@ -904,6 +1037,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
                cursorNitsYOffset);
 
 
+#ifdef IS_HDR_CSP
     //calculate offset for the colour spaces text in the overlay
     float cspsYOffset = ((!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR)
                        ? -(SHOW_NITS_VALUES_LINE_COUNT
@@ -968,7 +1102,7 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,
                cursorCspYOffset);
-
+#endif //IS_HDR_CSP
 
     float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0));
 
@@ -987,8 +1121,10 @@ void CS_PrepareOverlay(uint3 ID : SV_DispatchThreadID)
 
     activeTextArea.y += uint(max(SHOW_NITS_VALUES
                                + SHOW_NITS_FROM_CURSOR
+#ifdef IS_HDR_CSP
                                + SHOW_CSPS
                                + SHOW_CSP_FROM_CURSOR
+#endif
                                - 1, 0)
                            * charSize.y * SPACING_MULTIPLIER);
 
@@ -1082,18 +1218,20 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
   if (tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW) != 0.f)
   {
 
-    static const float showNitsValuesYOffset0 =  1.f + CSP_DESC_SPACING_MULTIPLIER;
-    static const float showNitsValuesYOffset1 =  2.f + CSP_DESC_SPACING_MULTIPLIER;
-    static const float showNitsValuesYOffset2 =  3.f + CSP_DESC_SPACING_MULTIPLIER;
-    static const float cursorNitsYOffset      =  4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS);
-    static const float cspsYOffset0           =  5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS);
-    static const float cspsYOffset1           =  1.f + cspsYOffset0;
-    static const float cspsYOffset2           =  2.f + cspsYOffset0;
+    static const float showMaxNitsValueYOffset      =  1.f + CSP_DESC_SPACING_MULTIPLIER;
+    static const float showAvgNitsValueYOffset      =  2.f + CSP_DESC_SPACING_MULTIPLIER;
+    static const float showMinNitsValueYOffset      =  3.f + CSP_DESC_SPACING_MULTIPLIER;
+    static const float cursorNitsYOffset            =  4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS);
+#ifdef IS_HDR_CSP
+    static const float cspsBt709PercentageYOffset   =  5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS);
+    static const float cspsDciP3PercentageYOffset   =  1.f + cspsBt709PercentageYOffset;
+    static const float cspsBt2020PercentageYOffset  =  2.f + cspsBt709PercentageYOffset;
 #ifdef IS_FLOAT_HDR_CSP
-    static const float cspsYOffset3           =  3.f + cspsYOffset0;
-    static const float cspsYOffset4           =  4.f + cspsYOffset0;
+    static const float cspsAp0PercentageYOffset     =  3.f + cspsBt709PercentageYOffset;
+    static const float cspsInvalidPercentageYOffset =  4.f + cspsBt709PercentageYOffset;
 #endif
-    static const float cursorCspYOffset       = 10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP);
+#endif
+    static const float cursorCspYOffset             = 10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP);
 
 #ifdef _DEBUG
 
@@ -1150,7 +1288,8 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
     DrawChar(_0, float2(18, 0));
     DrawChar(_roundBracketClose, float2(19, 0));
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-  #if (OVERWRITE_SDR_GAMMA == GAMMA_22 \
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+    || OVERWRITE_SDR_GAMMA == GAMMA_22    \
     || OVERWRITE_SDR_GAMMA == GAMMA_24)
     DrawChar(_g,   float2(14, 0));
     DrawChar(_a,   float2(15, 0));
@@ -1159,7 +1298,8 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
     DrawChar(_a,   float2(18, 0));
     DrawChar(_2,   float2(20, 0));
     DrawChar(_dot, float2(21, 0));
-    #if (OVERWRITE_SDR_GAMMA == GAMMA_22)
+    #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+      || OVERWRITE_SDR_GAMMA == GAMMA_22)
       DrawChar(_2, float2(22, 0));
     #elif (OVERWRITE_SDR_GAMMA == GAMMA_24)
       DrawChar(_4, float2(22, 0));
@@ -1183,111 +1323,139 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
   #endif
 #endif
 
+#ifdef IS_HDR_CSP
+  #define SHOW_NITS_VALUES_DOT_X_OFFSET 14 // 5 figure number
+#else
+  #define SHOW_NITS_VALUES_DOT_X_OFFSET 12 // 3 figure number
+
+  #define SHOW_MAX_AVG_NITS_VALUES_PERCENT_X_OFFSET (SHOW_NITS_VALUES_DOT_X_OFFSET + 4)
+  #define SHOW_MIN_NITS_VALUES_PERCENT_X_OFFSET     (SHOW_NITS_VALUES_DOT_X_OFFSET + 7)
+#endif
+
     // max/avg/min Nits
     if (SHOW_NITS_VALUES)
     {
       // maxNits:
-      DrawChar(_m,     float2( 0, showNitsValuesYOffset0));
-      DrawChar(_a,     float2( 1, showNitsValuesYOffset0));
-      DrawChar(_x,     float2( 2, showNitsValuesYOffset0));
-      DrawChar(_N,     float2( 3, showNitsValuesYOffset0));
-      DrawChar(_i,     float2( 4, showNitsValuesYOffset0));
-      DrawChar(_t,     float2( 5, showNitsValuesYOffset0));
-      DrawChar(_s,     float2( 6, showNitsValuesYOffset0));
-      DrawChar(_colon, float2( 7, showNitsValuesYOffset0));
-      DrawChar(_dot,   float2(14, showNitsValuesYOffset0)); // five figure number
+      DrawChar(_m,       float2( 0,                                        showMaxNitsValueYOffset));
+      DrawChar(_a,       float2( 1,                                        showMaxNitsValueYOffset));
+      DrawChar(_x,       float2( 2,                                        showMaxNitsValueYOffset));
+      DrawChar(_N,       float2( 3,                                        showMaxNitsValueYOffset));
+      DrawChar(_i,       float2( 4,                                        showMaxNitsValueYOffset));
+      DrawChar(_t,       float2( 5,                                        showMaxNitsValueYOffset));
+      DrawChar(_s,       float2( 6,                                        showMaxNitsValueYOffset));
+      DrawChar(_colon,   float2( 7,                                        showMaxNitsValueYOffset));
+      DrawChar(_dot,     float2(SHOW_NITS_VALUES_DOT_X_OFFSET,             showMaxNitsValueYOffset));
+#ifndef IS_HDR_CSP
+      DrawChar(_percent, float2(SHOW_MAX_AVG_NITS_VALUES_PERCENT_X_OFFSET, showMaxNitsValueYOffset));
+#endif
       // avgNits:
-      DrawChar(_a,     float2( 0, showNitsValuesYOffset1));
-      DrawChar(_v,     float2( 1, showNitsValuesYOffset1));
-      DrawChar(_g,     float2( 2, showNitsValuesYOffset1));
-      DrawChar(_N,     float2( 3, showNitsValuesYOffset1));
-      DrawChar(_i,     float2( 4, showNitsValuesYOffset1));
-      DrawChar(_t,     float2( 5, showNitsValuesYOffset1));
-      DrawChar(_s,     float2( 6, showNitsValuesYOffset1));
-      DrawChar(_colon, float2( 7, showNitsValuesYOffset1));
-      DrawChar(_dot,   float2(14, showNitsValuesYOffset1)); // five figure number
+      DrawChar(_a,       float2( 0,                                        showAvgNitsValueYOffset));
+      DrawChar(_v,       float2( 1,                                        showAvgNitsValueYOffset));
+      DrawChar(_g,       float2( 2,                                        showAvgNitsValueYOffset));
+      DrawChar(_N,       float2( 3,                                        showAvgNitsValueYOffset));
+      DrawChar(_i,       float2( 4,                                        showAvgNitsValueYOffset));
+      DrawChar(_t,       float2( 5,                                        showAvgNitsValueYOffset));
+      DrawChar(_s,       float2( 6,                                        showAvgNitsValueYOffset));
+      DrawChar(_colon,   float2( 7,                                        showAvgNitsValueYOffset));
+      DrawChar(_dot,     float2(SHOW_NITS_VALUES_DOT_X_OFFSET,             showAvgNitsValueYOffset));
+#ifndef IS_HDR_CSP
+      DrawChar(_percent, float2(SHOW_MAX_AVG_NITS_VALUES_PERCENT_X_OFFSET, showAvgNitsValueYOffset));
+#endif
       // minNits:
-      DrawChar(_m,     float2( 0, showNitsValuesYOffset2));
-      DrawChar(_i,     float2( 1, showNitsValuesYOffset2));
-      DrawChar(_n,     float2( 2, showNitsValuesYOffset2));
-      DrawChar(_N,     float2( 3, showNitsValuesYOffset2));
-      DrawChar(_i,     float2( 4, showNitsValuesYOffset2));
-      DrawChar(_t,     float2( 5, showNitsValuesYOffset2));
-      DrawChar(_s,     float2( 6, showNitsValuesYOffset2));
-      DrawChar(_colon, float2( 7, showNitsValuesYOffset2));
-      DrawChar(_dot,   float2(14, showNitsValuesYOffset2)); // five figure number
+      DrawChar(_m,       float2( 0,                                    showMinNitsValueYOffset));
+      DrawChar(_i,       float2( 1,                                    showMinNitsValueYOffset));
+      DrawChar(_n,       float2( 2,                                    showMinNitsValueYOffset));
+      DrawChar(_N,       float2( 3,                                    showMinNitsValueYOffset));
+      DrawChar(_i,       float2( 4,                                    showMinNitsValueYOffset));
+      DrawChar(_t,       float2( 5,                                    showMinNitsValueYOffset));
+      DrawChar(_s,       float2( 6,                                    showMinNitsValueYOffset));
+      DrawChar(_colon,   float2( 7,                                    showMinNitsValueYOffset));
+      DrawChar(_dot,     float2(SHOW_NITS_VALUES_DOT_X_OFFSET,         showMinNitsValueYOffset));
+#ifndef IS_HDR_CSP
+      DrawChar(_percent, float2(SHOW_MIN_NITS_VALUES_PERCENT_X_OFFSET, showMinNitsValueYOffset));
+#endif
     }
+
+#ifdef IS_HDR_CSP
+  #define SHOW_NITS_FROM_CURSOR_DOT_X_OFFSET 17 // 5 figure number
+#else
+  #define SHOW_NITS_FROM_CURSOR_DOT_X_OFFSET 15 // 3 figure number
+#endif
 
     // cursorNits:
     if (SHOW_NITS_FROM_CURSOR)
     {
-      DrawChar(_c,     float2( 0, cursorNitsYOffset));
-      DrawChar(_u,     float2( 1, cursorNitsYOffset));
-      DrawChar(_r,     float2( 2, cursorNitsYOffset));
-      DrawChar(_s,     float2( 3, cursorNitsYOffset));
-      DrawChar(_o,     float2( 4, cursorNitsYOffset));
-      DrawChar(_r,     float2( 5, cursorNitsYOffset));
-      DrawChar(_N,     float2( 6, cursorNitsYOffset));
-      DrawChar(_i,     float2( 7, cursorNitsYOffset));
-      DrawChar(_t,     float2( 8, cursorNitsYOffset));
-      DrawChar(_s,     float2( 9, cursorNitsYOffset));
-      DrawChar(_colon, float2(10, cursorNitsYOffset));
-      DrawChar(_dot,   float2(17, cursorNitsYOffset)); // five figure number
+      DrawChar(_c,       float2( 0,                                     cursorNitsYOffset));
+      DrawChar(_u,       float2( 1,                                     cursorNitsYOffset));
+      DrawChar(_r,       float2( 2,                                     cursorNitsYOffset));
+      DrawChar(_s,       float2( 3,                                     cursorNitsYOffset));
+      DrawChar(_o,       float2( 4,                                     cursorNitsYOffset));
+      DrawChar(_r,       float2( 5,                                     cursorNitsYOffset));
+      DrawChar(_N,       float2( 6,                                     cursorNitsYOffset));
+      DrawChar(_i,       float2( 7,                                     cursorNitsYOffset));
+      DrawChar(_t,       float2( 8,                                     cursorNitsYOffset));
+      DrawChar(_s,       float2( 9,                                     cursorNitsYOffset));
+      DrawChar(_colon,   float2(10,                                     cursorNitsYOffset));
+      DrawChar(_dot,     float2(SHOW_NITS_FROM_CURSOR_DOT_X_OFFSET,     cursorNitsYOffset));
+#ifndef IS_HDR_CSP
+      DrawChar(_percent, float2(SHOW_NITS_FROM_CURSOR_DOT_X_OFFSET + 7, cursorNitsYOffset));
+#endif
     }
 
+#ifdef IS_HDR_CSP
     // CSPs
     if (SHOW_CSPS)
     {
       // BT.709:
-      DrawChar(_B,       float2( 0, cspsYOffset0));
-      DrawChar(_T,       float2( 1, cspsYOffset0));
-      DrawChar(_dot,     float2( 2, cspsYOffset0));
-      DrawChar(_7,       float2( 3, cspsYOffset0));
-      DrawChar(_0,       float2( 4, cspsYOffset0));
-      DrawChar(_9,       float2( 5, cspsYOffset0));
-      DrawChar(_colon,   float2( 6, cspsYOffset0));
-      DrawChar(_dot,     float2(12, cspsYOffset0));
-      DrawChar(_percent, float2(15, cspsYOffset0));
+      DrawChar(_B,       float2( 0, cspsBt709PercentageYOffset));
+      DrawChar(_T,       float2( 1, cspsBt709PercentageYOffset));
+      DrawChar(_dot,     float2( 2, cspsBt709PercentageYOffset));
+      DrawChar(_7,       float2( 3, cspsBt709PercentageYOffset));
+      DrawChar(_0,       float2( 4, cspsBt709PercentageYOffset));
+      DrawChar(_9,       float2( 5, cspsBt709PercentageYOffset));
+      DrawChar(_colon,   float2( 6, cspsBt709PercentageYOffset));
+      DrawChar(_dot,     float2(12, cspsBt709PercentageYOffset));
+      DrawChar(_percent, float2(15, cspsBt709PercentageYOffset));
       // DCI-P3:
-      DrawChar(_D,       float2( 0, cspsYOffset1));
-      DrawChar(_C,       float2( 1, cspsYOffset1));
-      DrawChar(_I,       float2( 2, cspsYOffset1));
-      DrawChar(_minus,   float2( 3, cspsYOffset1));
-      DrawChar(_P,       float2( 4, cspsYOffset1));
-      DrawChar(_3,       float2( 5, cspsYOffset1));
-      DrawChar(_colon,   float2( 6, cspsYOffset1));
-      DrawChar(_dot,     float2(12, cspsYOffset1));
-      DrawChar(_percent, float2(15, cspsYOffset1));
+      DrawChar(_D,       float2( 0, cspsDciP3PercentageYOffset));
+      DrawChar(_C,       float2( 1, cspsDciP3PercentageYOffset));
+      DrawChar(_I,       float2( 2, cspsDciP3PercentageYOffset));
+      DrawChar(_minus,   float2( 3, cspsDciP3PercentageYOffset));
+      DrawChar(_P,       float2( 4, cspsDciP3PercentageYOffset));
+      DrawChar(_3,       float2( 5, cspsDciP3PercentageYOffset));
+      DrawChar(_colon,   float2( 6, cspsDciP3PercentageYOffset));
+      DrawChar(_dot,     float2(12, cspsDciP3PercentageYOffset));
+      DrawChar(_percent, float2(15, cspsDciP3PercentageYOffset));
       // BT.2020:
-      DrawChar(_B,       float2( 0, cspsYOffset2));
-      DrawChar(_T,       float2( 1, cspsYOffset2));
-      DrawChar(_dot,     float2( 2, cspsYOffset2));
-      DrawChar(_2,       float2( 3, cspsYOffset2));
-      DrawChar(_0,       float2( 4, cspsYOffset2));
-      DrawChar(_2,       float2( 5, cspsYOffset2));
-      DrawChar(_0,       float2( 6, cspsYOffset2));
-      DrawChar(_colon,   float2( 7, cspsYOffset2));
-      DrawChar(_dot,     float2(12, cspsYOffset2));
-      DrawChar(_percent, float2(15, cspsYOffset2));
+      DrawChar(_B,       float2( 0, cspsBt2020PercentageYOffset));
+      DrawChar(_T,       float2( 1, cspsBt2020PercentageYOffset));
+      DrawChar(_dot,     float2( 2, cspsBt2020PercentageYOffset));
+      DrawChar(_2,       float2( 3, cspsBt2020PercentageYOffset));
+      DrawChar(_0,       float2( 4, cspsBt2020PercentageYOffset));
+      DrawChar(_2,       float2( 5, cspsBt2020PercentageYOffset));
+      DrawChar(_0,       float2( 6, cspsBt2020PercentageYOffset));
+      DrawChar(_colon,   float2( 7, cspsBt2020PercentageYOffset));
+      DrawChar(_dot,     float2(12, cspsBt2020PercentageYOffset));
+      DrawChar(_percent, float2(15, cspsBt2020PercentageYOffset));
 #ifdef IS_FLOAT_HDR_CSP
       // AP0:
-      DrawChar(_A,       float2( 0, cspsYOffset3));
-      DrawChar(_P,       float2( 1, cspsYOffset3));
-      DrawChar(_0,       float2( 2, cspsYOffset3));
-      DrawChar(_colon,   float2( 3, cspsYOffset3));
-      DrawChar(_dot,     float2(12, cspsYOffset3));
-      DrawChar(_percent, float2(15, cspsYOffset3));
+      DrawChar(_A,       float2( 0, cspsAp0PercentageYOffset));
+      DrawChar(_P,       float2( 1, cspsAp0PercentageYOffset));
+      DrawChar(_0,       float2( 2, cspsAp0PercentageYOffset));
+      DrawChar(_colon,   float2( 3, cspsAp0PercentageYOffset));
+      DrawChar(_dot,     float2(12, cspsAp0PercentageYOffset));
+      DrawChar(_percent, float2(15, cspsAp0PercentageYOffset));
       // invalid:
-      DrawChar(_i,       float2( 0, cspsYOffset4));
-      DrawChar(_n,       float2( 1, cspsYOffset4));
-      DrawChar(_v,       float2( 2, cspsYOffset4));
-      DrawChar(_a,       float2( 3, cspsYOffset4));
-      DrawChar(_l,       float2( 4, cspsYOffset4));
-      DrawChar(_i,       float2( 5, cspsYOffset4));
-      DrawChar(_d,       float2( 6, cspsYOffset4));
-      DrawChar(_colon,   float2( 7, cspsYOffset4));
-      DrawChar(_dot,     float2(12, cspsYOffset4));
-      DrawChar(_percent, float2(15, cspsYOffset4));
+      DrawChar(_i,       float2( 0, cspsInvalidPercentageYOffset));
+      DrawChar(_n,       float2( 1, cspsInvalidPercentageYOffset));
+      DrawChar(_v,       float2( 2, cspsInvalidPercentageYOffset));
+      DrawChar(_a,       float2( 3, cspsInvalidPercentageYOffset));
+      DrawChar(_l,       float2( 4, cspsInvalidPercentageYOffset));
+      DrawChar(_i,       float2( 5, cspsInvalidPercentageYOffset));
+      DrawChar(_d,       float2( 6, cspsInvalidPercentageYOffset));
+      DrawChar(_colon,   float2( 7, cspsInvalidPercentageYOffset));
+      DrawChar(_dot,     float2(12, cspsInvalidPercentageYOffset));
+      DrawChar(_percent, float2(15, cspsInvalidPercentageYOffset));
 #endif //IS_FLOAT_HDR_CSP
     }
 
@@ -1305,6 +1473,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
       DrawChar(_P,     float2(8, cursorCspYOffset));
       DrawChar(_colon, float2(9, cursorCspYOffset));
     }
+#endif
 
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW, 0.f);
   }
@@ -1342,16 +1511,83 @@ void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
 }
 
 
-#define showNitsValuesYOffset0  1.f + CSP_DESC_SPACING_MULTIPLIER
-#define showNitsValuesYOffset1  2.f + CSP_DESC_SPACING_MULTIPLIER
-#define showNitsValuesYOffset2  3.f + CSP_DESC_SPACING_MULTIPLIER
-#define cursorNitsYOffset0      4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS)
-#define cspsYOffset0            5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsYOffset1            6.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsYOffset2            7.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsYOffset3            8.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsYOffset4            9.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cursorCspYOffset       10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP)
+#define showMaxNitsValueYOffset       1.f + CSP_DESC_SPACING_MULTIPLIER
+#define showAvgNitsValueYOffset       2.f + CSP_DESC_SPACING_MULTIPLIER
+#define showMinNitsValueYOffset       3.f + CSP_DESC_SPACING_MULTIPLIER
+#define cursorNitsYOffset             4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS)
+#define cspsBt709PercentageYOffset    5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsDciP3PercentageYOffset    6.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsBt2020PercentageYOffset   7.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsAp0PercentageYOffset      8.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsInvalidPercentageYOffset  9.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cursorCspYOffset             10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP)
+
+
+#define DRAW_NUMBERS(SHOW_IT, NUMBER, FETCH_COORDS, DRAW_TYPE, DRAW_OFFSET)   \
+  if (SHOW_IT)                                                                \
+  {                                                                           \
+    precise float fullNumber = tex2Dfetch(StorageConsolidated, FETCH_COORDS); \
+    precise uint  curNumber  = NUMBER(fullNumber);                            \
+    DRAW_TYPE(curNumber, DRAW_OFFSET);                                        \
+  }                                                                           \
+  return
+
+#define DRAW_CURSOR_NITS(NUMBER, X_OFFSET, DRAW_TYPE)                         \
+  if (SHOW_NITS_FROM_CURSOR)                                                  \
+  {                                                                           \
+    precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION); \
+    precise uint  curNumber  = NUMBER(cursorNits);                            \
+    DRAW_TYPE(curNumber, float2(X_OFFSET, cursorNitsYOffset));                \
+  }                                                                           \
+  return
+
+
+#ifdef IS_HDR_CSP
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET0   9
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET1  10
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET2  11
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET3  12
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET4  13
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET5  15
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET6  16
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET7  17
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET8  18
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET9  19
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET10 20
+
+  #define DRAW_CURSOR_NITS_OFFSET0  12
+  #define DRAW_CURSOR_NITS_OFFSET1  13
+  #define DRAW_CURSOR_NITS_OFFSET2  14
+  #define DRAW_CURSOR_NITS_OFFSET3  15
+  #define DRAW_CURSOR_NITS_OFFSET4  16
+  #define DRAW_CURSOR_NITS_OFFSET5  18
+  #define DRAW_CURSOR_NITS_OFFSET6  19
+  #define DRAW_CURSOR_NITS_OFFSET7  20
+  #define DRAW_CURSOR_NITS_OFFSET8  21
+  #define DRAW_CURSOR_NITS_OFFSET9  22
+  #define DRAW_CURSOR_NITS_OFFSET10 23
+#else
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET2   9
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET3  10
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET4  11
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET5  13
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET6  14
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET7  15
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET8  16
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET9  17
+  #define DRAW_MAX_AVG_MIN_NITS_OFFSET10 18
+
+  #define DRAW_CURSOR_NITS_OFFSET2  12
+  #define DRAW_CURSOR_NITS_OFFSET3  13
+  #define DRAW_CURSOR_NITS_OFFSET4  14
+  #define DRAW_CURSOR_NITS_OFFSET5  16
+  #define DRAW_CURSOR_NITS_OFFSET6  17
+  #define DRAW_CURSOR_NITS_OFFSET7  18
+  #define DRAW_CURSOR_NITS_OFFSET8  19
+  #define DRAW_CURSOR_NITS_OFFSET9  20
+  #define DRAW_CURSOR_NITS_OFFSET10 21
+#endif
+
 
 void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 {
@@ -1359,647 +1595,278 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
   {
     // max/avg/min Nits
     // maxNits:
+#ifdef IS_HDR_CSP
     case 0:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = _5th(maxNitsShow);
-        DrawNumberAboveZero(curNumber, float2(9, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showMaxNitsValueYOffset));
     }
     case 1:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = _4th(maxNitsShow);
-        DrawNumberAboveZero(curNumber, float2(10, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showMaxNitsValueYOffset));
     }
+#endif
     case 2:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = _3rd(maxNitsShow);
-        DrawNumberAboveZero(curNumber, float2(11, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showMaxNitsValueYOffset));
     }
     case 3:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = _2nd(maxNitsShow);
-        DrawNumberAboveZero(curNumber, float2(12, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showMaxNitsValueYOffset));
     }
     case 4:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = _1st(maxNitsShow);
-        DrawChar(curNumber, float2(13, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showMaxNitsValueYOffset));
     }
     case 5:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = d1st(maxNitsShow);
-        DrawChar(curNumber, float2(15, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showMaxNitsValueYOffset));
     }
     case 6:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = d2nd(maxNitsShow);
-        DrawChar(curNumber, float2(16, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showMaxNitsValueYOffset));
     }
     case 7:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float maxNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MAX_NITS);
-        precise uint  curNumber   = d3rd(maxNitsShow);
-        DrawChar(curNumber, float2(17, showNitsValuesYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showMaxNitsValueYOffset));
     }
     // avgNits:
+#ifdef IS_HDR_CSP
     case 8:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = _5th(avgNitsShow);
-        DrawNumberAboveZero(curNumber, float2(9, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showAvgNitsValueYOffset));
     }
     case 9:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = _4th(avgNitsShow);
-        DrawNumberAboveZero(curNumber, float2(10, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showAvgNitsValueYOffset));
     }
+#endif
     case 10:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = _3rd(avgNitsShow);
-        DrawNumberAboveZero(curNumber, float2(11, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showAvgNitsValueYOffset));
     }
     case 11:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = _2nd(avgNitsShow);
-        DrawNumberAboveZero(curNumber, float2(12, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showAvgNitsValueYOffset));
     }
     case 12:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = _1st(avgNitsShow);
-        DrawChar(curNumber, float2(13, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showAvgNitsValueYOffset));
     }
     case 13:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = d1st(avgNitsShow);
-        DrawChar(curNumber, float2(15, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showAvgNitsValueYOffset));
     }
     case 14:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = d2nd(avgNitsShow);
-        DrawChar(curNumber, float2(16, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showAvgNitsValueYOffset));
     }
     case 15:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float avgNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_AVG_NITS);
-        precise uint  curNumber   = d2nd(avgNitsShow);
-        DrawChar(curNumber, float2(17, showNitsValuesYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showAvgNitsValueYOffset));
     }
+#ifdef IS_HDR_CSP
     // minNits:
     case 16:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = _5th(minNitsShow);
-        DrawNumberAboveZero(curNumber, float2(9, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0,  showMinNitsValueYOffset));
     }
     case 17:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = _4th(minNitsShow);
-        DrawNumberAboveZero(curNumber, float2(10, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1,  showMinNitsValueYOffset));
     }
+#endif
     case 18:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = _3rd(minNitsShow);
-        DrawNumberAboveZero(curNumber, float2(11, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2,  showMinNitsValueYOffset));
     }
     case 19:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = _2nd(minNitsShow);
-        DrawNumberAboveZero(curNumber, float2(12, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3,  showMinNitsValueYOffset));
     }
     case 20:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = _1st(minNitsShow);
-        DrawChar(curNumber, float2(13, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4,  showMinNitsValueYOffset));
     }
     case 21:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d1st(minNitsShow);
-        DrawChar(curNumber, float2(15, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5,  showMinNitsValueYOffset));
     }
     case 22:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d2nd(minNitsShow);
-        DrawChar(curNumber, float2(16, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6,  showMinNitsValueYOffset));
     }
     case 23:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d3rd(minNitsShow);
-        DrawChar(curNumber, float2(17, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7,  showMinNitsValueYOffset));
     }
     case 24:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d4th(minNitsShow);
-        DrawChar(curNumber, float2(18, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d4th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET8,  showMinNitsValueYOffset));
     }
     case 25:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d5th(minNitsShow);
-        DrawChar(curNumber, float2(19, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d5th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET9,  showMinNitsValueYOffset));
     }
     case 26:
     {
-      if (SHOW_NITS_VALUES)
-      {
-        precise float minNitsShow = tex2Dfetch(StorageConsolidated, COORDS_SHOW_MIN_NITS);
-        precise uint  curNumber   = d6th(minNitsShow);
-        DrawChar(curNumber, float2(20, showNitsValuesYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_NITS_VALUES, d6th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET10, showMinNitsValueYOffset));
     }
     // cursorNits:
+#ifdef IS_HDR_CSP
     case 27:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = _5th(cursorNits);
-        DrawNumberAboveZero(curNumber, float2(12, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(_5th, DRAW_CURSOR_NITS_OFFSET0, DrawNumberAboveZero);
     }
     case 28:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = _4th(cursorNits);
-        DrawNumberAboveZero(curNumber, float2(13, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(_4th, DRAW_CURSOR_NITS_OFFSET1, DrawNumberAboveZero);
     }
+#endif
     case 29:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = _3rd(cursorNits);
-        DrawNumberAboveZero(curNumber, float2(14, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(_3rd, DRAW_CURSOR_NITS_OFFSET2, DrawNumberAboveZero);
     }
     case 30:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = _2nd(cursorNits);
-        DrawNumberAboveZero(curNumber, float2(15, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(_2nd, DRAW_CURSOR_NITS_OFFSET3, DrawNumberAboveZero);
     }
     case 31:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = _1st(cursorNits);
-        DrawChar(curNumber, float2(16, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(_1st, DRAW_CURSOR_NITS_OFFSET4, DrawChar);
     }
     case 32:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = d1st(cursorNits);
-        DrawChar(curNumber, float2(18, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d1st, DRAW_CURSOR_NITS_OFFSET5, DrawChar);
     }
     case 33:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = d2nd(cursorNits);
-        DrawChar(curNumber, float2(19, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d2nd, DRAW_CURSOR_NITS_OFFSET6, DrawChar);
     }
     case 34:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = d3rd(cursorNits);
-        DrawChar(curNumber, float2(20, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d3rd, DRAW_CURSOR_NITS_OFFSET7, DrawChar);
     }
     case 35:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber = d4th(cursorNits);
-        DrawChar(curNumber, float2(21, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d4th, DRAW_CURSOR_NITS_OFFSET8, DrawChar);
     }
     case 36:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = d5th(cursorNits);
-        DrawChar(curNumber, float2(22, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d5th, DRAW_CURSOR_NITS_OFFSET9, DrawChar);
     }
     case 37:
     {
-      if (SHOW_NITS_FROM_CURSOR)
-      {
-        precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION).r;
-        precise uint  curNumber  = d6th(cursorNits);
-        DrawChar(curNumber, float2(23, cursorNitsYOffset0));
-      }
-      return;
+      DRAW_CURSOR_NITS(d6th, DRAW_CURSOR_NITS_OFFSET10, DrawChar);
     }
 
 
+#ifdef IS_HDR_CSP
     // show CSPs
     // BT.709:
     case 38:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-        precise uint  curNumber       = _3rd(precentageBt709);
-        DrawNumberAboveZero(curNumber, float2(9, cspsYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _3rd, COORDS_SHOW_PERCENTAGE_BT709, DrawNumberAboveZero, float2( 9, cspsBt709PercentageYOffset));
     }
     case 39:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-        precise uint  curNumber       = _2nd(precentageBt709);
-        DrawNumberAboveZero(curNumber, float2(10, cspsYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _2nd, COORDS_SHOW_PERCENTAGE_BT709, DrawNumberAboveZero, float2(10, cspsBt709PercentageYOffset));
     }
     case 40:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-        precise uint  curNumber       = _1st(precentageBt709);
-        DrawChar(curNumber, float2(11, cspsYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _1st, COORDS_SHOW_PERCENTAGE_BT709, DrawChar, float2(11, cspsBt709PercentageYOffset));
     }
     case 41:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-        precise uint  curNumber       = d1st(precentageBt709);
-        DrawChar(curNumber, float2(13, cspsYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d1st, COORDS_SHOW_PERCENTAGE_BT709, DrawChar, float2(13, cspsBt709PercentageYOffset));
     }
     case 42:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt709 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-        precise uint  curNumber       = d2nd(precentageBt709);
-        DrawChar(curNumber, float2(14, cspsYOffset0));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d2nd, COORDS_SHOW_PERCENTAGE_BT709, DrawChar, float2(14, cspsBt709PercentageYOffset));
     }
     // DCI-P3:
     case 43:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-        precise uint  curNumber       = _3rd(precentageDciP3);
-        DrawNumberAboveZero(curNumber, float2(9, cspsYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _3rd, COORDS_SHOW_PERCENTAGE_DCI_P3, DrawNumberAboveZero, float2( 9, cspsDciP3PercentageYOffset));
     }
     case 44:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-        precise uint  curNumber       = _2nd(precentageDciP3);
-        DrawNumberAboveZero(curNumber, float2(10, cspsYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _2nd, COORDS_SHOW_PERCENTAGE_DCI_P3, DrawNumberAboveZero, float2(10, cspsDciP3PercentageYOffset));
     }
     case 45:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-        precise uint  curNumber       = _1st(precentageDciP3);
-        DrawChar(curNumber, float2(11, cspsYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _1st, COORDS_SHOW_PERCENTAGE_DCI_P3, DrawChar, float2(11, cspsDciP3PercentageYOffset));
     }
     case 46:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-        precise uint  curNumber       = d1st(precentageDciP3);
-        DrawChar(curNumber, float2(13, cspsYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d1st, COORDS_SHOW_PERCENTAGE_DCI_P3, DrawChar, float2(13, cspsDciP3PercentageYOffset));
     }
     case 47:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageDciP3 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-        precise uint  curNumber       = d2nd(precentageDciP3);
-        DrawChar(curNumber, float2(14, cspsYOffset1));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d2nd, COORDS_SHOW_PERCENTAGE_DCI_P3, DrawChar, float2(14, cspsDciP3PercentageYOffset));
     }
     // BT.2020:
     case 48:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-        precise uint  curNumber        = _3rd(precentageBt2020);
-        DrawNumberAboveZero(curNumber, float2(9, cspsYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _3rd, COORDS_SHOW_PERCENTAGE_BT2020, DrawNumberAboveZero, float2( 9, cspsBt2020PercentageYOffset));
     }
     case 49:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-        precise uint  curNumber        = _2nd(precentageBt2020);
-        DrawNumberAboveZero(curNumber, float2(10, cspsYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _2nd, COORDS_SHOW_PERCENTAGE_BT2020, DrawNumberAboveZero, float2(10, cspsBt2020PercentageYOffset));
     }
     case 50:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-        precise uint  curNumber        = _1st(precentageBt2020);
-        DrawChar(curNumber, float2(11, cspsYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _1st, COORDS_SHOW_PERCENTAGE_BT2020, DrawChar, float2(11, cspsBt2020PercentageYOffset));
     }
     case 51:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-        precise uint  curNumber        = d1st(precentageBt2020);
-        DrawChar(curNumber, float2(13, cspsYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d1st, COORDS_SHOW_PERCENTAGE_BT2020, DrawChar, float2(13, cspsBt2020PercentageYOffset));
     }
     case 52:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageBt2020 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-        precise uint  curNumber        = d2nd(precentageBt2020);
-        DrawChar(curNumber, float2(14, cspsYOffset2));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d2nd, COORDS_SHOW_PERCENTAGE_BT2020, DrawChar, float2(14, cspsBt2020PercentageYOffset));
     }
 #ifdef IS_FLOAT_HDR_CSP
     // AP0:
     case 53:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-        precise uint  curNumber     = _3rd(precentageAp0);
-        DrawNumberAboveZero(curNumber, float2(9, cspsYOffset3));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _3rd, COORDS_SHOW_PERCENTAGE_AP0, DrawNumberAboveZero, float2( 9, cspsAp0PercentageYOffset));
     }
     case 54:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-        precise uint  curNumber     = _2nd(precentageAp0);
-        DrawNumberAboveZero(curNumber, float2(10, cspsYOffset3));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _2nd, COORDS_SHOW_PERCENTAGE_AP0, DrawNumberAboveZero, float2(10, cspsAp0PercentageYOffset));
     }
     case 55:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-        precise uint  curNumber     = _1st(precentageAp0);
-        DrawChar(curNumber, float2(11, cspsYOffset3));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _1st, COORDS_SHOW_PERCENTAGE_AP0, DrawChar, float2(11, cspsAp0PercentageYOffset));
     }
     case 56:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-        precise uint  curNumber     = d1st(precentageAp0);
-        DrawChar(curNumber, float2(13, cspsYOffset3));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d1st, COORDS_SHOW_PERCENTAGE_AP0, DrawChar, float2(13, cspsAp0PercentageYOffset));
     }
     case 57:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageAp0 = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-        precise uint  curNumber     = d2nd(precentageAp0);
-        DrawChar(curNumber, float2(14, cspsYOffset3));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d2nd, COORDS_SHOW_PERCENTAGE_AP0, DrawChar, float2(14, cspsAp0PercentageYOffset));
     }
     // invalid:
     case 58:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-        precise uint  curNumber         = _3rd(precentageInvalid);
-        DrawNumberAboveZero(curNumber, float2(9, cspsYOffset4));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _3rd, COORDS_SHOW_PERCENTAGE_INVALID, DrawNumberAboveZero, float2( 9, cspsInvalidPercentageYOffset));
     }
     case 59:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-        precise uint  curNumber         = _2nd(precentageInvalid);
-        DrawNumberAboveZero(curNumber, float2(10, cspsYOffset4));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _2nd, COORDS_SHOW_PERCENTAGE_INVALID, DrawNumberAboveZero, float2(10, cspsInvalidPercentageYOffset));
     }
     case 60:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-        precise uint  curNumber         = _1st(precentageInvalid);
-        DrawChar(curNumber, float2(11, cspsYOffset4));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, _1st, COORDS_SHOW_PERCENTAGE_INVALID, DrawChar, float2(11, cspsInvalidPercentageYOffset));
     }
     case 61:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-        precise uint  curNumber         = d1st(precentageInvalid);
-        DrawChar(curNumber, float2(13, cspsYOffset4));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d1st, COORDS_SHOW_PERCENTAGE_INVALID, DrawChar, float2(13, cspsInvalidPercentageYOffset));
     }
     case 62:
     {
-      if (SHOW_CSPS)
-      {
-        precise float precentageInvalid = tex2Dfetch(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-        precise uint  curNumber         = d2nd(precentageInvalid);
-        DrawChar(curNumber, float2(14, cspsYOffset4));
-      }
-      return;
+      DRAW_NUMBERS(SHOW_CSPS, d2nd, COORDS_SHOW_PERCENTAGE_INVALID, DrawChar, float2(14, cspsInvalidPercentageYOffset));
     }
 #endif
     //cursorCSP:
@@ -2009,18 +1876,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(11, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_B, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_D, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2029,7 +1898,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawChar(_A, currentCursorCspOffset);
           return;
@@ -2049,18 +1918,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(12, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_T, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_C, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2069,7 +1940,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawChar(_P, currentCursorCspOffset);
           return;
@@ -2089,18 +1960,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(13, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_dot, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_I, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2109,7 +1982,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawChar(_0, currentCursorCspOffset);
           return;
@@ -2129,18 +2002,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(14, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_7, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_minus, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2149,7 +2024,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawSpace(currentCursorCspOffset);
           return;
@@ -2169,18 +2044,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(15, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_0, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_P, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2189,7 +2066,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawSpace(currentCursorCspOffset);
           return;
@@ -2209,18 +2086,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(16, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709)
         {
           DrawChar(_9, currentCursorCspOffset);
           return;
         }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        else if (mousePosCsp == IS_CSP_DCI_P3)
         {
           DrawChar(_3, currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2229,7 +2108,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
+        else if (mousePosCsp == IS_CSP_AP0)
         {
           DrawSpace(currentCursorCspOffset);
           return;
@@ -2249,18 +2128,20 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       {
         float2 currentCursorCspOffset = float2(17, cursorCspYOffset);
 
-        if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT709)
-        {
-          DrawSpace(currentCursorCspOffset);
-          return;
-        }
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_DCI_P3)
+        uint mousePosCsp = uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f);
+
+        if (mousePosCsp == IS_CSP_BT709
+         || mousePosCsp == IS_CSP_DCI_P3
+#ifdef IS_FLOAT_HDR_CSP
+         || mousePosCsp == IS_CSP_AP0
+#endif
+        )
         {
           DrawSpace(currentCursorCspOffset);
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_BT2020)
+        else if (mousePosCsp == IS_CSP_BT2020)
 #else
         else
 #endif
@@ -2269,11 +2150,6 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
           return;
         }
 #ifdef IS_FLOAT_HDR_CSP
-        else if (uint(tex2Dfetch(SamplerCsps, MOUSE_POSITION).r * 255.f) == IS_CSP_AP0)
-        {
-          DrawSpace(currentCursorCspOffset);
-          return;
-        }
         else //invalid
         {
           DrawChar(_d, currentCursorCspOffset);
@@ -2283,21 +2159,22 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
       }
       return;
     }
+#endif
     default:
       return;
   }
   return;
 }
 
-#undef showNitsValuesYOffset0
-#undef showNitsValuesYOffset1
-#undef showNitsValuesYOffset2
-#undef cursorNitsYOffset0
-#undef cspsYOffset0
-#undef cspsYOffset1
-#undef cspsYOffset2
-#undef cspsYOffset3
-#undef cspsYOffset4
+#undef showMaxNitsValueYOffset
+#undef showAvgNitsValueYOffset
+#undef showMinNitsValueYOffset
+#undef cursorNitsYOffset
+#undef cspsBt709PercentageYOffset
+#undef cspsDciP3PercentageYOffset
+#undef cspsBt2020PercentageYOffset
+#undef cspsAp0PercentageYOffset
+#undef cspsInvalidPercentageYOffset
 #undef cursorCspYOffset
 
 
@@ -2500,15 +2377,20 @@ void VS_PrepareHdrAnalysis(
 
     currentOverlayDimensions.y += uint(max(SHOW_NITS_VALUES
                                          + SHOW_NITS_FROM_CURSOR
+#ifdef IS_HDR_CSP
                                          + SHOW_CSPS
                                          + SHOW_CSP_FROM_CURSOR
+#endif
                                          - 1, 0)
                                      * charSize.y * SPACING_MULTIPLIER);
 
     if (SHOW_NITS_VALUES
      || SHOW_NITS_FROM_CURSOR
+#ifdef IS_HDR_CSP
      || SHOW_CSPS
-     || SHOW_CSP_FROM_CURSOR)
+     || SHOW_CSP_FROM_CURSOR
+#endif
+    )
     {
       currentOverlayDimensions.y += charSize.y * CSP_DESC_SPACING_MULTIPLIER;
     }
@@ -2530,7 +2412,11 @@ void ExtendedReinhardTmo(
   inout float3 Colour,
   in    float  WhitePoint)
 {
+#ifdef IS_HDR_CSP
   float maxWhite = 10000.f / WhitePoint;
+#else
+  float maxWhite = 100.f / WhitePoint;
+#endif
 
   Colour = (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
          / (1.f + Colour);
@@ -2542,7 +2428,9 @@ void MergeOverlay(
   in    float  OverlayBrightness,
   in    float  Alpha)
 {
+#ifdef IS_HDR_CSP
   Overlay = Csp::Mat::Bt709To::Bt2020(Overlay);
+#endif
 
   // tone map pixels below the overlay area
   //
@@ -2553,16 +2441,27 @@ void MergeOverlay(
 
   adjustFactor = OverlayBrightness / 80.f;
 
-  Output.rgb = Csp::Mat::Bt709To::Bt2020(Output.rgb / adjustFactor);
+  Output = Csp::Mat::Bt709To::Bt2020(Output / adjustFactor);
 
   // safety clamp colours outside of BT.2020
-  Output.rgb = max(Output.rgb, 0.f);
+  Output = max(Output, 0.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   adjustFactor = OverlayBrightness / 10000.f;
 
-  Output =  Csp::Trc::PqTo::Linear(Output);
+  Output = Csp::Trc::PqTo::Linear(Output);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  adjustFactor = OverlayBrightness / 100.f;
+
+  Output = DECODE_SDR(Output);
+
+#endif
+
+#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB)
+
   Output /= adjustFactor;
 
 #endif
@@ -2590,6 +2489,11 @@ void MergeOverlay(
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   Output = Csp::Trc::LinearTo::Pq(Output);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  Output = ENCODE_SDR(Output);
+
 #endif
 }
 
@@ -2613,27 +2517,33 @@ void PS_HdrAnalysis(
 
   Output = tex2Dfetch(ReShade::BackBuffer, pureCoordAsInt);
 
-  if (SHOW_CSP_MAP
-   || SHOW_HEATMAP
+  if (SHOW_HEATMAP
+#ifdef IS_HDR_CSP
+   || SHOW_CSP_MAP
+#endif
    || HIGHLIGHT_NIT_RANGE
    || DRAW_ABOVE_NITS_AS_BLACK
    || DRAW_BELOW_NITS_AS_BLACK)
   {
     const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
 
-    if (SHOW_CSP_MAP)
-    {
-      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt) * 255.f, pixelNits);
-    }
-
     if (SHOW_HEATMAP)
     {
       Output.rgb = HeatmapRgbValues(pixelNits,
+#ifdef IS_HDR_CSP
                                     HEATMAP_CUTOFF_POINT,
+#endif
                                     false);
 
       Output.rgb = MapBt709IntoCurrentCsp(Output.rgb, HEATMAP_BRIGHTNESS);
     }
+
+#ifdef IS_HDR_CSP
+    if (SHOW_CSP_MAP)
+    {
+      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt).x * 255.f, pixelNits);
+    }
+#endif
 
     if (HIGHLIGHT_NIT_RANGE
      && pixelNits >= HIGHLIGHT_NIT_RANGE_START_POINT
@@ -2860,7 +2770,11 @@ technique lilium__make_overlay_bg_redraw
 
 technique lilium__hdr_analysis
 <
+#ifdef IS_HDR_CSP
   ui_label = "Lilium's HDR analysis";
+#else
+  ui_label = "Lilium's SDR analysis";
+#endif
 >
 {
 
@@ -2948,6 +2862,7 @@ technique lilium__hdr_analysis
 
 
 //CSP
+#ifdef IS_HDR_CSP
   pass PS_CalcCsps
   {
     VertexShader = VS_PostProcess;
@@ -2968,6 +2883,7 @@ technique lilium__hdr_analysis
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+#endif
 
 
   pass CS_CopyShowValues
@@ -2995,7 +2911,11 @@ technique lilium__hdr_analysis
   pass CS_DrawValuesToOverlay
   {
     ComputeShader = CS_DrawValuesToOverlay <1, 1>;
+#ifdef IS_HDR_CSP
     DispatchSizeX = 70;
+#else
+    DispatchSizeX = 38;
+#endif
     DispatchSizeY = 1;
   }
 
@@ -3012,7 +2932,11 @@ ERROR_STUFF
 
 technique lilium__hdr_analysis
 <
+#ifdef IS_HDR_CSP
   ui_label = "Lilium's HDR analysis (ERROR)";
+#else
+  ui_label = "Lilium's SDR analysis (ERROR)";
+#endif
 >
 CS_ERROR
 
