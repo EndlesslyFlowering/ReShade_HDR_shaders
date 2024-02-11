@@ -641,7 +641,7 @@ precise uniform float2 TEST_THINGY_xy
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 1.f;
-  ui_step     = 0.0001f;
+  ui_step     = 0.000001f;
 > = 0.f;
 
 precise uniform float TEST_THINGY_Y
@@ -735,7 +735,7 @@ void PS_Testy(
     {
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 125.f);
+      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 80.f);
       Output = float4(Csp::Mat::XYZTo::Bt709(XYZ), 1.f);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
       precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 10000.f);
