@@ -1405,6 +1405,263 @@ namespace Csp
   } //ICtCp
 
 
+  namespace Jzazbz
+  {
+
+// https://doi.org/10.1364/OE.25.015131
+
+    static const float b  =   1.15f;
+    static const float g  =   0.66f;
+    static const float p  = 134.034375f; // 1.7 * 2523 / 2^5 (2523 / 2^5 = 2523 / 4096 * 128, which is the PQ constant m2)
+    static const float d  =  -0.56f;
+    static const float d0 =   0.000000000016295499671858948431690805591642856597900390625f; // 1.6295499532821566 * 10^-11
+
+    static const float bMinus1 =  0.15f;
+    static const float gMinus1 = -0.34f;
+
+    static const float dPlus1 = 0.44f;
+
+    static const float _1_div_p = 0.0074607725255191326141357421875f;
+
+    static const float3x3 NonLinearXYAndLinearZToJzazbzLms = float3x3(
+       0.41478972f, 0.579999f, 0.014648f,
+      -0.20151f,    1.120649f, 0.0531008f,
+      -0.0166008f,  0.2648f,   0.6684799f);
+
+    static const float3x3 JzazbzLmsToNonLinearXYAndLinearZ = float3x3(
+       1.92422640323638916015625f,    -1.00479233264923095703125f,  0.03765140473842620849609375f,
+       0.3503167629241943359375f,      0.7264811992645263671875f,  -0.065384425222873687744140625f,
+      -0.09098280966281890869140625f, -0.31272828578948974609375f,  1.522766590118408203125f);
+
+    static const float3x3 PqJzazbzLmsToIzazbz = float3x3(
+      0.5f,       0.5f,       0.f,
+      3.524f,    -4.066708f,  0.542708f,
+      0.199076f,  1.096799f, -1.295875f);
+
+    static const float3x3 IzazbzToPqJzazbzLms = float3x3(
+      1.f,  0.13860504329204559326171875f,   0.058047316968441009521484375f,
+      1.f, -0.13860504329204559326171875f,  -0.058047316968441009521484375f,
+      1.f, -0.096019245684146881103515625f, -0.81189191341400146484375f);
+
+    namespace XYZTo
+    {
+      //XYZ->X'Y'Z
+      float3 NonLinearXYAndLinearZ(float3 XYZ)
+      {
+        float2 val0 = float2(b * XYZ.x,
+                             g * XYZ.y);
+
+        float2 val1 = float2(bMinus1 * XYZ.z,
+                             gMinus1 * XYZ.x);
+
+        return float3(val0 - val1, XYZ.z);
+      }
+    } //XYZTo
+
+    namespace NonLinearXYAndLinearZTo
+    {
+      //X'Y'Z->XYZ
+      float3 XYZ(float3 NonLinearXYAndLinearZ)
+      {
+        float X = (NonLinearXYAndLinearZ.x + (bMinus1 * NonLinearXYAndLinearZ.z))
+                / b;
+
+        float Y = (NonLinearXYAndLinearZ.y + (gMinus1 * X))
+                / g;
+
+        return float3(X, Y, NonLinearXYAndLinearZ.z);
+      }
+
+      //X'Y'Z->LMS (Jzazbz variant)
+      float3 JzazbzLms(float3 NonLinearXYAndLinearZ)
+      {
+        return mul(NonLinearXYAndLinearZToJzazbzLms, NonLinearXYAndLinearZ);
+      }
+    } //NonLinearXYAndLinearZTo
+
+    namespace JzazbzLmsTo
+    {
+      //LMS (Jzazbz variant)->X'Y'Z
+      float3 NonLinearXYAndLinearZ(float3 JzazbzLms)
+      {
+        return mul(JzazbzLmsToNonLinearXYAndLinearZ, JzazbzLms);
+      }
+
+      //LMS (Jzazbz variant)->L'M'S' (Jzazbz variant)
+      float3 PqJzazbzLms(float3 JzazbzLms)
+      {
+        float3 powJzazbzLms = pow(JzazbzLms, PQ_m1);
+
+        float3 numerator    = PQ_c1 + PQ_c2 * powJzazbzLms;
+
+        float3 denominator  = 1.f   + PQ_c3 * powJzazbzLms;
+
+        return pow(numerator / denominator, p);
+      }
+    } //JzazbzLmsTo
+
+    namespace PqJzazbzLmsTo
+    {
+      //L'M'S' (Jzazbz variant)->Izazbz
+      float3 Izazbz(float3 PqJzazbzLms)
+      {
+        return mul(PqJzazbzLmsToIzazbz, PqJzazbzLms);
+      }
+
+      //L'M'S' (Jzazbz variant)->LMS (Jzazbz variant)
+      float3 JzazbzLms(float3 PqJzazbzLms)
+      {
+        float3 powPqJzazbzLms = pow(PqJzazbzLms, _1_div_p);
+
+        float3 numerator      = PQ_c1 - powPqJzazbzLms;
+
+        float3 denominator    = PQ_c3 * powPqJzazbzLms - PQ_c2;
+
+        return pow(numerator / denominator, _1_div_PQ_m1);
+      }
+    } //PqJzazbzLmsTo
+
+    namespace IzazbzTo
+    {
+      //Izazbz->Jzazbz
+      float3 Jzazbz(float3 Izazbz)
+      {
+        float numerator   = dPlus1 * Izazbz.x;
+
+        float denominator = 1.f + (d * Izazbz.x);
+
+        float Jz = (numerator / denominator) - d0;
+
+        return float3(Jz, Izazbz.yz);
+      }
+
+      //Izazbz->L'M'S' (Jzazbz variant)
+      float3 PqJzazbzLms(float3 Izazbz)
+      {
+        return mul(IzazbzToPqJzazbzLms, Izazbz);
+      }
+    } //IzazbzTo
+
+    namespace JzazbzTo
+    {
+      //Jzazbz->Izazbz
+      float3 Izazbz(float3 Jzazbz)
+      {
+        float numerator   = Jzazbz.x + d0;
+
+        float denominator = dPlus1 - (d * (Jzazbz.x + d0));
+
+        float Iz = numerator / denominator;
+
+        return float3(Iz, Jzazbz.yz);
+      }
+    } //JzazbzTo
+
+    namespace XYZTo
+    {
+      //XYZ->Jzazbz
+      float3 Jzazbz(float3 XYZ)
+      {
+        float3 NonLinearXYAndLinearZ = XYZTo::NonLinearXYAndLinearZ(XYZ);
+
+        float3 JzazbzLms             = NonLinearXYAndLinearZTo::JzazbzLms(NonLinearXYAndLinearZ);
+
+        float3 PqJzazbzLms           = JzazbzLmsTo::PqJzazbzLms(JzazbzLms);
+
+        float3 Izazbz                = PqJzazbzLmsTo::Izazbz(PqJzazbzLms);
+
+        //Jzazbz
+        return IzazbzTo::Jzazbz(Izazbz);
+      }
+    } //XYZTo
+
+    namespace JzazbzTo
+    {
+      //Jzazbz->XYZ
+      float3 XYZ(float3 Jzazbz)
+      {
+        float3 Izazbz                = JzazbzTo::Izazbz(Jzazbz);
+
+        float3 PqJzazbzLms           = IzazbzTo::PqJzazbzLms(Izazbz);
+
+        float3 JzazbzLms             = PqJzazbzLmsTo::JzazbzLms(PqJzazbzLms);
+
+        float3 NonLinearXYAndLinearZ = JzazbzLmsTo::NonLinearXYAndLinearZ(JzazbzLms);
+
+        //XYZ
+        return NonLinearXYAndLinearZTo::XYZ(NonLinearXYAndLinearZ);
+      }
+    } //JzazbzTo
+
+    namespace Bt709To
+    {
+      //RGB BT.709->Jzazbz
+      float3 Jzazbz(float3 Rgb)
+      {
+        float3 XYZ = Csp::Mat::Bt709To::XYZ(Rgb);
+
+        //Jzazbz
+        return XYZTo::Jzazbz(XYZ);
+      }
+    } //Bt709To
+
+    namespace DciP3To
+    {
+      //RGB DCI-P3->Jzazbz
+      float3 Jzazbz(float3 Rgb)
+      {
+        float3 XYZ = Csp::Mat::DciP3To::XYZ(Rgb);
+
+        //Jzazbz
+        return XYZTo::Jzazbz(XYZ);
+      }
+    } //DciP3To
+
+    namespace Bt2020To
+    {
+      //RGB BT.2020->Jzazbz
+      float3 Jzazbz(float3 Rgb)
+      {
+        float3 XYZ = Csp::Mat::Bt2020To::XYZ(Rgb);
+
+        //Jzazbz
+        return XYZTo::Jzazbz(XYZ);
+      }
+    } //Bt2020To
+
+    namespace JzazbzTo
+    {
+      //Jzazbz->RGB BT.709
+      float3 Bt709(float3 Jzazbz)
+      {
+        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+
+        //RGB BT.709
+        return Csp::Mat::XYZTo::Bt709(XYZ);
+      }
+
+      //Jzazbz->RGB DCI-P3
+      float3 DciP3(float3 Jzazbz)
+      {
+        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+
+        //RGB DCI-P3
+        return Csp::Mat::XYZTo::DciP3(XYZ);
+      }
+
+      //Jzazbz->RGB BT.2020
+      float3 Bt2020(float3 Jzazbz)
+      {
+        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+
+        //RGB BT.2020
+        return Csp::Mat::XYZTo::Bt2020(XYZ);
+      }
+    } //JzazbzTo
+
+  }
+
+
   namespace OkLab
   {
 
