@@ -672,10 +672,10 @@ namespace Itmos
 
         float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
-        //to L'M'S'
-        LMS = Csp::Ictcp::Mat::IctcpTo::PqLms(float3(I2, min_I * Ct1, min_I * Cp1));
         //to LMS
-        LMS = Csp::Trc::PqTo::Linear(LMS);
+        LMS = Csp::Ictcp::IctcpTo::Lms(float3(I2,
+                                              min_I * Ct1,
+                                              min_I * Cp1));
         //to RGB
         return max(mul(LmsToRgb, LMS), 0.f);
       }

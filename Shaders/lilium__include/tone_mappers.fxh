@@ -194,9 +194,9 @@ namespace Tmos
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
         //to L'M'S'
-        Colour = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
+        float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Colour);
 
-        float i1 = 0.5f * Colour.x + 0.5f * Colour.y;
+        float i1 = 0.5f * pqLms.x + 0.5f * pqLms.y;
         //E1
         float i2 = (i1 - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
         //float i2 = i1 / SrcMaxPq;
@@ -221,8 +221,8 @@ namespace Tmos
         //i2 *= SrcMaxPq;
 
         float3 ictcp = float3(i2,
-                              dot(Colour, PqLmsToIctcp[1]),
-                              dot(Colour, PqLmsToIctcp[2]));
+                              dot(pqLms, PqLmsToIctcp[1]),
+                              dot(pqLms, PqLmsToIctcp[2]));
 
         if (EnableBlowingOutHighlights)
         {
@@ -232,12 +232,8 @@ namespace Tmos
                          ictcp.yz * minI);
         }
 
-        //to L'M'S'
-        Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(ictcp);
-        //to LMS
-        Colour = Csp::Trc::PqTo::Linear(Colour);
         //to RGB
-        Colour = max(Csp::Ictcp::Mat::LmsTo::Bt2020(Colour), 0.f);
+        Colour = max(Csp::Ictcp::IctcpTo::Bt2020(ictcp), 0.f);
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
@@ -409,8 +405,8 @@ namespace Tmos
     //                  ? KG_AP0_D65_HELPER
     //                  : KG_BT2020_HELPER;
 
-//      float3x3 RgbToLms = Csp::Ictcp::Mat::Bt2020ToLms;
-//      float3x3 LmsToRgb = Csp::Ictcp::Mat::LmsToBt2020;
+//      float3x3 RgbToLms = Csp::Ictcp::Bt2020ToLms;
+//      float3x3 LmsToRgb = Csp::Ictcp::LmsToBt2020;
 //      float3   KFactors = Csp::KHelpers::Bt2020::K;
 //      float    KbHelper = Csp::KHelpers::Bt2020::Kb;
 //      float    KrHelper = Csp::KHelpers::Bt2020::Kr;
@@ -418,8 +414,8 @@ namespace Tmos
 //
 //      if (WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
 //      {
-//        RgbToLms = Csp::Ictcp::Mat::Ap0D65ToLms;
-//        LmsToRgb = Csp::Ictcp::Mat::LmsToAp0D65;
+//        RgbToLms = Csp::Ictcp::Ap0D65ToLms;
+//        LmsToRgb = Csp::Ictcp::LmsToAp0D65;
 //        KFactors = Csp::KHelpers::Ap0D65::K;
 //        KbHelper = Csp::KHelpers::Ap0D65::Kb;
 //        KrHelper = Csp::KHelpers::Ap0D65::Kr;
@@ -430,13 +426,10 @@ namespace Tmos
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
         //to L'M'S'
-        Colour = Csp::Trc::LinearTo::Pq(Csp::Ictcp::Mat::Bt2020To::Lms(Colour));
-
-//        //to L'M'S'
-//        Colour = Csp::Trc::LinearTo::Pq(mul(RgbToLms, Colour));
+        float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Colour);
 
         //Intensity
-        float i1 = 0.5f * Colour.x + 0.5f * Colour.y;
+        float i1 = 0.5f * pqLms.x + 0.5f * pqLms.y;
 
         if (i1 < ShoulderStartInPq)
         {
@@ -449,8 +442,8 @@ namespace Tmos
           float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
           float3 ictcp = float3(i2,
-                                dot(Colour, PqLmsToIctcp[1]),
-                                dot(Colour, PqLmsToIctcp[2]));
+                                dot(pqLms, PqLmsToIctcp[1]),
+                                dot(pqLms, PqLmsToIctcp[2]));
 
           if (EnableBlowingOutHighlights)
           {
@@ -460,15 +453,8 @@ namespace Tmos
                            ictcp.yz * minI);
           }
 
-          //to L'M'S'
-          Colour = Csp::Ictcp::Mat::IctcpTo::PqLms(ictcp);
-          //to LMS
-          Colour = Csp::Trc::PqTo::Linear(Colour);
           //to RGB
-          Colour = max(Csp::Ictcp::Mat::LmsTo::Bt2020(Colour), 0.f);
-
-//          //to RGB
-//          Colour = max(mul(LmsToRgb, Colour), 0.f);
+          Colour = max(Csp::Ictcp::IctcpTo::Bt2020(ictcp), 0.f);
         }
       }
       else if (ProcessingMode == DICE_PRO_MODE_YCBCR)
@@ -501,13 +487,6 @@ namespace Tmos
 
           //to RGB
           Colour = max(Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr), 0.f);
-
-//          float cb2 = (Colour.b - y1) / KbHelper * minY;
-//          float cr2 = (Colour.r - y1) / KrHelper * minY;
-//
-//          return max(float3(y2 + KrHelper    * cr2,
-//                            y2 - KgHelper[0] * cb2 - KgHelper[1] * cr2,
-//                            y2 + KbHelper    * cb2), 0.f);
         }
       }
       else // if (ProcessingMode == DICE_PRO_MODE_YRGB)
