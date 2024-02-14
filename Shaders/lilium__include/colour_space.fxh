@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma warning(disable : 3571) // disable warning about potentially using pow on a negative value
+
 #include "../ReShade.fxh"
 
 #ifndef __RESHADE__
