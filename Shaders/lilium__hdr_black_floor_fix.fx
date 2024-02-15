@@ -49,6 +49,20 @@ void VS_PrepareHdrBlackFloorFix(
 
     rollOffMinusOldBlackPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint) - oldBlackPoint;
   }
+  else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_ICTCP)
+  {
+    float2 lmRollOffStoppingPoint = (Csp::Ictcp::Bt2020To::PqLms(rollOffStoppingPoint)).xy;
+    float2 lmOldBlackPoint        = (Csp::Ictcp::Bt2020To::PqLms(oldBlackPoint)).xy;
+    float2 lmNewBlackPoint        = (Csp::Ictcp::Bt2020To::PqLms(abs(newBlackPoint))).xy;
+
+    rollOffStoppingPoint = 0.5f * lmRollOffStoppingPoint.x + 0.5f * lmRollOffStoppingPoint.y;
+    oldBlackPoint        = 0.5f * lmOldBlackPoint.x        + 0.5f * lmOldBlackPoint.y;
+
+    newBlackPoint = sign(newBlackPoint)
+                  * (0.5f * lmNewBlackPoint.x + 0.5f * lmNewBlackPoint.y);
+
+    rollOffMinusOldBlackPoint = rollOffStoppingPoint - oldBlackPoint;
+  }
   else
   {
     rollOffStoppingPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint);
