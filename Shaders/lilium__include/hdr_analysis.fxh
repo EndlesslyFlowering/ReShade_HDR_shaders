@@ -668,7 +668,7 @@ namespace Waveform
   {
     SWaveformData waveDat;
 
-    const float2 waveformScaleFactorXY = clamp(LUMINANCE_WAVEFORM_SIZE / 100.f, 0.5f, float2(1.f, 2.f));
+    const float2 waveformScaleFactorXY = clamp(_LUMINANCE_WAVEFORM_SIZE / 100.f, 0.5f, float2(1.f, 2.f));
 
     const float waveformScaleFactor =
 #ifdef IS_HDR_CSP
@@ -958,8 +958,8 @@ namespace Waveform
 
 void CS_RenderLuminanceWaveformScale()
 {
-  if (tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X).x       != LUMINANCE_WAVEFORM_SIZE.x
-   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y).x       != LUMINANCE_WAVEFORM_SIZE.y
+  if (tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X).x       != _LUMINANCE_WAVEFORM_SIZE.x
+   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y).x       != _LUMINANCE_WAVEFORM_SIZE.y
 #ifdef IS_HDR_CSP
    || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT).x != LUMINANCE_WAVEFORM_CUTOFF_POINT
 #endif
@@ -1455,8 +1455,8 @@ void CS_RenderLuminanceWaveformScale()
       }
     }
 
-    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X,       LUMINANCE_WAVEFORM_SIZE.x);
-    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y,       LUMINANCE_WAVEFORM_SIZE.y);
+    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X,       _LUMINANCE_WAVEFORM_SIZE.x);
+    tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y,       _LUMINANCE_WAVEFORM_SIZE.y);
 #ifdef IS_HDR_CSP
     tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT, LUMINANCE_WAVEFORM_CUTOFF_POINT);
 #endif
@@ -1475,7 +1475,7 @@ void PS_ClearLuminanceWaveformTexture(
 
 void CS_RenderLuminanceWaveform(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_LUMINANCE_WAVEFORM)
   {
     for (uint y = 0; y < BUFFER_HEIGHT; y++)
     {
@@ -1544,7 +1544,7 @@ void VS_PrepareRenderLuminanceWaveformToScale(
   #define WaveformCutoffOffset 0
 #endif
 
-  if (SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_LUMINANCE_WAVEFORM)
   {
     Waveform::SWaveformData waveDat = Waveform::GetData();
 
@@ -1557,9 +1557,9 @@ void VS_PrepareRenderLuminanceWaveformToScale(
     WaveformCutoffOffset = WAVEDAT_CUTOFFSET;
 #endif
 
-    const float waveformScaleFactorY = clamp(LUMINANCE_WAVEFORM_SIZE.y / 100.f, 0.5f, 2.f);
+    const float waveformScaleFactorY = clamp(_LUMINANCE_WAVEFORM_SIZE.y / 100.f, 0.5f, 2.f);
 
-    if (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
+    if (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
     {
       const float minNits = tex2Dfetch(SamplerConsolidated, COORDS_MIN_NITS_VALUE);
 
@@ -1585,7 +1585,7 @@ void VS_PrepareRenderLuminanceWaveformToScale(
       }
     }
 
-    if (LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)
+    if (_LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)
     {
       const float maxNits = tex2Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
 
@@ -1620,7 +1620,7 @@ void PS_RenderLuminanceWaveformToScale(
 {
   Out = 0.f;
 
-  if (SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_LUMINANCE_WAVEFORM)
   {
     const int2 pureCoordAsInt = int2(VPos.xy);
 
@@ -1652,16 +1652,16 @@ void PS_RenderLuminanceWaveformToScale(
       const bool waveformCoordsGTEMaxNitsLine = waveformCoords.y >= MaxNitsLineY;
       const bool waveformCoordsSTEMinNitsLine = waveformCoords.y <= MinNitsLineY;
 
-      const bool showMaxNitsLineActive = waveformCoordsGTEMaxNitsLine && LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE;
-      const bool showMinNitsLineActive = waveformCoordsSTEMinNitsLine && LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE;
+      const bool showMaxNitsLineActive = waveformCoordsGTEMaxNitsLine && _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE;
+      const bool showMinNitsLineActive = waveformCoordsSTEMinNitsLine && _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE;
 
-      if (( showMaxNitsLineActive                 &&  showMinNitsLineActive)
-       || (!LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinNitsLineActive)
-       || ( showMaxNitsLineActive                 && !LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
-       || (!LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE && !LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE))
+      if (( showMaxNitsLineActive                  &&  showMinNitsLineActive)
+       || (!_LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinNitsLineActive)
+       || ( showMaxNitsLineActive                  && !_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
+       || (!_LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE && !_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE))
       {
         float2 waveformSamplerCoords = (float2(waveformCoords + int2(0, WaveformCutoffOffset)) + 0.5f)
-                                      * (clamp(100.f / LUMINANCE_WAVEFORM_SIZE, float2(1.f, 0.5f), 2.f))
+                                      * (clamp(100.f / _LUMINANCE_WAVEFORM_SIZE, float2(1.f, 0.5f), 2.f))
                                       / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
 
         float4 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
@@ -1697,13 +1697,13 @@ void PS_CalcNitsPerPixel(
   CurNits = 0.f;
 
 #if defined(ANALYSIS_ENABLE)
-  if (SHOW_NITS_VALUES
-   || SHOW_NITS_FROM_CURSOR
-   || SHOW_HEATMAP
-   || SHOW_LUMINANCE_WAVEFORM
-   || HIGHLIGHT_NIT_RANGE
-   || DRAW_ABOVE_NITS_AS_BLACK
-   || DRAW_BELOW_NITS_AS_BLACK
+  if (_SHOW_NITS_VALUES
+   || _SHOW_NITS_FROM_CURSOR
+   || _SHOW_HEATMAP
+   || _SHOW_LUMINANCE_WAVEFORM
+   || _HIGHLIGHT_NIT_RANGE
+   || _DRAW_ABOVE_NITS_AS_BLACK
+   || _DRAW_BELOW_NITS_AS_BLACK
 #ifdef IS_HDR_CSP
    || SHOW_CSP_MAP
 #endif
@@ -1763,7 +1763,7 @@ void PS_CalcNitsPerPixel(
 // per column first
 //void CS_GetMaxAvgMinCll0(uint3 ID : SV_DispatchThreadID)
 //{
-//  if (SHOW_NITS_VALUES)
+//  if (_SHOW_NITS_VALUES)
 //  {
 //#ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 //
@@ -1805,7 +1805,7 @@ void PS_CalcNitsPerPixel(
 //
 //void CS_GetMaxAvgMinCll1(uint3 ID : SV_DispatchThreadID)
 //{
-//  if (SHOW_NITS_VALUES)
+//  if (_SHOW_NITS_VALUES)
 //  {
 //  float maxNits = 0.f;
 //  float avgNits = 0.f;
@@ -1906,9 +1906,9 @@ void PS_CalcNitsPerPixel(
 
 void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_NITS_VALUES
-   || (SHOW_LUMINANCE_WAVEFORM
-    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
+  if (_SHOW_NITS_VALUES
+   || (_SHOW_LUMINANCE_WAVEFORM
+    && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
 #ifndef WIDTH1_DISPATCH_DOESNT_OVERFLOW
 
@@ -1978,9 +1978,9 @@ void CS_GetMaxAvgMinNits0_NEW(uint3 ID : SV_DispatchThreadID)
 
 void CS_GetMaxAvgMinNits1_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_NITS_VALUES
-   || (SHOW_LUMINANCE_WAVEFORM
-    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
+  if (_SHOW_NITS_VALUES
+   || (_SHOW_LUMINANCE_WAVEFORM
+    && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
     if (ID.x == 0)
     {
@@ -2109,9 +2109,9 @@ void CS_GetMaxAvgMinNits1_NEW(uint3 ID : SV_DispatchThreadID)
 
 void CS_GetFinalMaxAvgMinNits_NEW(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_NITS_VALUES
-   || (SHOW_LUMINANCE_WAVEFORM
-    && (LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
+  if (_SHOW_NITS_VALUES
+   || (_SHOW_LUMINANCE_WAVEFORM
+    && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
     const float maxNits0 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAX_NITS_VALUE0);
     const float maxNits1 = tex2Dfetch(StorageConsolidated, COORDS_FINAL_4_MAX_NITS_VALUE1);
@@ -2383,18 +2383,18 @@ void PS_CopyCieBgAndOutlines(
 {
   int2 vPosAsInt2 = int2(VPos.xy);
 
-  int2 fetchPos = int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
-                       vPosAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(CIE_DIAGRAM_TYPE));
+  int2 fetchPos = int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
+                       vPosAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(_CIE_DIAGRAM_TYPE));
 
   Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
 
   // using gamma 2 as intermediate gamma space
   Out.rgb *= Out.rgb;
 
-  if (SHOW_CIE_CSP_BT709_OUTLINE)
+  if (_SHOW_CIE_CSP_BT709_OUTLINE)
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
                                           vPosAsInt2.x,
                                           fetchPos.y);
 
@@ -2404,7 +2404,7 @@ void PS_CopyCieBgAndOutlines(
   if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
                                           vPosAsInt2.x,
                                           fetchPos.y);
 
@@ -2413,7 +2413,7 @@ void PS_CopyCieBgAndOutlines(
   if (SHOW_CIE_CSP_BT2020_OUTLINE)
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
                                           vPosAsInt2.x,
                                           fetchPos.y);
 
@@ -2423,7 +2423,7 @@ void PS_CopyCieBgAndOutlines(
   if (SHOW_CIE_CSP_AP0_OUTLINE)
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[CIE_DIAGRAM_TYPE],
+                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
                                           vPosAsInt2.x,
                                           fetchPos.y);
 
@@ -2440,7 +2440,7 @@ void PS_CopyCieBgAndOutlines(
 
 void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 {
-  if (SHOW_CIE)
+  if (_SHOW_CIE)
   {
 
 #if !defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  \
@@ -2508,7 +2508,7 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 
 #endif
 
-      if (CIE_DIAGRAM_TYPE == CIE_1931)
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
       {
         // get xy
         precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
@@ -2533,7 +2533,7 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
                    xy,
                    xyColour);
       }
-      else if (CIE_DIAGRAM_TYPE == CIE_1976)
+      else if (_CIE_DIAGRAM_TYPE == CIE_1976)
       {
         // get u'v'
         precise const float X15Y3Z = XYZ.x

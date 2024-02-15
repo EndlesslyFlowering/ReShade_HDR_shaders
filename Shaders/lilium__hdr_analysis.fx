@@ -67,7 +67,78 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 
-uniform uint TEXT_SIZE
+#ifndef IS_HDR_CSP
+  #define _TEXT_SIZE                              SDR_TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                        SDR_TEXT_BRIGHTNESS
+  #define _TEXT_BG_ALPHA                          SDR_TEXT_BG_ALPHA
+  #define _TEXT_POSITION                          SDR_TEXT_POSITION
+  #define _ACTIVE_AREA_ENABLE                     SDR_ACTIVE_AREA_ENABLE
+  #define _TACTIVE_AREA_CROP_LEFT                 SDR_ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                   SDR_ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                 SDR_ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                SDR_ACTIVE_AREA_CROP_BOTTOM
+  #define _SHOW_NITS_VALUES                       SDR_SHOW_NITS_VALUES
+  #define _SHOW_NITS_FROM_CURSOR                  SDR_SHOW_NITS_FROM_CURSOR
+  #define _SHOW_CIE                               SDR_SHOW_CIE
+  #define _CIE_DIAGRAM_TYPE                       SDR_CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_ALPHA                      SDR_CIE_DIAGRAM_ALPHA
+  #define _CIE_DIAGRAM_SIZE                       SDR_CIE_DIAGRAM_SIZE
+  #define _CIE_SHOW_CIE_CSP_BT709_OUTLINE         SDR_SHOW_CIE_CSP_BT709_OUTLINE
+  #define _SHOW_HEATMAP                           SDR_SHOW_HEATMAP
+  #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
+  #define _SHOW_LUMINANCE_WAVEFORM                SDR_SHOW_LUMINANCE_WAVEFORM
+  #define _LUMINANCE_WAVEFORM_BRIGHTNESS          SDR_LUMINANCE_WAVEFORM_BRIGHTNESS
+  #define _LUMINANCE_WAVEFORM_ALPHA               SDR_LUMINANCE_WAVEFORM_ALPHA
+  #define _LUMINANCE_WAVEFORM_SIZE                SDR_LUMINANCE_WAVEFORM_SIZE
+  #define _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE  SDR_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE  SDR_LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _HIGHLIGHT_NIT_RANGE                    SDR_HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT        SDR_HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT          SDR_HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK               SDR_DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                    SDR_ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK               SDR_DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                    SDR_BELOW_NITS_AS_BLACK
+#else
+  #define _TEXT_SIZE                              TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                        TEXT_BRIGHTNESS
+  #define _TEXT_BG_ALPHA                          TEXT_BG_ALPHA
+  #define _TEXT_POSITION                          TEXT_POSITION
+  #define _ACTIVE_AREA_ENABLE                     ACTIVE_AREA_ENABLE
+  #define _ACTIVE_AREA_CROP_LEFT                  ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                   ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                 ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                ACTIVE_AREA_CROP_BOTTOM
+  #define _SHOW_NITS_VALUES                       SHOW_NITS_VALUES
+  #define _SHOW_NITS_FROM_CURSOR                  SHOW_NITS_FROM_CURSOR
+  #define _SHOW_CIE                               SHOW_CIE
+  #define _CIE_DIAGRAM_TYPE                       CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_ALPHA                      CIE_DIAGRAM_ALPHA
+  #define _CIE_DIAGRAM_SIZE                       CIE_DIAGRAM_SIZE
+  #define _SHOW_CIE_CSP_BT709_OUTLINE             SHOW_CIE_CSP_BT709_OUTLINE
+  #define _SHOW_HEATMAP                           SHOW_HEATMAP
+  #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
+  #define _SHOW_LUMINANCE_WAVEFORM                SHOW_LUMINANCE_WAVEFORM
+  #define _LUMINANCE_WAVEFORM_BRIGHTNESS          LUMINANCE_WAVEFORM_BRIGHTNESS
+  #define _LUMINANCE_WAVEFORM_ALPHA               LUMINANCE_WAVEFORM_ALPHA
+  #define _LUMINANCE_WAVEFORM_SIZE                LUMINANCE_WAVEFORM_SIZE
+  #define _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE  LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE  LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _HIGHLIGHT_NIT_RANGE                    HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT        HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT          HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK               DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                    ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK               DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                    BELOW_NITS_AS_BLACK
+#endif
+
+
+uniform uint _TEXT_SIZE
 <
   ui_category = "Global";
   ui_label    = "text size";
@@ -98,7 +169,7 @@ uniform uint TEXT_SIZE
                 "58\0";
 > = TEXT_SIZE_DEFAULT;
 
-uniform float TEXT_BRIGHTNESS
+uniform float _TEXT_BRIGHTNESS
 <
   ui_category = "Global";
   ui_label    = "text brightness";
@@ -122,7 +193,7 @@ uniform float TEXT_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float TEXT_BG_ALPHA
+uniform float _TEXT_BG_ALPHA
 <
   ui_category = "Global";
   ui_label    = "text background transparency";
@@ -136,7 +207,7 @@ uniform float TEXT_BG_ALPHA
 #define TEXT_POSITION_TOP_LEFT  0
 #define TEXT_POSITION_TOP_RIGHT 1
 
-uniform uint TEXT_POSITION
+uniform uint _TEXT_POSITION
 <
   ui_category = "Global";
   ui_label    = "text position";
@@ -147,13 +218,13 @@ uniform uint TEXT_POSITION
 
 
 // Active Area
-uniform bool ACTIVE_AREA_ENABLE
+uniform bool _ACTIVE_AREA_ENABLE
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = "enable setting the active area";
 > = false;
 
-uniform float ACTIVE_AREA_CROP_LEFT
+uniform float _ACTIVE_AREA_CROP_LEFT
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = "% to crop from the left side";
@@ -164,7 +235,7 @@ uniform float ACTIVE_AREA_CROP_LEFT
   ui_step     = 0.1f;
 > = 0.f;
 
-uniform float ACTIVE_AREA_CROP_TOP
+uniform float _ACTIVE_AREA_CROP_TOP
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = "% to crop from the top side";
@@ -175,7 +246,7 @@ uniform float ACTIVE_AREA_CROP_TOP
   ui_step     = 0.1f;
 > = 0.f;
 
-uniform float ACTIVE_AREA_CROP_RIGHT
+uniform float _ACTIVE_AREA_CROP_RIGHT
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = "% to crop from the right side";
@@ -186,7 +257,7 @@ uniform float ACTIVE_AREA_CROP_RIGHT
   ui_step     = 0.1f;
 > = 0.f;
 
-uniform float ACTIVE_AREA_CROP_BOTTOM
+uniform float _ACTIVE_AREA_CROP_BOTTOM
 <
   ui_category = "Set Active Area for analysis";
   ui_label    = "% to crop from the bottom side";
@@ -199,13 +270,13 @@ uniform float ACTIVE_AREA_CROP_BOTTOM
 
 
 // Nit Values
-uniform bool SHOW_NITS_VALUES
+uniform bool _SHOW_NITS_VALUES
 <
   ui_category = "Luminance analysis";
   ui_label    = "show max/avg/min luminance values";
 > = true;
 
-uniform bool SHOW_NITS_FROM_CURSOR
+uniform bool _SHOW_NITS_FROM_CURSOR
 <
   ui_category = "Luminance analysis";
   ui_label    = "show luminance value from cursor position";
@@ -238,10 +309,10 @@ uniform bool SHOW_CSP_MAP
            "\n" "            red: AP0"
            "\n" "           pink: invalid";
 > = false;
-#endif
+#endif // IS_HDR_CSP
 
 // CIE
-uniform bool SHOW_CIE
+uniform bool _SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
@@ -250,7 +321,7 @@ uniform bool SHOW_CIE
 #define CIE_1931 0
 #define CIE_1976 1
 
-uniform uint CIE_DIAGRAM_TYPE
+uniform uint _CIE_DIAGRAM_TYPE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "CIE diagram type";
@@ -259,7 +330,7 @@ uniform uint CIE_DIAGRAM_TYPE
                 "CIE 1976 UCS u'v'\0";
 > = CIE_1931;
 
-uniform float CIE_DIAGRAM_BRIGHTNESS
+uniform float _CIE_DIAGRAM_BRIGHTNESS
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "CIE diagram brightness";
@@ -281,7 +352,7 @@ uniform float CIE_DIAGRAM_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float CIE_DIAGRAM_ALPHA
+uniform float _CIE_DIAGRAM_ALPHA
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "CIE diagram transparency";
@@ -343,7 +414,7 @@ static const float CIE_DIAGRAM_DEFAULT_SIZE = (float(BUFFER_HEIGHT) * 0.375f)
                                               / CIE_1931_BG_HEIGHT
                                               * 100.f;
 
-uniform float CIE_DIAGRAM_SIZE
+uniform float _CIE_DIAGRAM_SIZE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "CIE diagram size";
@@ -354,7 +425,7 @@ uniform float CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = CIE_DIAGRAM_DEFAULT_SIZE;
 
-uniform bool SHOW_CIE_CSP_BT709_OUTLINE
+uniform bool _SHOW_CIE_CSP_BT709_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.709 colour space outline";
@@ -383,7 +454,7 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 #endif //IS_HDR_CSP
 
 // heatmap
-uniform bool SHOW_HEATMAP
+uniform bool _SHOW_HEATMAP
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
@@ -404,7 +475,7 @@ uniform bool SHOW_HEATMAP
 #endif
 > = false;
 
-uniform float HEATMAP_BRIGHTNESS
+uniform float _HEATMAP_BRIGHTNESS
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "heatmap brightness";
@@ -447,7 +518,7 @@ uniform uint HEATMAP_CUTOFF_POINT
 > = 0;
 #endif //IS_HDR_CSP
 
-uniform bool SHOW_LUMINANCE_WAVEFORM
+uniform bool _SHOW_LUMINANCE_WAVEFORM
 <
   ui_category = "Luminance waveform";
   ui_label    = "show luminance waveform";
@@ -467,7 +538,7 @@ uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
 > = 0;
 #endif //IS_HDR_CSP
 
-uniform float LUMINANCE_WAVEFORM_BRIGHTNESS
+uniform float _LUMINANCE_WAVEFORM_BRIGHTNESS
 <
   ui_category = "Luminance waveform";
   ui_label    = "luminance waveform brightness";
@@ -489,7 +560,7 @@ uniform float LUMINANCE_WAVEFORM_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float LUMINANCE_WAVEFORM_ALPHA
+uniform float _LUMINANCE_WAVEFORM_ALPHA
 <
   ui_category = "Luminance waveform";
   ui_label    = "luminance waveform transparency";
@@ -549,7 +620,7 @@ static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) 
 static const precise float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = UGH2
                                                              / 100.f;
 
-uniform float2 LUMINANCE_WAVEFORM_SIZE
+uniform float2 _LUMINANCE_WAVEFORM_SIZE
 <
   ui_category = "Luminance waveform";
   ui_label    = "luminance waveform size";
@@ -560,7 +631,7 @@ uniform float2 LUMINANCE_WAVEFORM_SIZE
   ui_step     =   0.1f;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
-uniform bool LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
+uniform bool _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
 <
   ui_category = "Luminance waveform";
   ui_label    = "show the minimum nits line";
@@ -568,7 +639,7 @@ uniform bool LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
            "\n" "The line is invisible when the minimum nits hits 0 nits.";
 > = true;
 
-uniform bool LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+uniform bool _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
 <
   ui_category = "Luminance waveform";
   ui_label    = "show the maximum nits line";
@@ -577,14 +648,14 @@ uniform bool LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
 > = true;
 
 // highlight a certain nit range
-uniform bool HIGHLIGHT_NIT_RANGE
+uniform bool _HIGHLIGHT_NIT_RANGE
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "enable highlighting brightness levels in a certain range";
   ui_tooltip  = "in nits";
 > = false;
 
-uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+uniform float _HIGHLIGHT_NIT_RANGE_BRIGHTNESS
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "highlighted range brightness";
@@ -600,7 +671,7 @@ uniform float HIGHLIGHT_NIT_RANGE_BRIGHTNESS
 #endif
 > = DEFAULT_BRIGHTNESS;
 
-uniform float HIGHLIGHT_NIT_RANGE_START_POINT
+uniform float _HIGHLIGHT_NIT_RANGE_START_POINT
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "range starting point";
@@ -619,7 +690,7 @@ uniform float HIGHLIGHT_NIT_RANGE_START_POINT
 #endif
 > = 0.f;
 
-uniform float HIGHLIGHT_NIT_RANGE_END_POINT
+uniform float _HIGHLIGHT_NIT_RANGE_END_POINT
 <
   ui_category = "Highlight brightness range visualisation";
   ui_label    = "range end point";
@@ -639,13 +710,13 @@ uniform float HIGHLIGHT_NIT_RANGE_END_POINT
 > = 0.f;
 
 // draw pixels as black depending on their nits
-uniform bool DRAW_ABOVE_NITS_AS_BLACK
+uniform bool _DRAW_ABOVE_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "enable drawing above this brightness as black";
 > = false;
 
-uniform float ABOVE_NITS_AS_BLACK
+uniform float _ABOVE_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "draw above this brightness as black";
@@ -667,13 +738,13 @@ uniform float ABOVE_NITS_AS_BLACK
 > = 100.f;
 #endif
 
-uniform bool DRAW_BELOW_NITS_AS_BLACK
+uniform bool _DRAW_BELOW_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "enable drawing below this brightness as black";
 > = false;
 
-uniform float BELOW_NITS_AS_BLACK
+uniform float _BELOW_NITS_AS_BLACK
 <
   ui_category = "Draw certain brightness levels as black";
   ui_label    = "draw below this brightness as black";
@@ -929,10 +1000,10 @@ uint GetOuterSpacing(const uint CharXDimension)
 uint GetActiveLines()
 {
   return 1
-       + (SHOW_NITS_VALUES ? SHOW_NITS_VALUES_LINE_COUNT
-                           : 0)
-       + (SHOW_NITS_FROM_CURSOR ? SHOW_NITS_FROM_CURSOR_LINE_COUNT
-                                : 0)
+       + (_SHOW_NITS_VALUES ? SHOW_NITS_VALUES_LINE_COUNT
+                            : 0)
+       + (_SHOW_NITS_FROM_CURSOR ? SHOW_NITS_FROM_CURSOR_LINE_COUNT
+                                 : 0)
 #ifdef IS_HDR_CSP
        + (SHOW_CSPS ? SHOW_CSPS_LINE_COUNT
                     : 0)
@@ -959,24 +1030,24 @@ uint GetActiveLines()
 uint GetActiveCharacters()
 {
 //  return MAX5(CSP_DESC_TEXT_LENGTH,
-//              (SHOW_NITS_VALUES ? 21
-//                                :  0),
-//              (SHOW_NITS_FROM_CURSOR ? 24
-//                                     :  0),
+//              (_SHOW_NITS_VALUES ? 21
+//                                 :  0),
+//              (_SHOW_NITS_FROM_CURSOR ? 24
+//                                      :  0),
 //              (SHOW_CSPS ? 16
 //                         :  0),
 //              (SHOW_CSP_FROM_CURSOR ? 18
 //                                    :  0));
   return MAX3(CSP_DESC_TEXT_LENGTH,
-              (SHOW_NITS_VALUES ? 21
-                                :  0),
-              (SHOW_NITS_FROM_CURSOR ? 24
-                                     :  0));
+              (_SHOW_NITS_VALUES ? 21
+                                 :  0),
+              (_SHOW_NITS_FROM_CURSOR ? 24
+                                      :  0));
 }
 
 uint GetAtlasEntry()
 {
-  return 23 - TEXT_SIZE;
+  return 23 - _TEXT_SIZE;
 }
 
 uint GetCharArrayEntry()
@@ -1031,15 +1102,15 @@ void DrawSpace(float2 DrawOffset)
 void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 {
   //convert UI inputs into floats for comparisons
-  const float showNitsValues     = SHOW_NITS_VALUES;
-  const float showNitsFromCrusor = SHOW_NITS_FROM_CURSOR;
+  const float showNitsValues     = _SHOW_NITS_VALUES;
+  const float showNitsFromCrusor = _SHOW_NITS_FROM_CURSOR;
 
 #ifdef IS_HDR_CSP
   const float showCsps          = SHOW_CSPS;
   const float showCspFromCursor = SHOW_CSP_FROM_CURSOR;
 #endif
 
-  const float fontSize          = TEXT_SIZE;
+  const float fontSize          = _TEXT_SIZE;
 
   //get last UI values from the consolidated texture
   const float showNitsLast       = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0);
@@ -1070,7 +1141,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
     tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, fontSize);
 
     //calculate offset for the cursor nits text in the overlay
-    float cursorNitsYOffset = (!SHOW_NITS_VALUES
+    float cursorNitsYOffset = (!_SHOW_NITS_VALUES
                              ? -SHOW_NITS_VALUES_LINE_COUNT
                              : SPACING_MULTIPLIER)
                             + CSP_DESC_SPACING_MULTIPLIER;
@@ -1082,15 +1153,15 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 
 #ifdef IS_HDR_CSP
     //calculate offset for the colour spaces text in the overlay
-    float cspsYOffset = ((!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR)
+    float cspsYOffset = ((!_SHOW_NITS_VALUES) && _SHOW_NITS_FROM_CURSOR
                        ? -(SHOW_NITS_VALUES_LINE_COUNT
                          - SPACING_MULTIPLIER)
 
-                       : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR)
+                       : (_SHOW_NITS_VALUES)  && !_SHOW_NITS_FROM_CURSOR
                        ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
                          - SPACING_MULTIPLIER)
 
-                       : (!SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR)
+                       : (!_SHOW_NITS_VALUES)  && !_SHOW_NITS_FROM_CURSOR
                        ? -(SHOW_NITS_VALUES_LINE_COUNT
                          + SHOW_NITS_FROM_CURSOR_LINE_COUNT)
 
@@ -1103,34 +1174,34 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 
 
     //calculate offset for the cursorCSP text in the overlay
-    float cursorCspYOffset = ((!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR  && SHOW_CSPS)
+    float cursorCspYOffset = ((!_SHOW_NITS_VALUES) && _SHOW_NITS_FROM_CURSOR  && SHOW_CSPS
                             ? -(SHOW_NITS_VALUES_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
-                            : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR && SHOW_CSPS)
+                            : (_SHOW_NITS_VALUES)  && !_SHOW_NITS_FROM_CURSOR && SHOW_CSPS
                             ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
-                            : (SHOW_NITS_VALUES  && SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS)
+                            : (_SHOW_NITS_VALUES)  && _SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS
                             ? -(SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER * 2)
 
-                            : (!SHOW_NITS_VALUES && !SHOW_NITS_FROM_CURSOR && SHOW_CSPS)
+                            : (!_SHOW_NITS_VALUES) && !_SHOW_NITS_FROM_CURSOR && SHOW_CSPS
                             ? -(SHOW_NITS_VALUES_LINE_COUNT
                               + SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
-                            : (!SHOW_NITS_VALUES && SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS)
+                            : (!_SHOW_NITS_VALUES) && _SHOW_NITS_FROM_CURSOR  && !SHOW_CSPS
                             ? -(SHOW_NITS_VALUES_LINE_COUNT
                               + SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
-                            : (SHOW_NITS_VALUES  && !SHOW_NITS_FROM_CURSOR && !SHOW_CSPS)
+                            : (_SHOW_NITS_VALUES)  && !_SHOW_NITS_FROM_CURSOR && !SHOW_CSPS
                             ? -(SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               + SHOW_CSPS_LINE_COUNT
                               - SPACING_MULTIPLIER)
 
-                            : (!SHOW_NITS_VALUES && !SHOW_NITS_FROM_CURSOR && !SHOW_CSPS)
+                            : (!_SHOW_NITS_VALUES) && !_SHOW_NITS_FROM_CURSOR && !SHOW_CSPS
                             ? -(SHOW_NITS_VALUES_LINE_COUNT
                               + SHOW_NITS_FROM_CURSOR_LINE_COUNT
                               + SHOW_CSPS_LINE_COUNT)
@@ -1162,8 +1233,8 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
     uint2 activeTextArea = charSize
                          * uint2(activeCharacters, activeLines);
 
-    activeTextArea.y += uint(max(SHOW_NITS_VALUES
-                               + SHOW_NITS_FROM_CURSOR
+    activeTextArea.y += uint(max(_SHOW_NITS_VALUES
+                               + _SHOW_NITS_FROM_CURSOR
 #ifdef IS_HDR_CSP
                                + SHOW_CSPS
                                + SHOW_CSP_FROM_CURSOR
@@ -1308,7 +1379,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 #endif
 
     // max/avg/min Nits
-    if (SHOW_NITS_VALUES)
+    if (_SHOW_NITS_VALUES)
     {
       // maxNits:
       DrawChar(_m,       float2( 0,                                        showMaxNitsValueYOffset));
@@ -1358,7 +1429,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 #endif
 
     // cursorNits:
-    if (SHOW_NITS_FROM_CURSOR)
+    if (_SHOW_NITS_FROM_CURSOR)
     {
       DrawChar(_c,       float2( 0,                                     cursorNitsYOffset));
       DrawChar(_u,       float2( 1,                                     cursorNitsYOffset));
@@ -1520,7 +1591,7 @@ void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
   return
 
 #define DRAW_CURSOR_NITS(NUMBER, X_OFFSET, DRAW_TYPE)                         \
-  if (SHOW_NITS_FROM_CURSOR)                                                  \
+  if (_SHOW_NITS_FROM_CURSOR)                                                  \
   {                                                                           \
     precise float cursorNits = tex2Dfetch(StorageNitsValues, MOUSE_POSITION); \
     precise uint  curNumber  = NUMBER(cursorNits);                            \
@@ -1585,118 +1656,118 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 #ifdef IS_HDR_CSP
     case 0:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _5th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showMaxNitsValueYOffset));
     }
     case 1:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _4th, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showMaxNitsValueYOffset));
     }
 #endif
     case 2:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showMaxNitsValueYOffset));
     }
     case 3:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MAX_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showMaxNitsValueYOffset));
     }
     case 4:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showMaxNitsValueYOffset));
     }
     case 5:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d1st, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showMaxNitsValueYOffset));
     }
     case 6:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showMaxNitsValueYOffset));
     }
     case 7:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showMaxNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MAX_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showMaxNitsValueYOffset));
     }
     // avgNits:
 #ifdef IS_HDR_CSP
     case 8:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _5th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0, showAvgNitsValueYOffset));
     }
     case 9:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _4th, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1, showAvgNitsValueYOffset));
     }
 #endif
     case 10:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _3rd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2, showAvgNitsValueYOffset));
     }
     case 11:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _2nd, COORDS_SHOW_AVG_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3, showAvgNitsValueYOffset));
     }
     case 12:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4, showAvgNitsValueYOffset));
     }
     case 13:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d1st, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5, showAvgNitsValueYOffset));
     }
     case 14:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d2nd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6, showAvgNitsValueYOffset));
     }
     case 15:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showAvgNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d3rd, COORDS_SHOW_AVG_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7, showAvgNitsValueYOffset));
     }
 #ifdef IS_HDR_CSP
     // minNits:
     case 16:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _5th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _5th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET0,  showMinNitsValueYOffset));
     }
     case 17:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _4th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _4th, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET1,  showMinNitsValueYOffset));
     }
 #endif
     case 18:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _3rd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET2,  showMinNitsValueYOffset));
     }
     case 19:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _2nd, COORDS_SHOW_MIN_NITS, DrawNumberAboveZero, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET3,  showMinNitsValueYOffset));
     }
     case 20:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, _1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, _1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET4,  showMinNitsValueYOffset));
     }
     case 21:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d1st, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET5,  showMinNitsValueYOffset));
     }
     case 22:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d2nd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET6,  showMinNitsValueYOffset));
     }
     case 23:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d3rd, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET7,  showMinNitsValueYOffset));
     }
     case 24:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d4th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET8,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d4th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET8,  showMinNitsValueYOffset));
     }
     case 25:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d5th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET9,  showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d5th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET9,  showMinNitsValueYOffset));
     }
     case 26:
     {
-      DRAW_NUMBERS(SHOW_NITS_VALUES, d6th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET10, showMinNitsValueYOffset));
+      DRAW_NUMBERS(_SHOW_NITS_VALUES, d6th, COORDS_SHOW_MIN_NITS, DrawChar, float2(DRAW_MAX_AVG_MIN_NITS_OFFSET10, showMinNitsValueYOffset));
     }
     // cursorNits:
 #ifdef IS_HDR_CSP
@@ -2196,10 +2267,10 @@ void VS_PrepareSetActiveArea(
 #define percentageToCropFromRight  PercentagesToCrop.z
 #define percentageToCropFromBottom PercentagesToCrop.w
 
-  float fractionCropLeft   = ACTIVE_AREA_CROP_LEFT   / 100.f;
-  float fractionCropTop    = ACTIVE_AREA_CROP_TOP    / 100.f;
-  float fractionCropRight  = ACTIVE_AREA_CROP_RIGHT  / 100.f;
-  float fractionCropBottom = ACTIVE_AREA_CROP_BOTTOM / 100.f;
+  float fractionCropLeft   = _ACTIVE_AREA_CROP_LEFT   / 100.f;
+  float fractionCropTop    = _ACTIVE_AREA_CROP_TOP    / 100.f;
+  float fractionCropRight  = _ACTIVE_AREA_CROP_RIGHT  / 100.f;
+  float fractionCropBottom = _ACTIVE_AREA_CROP_BOTTOM / 100.f;
 
   percentageToCropFromLeft   =                 fractionCropLeft   * BUFFER_WIDTH;
   percentageToCropFromTop    =                 fractionCropTop    * BUFFER_HEIGHT;
@@ -2220,7 +2291,7 @@ void PS_SetActiveArea(
 {
   Output = 0.f;
 
-  if (ACTIVE_AREA_ENABLE)
+  if (_ACTIVE_AREA_ENABLE)
   {
     if (VPos.x > percentageToCropFromLeft
      && VPos.y > percentageToCropFromTop
@@ -2283,7 +2354,7 @@ void VS_PrepareHdrAnalysis(
   CieDiagramTextureActiveSize              = 0.f;
   CieDiagramTextureDisplaySize             = 0.f;
 
-  if (HIGHLIGHT_NIT_RANGE)
+  if (_HIGHLIGHT_NIT_RANGE)
   {
     float pingpong0 = NIT_PINGPONG0.x + 0.5f;
 
@@ -2326,21 +2397,21 @@ void VS_PrepareHdrAnalysis(
 
       highlightNitRangeOut *= breathing;
 
-      highlightNitRangeOut = MapBt709IntoCurrentCsp(highlightNitRangeOut, HIGHLIGHT_NIT_RANGE_BRIGHTNESS);
+      highlightNitRangeOut = MapBt709IntoCurrentCsp(highlightNitRangeOut, _HIGHLIGHT_NIT_RANGE_BRIGHTNESS);
     }
   }
 
-  if (SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_LUMINANCE_WAVEFORM)
   {
     LuminanceWaveformTextureDisplayAreaBegin = int2(BUFFER_WIDTH, BUFFER_HEIGHT) - Waveform::GetActiveArea();
   }
 
-  if (SHOW_CIE)
+  if (_SHOW_CIE)
   {
-    float cieDiagramSizeFrac = CIE_DIAGRAM_SIZE / 100.f;
+    float cieDiagramSizeFrac = _CIE_DIAGRAM_SIZE / 100.f;
 
     CieDiagramTextureActiveSize =
-      round(float2(CIE_BG_WIDTH[CIE_DIAGRAM_TYPE], CIE_BG_HEIGHT[CIE_DIAGRAM_TYPE]) * cieDiagramSizeFrac);
+      round(float2(CIE_BG_WIDTH[_CIE_DIAGRAM_TYPE], CIE_BG_HEIGHT[_CIE_DIAGRAM_TYPE]) * cieDiagramSizeFrac);
 
     CieDiagramTextureActiveSize.y = float(BUFFER_HEIGHT) - CieDiagramTextureActiveSize.y;
 
@@ -2362,8 +2433,8 @@ void VS_PrepareHdrAnalysis(
     uint2 currentOverlayDimensions = charSize
                                    * uint2(activeCharacters, activeLines);
 
-    currentOverlayDimensions.y += uint(max(SHOW_NITS_VALUES
-                                         + SHOW_NITS_FROM_CURSOR
+    currentOverlayDimensions.y += uint(max(_SHOW_NITS_VALUES
+                                         + _SHOW_NITS_FROM_CURSOR
 #ifdef IS_HDR_CSP
                                          + SHOW_CSPS
                                          + SHOW_CSP_FROM_CURSOR
@@ -2371,8 +2442,8 @@ void VS_PrepareHdrAnalysis(
                                          - 1, 0)
                                      * charSize.y * SPACING_MULTIPLIER);
 
-    if (SHOW_NITS_VALUES
-     || SHOW_NITS_FROM_CURSOR
+    if (_SHOW_NITS_VALUES
+     || _SHOW_NITS_FROM_CURSOR
 #ifdef IS_HDR_CSP
      || SHOW_CSPS
      || SHOW_CSP_FROM_CURSOR
@@ -2386,7 +2457,7 @@ void VS_PrepareHdrAnalysis(
 
     CurrentActiveOverlayArea = int2(currentOverlayDimensions);
 
-    if (TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
+    if (_TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
     {
       CurrentActiveOverlayArea.x = int(BUFFER_WIDTH) - CurrentActiveOverlayArea.x;
     }
@@ -2504,17 +2575,17 @@ void PS_HdrAnalysis(
 
   Output = tex2Dfetch(ReShade::BackBuffer, pureCoordAsInt);
 
-  if (SHOW_HEATMAP
+  if (_SHOW_HEATMAP
 #ifdef IS_HDR_CSP
    || SHOW_CSP_MAP
 #endif
-   || HIGHLIGHT_NIT_RANGE
-   || DRAW_ABOVE_NITS_AS_BLACK
-   || DRAW_BELOW_NITS_AS_BLACK)
+   || _HIGHLIGHT_NIT_RANGE
+   || _DRAW_ABOVE_NITS_AS_BLACK
+   || _DRAW_BELOW_NITS_AS_BLACK)
   {
     const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
 
-    if (SHOW_HEATMAP)
+    if (_SHOW_HEATMAP)
     {
       Output.rgb = HeatmapRgbValues(pixelNits,
 #ifdef IS_HDR_CSP
@@ -2522,7 +2593,7 @@ void PS_HdrAnalysis(
 #endif
                                     false);
 
-      Output.rgb = MapBt709IntoCurrentCsp(Output.rgb, HEATMAP_BRIGHTNESS);
+      Output.rgb = MapBt709IntoCurrentCsp(Output.rgb, _HEATMAP_BRIGHTNESS);
     }
 
 #ifdef IS_HDR_CSP
@@ -2532,9 +2603,9 @@ void PS_HdrAnalysis(
     }
 #endif
 
-    if (HIGHLIGHT_NIT_RANGE
-     && pixelNits >= HIGHLIGHT_NIT_RANGE_START_POINT
-     && pixelNits <= HIGHLIGHT_NIT_RANGE_END_POINT
+    if (_HIGHLIGHT_NIT_RANGE
+     && pixelNits >= _HIGHLIGHT_NIT_RANGE_START_POINT
+     && pixelNits <= _HIGHLIGHT_NIT_RANGE_END_POINT
      && pingpong0Above1
      && breathingIsActive)
     {
@@ -2542,24 +2613,24 @@ void PS_HdrAnalysis(
       Output.rgb = lerp(Output.rgb, highlightNitRangeOut, breathing);
     }
 
-    if (DRAW_ABOVE_NITS_AS_BLACK)
+    if (_DRAW_ABOVE_NITS_AS_BLACK)
     {
-      if (pixelNits > ABOVE_NITS_AS_BLACK)
+      if (pixelNits > _ABOVE_NITS_AS_BLACK)
       {
         Output.rgba = 0.f;
       }
     }
 
-    if (DRAW_BELOW_NITS_AS_BLACK)
+    if (_DRAW_BELOW_NITS_AS_BLACK)
     {
-      if (pixelNits < BELOW_NITS_AS_BLACK)
+      if (pixelNits < _BELOW_NITS_AS_BLACK)
       {
         Output.rgba = 0.f;
       }
     }
   }
 
-  if (SHOW_CIE)
+  if (_SHOW_CIE)
   {
     // draw the diagram in the bottom left corner
     if (VPos.x <  CieDiagramTextureActiveSize.x
@@ -2576,16 +2647,16 @@ void PS_HdrAnalysis(
       // using gamma 2 as intermediate gamma space
       currentPixelToDisplay *= currentPixelToDisplay;
 
-      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
 
       MergeOverlay(Output.rgb,
                    currentPixelToDisplay,
-                   CIE_DIAGRAM_BRIGHTNESS,
+                   _CIE_DIAGRAM_BRIGHTNESS,
                    alpha);
     }
   }
 
-  if (SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_LUMINANCE_WAVEFORM)
   {
     // draw the waveform in the bottom right corner
     if (all(pureCoordAsInt.xy >= LuminanceWaveformTextureDisplayAreaBegin))
@@ -2599,17 +2670,17 @@ void PS_HdrAnalysis(
       // using gamma 2 as intermediate gamma space
       currentPixelToDisplay.rgb *= currentPixelToDisplay.rgb;
 
-      float alpha = min(LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
+      float alpha = min(_LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
 
       MergeOverlay(Output.rgb,
                    currentPixelToDisplay.rgb,
-                   LUMINANCE_WAVEFORM_BRIGHTNESS,
+                   _LUMINANCE_WAVEFORM_BRIGHTNESS,
                    alpha);
     }
   }
 
   {
-    if (TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
+    if (_TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
     {
       if (all(pureCoordAsInt <= CurrentActiveOverlayArea))
       {
@@ -2618,11 +2689,11 @@ void PS_HdrAnalysis(
         // using gamma 2 as intermediate gamma space
         overlay.rgb *= overlay.rgb;
 
-        float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
+        float alpha = min(_TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 
         MergeOverlay(Output.rgb,
                      overlay.rgb,
-                     TEXT_BRIGHTNESS,
+                     _TEXT_BRIGHTNESS,
                      alpha);
       }
     }
@@ -2637,11 +2708,11 @@ void PS_HdrAnalysis(
         // using gamma 2 as intermediate gamma space
         overlay.rgb *= overlay.rgb;
 
-        float alpha = min(TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
+        float alpha = min(_TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
 
         MergeOverlay(Output.rgb,
                      overlay.rgb,
-                     TEXT_BRIGHTNESS,
+                     _TEXT_BRIGHTNESS,
                      alpha);
       }
     }
