@@ -399,15 +399,41 @@ void VS_PrepareToneMapping(
 #define bt2390MinMaxLum             TmParms1.xy
 #define bt2390KneeStart             TmParms1.z
 
-    // source min brightness (Lb) in PQ
-    // source max brightness (Lw) in PQ
-    bt2390SrcMinMaxPq = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::OldBlackPoint,
-                                                    usedMaxNits));
 
-    // target min brightness (Lmin) in PQ
-    // target max brightness (Lmax) in PQ
-    float2 tgtMinMaxPQ = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::NewBlackPoint,
-                                                     Ui::Tm::Global::TargetBrightness));
+    float2 tgtMinMaxPQ;
+
+    if (Ui::Tm::Bt2390::ProcessingModeBt2390 == BT2390_PRO_MODE_ICTCP)
+    {
+      float2 lmOldBlackPoint    = (Csp::Ictcp::Bt2020To::PqLms(Ui::Tm::Bt2390::OldBlackPoint    / 10000.f)).xy;
+      float2 lmNewBlackPoint    = (Csp::Ictcp::Bt2020To::PqLms(Ui::Tm::Bt2390::NewBlackPoint    / 10000.f)).xy;
+      float2 lmTargetBrightness = (Csp::Ictcp::Bt2020To::PqLms(Ui::Tm::Global::TargetBrightness / 10000.f)).xy;
+
+      float oldBlackPoint    = 0.5f * lmOldBlackPoint.x    + 0.5f * lmOldBlackPoint.y;
+      float newBlackPoint    = 0.5f * lmNewBlackPoint.x    + 0.5f * lmNewBlackPoint.y;
+      float targetBrightness = 0.5f * lmTargetBrightness.x + 0.5f * lmTargetBrightness.y;
+
+      // source min brightness (Lb) in PQ
+      // source max brightness (Lw) in PQ
+      bt2390SrcMinMaxPq = float2(oldBlackPoint,
+                                 Csp::Trc::NitsTo::Pq(usedMaxNits));
+
+      // target min brightness (Lmin) in PQ
+      // target max brightness (Lmax) in PQ
+      tgtMinMaxPQ = float2(newBlackPoint,
+                           targetBrightness);
+    }
+    else
+    {
+      // source min brightness (Lb) in PQ
+      // source max brightness (Lw) in PQ
+      bt2390SrcMinMaxPq = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::OldBlackPoint,
+                                                      usedMaxNits));
+
+      // target min brightness (Lmin) in PQ
+      // target max brightness (Lmax) in PQ
+      tgtMinMaxPQ = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::NewBlackPoint,
+                                                Ui::Tm::Global::TargetBrightness));
+    }
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -428,11 +454,28 @@ void VS_PrepareToneMapping(
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
-    diceTargetNitsInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetBrightness);
-    diceShoulderStartInPq =
-      Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
-                         / 100.f
-                         * Ui::Tm::Global::TargetBrightness);
+
+    if (Ui::Tm::Dice::ProcessingModeDice == DICE_PRO_MODE_ICTCP)
+    {
+      float targetBrightnessNormalised = Ui::Tm::Global::TargetBrightness / 10000.f;
+
+      float2 lmTargetNits    = (Csp::Ictcp::Bt2020To::PqLms(targetBrightnessNormalised)).xy;
+      float2 lmShoulderStart = (Csp::Ictcp::Bt2020To::PqLms(Ui::Tm::Dice::ShoulderStart
+                                                               / 100.f
+                                                               * targetBrightnessNormalised)).xy;
+
+      diceTargetNitsInPq    = 0.5f * lmTargetNits.x    + 0.5f * lmTargetNits.y;
+      diceShoulderStartInPq = 0.5f * lmShoulderStart.x + 0.5f * lmShoulderStart.y;
+    }
+    else
+    {
+      diceTargetNitsInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetBrightness);
+
+      diceShoulderStartInPq =
+        Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
+                           / 100.f
+                           * Ui::Tm::Global::TargetBrightness);
+    }
 
     diceUnused0 = 0.f;
     diceUnused1 = float3(0.f, 0.f, 0.f);
