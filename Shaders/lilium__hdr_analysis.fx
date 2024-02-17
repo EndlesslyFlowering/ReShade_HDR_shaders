@@ -9,6 +9,13 @@
 
 #undef TEXT_BRIGHTNESS
 
+#if (defined(API_IS_VULKAN) \
+  && (BUFFER_WIDTH > 1280   \
+   || BUFFER_HEIGHT > 800))
+  #warning "If you are on the Steam Deck and want to use this shader, you need to switch to a resolution that is 1280x800 or lower!"
+  #warning "The Steam Deck also has my HDR analysis shaders built in. They are available throught developer options."
+#endif
+
 #ifndef GAMESCOPE
   //#define _DEBUG
   //#define _TESTY
@@ -56,7 +63,7 @@ uniform float2 NIT_PINGPONG2
   smoothing = 0.f;
 >;
 
-#if (defined(GAMESCOPE) \
+#if ((defined(GAMESCOPE) || defined(POSSIBLE_DECK_VULKAN_USAGE)) \
   && BUFFER_HEIGHT <= 800)
   static const uint TEXT_SIZE_DEFAULT = 0;
 #else
@@ -2320,7 +2327,8 @@ void VS_PrepareHdrAnalysis(
   out                 float2 TexCoord          : TEXCOORD0,
   out nointerpolation bool2  PingPongChecks    : PingPongChecks,
   out nointerpolation float4 HighlightNitRange : HighlightNitRange,
-#ifndef GAMESCOPE
+#if (!defined(GAMESCOPE) \
+  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
   out nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
 #else
   out nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
@@ -2341,7 +2349,8 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-#ifndef GAMESCOPE
+#if (!defined(GAMESCOPE) \
+  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
   #define CurrentActiveOverlayArea                 TextureDisplaySizes.xy
   #define LuminanceWaveformTextureDisplayAreaBegin TextureDisplaySizes.zw
 #endif
@@ -2561,7 +2570,8 @@ void PS_HdrAnalysis(
   in                  float2 TexCoord          : TEXCOORD0,
   in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
-#ifndef GAMESCOPE
+#if (!defined(GAMESCOPE) \
+  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
   in  nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
 #else
   in  nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
