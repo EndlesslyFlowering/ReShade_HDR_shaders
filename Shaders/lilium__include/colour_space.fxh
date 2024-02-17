@@ -11,6 +11,18 @@
   #define BUFFER_COLOR_SPACE    2
 #endif
 
+
+#if ((__RENDERER__ & 0xB000) == 0xB000)
+  #define API_IS_D3D11
+#elif ((__RENDERER__ & 0xC000) == 0xC000)
+  #define API_IS_D3D12
+#elif ((__RENDERER__ & 0x10000) == 0x10000)
+  #define API_IS_OPENGL
+#elif ((__RENDERER__ & 0x20000) == 0x20000)
+  #define API_IS_VULKAN
+#endif
+
+
 #ifdef GAMESCOPE
   #ifndef GAMESCOPE_SDR_ON_HDR_NITS
     #define GAMESCOPE_SDR_ON_HDR_NITS 203.f
@@ -239,16 +251,6 @@ uniform int GLOBAL_INFO
   ui_text     = INFO_TEXT;
 >;
 
-
-#if (!(__RENDERER__ & 0xB000 == 0xB000))
-  #define API_IS_D3D11
-#elif (!(__RENDERER__ & 0xC000 == 0xC000))
-  #define API_IS_D3D12
-#elif (!(__RENDERER__ & 0x10000 == 0x10000))
-  #define API_IS_OPENGL
-#elif (!(__RENDERER__ & 0x20000 == 0x20000))
-  #define API_IS_VULKAN
-#endif
 
 #if (defined(API_IS_D3D11)   \
   || defined(API_IS_D3D12)   \
