@@ -4,6 +4,7 @@
 
 #include "../ReShade.fxh"
 
+
 #ifndef __RESHADE__
   #include "_no.fxh"
   #define BUFFER_WIDTH       3840
@@ -20,6 +21,13 @@
   #define API_IS_OPENGL
 #elif ((__RENDERER__ & 0x20000) == 0x20000)
   #define API_IS_VULKAN
+#endif
+
+
+#if (defined(API_IS_VULKAN) \
+  && BUFFER_WIDTH <= 1280   \
+  && BUFFER_HEIGHT <= 800)
+  #define POSSIBLE_DECK_VULKAN_USAGE
 #endif
 
 
