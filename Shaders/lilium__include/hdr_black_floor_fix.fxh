@@ -161,7 +161,7 @@ void Gamma22Emulation(
     {
       if (dot(Colour, Csp::Mat::Bt709ToXYZ[1]) <= WhitePointNormalised)
       {
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
       return;
     }
@@ -169,7 +169,7 @@ void Gamma22Emulation(
     {
       if (dot(Colour, Csp::Mat::DciP3ToXYZ[1]) <= WhitePointNormalised)
       {
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
       }
       return;
     }
@@ -179,7 +179,7 @@ void Gamma22Emulation(
       if (dot(Colour, Csp::Mat::Bt2020ToXYZ[1]) <= WhitePointNormalised)
       {
 #if defined(IS_FLOAT_HDR_CSP)
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour / WhitePointNormalised)) * WhitePointNormalised;
+        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
 #else
         Colour = pow(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 #endif
