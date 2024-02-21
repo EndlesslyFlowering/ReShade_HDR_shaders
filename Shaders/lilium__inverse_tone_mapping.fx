@@ -33,14 +33,12 @@ namespace Ui
         ui_type     = "combo";
         ui_items    = "BT.2446 Method A\0"
                       "BT.2446 Methoc C\0"
-                      "Dice inverse\0"
-                      "map SDR into HDR\0";
+                      "Dice inverse\0";
       > = 0;
 
 #define ITM_METHOD_BT2446A          0
 #define ITM_METHOD_BT2446C          1
 #define ITM_METHOD_DICE_INVERSE     2
-#define ITM_METHOD_MAP_SDR_INTO_HDR 3
 
       uniform uint InputTrc
       <
@@ -252,20 +250,6 @@ namespace Ui
       > = 50.f;
     }
 #endif //ENABLE_DICE
-
-    namespace MapSdrIntoHdr
-    {
-      uniform float SdrHdrTargetBrightness
-      <
-        ui_category = "map SDR into HDR";
-        ui_label    = "target brightness";
-        ui_type     = "drag";
-        ui_units    = " nits";
-        ui_min      = 1.f;
-        ui_max      = 1000.f;
-        ui_step     = 0.1f;
-      > = 203.f;
-    }
   }
 }
 
@@ -381,12 +365,6 @@ void PS_InverseToneMapping(
     } break;
 
 #endif //ENABLE_DICE
-
-    case ITM_METHOD_MAP_SDR_INTO_HDR:
-    {
-      colour = Itmos::MapSdrIntoHdr(colour,
-                                    Ui::Itm::MapSdrIntoHdr::SdrHdrTargetBrightness);
-    } break;
   }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)

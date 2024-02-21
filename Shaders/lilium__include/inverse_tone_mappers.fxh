@@ -158,16 +158,6 @@ namespace Itmos
   } //Bt2446a
 
 
-  // outputs normalised values
-  float3 MapSdrIntoHdr(
-    float3 Input,
-    float  Brightness)
-  {
-    //map SDR into HDR
-    return Input * (Brightness / 10000.f);
-  } //MapSdrIntoHdr
-
-
   // HDR reference white in XYZ
   #define HDR_REF_WHITE_XYZ float3(192.93f, 203.f, 221.05f)
   #define DELTA             6.f / 29.f
