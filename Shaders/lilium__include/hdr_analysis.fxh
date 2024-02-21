@@ -76,13 +76,6 @@ static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 precise static const float PIXELS = uint(BUFFER_WIDTH) * uint(BUFFER_HEIGHT);
 
 
-#define IS_CSP_BT709   0
-#define IS_CSP_DCI_P3  1
-#define IS_CSP_BT2020  2
-#define IS_CSP_AP0     3
-#define IS_CSP_INVALID 4
-
-
 uniform float FRAMETIME
 <
   source = "frametime";
@@ -2583,6 +2576,12 @@ bool IsCsp(precise float3 Rgb)
   return false;
 }
 
+#define IS_CSP_BT709   0
+#define IS_CSP_DCI_P3  1
+#define IS_CSP_BT2020  2
+#define IS_CSP_AP0     3
+#define IS_CSP_INVALID 4
+
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
   #define _IS_CSP_BT709(Rgb)  Rgb
@@ -2664,7 +2663,7 @@ void PS_CalcCsps(
     }
     else
     {
-      CurCsp = IS_CSP_BT709 / 255.f;
+      CurCsp = IS_CSP_BT709;
     }
     return;
 
@@ -2693,7 +2692,7 @@ void PS_CalcCsps(
     }
     else
     {
-      CurCsp = IS_CSP_BT709 / 255.f;
+      CurCsp = IS_CSP_BT709;
     }
     return;
 
