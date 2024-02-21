@@ -42,23 +42,24 @@ namespace Ui
 #define ITM_METHOD_DICE_INVERSE     2
 #define ITM_METHOD_MAP_SDR_INTO_HDR 3
 
-      uniform uint ContentTrc
+      uniform uint InputTrc
       <
         ui_category = "global";
-        ui_label    = "content TRC";
-        ui_tooltip  = "TRC = tone reproduction curve"
-                 "\n" "also wrongly known as \"gamma\"";
+        ui_label    = "input gamma";
+        ui_tooltip  = "\"linear with SDR black floor emulation (scRGB)\" fixes the sRGB<->gamma 2.2 mismatch";
         ui_type     = "combo";
         ui_items    = "2.2\0"
-                      "sRGB\0"
                       "2.4\0"
-                      "linear (scRGB)\0";
+                      "linear (scRGB)\0"
+                      "linear with SDR black floor emulation (scRGB)\0"
+                      "sRGB\0";
       > = 0;
 
-#define CONTENT_TRC_GAMMA_22 0
-#define CONTENT_TRC_SRGB     1
-#define CONTENT_TRC_GAMMA_24 2
-#define CONTENT_TRC_LINEAR   3
+#define CONTENT_TRC_GAMMA_22                    0
+#define CONTENT_TRC_GAMMA_24                    1
+#define CONTENT_TRC_LINEAR                      2
+#define CONTENT_TRC_LINEAR_WITH_BLACK_FLOOR_EMU 3
+#define CONTENT_TRC_SRGB                        4
 
       uniform float TargetBrightness
       <
@@ -284,34 +285,40 @@ namespace Ui
 
 
 void PS_InverseToneMapping(
-      float4     VPos : SV_Position,
-      float2 TexCoord : TEXCOORD0,
-  out float4   Output : SV_Target0)
+      float4   VPos : SV_Position,
+  out float4 Output : SV_Target0)
 {
-  float3 hdr = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  float4 inputColour = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
 
-  switch (Ui::Itm::Global::ContentTrc)
+  float3 colour = inputColour.rgb;
+
+  switch (Ui::Itm::Global::InputTrc)
   {
-    case CONTENT_TRC_SRGB:
-    {
-      hdr = Csp::Trc::ExtendedSrgbTo::Linear(hdr);
-    }
-    break;
     case CONTENT_TRC_GAMMA_22:
     {
-      hdr = Csp::Trc::ExtendedGamma22To::Linear(hdr);
+      colour = Csp::Trc::ExtendedGamma22To::Linear(colour);
     }
     break;
     case CONTENT_TRC_GAMMA_24:
     {
-      hdr = Csp::Trc::ExtendedGamma24To::Linear(hdr);
+      colour = Csp::Trc::ExtendedGamma24To::Linear(colour);
+    }
+    break;
+    case CONTENT_TRC_LINEAR_WITH_BLACK_FLOOR_EMU:
+    {
+      colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(colour));
+    }
+    break;
+    case CONTENT_TRC_SRGB:
+    {
+      colour = Csp::Trc::ExtendedSrgbTo::Linear(colour);
     }
     break;
     default:
       break;
   }
 
-  //hdr = gamut(hdr, EXPAND_GAMUT);
+  //colour = gamut(colour, EXPAND_GAMUT);
 
 #ifdef ENABLE_DICE
   float diceReferenceWhite = (Ui::Itm::Dice::DiceInputBrightness / 80.f);
@@ -319,13 +326,13 @@ void PS_InverseToneMapping(
 
   if (Ui::Itm::Global::ItmMethod != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = Csp::Mat::Bt709To::Bt2020(hdr);
+    colour = Csp::Mat::Bt709To::Bt2020(colour);
   }
 
 #ifdef ENABLE_DICE
   else
   {
-    hdr = max(Csp::Mat::Bt709To::Ap0D65(hdr * diceReferenceWhite / 125.f), 0.f);
+    colour = max(Csp::Mat::Bt709To::Ap0D65(colour * diceReferenceWhite / 125.f), 0.f);
   }
 #endif //ENABLE_DICE
 
@@ -342,24 +349,24 @@ void PS_InverseToneMapping(
                                ? referenceWhiteNits
                                : Ui::Itm::Global::TargetBrightness;
 
-      hdr = Itmos::Bt2446A(hdr,
-                           Ui::Itm::Global::TargetBrightness,
-                           referenceWhiteNits,
-                           inputNitsFactor,
-                           Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
-                           Ui::Itm::Bt2446A::GammaIn,
-                           Ui::Itm::Bt2446A::GammaOut);
+      colour = Itmos::Bt2446A(colour,
+                              Ui::Itm::Global::TargetBrightness,
+                              referenceWhiteNits,
+                              inputNitsFactor,
+                              Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
+                              Ui::Itm::Bt2446A::GammaIn,
+                              Ui::Itm::Bt2446A::GammaOut);
     } break;
 
     case ITM_METHOD_BT2446C:
     {
-      hdr = Itmos::Bt2446c(hdr,
-                           Ui::Itm::Bt2446C::Bt2446CInputBrightness > 153.9f
-                         ? 1.539f
-                         : Ui::Itm::Bt2446C::Bt2446CInputBrightness / 100.f,
-                           0.33f - Ui::Itm::Bt2446C::Alpha);
-                           //BT2446C_USE_ACHROMATIC_CORRECTION,
-                           //BT2446C_SIGMA);
+      colour = Itmos::Bt2446c(colour,
+                              Ui::Itm::Bt2446C::Bt2446CInputBrightness > 153.9f
+                            ? 1.539f
+                            : Ui::Itm::Bt2446C::Bt2446CInputBrightness / 100.f,
+                              0.33f - Ui::Itm::Bt2446C::Alpha);
+                              //BT2446C_USE_ACHROMATIC_CORRECTION,
+                              //BT2446C_SIGMA);
     } break;
 
 #ifdef ENABLE_DICE
@@ -367,18 +374,18 @@ void PS_InverseToneMapping(
     case ITM_METHOD_DICE_INVERSE:
     {
       float targetNitsNormalised = Ui::Itm::Global::TargetBrightness / 10000.f;
-      hdr = Itmos::Dice::InverseToneMapper(
-              hdr,
-              Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::DiceInputBrightness),
-              Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
+      colour = Itmos::Dice::InverseToneMapper(
+                 colour,
+                 Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::DiceInputBrightness),
+                 Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
     } break;
 
 #endif //ENABLE_DICE
 
     case ITM_METHOD_MAP_SDR_INTO_HDR:
     {
-      hdr = Itmos::MapSdrIntoHdr(hdr,
-                                 Ui::Itm::MapSdrIntoHdr::SdrHdrTargetBrightness);
+      colour = Itmos::MapSdrIntoHdr(colour,
+                                    Ui::Itm::MapSdrIntoHdr::SdrHdrTargetBrightness);
     } break;
   }
 
@@ -388,38 +395,38 @@ void PS_InverseToneMapping(
 
   if (Ui::Itm::Global::ItmMethod == ITM_METHOD_DICE_INVERSE)
   {
-    hdr = Csp::Mat::Ap0D65To::Bt2020(hdr);
+    colour = Csp::Mat::Ap0D65To::Bt2020(colour);
   }
 
 #endif //ENABLE_DICE
 
-  hdr = Csp::Trc::LinearTo::Pq(hdr);
+  colour = Csp::Trc::LinearTo::Pq(colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
   if (Ui::Itm::Global::ItmMethod != ITM_METHOD_DICE_INVERSE)
   {
-    hdr = Csp::Mat::Bt2020To::Bt709(hdr);
+    colour = Csp::Mat::Bt2020To::Bt709(colour);
   }
 
 #ifdef ENABLE_DICE
 
   else
   {
-    hdr = Csp::Mat::Ap0D65To::Bt709(hdr);
+    colour = Csp::Mat::Ap0D65To::Bt709(colour);
   }
 
 #endif //ENABLE_DICE
 
-  hdr *= 125.f; // 125 = 10000 / 80
+  colour *= 125.f; // 125 = 10000 / 80
 
 #else //ACTUAL_COLOUR_SPACE ==
 
-  hdr = float3(0.f, 0.f, 0.f);
+  colour = float3(0.f, 0.f, 0.f);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-  Output = float4(hdr, 1.f);
+  Output = float4(colour, inputColour.a);
 }
 
 
@@ -430,7 +437,7 @@ technique lilium__inverse_tone_mapping
 {
   pass PS_InverseToneMapping
   {
-    VertexShader = VS_PostProcess;
+    VertexShader = VS_PostProcessWithoutTexCoord;
      PixelShader = PS_InverseToneMapping;
   }
 }
