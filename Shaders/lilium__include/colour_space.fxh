@@ -43,6 +43,17 @@
 
 #define VS_PostProcess PostProcessVS
 
+void VS_PostProcessWithoutTexCoord(
+  in  uint   id    : SV_VertexID,
+  out float4 SVPos : SV_Position0)
+{
+  float2 texCoord;
+  texCoord.x = (id == 2) ? 2.f : 0.f;
+  texCoord.y = (id == 1) ? 2.f : 0.f;
+
+  SVPos = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+}
+
 #define YES 1
 #define NO  0
 
