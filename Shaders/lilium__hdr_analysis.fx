@@ -2248,12 +2248,7 @@ void CS_DrawValuesToOverlay(uint3 ID : SV_DispatchThreadID)
 // for the pixel shader.
 void VS_PrepareSetActiveArea(
   in                  uint   Id                : SV_VertexID,
-#if (defined(API_IS_D3D11) \
-  || defined(API_IS_D3D12))
   out                 float4 VPos              : SV_Position,
-#else
-  out                 float2 VPos              : SV_Position,
-#endif
   out nointerpolation float4 PercentagesToCrop : PercentagesToCrop)
 {
   float2 TexCoord;
@@ -2261,12 +2256,7 @@ void VS_PrepareSetActiveArea(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-#if (defined(API_IS_D3D11) \
-  || defined(API_IS_D3D12))
   VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
-#else
-  VPos = TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f);
-#endif
 
 
 #define percentageToCropFromLeft   PercentagesToCrop.x
@@ -2287,12 +2277,7 @@ void VS_PrepareSetActiveArea(
 }
 
 void PS_SetActiveArea(
-#if (defined(API_IS_D3D11) \
-  || defined(API_IS_D3D12))
   in                  float4 VPos              : SV_Position,
-#else
-  in                  float2 VPos              : SV_Position,
-#endif
   in  nointerpolation float4 PercentagesToCrop : PercentagesToCrop,
   out                 float4 Output            : SV_Target0)
 {
@@ -2464,12 +2449,12 @@ void VS_PrepareHdrAnalysis(
 
     currentOverlayDimensions += outerSpacing + outerSpacing;
 
-    CurrentActiveOverlayArea = int2(currentOverlayDimensions);
-
     if (_TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
     {
-      CurrentActiveOverlayArea.x = int(BUFFER_WIDTH) - CurrentActiveOverlayArea.x;
+      currentOverlayDimensions.x = uint(BUFFER_WIDTH) - currentOverlayDimensions.x;
     }
+
+    CurrentActiveOverlayArea = int2(currentOverlayDimensions);
   }
 
 }
