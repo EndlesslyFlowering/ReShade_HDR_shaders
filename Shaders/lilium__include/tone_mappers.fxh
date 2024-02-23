@@ -129,9 +129,9 @@ namespace Tmos
 
     // tone mapping step 2
     //Y'c
-    float yC = yP <= 0.7399f                ? 1.0770f * yP
-             : yP > 0.7399f && yP < 0.9909f ? (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f
-                                            : (0.5000f * yP) + 0.5000f;
+    float yC = yP <= 0.7399f ? 1.0770f * yP
+             : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
+                             : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
 
     // tone mapping step 3
     //pSDR
@@ -208,9 +208,9 @@ namespace Tmos
 
     // tone mapping step 2
     //Y'c
-    float yC = yP <= 0.7399f                ? 1.0770f * yP
-             : yP > 0.7399f && yP < 0.9909f ? (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f
-                                            : (0.5000f * yP) + 0.5000f;
+    float yC = yP <= 0.7399f ? 1.0770f * yP
+             : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
+                             : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
 
     // tone mapping step 3
     //pSDR

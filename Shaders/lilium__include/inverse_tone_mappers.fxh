@@ -74,40 +74,16 @@ namespace Itmos
 
     // Tone mapping step 2 (inverse)
     // get Y'p
-    float yP = 0.f;
-
     float yP0 = yC / 1.0770f;
     float yP2 = (yC - 0.5000f) /
                 0.5000f;
+
     //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
-    float yP11 = (-2.7811f + sqrt(pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))) /
-                 -2.302f;
-    //yP12 is never reached
-    //float yP12 = abs((_1_first - _1_sqrt) /
-    //                 _1_div);
 
-    if (yP0 <= 0.7399f)
-      yP = yP0;
-    else if (yP11 > 0.7399f
-          && yP11 < 0.9909f)
-      yP = yP11;
-    //else if (yP12 > 0.7399f && yP12 < 0.9909f)
-    //  yP = yP12;
-    else if (yP2 >= 0.9909f)
-      yP = yP2;
-    else //yP11 sometimes (0.12% out of the full RGB range) is less than 0.7399f or more than 0.9909f
-    {
-      //error is small enough (less than 0.001) for this to be OK
-      //ideally you would choose between yP0 and yP11 if yP11 < 0.7399f depending on which is closer to 0.7399f
-      //or between yP11 and yP2 if yP11 > 0.9909f depending on which is closer to 0.9909f
-      yP = yP11;
-
-      //this clamps it to one float step above 0.7399f or one float step below 0.9909f
-      //if (yP11 < 0.7399f)
-      //  yP = 0.73990005f;
-      //else
-      //  yP = 0.9908999f;
-    }
+    float yP = yP0 <= 0.7399f ? yP0
+             : yP2 >= 0.9909f ? yP2
+                              : (-2.7811f + sqrt(4.83307641f - 4.604f * yC)) /
+                                -2.302f;
 
     // Tone mapping step 1 (inverse)
     // get Y'
@@ -160,9 +136,9 @@ namespace Itmos
 
   // HDR reference white in XYZ
   #define HDR_REF_WHITE_XYZ float3(192.93f, 203.f, 221.05f)
-  #define DELTA             6.f / 29.f
-  #define POW_DELTA_3       pow(DELTA, 3.f)
-  #define _3_X_POW_DELTA_2  3.f * pow(DELTA, 2.f)
+  #define DELTA             (6.f / 29.f)
+  #define POW_DELTA_3       (DELTA * DELTA * DELTA)
+  #define _3_X_POW_DELTA_2  (3.f * (DELTA * DELTA))
 
   //// outputs normalised values
   //float3 Bt2446c(
