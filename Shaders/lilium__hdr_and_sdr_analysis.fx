@@ -2922,18 +2922,11 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget = TextureCsps;
   }
 
-  pass CS_CountCspsY
+  pass CS_CountCsps
   {
-    ComputeShader = CS_CountCspsY <THREAD_SIZE0, 1>;
-    DispatchSizeX = DISPATCH_X0;
-    DispatchSizeY = 1;
-  }
-
-  pass CS_CountCspsX
-  {
-    ComputeShader = CS_CountCspsX <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
+    ComputeShader = CS_CountCsps <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = CSP_COUNTER_DISPATCH_X;
+    DispatchSizeY = CSP_COUNTER_DISPATCH_Y;
   }
 #endif
 

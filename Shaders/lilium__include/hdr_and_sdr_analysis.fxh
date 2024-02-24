@@ -154,31 +154,31 @@ storage2D<float> StorageNitsValues
 
 #if defined(ANALYSIS_ENABLE)
 
-#if 0
-static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
-static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
-
-texture2D TextureMaxNits0Dot01Percent
-<
-  pooled = true;
->
-{
-  Width  = _0_Dot_01_Percent_Texture_Width;
-  Height = 16;
-
-  Format = R32F;
-};
-
-sampler2D<float> SamplerMaxNits0Dot01Percent
-{
-  Texture = TextureMaxNits0Dot01Percent;
-};
-
-storage2D<float> StorageMaxNits0Dot01Percent
-{
-  Texture = TextureMaxNits0Dot01Percent;
-};
-#endif
+//#if 0
+//static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
+//static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
+//
+//texture2D TextureMaxNits0Dot01Percent
+//<
+//  pooled = true;
+//>
+//{
+//  Width  = _0_Dot_01_Percent_Texture_Width;
+//  Height = 16;
+//
+//  Format = R32F;
+//};
+//
+//sampler2D<float> SamplerMaxNits0Dot01Percent
+//{
+//  Texture = TextureMaxNits0Dot01Percent;
+//};
+//
+//storage2D<float> StorageMaxNits0Dot01Percent
+//{
+//  Texture = TextureMaxNits0Dot01Percent;
+//};
+//#endif
 
 
 #define CIE_TEXTURE_ENTRY_DIAGRAM_COLOUR   0
@@ -247,6 +247,23 @@ texture2D TextureCsps
 sampler2D<float> SamplerCsps
 {
   Texture = TextureCsps;
+};
+
+#if defined(IS_FLOAT_HDR_CSP)
+  #define COUNTED_CSPS 5
+#else
+  #define COUNTED_CSPS 3
+#endif
+
+texture1D TextureCspCounter
+{
+  Width  = COUNTED_CSPS;
+  Format = R32U;
+};
+
+storage1D<uint> StorageCspCounter
+{
+  Texture = TextureCspCounter;
 };
 #endif
 
@@ -351,13 +368,9 @@ sampler2D<float4> SamplerLuminanceWaveformFinal
 #define INTERMEDIATE_NITS_VALUES_Y_OFFSET 0
 
 
-#define CSP_COUNTER_X_OFFSET 0
-#define CSP_COUNTER_Y_OFFSET 6
-
-
 // (12) 4x max, avg and min Nits
 #define FINAL_4_NITS_VALUES_X_OFFSET 0
-#define FINAL_4_NITS_VALUES_Y_OFFSET 12
+#define FINAL_4_NITS_VALUES_Y_OFFSET 6
 static const int2 COORDS_FINAL_4_MAX_NITS_VALUE0 = int2(     FINAL_4_NITS_VALUES_X_OFFSET, FINAL_4_NITS_VALUES_Y_OFFSET);
 static const int2 COORDS_FINAL_4_AVG_NITS_VALUE0 = int2( 1 + FINAL_4_NITS_VALUES_X_OFFSET, FINAL_4_NITS_VALUES_Y_OFFSET);
 static const int2 COORDS_FINAL_4_MIN_NITS_VALUE0 = int2( 2 + FINAL_4_NITS_VALUES_X_OFFSET, FINAL_4_NITS_VALUES_Y_OFFSET);
@@ -374,26 +387,16 @@ static const int2 COORDS_FINAL_4_MIN_NITS_VALUE3 = int2(11 + FINAL_4_NITS_VALUES
 
 // (4) max, max 99.99%, avg and min Nits
 #define MAX_AVG_MIN_NITS_VALUES_X_OFFSET 12 + FINAL_4_NITS_VALUES_X_OFFSET
-#define MAX_AVG_MIN_NITS_VALUES_Y_OFFSET 12
+#define MAX_AVG_MIN_NITS_VALUES_Y_OFFSET  6
 static const int2 COORDS_MAX_NITS_VALUE   = int2(    MAX_AVG_MIN_NITS_VALUES_X_OFFSET, MAX_AVG_MIN_NITS_VALUES_Y_OFFSET);
 static const int2 COORDS_MAX_NITS99_VALUE = int2(1 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET, MAX_AVG_MIN_NITS_VALUES_Y_OFFSET);
 static const int2 COORDS_AVG_NITS_VALUE   = int2(2 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET, MAX_AVG_MIN_NITS_VALUES_Y_OFFSET);
 static const int2 COORDS_MIN_NITS_VALUE   = int2(3 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET, MAX_AVG_MIN_NITS_VALUES_Y_OFFSET);
 
 
-// (5) CSP counter for BT.709, DCI-P3, BT.2020, AP0 and invalid
-#define CSP_COUNTER_FINAL_X_OFFSET  4 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET
-#define CSP_COUNTER_FINAL_Y_OFFSET 12
-static const int2 COORDS_CSP_PERCENTAGE_BT709   = int2(    CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_DCI_P3  = int2(1 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_BT2020  = int2(2 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_AP0     = int2(3 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-static const int2 COORDS_CSP_PERCENTAGE_INVALID = int2(4 + CSP_COUNTER_FINAL_X_OFFSET, CSP_COUNTER_FINAL_Y_OFFSET);
-
-
 // (8) show values for max, avg and min Nits plus CSP % for BT.709, DCI-P3, BT.2020, AP0 and invalid
-#define SHOW_VALUES_X_OFFSET  5 + CSP_COUNTER_FINAL_X_OFFSET
-#define SHOW_VALUES_Y_OFFSET 12
+#define SHOW_VALUES_X_OFFSET 4 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET
+#define SHOW_VALUES_Y_OFFSET 6
 static const int2 COORDS_SHOW_MAX_NITS           = int2(    SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
 static const int2 COORDS_SHOW_AVG_NITS           = int2(1 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
 static const int2 COORDS_SHOW_MIN_NITS           = int2(2 + SHOW_VALUES_X_OFFSET, SHOW_VALUES_Y_OFFSET);
@@ -405,14 +408,14 @@ static const int2 COORDS_SHOW_PERCENTAGE_INVALID = int2(7 + SHOW_VALUES_X_OFFSET
 
 
 // (1) adaptive Nits for tone mapping
-#define ADAPTIVE_NITS_X_OFFSET  8 + SHOW_VALUES_X_OFFSET
-#define ADAPTIVE_NITS_Y_OFFSET 12
+#define ADAPTIVE_NITS_X_OFFSET 8 + SHOW_VALUES_X_OFFSET
+#define ADAPTIVE_NITS_Y_OFFSET 6
 static const int2 COORDS_ADAPTIVE_NITS = int2(ADAPTIVE_NITS_X_OFFSET, ADAPTIVE_NITS_Y_OFFSET);
 
 
 // (12) averaged Nits over the last 10 frames for adaptive Nits
-#define AVERAGE_MAX_NITS_X_OFFSET  1 + ADAPTIVE_NITS_X_OFFSET
-#define AVERAGE_MAX_NITS_Y_OFFSET 12
+#define AVERAGE_MAX_NITS_X_OFFSET 1 + ADAPTIVE_NITS_X_OFFSET
+#define AVERAGE_MAX_NITS_Y_OFFSET 6
 static const int2 COORDS_AVERAGE_MAX_NITS_CUR = int2(     AVERAGE_MAX_NITS_X_OFFSET, AVERAGE_MAX_NITS_Y_OFFSET);
 static const int2 COORDS_AVERAGE_MAX_NITS_0   = int2( 1 + AVERAGE_MAX_NITS_X_OFFSET, AVERAGE_MAX_NITS_Y_OFFSET);
 static const int2 COORDS_AVERAGE_MAX_NITS_1   = int2( 2 + AVERAGE_MAX_NITS_X_OFFSET, AVERAGE_MAX_NITS_Y_OFFSET);
@@ -429,7 +432,7 @@ static const int2 COORDS_AVERAGED_MAX_NITS    = int2(11 + AVERAGE_MAX_NITS_X_OFF
 
 // (5) check if redraw of text is needed for overlay
 #define CHECK_OVERLAY_REDRAW_X_OFFSET 12 + AVERAGE_MAX_NITS_X_OFFSET
-#define CHECK_OVERLAY_REDRAW_Y_OFFSET 12
+#define CHECK_OVERLAY_REDRAW_Y_OFFSET  6
 static const int2 COORDS_CHECK_OVERLAY_REDRAW0 = int2(    CHECK_OVERLAY_REDRAW_X_OFFSET, CHECK_OVERLAY_REDRAW_Y_OFFSET);
 static const int2 COORDS_CHECK_OVERLAY_REDRAW1 = int2(1 + CHECK_OVERLAY_REDRAW_X_OFFSET, CHECK_OVERLAY_REDRAW_Y_OFFSET);
 static const int2 COORDS_CHECK_OVERLAY_REDRAW2 = int2(2 + CHECK_OVERLAY_REDRAW_X_OFFSET, CHECK_OVERLAY_REDRAW_Y_OFFSET);
@@ -438,29 +441,29 @@ static const int2 COORDS_CHECK_OVERLAY_REDRAW4 = int2(4 + CHECK_OVERLAY_REDRAW_X
 
 
 // (3) offsets for overlay text blocks
-#define OVERLAY_TEXT_Y_OFFSETS_X_OFFSET  5 + CHECK_OVERLAY_REDRAW_X_OFFSET
-#define OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET 12
+#define OVERLAY_TEXT_Y_OFFSETS_X_OFFSET 5 + CHECK_OVERLAY_REDRAW_X_OFFSET
+#define OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET 6
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS = int2(    OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS        = int2(1 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
 static const int2 COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP  = int2(2 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET, OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET);
 
 
 // (1) update Nits values and CSP percentages for the overlay
-#define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET  3 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET
-#define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 12
+#define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET 3 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET
+#define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 6
 static const int2 COORDS_UPDATE_OVERLAY_PERCENTAGES = int2(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET, UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET);
 
 
 // (3) luminance waveform variables
-#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET  1 + UPDATE_OVERLAY_PERCENTAGES_X_OFFSET
-#define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 12
+#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET 1 + UPDATE_OVERLAY_PERCENTAGES_X_OFFSET
+#define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 6
 static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X       = int2(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
 static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y       = int2(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
 static const int2 COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT = int2(2 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET, LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET);
 
 
 #define CONSOLIDATED_TEXTURE_SIZE_WIDTH  BUFFER_WIDTH
-#define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 13
+#define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 7
 
 
 texture2D TextureConsolidated
@@ -2729,131 +2732,113 @@ void PS_CalcCsps(
 }
 
 
-#define COORDS_CSP_COUNTER_BT709(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_BT709   + CSP_COUNTER_Y_OFFSET)
-#define COORDS_CSP_COUNTER_DCI_P3(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_DCI_P3  + CSP_COUNTER_Y_OFFSET)
-#define COORDS_CSP_COUNTER_BT2020(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_BT2020  + CSP_COUNTER_Y_OFFSET)
-#define COORDS_CSP_COUNTER_AP0(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_AP0     + CSP_COUNTER_Y_OFFSET)
-#define COORDS_CSP_COUNTER_INVALID(X) \
-  int2(X + CSP_COUNTER_X_OFFSET, IS_CSP_INVALID + CSP_COUNTER_Y_OFFSET)
-
-
-void CS_CountCspsY(uint3 ID : SV_DispatchThreadID)
-{
-  if (SHOW_CSPS
-   || SHOW_CSP_FROM_CURSOR
-   || SHOW_CSP_MAP)
-  {
-#ifndef WIDTH0_DISPATCH_DOESNT_OVERFLOW
-
-    if (ID.x < BUFFER_WIDTH)
-    {
-
+// 8 * 4
+#if (BUFFER_WIDTH % 32 == 0)
+  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / 32)
+#else
+  #define CSP_COUNTER_FETCH_X_NEEDS_CLAMPING
+  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / 32 + 1)
 #endif
 
-      precise uint counter_BT709  = 0;
-      precise uint counter_DCI_P3 = 0;
+#if (BUFFER_HEIGHT % 32 == 0)
+  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / 32)
+#else
+  #define CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING
+  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / 32 + 1)
+#endif
+
+#define GROUP_CSP_COUNTER_SHARED_VARIABLES (64 * COUNTED_CSPS)
+
+groupshared uint GroupCspCounter[GROUP_CSP_COUNTER_SHARED_VARIABLES];
+void CS_CountCsps(uint3 GID  : SV_GroupID,
+                  uint3 GTID : SV_GroupThreadID,
+                  uint3 DTID : SV_DispatchThreadID)
+{
+  if (SHOW_CSPS)
+  {
+    //move this into a 1x1x1 compute shader that is called before this shader
+    if (all(DTID.xy == 0))
+    {
+      tex1Dstore(StorageCspCounter, 0, 0);
+      tex1Dstore(StorageCspCounter, 1, 0);
+      tex1Dstore(StorageCspCounter, 2, 0);
+#if defined(IS_FLOAT_HDR_CSP)
+      tex1Dstore(StorageCspCounter, 3, 0);
+      tex1Dstore(StorageCspCounter, 4, 0);
+#endif
+    }
+    memoryBarrier();
 
 #if defined(IS_FLOAT_HDR_CSP)
+    uint counter[5] = {0,0,0,0,0};
+#else
+    uint counter[3] = {0,0,0};
+#endif
 
-      precise uint counter_BT2020 = 0;
-      precise uint counter_AP0    = 0;
+    const int xStart = DTID.x * 4;
+#ifndef CSP_COUNTER_FETCH_X_NEEDS_CLAMPING
+    const int xStop  = xStart + 4;
+#else
+    const int xStop  = min(xStart + 4, BUFFER_WIDTH);
+#endif
 
-#endif //IS_FLOAT_HDR_CSP
+    const int yStart = DTID.y * 4;
+#ifndef CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING
+    const int yStop  = yStart + 4;
+#else
+    const int yStop  = min(yStart + 4, BUFFER_HEIGHT);
+#endif
 
-      for (int y = 0; y < BUFFER_HEIGHT; y++)
+    for (int x = xStart; x < xStop; x++)
+    {
+      for (int y = yStart; y < yStop; y++)
       {
-        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(ID.x, y)) * 255.f);
-        if (curCsp == IS_CSP_BT709)
-        {
-          counter_BT709++;
-        }
-        else if (curCsp == IS_CSP_DCI_P3)
-        {
-          counter_DCI_P3++;
-        }
-
-#if defined(IS_FLOAT_HDR_CSP)
-
-        else if (curCsp == IS_CSP_BT2020)
-        {
-          counter_BT2020++;
-        }
-        else if (curCsp == IS_CSP_AP0)
-        {
-          counter_AP0++;
-        }
-
-#endif //IS_FLOAT_HDR_CSP
+        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(x, y)) * 255.f);
+        counter[curCsp]++;
       }
-
-      tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_BT709(ID.x),  counter_BT709);
-      tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_DCI_P3(ID.x), counter_DCI_P3);
-
-#if defined(IS_FLOAT_HDR_CSP)
-
-      tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(ID.x), counter_BT2020);
-      tex2Dstore(StorageConsolidated, COORDS_CSP_COUNTER_AP0(ID.x),    counter_AP0);
-
-#endif //IS_FLOAT_HDR_CSP
-
-#ifndef WIDTH0_DISPATCH_DOESNT_OVERFLOW
-
     }
 
+    const uint groupCspCounterId = (DTID.x - (GID.x * 8)) | ((DTID.y - (GID.y * 8)) << 3);
+    GroupCspCounter[groupCspCounterId]         = counter[0];
+    GroupCspCounter[groupCspCounterId | 0x40]  = counter[1];
+    GroupCspCounter[groupCspCounterId | 0x80]  = counter[2];
+#if defined(IS_FLOAT_HDR_CSP)
+    GroupCspCounter[groupCspCounterId | 0xC0]  = counter[3];
+    GroupCspCounter[groupCspCounterId | 0x100] = counter[4];
 #endif
-  }
-}
-
-void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
-{
-  if (SHOW_CSPS
-   || SHOW_CSP_FROM_CURSOR
-   || SHOW_CSP_MAP)
-  {
-    precise uint counter_BT709  = 0;
-    precise uint counter_DCI_P3 = 0;
-
-#if defined(IS_FLOAT_HDR_CSP)
-
-    precise uint counter_BT2020 = 0;
-    precise uint counter_AP0    = 0;
-
-#endif //IS_FLOAT_HDR_CSP
-
-    for (int x = 0; x < BUFFER_WIDTH; x++)
-    {
-      counter_BT709  += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT709(x)));
-      counter_DCI_P3 += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_DCI_P3(x)));
-
-#if defined(IS_FLOAT_HDR_CSP)
-
-      counter_BT2020 += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_BT2020(x)));
-      counter_AP0    += uint(tex2Dfetch(StorageConsolidated, COORDS_CSP_COUNTER_AP0(x)));
-
-#endif //IS_FLOAT_HDR_CSP
-    }
 
     barrier();
 
-    precise float percentageBt709 = counter_BT709  / PixelCountInFloat;
-    precise float percentageDciP3 = counter_DCI_P3 / PixelCountInFloat;
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709,  percentageBt709);
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3, percentageDciP3);
-
+    if (all(GTID.xy == 0))
+    {
+      uint counterBt709   = 0;
+      uint counterDciP3   = 0;
+      uint counterBt2020  = 0;
 #if defined(IS_FLOAT_HDR_CSP)
-
-    precise float percentageBt2020 = counter_BT2020 / PixelCountInFloat;
-    precise float percentageAp0    = counter_AP0    / PixelCountInFloat;
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020, percentageBt2020);
-    tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0,    percentageAp0);
-
-#endif //IS_FLOAT_HDR_CSP
+      uint counterAp0     = 0;
+      uint counterInvalid = 0;
+#endif
+      for (uint i = 0; i < 64; i++)
+      {
+        counterBt709   += GroupCspCounter[i];
+        counterDciP3   += GroupCspCounter[i | 0x40];
+        counterBt2020  += GroupCspCounter[i | 0x80];
+#if defined(IS_FLOAT_HDR_CSP)
+        counterAp0     += GroupCspCounter[i | 0xC0];
+        counterInvalid += GroupCspCounter[i | 0x100];
+#endif
+      }
+      atomicAdd(StorageCspCounter, 0, counterBt709);
+      atomicAdd(StorageCspCounter, 1, counterDciP3);
+      atomicAdd(StorageCspCounter, 2, counterBt2020);
+#if defined(IS_FLOAT_HDR_CSP)
+      atomicAdd(StorageCspCounter, 3, counterAp0);
+      atomicAdd(StorageCspCounter, 4, counterInvalid);
+#endif
+    }
   }
 }
+
 
 float3 CreateCspMap(
   uint  Csp,
@@ -2950,54 +2935,32 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
     avgNits = min(avgNits, maxNits);
 
 #ifdef IS_HDR_CSP
-    precise float counter_BT709  = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709)
-#if (__VENDOR__ == 0x1002)
-                                 * 100.0001f;
-#else
-                                 * 100.f;
-#endif
-    precise float counter_DCI_P3 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3)
-#if (__VENDOR__ == 0x1002)
-                                 * 100.0001f;
-#else
-                                 * 100.f;
-#endif
 
+    precise uint counterBt709   = tex1Dfetch(StorageCspCounter, 0);
+    precise uint counterDciP3   = tex1Dfetch(StorageCspCounter, 1);
+    precise uint counterBt2020  = tex1Dfetch(StorageCspCounter, 2);
 #if defined(IS_FLOAT_HDR_CSP)
-
-    precise float counter_BT2020 = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020)
-#if (__VENDOR__ == 0x1002)
-                                 * 100.0001f;
-#else
-                                 * 100.f;
-#endif
-
-#else
-
-    precise float counter_BT2020 = 100.f
-                                 - counter_DCI_P3
-                                 - counter_BT709;
-
+    precise uint counterAp0     = tex1Dfetch(StorageCspCounter, 3);
+    precise uint counterInvalid = tex1Dfetch(StorageCspCounter, 4);
 #endif //IS_FLOAT_HDR_CSP
 
-#if defined(IS_FLOAT_HDR_CSP)
-
-    precise float counter_AP0     = tex2Dfetch(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0)
 #if (__VENDOR__ == 0x1002)
-                                 * 100.0001f;
+  #define TIMES_100 100.0001f
 #else
-                                 * 100.f;
+  #define TIMES_100 100.f
 #endif
-    precise float counter_invalid = 100.f
-                                  - counter_AP0
-                                  - counter_BT2020
-                                  - counter_DCI_P3
-                                  - counter_BT709;
 
+    static const float pixelCountInFloat = float(BUFFER_WIDTH) * float(BUFFER_HEIGHT);
+
+    precise float percentageBt709   = float(counterBt709)   / pixelCountInFloat * TIMES_100;
+    precise float percentageDciP3   = float(counterDciP3)   / pixelCountInFloat * TIMES_100;
+    precise float percentageBt2020  = float(counterBt2020)  / pixelCountInFloat * TIMES_100;
+#if defined(IS_FLOAT_HDR_CSP)
+    precise float percentageAp0     = float(counterAp0)     / pixelCountInFloat * TIMES_100;
+    precise float percentageInvalid = float(counterInvalid) / pixelCountInFloat * TIMES_100;
 #endif //IS_FLOAT_HDR_CSP
+
 #endif //IS_HDR_CSP
-
-    barrier();
 
     tex2Dstore(StorageConsolidated, COORDS_SHOW_MAX_NITS, maxNits);
     tex2Dstore(StorageConsolidated, COORDS_SHOW_AVG_NITS, avgNits);
@@ -3005,14 +2968,14 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
 
 #ifdef IS_HDR_CSP
 
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709,  counter_BT709);
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3, counter_DCI_P3);
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020, counter_BT2020);
+    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT709,  percentageBt709);
+    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3, percentageDciP3);
+    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_BT2020, percentageBt2020);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0,     counter_AP0);
-    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID, counter_invalid);
+    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_AP0,     percentageAp0);
+    tex2Dstore(StorageConsolidated, COORDS_SHOW_PERCENTAGE_INVALID, percentageInvalid);
 
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
