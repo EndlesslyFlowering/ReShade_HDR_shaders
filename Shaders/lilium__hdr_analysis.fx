@@ -3,10 +3,6 @@
 
 #if defined(IS_HDR_COMPATIBLE_API)
 
-#ifndef IS_HDR_CSP
-  #define LUMINANCE_WAVEFORM_CUTOFF_POINT 0 //FIX ME
-#endif
-
 #undef TEXT_BRIGHTNESS
 
 #if (defined(API_IS_VULKAN) \
