@@ -2873,7 +2873,7 @@ technique lilium__hdr_analysis
 
   pass PS_ClearLuminanceWaveformTexture
   {
-    VertexShader       = VS_PostProcess;
+    VertexShader       = VS_PostProcessWithoutTexCoord;
      PixelShader       = PS_ClearLuminanceWaveformTexture;
     RenderTarget       = TextureLuminanceWaveform;
     ClearRenderTargets = true;

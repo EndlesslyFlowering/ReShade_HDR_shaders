@@ -1465,9 +1465,8 @@ void CS_RenderLuminanceWaveformScale()
 }
 
 void PS_ClearLuminanceWaveformTexture(
-  in  float4 VPos     : SV_Position,
-  in  float2 TexCoord : TEXCOORD0,
-  out float4 Out      : SV_Target0)
+  in  float4 VPos : SV_Position,
+  out float4 Out  : SV_Target0)
 {
   Out = 0.f;
   discard;
