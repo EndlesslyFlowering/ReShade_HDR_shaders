@@ -112,6 +112,7 @@ void VS_PostProcessWithoutTexCoord(
   #define FONT_BRIGHTNESS 2.03f
 
 #elif ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
+    || (                                  CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
     || (                                  CSP_OVERRIDE == CSP_SRGB  && defined(IS_POSSIBLE_SRGB_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_SRGB
