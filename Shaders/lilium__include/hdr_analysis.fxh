@@ -683,7 +683,14 @@ namespace Waveform
     waveDat.borderSize = clamp(int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f * borderAndFrameSizeFactor + 0.5f), 10, maxBorderSize);
     waveDat.frameSize  = clamp(int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f * borderAndFrameSizeFactor + 0.5f),  4, maxFrameSize);
 
-    static const uint maxFontSize = uint(((TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f + 0.5f)) * 2;
+    static const uint maxFontSize =
+      clamp(uint(((TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *
+#ifdef IS_HDR_CSP
+                                                              27.f + 5.f
+#else
+                                                              28.f + 3.f
+#endif
+                                                                        ) / 2.f + 0.5f)) * 2, 12, 32);
 
     const uint fontSize =
       clamp(uint(((TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *
