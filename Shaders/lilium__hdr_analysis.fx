@@ -2881,9 +2881,9 @@ technique lilium__hdr_analysis
 
   pass CS_RenderLuminanceWaveform
   {
-    ComputeShader = CS_RenderLuminanceWaveform <THREAD_SIZE0, 1>;
-    DispatchSizeX = DISPATCH_X0;
-    DispatchSizeY = 1;
+    ComputeShader = CS_RenderLuminanceWaveform <8, 8>;
+    DispatchSizeX = RENDER_WAVEFORM_DISPATCH_X;
+    DispatchSizeY = RENDER_WAVEFORM_DISPATCH_Y;
   }
 
   pass PS_RenderLuminanceWaveformToScale
