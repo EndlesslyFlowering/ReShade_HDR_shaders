@@ -2912,9 +2912,9 @@ technique lilium__hdr_analysis
 
   pass CS_GenerateCieDiagram
   {
-    ComputeShader = CS_GenerateCieDiagram <THREAD_SIZE1, THREAD_SIZE1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = DISPATCH_Y1;
+    ComputeShader = CS_GenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = WAVE64_DISPATCH_X;
+    DispatchSizeY = WAVE64_DISPATCH_Y;
   }
 
 

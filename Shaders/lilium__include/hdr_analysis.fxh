@@ -2473,62 +2473,57 @@ void PS_CopyCieBgAndOutlines(
   return;
 }
 
-void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
+
+void CS_GenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
 {
   if (_SHOW_CIE)
   {
 
-#if !defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  \
- && !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)
-
-    if (ID.x < BUFFER_WIDTH && ID.y < BUFFER_HEIGHT)
-    {
-
-#elif !defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  \
-    && defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)
-
-    if (ID.y < BUFFER_HEIGHT)
-    {
-
-#elif !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW) \
-    && defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)
-
-    if (ID.y < BUFFER_WIDTH)
-    {
-
+#ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
+    const int fetchPosX = DTID.x;
+#else
+    const int fetchPosX = min(DTID.x, uint(BUFFER_WIDTH - 1));
 #endif
 
-      precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, ID.xy).rgb;
+#ifndef WAVE64_FETCH_Y_NEEDS_CLAMPING
+    const int fetchPosY = DTID.y;
+#else
+    const int fetchPosX = min(DTID.y, uint(BUFFER_HEIGHT - 1));
+#endif
 
-      if (all(pixel == 0.f))
-      {
-        return;
-      }
+    const int2 fetchPos = int2(fetchPosX, fetchPosY);
+
+    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, fetchPos).rgb;
+
+    if (all(pixel == 0.f))
+    {
+      return;
+    }
 
     // get XYZ
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
+    precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-      precise const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(pixel));
+    precise const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(pixel));
 
 #else
 
-      precise const float3 XYZ = float3(0.f, 0.f, 0.f);
+    precise const float3 XYZ = float3(0.f, 0.f, 0.f);
 
 #endif
 
@@ -2536,77 +2531,70 @@ void CS_GenerateCieDiagram(uint3 ID : SV_DispatchThreadID)
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-      if (XYZ.y <= 0.f)
-      {
-        return;
-      }
-
-#endif
-
-      if (_CIE_DIAGRAM_TYPE == CIE_1931)
-      {
-        // get xy
-        precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
-
-        precise int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
-         CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
-
-        // adjust for the added borders
-        xy += CIE_BG_BORDER;
-
-        // clamp to borders
-        xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
-
-        // leave this as sampler and not storage
-        // otherwise d3d complains about the resource still being bound on input
-        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-        const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
-
-        tex2Dstore(StorageCieCurrent,
-                   xy,
-                   xyColour);
-      }
-      else if (_CIE_DIAGRAM_TYPE == CIE_1976)
-      {
-        // get u'v'
-        precise const float X15Y3Z = XYZ.x
-                                   + 15.f * XYZ.y
-                                   +  3.f * XYZ.z;
-
-        precise int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
-         CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
-
-        // adjust for the added borders
-        uv += CIE_BG_BORDER;
-
-        // clamp to borders
-        uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
-
-        const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
-
-        // leave this as sampler and not storage
-        // otherwise d3d complains about the resource still being bound on input
-        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-        const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
-
-        tex2Dstore(StorageCieCurrent,
-                   uv,
-                   uvColour);
-      }
-
-#if (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  && !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \
- || (!defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  &&  defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW)) \
- || ( defined(WIDTH1_DISPATCH_DOESNT_OVERFLOW)  && !defined(HEIGHT1_DISPATCH_DOESNT_OVERFLOW))
-
+    if (XYZ.y <= 0.f)
+    {
+      return;
     }
 
 #endif
+
+    if (_CIE_DIAGRAM_TYPE == CIE_1931)
+    {
+      // get xy
+      precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
+
+      precise int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
+       CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
+
+      // adjust for the added borders
+      xy += CIE_BG_BORDER;
+
+      // clamp to borders
+      xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
+
+      // leave this as sampler and not storage
+      // otherwise d3d complains about the resource still being bound on input
+      // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+      // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+      // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+      const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
+
+      tex2Dstore(StorageCieCurrent,
+                 xy,
+                 xyColour);
+    }
+    else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+    {
+      // get u'v'
+      precise const float X15Y3Z = XYZ.x
+                                 + 15.f * XYZ.y
+                                 +  3.f * XYZ.z;
+
+      precise int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
+       CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
+
+      // adjust for the added borders
+      uv += CIE_BG_BORDER;
+
+      // clamp to borders
+      uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
+
+      const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
+
+      // leave this as sampler and not storage
+      // otherwise d3d complains about the resource still being bound on input
+      // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+      // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+      // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+      const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
+
+      tex2Dstore(StorageCieCurrent,
+                 uv,
+                 uvColour);
+    }
   }
 }
+
 
 #ifdef IS_HDR_CSP
 bool IsCsp(precise float3 Rgb)
