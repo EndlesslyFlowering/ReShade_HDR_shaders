@@ -5,6 +5,23 @@
 
 #if defined(IS_HDR_COMPATIBLE_API)
 
+#define WAVE64_THREAD_SIZE_X 8
+#define WAVE64_THREAD_SIZE_Y 8
+
+#if (BUFFER_WIDTH % 8 == 0)
+  #define WAVE64_DISPATCH_X (BUFFER_WIDTH / 8)
+#else
+  #define WAVE64_FETCH_X_NEEDS_CLAMPING
+  #define WAVE64_DISPATCH_X (BUFFER_WIDTH / 8 + 1)
+#endif
+
+#if (BUFFER_HEIGHT % 8 == 0)
+  #define WAVE64_DISPATCH_Y (BUFFER_HEIGHT / 8)
+#else
+  #define WAVE64_FETCH_Y_NEEDS_CLAMPING
+  #define WAVE64_DISPATCH_Y (BUFFER_HEIGHT / 8 + 1)
+#endif
+
 //max is 32
 //#ifndef THREAD_SIZE0
   #define THREAD_SIZE0 8
@@ -1478,68 +1495,46 @@ void PS_ClearLuminanceWaveformTexture(
 }
 
 
-// 8 * 4
-#if ((BUFFER_WIDTH % 32) == 0)
-  #define RENDER_WAVEFORM_DISPATCH_X (BUFFER_WIDTH / 32)
-#else
-  #define RENDER_WAVEFORM_X_NEEDS_CLAMPING
-  #define RENDER_WAVEFORM_DISPATCH_X (BUFFER_WIDTH / 32 + 1)
-#endif
-
-#if ((BUFFER_HEIGHT % 32) == 0)
-  #define RENDER_WAVEFORM_DISPATCH_Y (BUFFER_HEIGHT / 32)
-#else
-  #define RENDER_WAVEFORM_Y_NEEDS_CLAMPING
-  #define RENDER_WAVEFORM_DISPATCH_Y (BUFFER_HEIGHT / 32 + 1)
-#endif
-
-
 void CS_RenderLuminanceWaveform(uint3 DTID : SV_DispatchThreadID)
 {
   if (_SHOW_LUMINANCE_WAVEFORM)
   {
 
-    const int xStart = DTID.x * 4;
-#ifndef RENDER_WAVEFORM_X_NEEDS_CLAMPING
-    const int xStop  = xStart + 4;
+#ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
+    const int fetchPosX = DTID.x;
 #else
-    const int xStop  = min(xStart + 4, BUFFER_WIDTH);
+    const int fetchPosX = min(DTID.x, uint(BUFFER_WIDTH - 1));
 #endif
 
-    const int yStart = DTID.y * 4;
-#ifndef RENDER_WAVEFORM_Y_NEEDS_CLAMPING
-    const int yStop  = yStart + 4;
+#ifndef WAVE64_FETCH_Y_NEEDS_CLAMPING
+    const int fetchPosY = DTID.y;
 #else
-    const int yStop  = min(yStart + 4, BUFFER_HEIGHT);
+    const int fetchPosX = min(DTID.y, uint(BUFFER_HEIGHT - 1));
 #endif
 
-    for (int x = xStart; x < xStop; x++)
+    const int2 fetchPos = int2(fetchPosX, fetchPosY);
+
+    float curPixelNits = tex2Dfetch(StorageNitsValues, fetchPos);
+
+    if (curPixelNits > 0.f)
     {
-      for (int y = yStart; y < yStop; y++)
-      {
-        float curPixelNits = tex2Dfetch(StorageNitsValues, int2(x, y));
-
-        if (curPixelNits > 0.f)
-        {
 #ifdef IS_HDR_CSP
-          float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
+      float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-          float encodedPixel = ENCODE_SDR(curPixelNits / 100.f);
+      float encodedPixel = ENCODE_SDR(curPixelNits / 100.f);
 #endif
 
-          int2 coord = float2(float(x)
-                            / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
-                              float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
-                            - (encodedPixel * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
+      int2 coord = float2(float(fetchPos.x)
+                        / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
+                          float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+                        - (encodedPixel * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
 
-          float3 waveformColour = WaveformRgbValues(curPixelNits);
-          waveformColour = sqrt(waveformColour);
+      float3 waveformColour = WaveformRgbValues(curPixelNits);
+      waveformColour = sqrt(waveformColour);
 
-          tex2Dstore(StorageLuminanceWaveform,
-                     coord,
-                     float4(waveformColour, 1.f));
-        }
-      }
+      tex2Dstore(StorageLuminanceWaveform,
+                 coord,
+                 float4(waveformColour, 1.f));
     }
   }
 }
