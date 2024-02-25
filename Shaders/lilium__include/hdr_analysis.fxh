@@ -1495,9 +1495,10 @@ void PS_ClearLuminanceWaveformTexture(
 }
 
 
-void CS_RenderLuminanceWaveform(uint3 DTID : SV_DispatchThreadID)
+void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
 {
-  if (_SHOW_LUMINANCE_WAVEFORM)
+
+  if (_SHOW_LUMINANCE_WAVEFORM || _SHOW_CIE)
   {
 
 #ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
@@ -1509,15 +1510,52 @@ void CS_RenderLuminanceWaveform(uint3 DTID : SV_DispatchThreadID)
 #ifndef WAVE64_FETCH_Y_NEEDS_CLAMPING
     const int fetchPosY = DTID.y;
 #else
-    const int fetchPosX = min(DTID.y, uint(BUFFER_HEIGHT - 1));
+    const int fetchPosY = min(DTID.y, uint(BUFFER_HEIGHT - 1));
 #endif
 
     const int2 fetchPos = int2(fetchPosX, fetchPosY);
 
-    float curPixelNits = tex2Dfetch(StorageNitsValues, fetchPos);
+    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, fetchPos).rgb;
 
-    if (curPixelNits > 0.f)
+    // get XYZ
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+    precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+    precise const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(pixel));
+
+#else
+
+    precise const float3 XYZ = float3(0.f, 0.f, 0.f);
+
+#endif
+
+//ignore negative luminance and luminance being 0
+
+    if (XYZ.y <= 0.f)
     {
+      return;
+    }
+
+//Waveform stuff start
+    if (_SHOW_LUMINANCE_WAVEFORM)
+    {
+      float curPixelNits = tex2Dfetch(StorageNitsValues, fetchPos);
+
 #ifdef IS_HDR_CSP
       float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
@@ -1525,9 +1563,9 @@ void CS_RenderLuminanceWaveform(uint3 DTID : SV_DispatchThreadID)
 #endif
 
       int2 coord = float2(float(fetchPos.x)
-                        / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
-                          float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
-                        - (encodedPixel * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
+                      / TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR,
+                        float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+                      - (encodedPixel * float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT))) + 0.5f;
 
       float3 waveformColour = WaveformRgbValues(curPixelNits);
       waveformColour = sqrt(waveformColour);
@@ -1536,6 +1574,67 @@ void CS_RenderLuminanceWaveform(uint3 DTID : SV_DispatchThreadID)
                  coord,
                  float4(waveformColour, 1.f));
     }
+//Waveform stuff end
+
+//CIE stuff start
+    if (_SHOW_CIE)
+    {
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        // get xy
+        precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
+
+        precise int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
+         CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
+
+        // adjust for the added borders
+        xy += CIE_BG_BORDER;
+
+        // clamp to borders
+        xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
+
+        // leave this as sampler and not storage
+        // otherwise d3d complains about the resource still being bound on input
+        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+        const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
+
+        tex2Dstore(StorageCieCurrent,
+                   xy,
+                   xyColour);
+      }
+      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        // get u'v'
+        precise const float X15Y3Z = XYZ.x
+                                   + 15.f * XYZ.y
+                                   +  3.f * XYZ.z;
+
+        precise int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
+         CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
+
+        // adjust for the added borders
+        uv += CIE_BG_BORDER;
+
+        // clamp to borders
+        uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
+
+        const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
+
+        // leave this as sampler and not storage
+        // otherwise d3d complains about the resource still being bound on input
+        // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
+        // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
+        // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
+        const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
+
+        tex2Dstore(StorageCieCurrent,
+                   uv,
+                   uvColour);
+      }
+    }
+//CIE stuff end
   }
 }
 
@@ -1735,7 +1834,6 @@ void PS_CalcNitsPerPixel(
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR
    || _SHOW_HEATMAP
-   || _SHOW_LUMINANCE_WAVEFORM
    || _HIGHLIGHT_NIT_RANGE
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK
@@ -2471,128 +2569,6 @@ void PS_CopyCieBgAndOutlines(
   Out.rgb = sqrt(Out.rgb);
 
   return;
-}
-
-
-void CS_GenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
-{
-  if (_SHOW_CIE)
-  {
-
-#ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
-    const int fetchPosX = DTID.x;
-#else
-    const int fetchPosX = min(DTID.x, uint(BUFFER_WIDTH - 1));
-#endif
-
-#ifndef WAVE64_FETCH_Y_NEEDS_CLAMPING
-    const int fetchPosY = DTID.y;
-#else
-    const int fetchPosX = min(DTID.y, uint(BUFFER_HEIGHT - 1));
-#endif
-
-    const int2 fetchPos = int2(fetchPosX, fetchPosY);
-
-    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, fetchPos).rgb;
-
-    if (all(pixel == 0.f))
-    {
-      return;
-    }
-
-    // get XYZ
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-    precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-    precise const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(pixel));
-
-#else
-
-    precise const float3 XYZ = float3(0.f, 0.f, 0.f);
-
-#endif
-
-//ignore negative luminance in float based colour spaces
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-    if (XYZ.y <= 0.f)
-    {
-      return;
-    }
-
-#endif
-
-    if (_CIE_DIAGRAM_TYPE == CIE_1931)
-    {
-      // get xy
-      precise const float xyz = XYZ.x + XYZ.y + XYZ.z;
-
-      precise int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
-       CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
-
-      // adjust for the added borders
-      xy += CIE_BG_BORDER;
-
-      // clamp to borders
-      xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
-
-      // leave this as sampler and not storage
-      // otherwise d3d complains about the resource still being bound on input
-      // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-      // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-      // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-      const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
-
-      tex2Dstore(StorageCieCurrent,
-                 xy,
-                 xyColour);
-    }
-    else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
-    {
-      // get u'v'
-      precise const float X15Y3Z = XYZ.x
-                                 + 15.f * XYZ.y
-                                 +  3.f * XYZ.z;
-
-      precise int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
-       CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
-
-      // adjust for the added borders
-      uv += CIE_BG_BORDER;
-
-      // clamp to borders
-      uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
-
-      const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
-
-      // leave this as sampler and not storage
-      // otherwise d3d complains about the resource still being bound on input
-      // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-      // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-      // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-      const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
-
-      tex2Dstore(StorageCieCurrent,
-                 uv,
-                 uvColour);
-    }
-  }
 }
 
 

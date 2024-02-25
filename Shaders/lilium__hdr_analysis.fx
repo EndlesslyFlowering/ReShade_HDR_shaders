@@ -2872,6 +2872,7 @@ technique lilium__hdr_analysis
     DispatchSizeY = 1;
   }
 
+//Waveform
   pass CS_RenderLuminanceWaveformScale
   {
     ComputeShader = CS_RenderLuminanceWaveformScale <1, 1>;
@@ -2887,21 +2888,6 @@ technique lilium__hdr_analysis
     ClearRenderTargets = true;
   }
 
-  pass CS_RenderLuminanceWaveform
-  {
-    ComputeShader = CS_RenderLuminanceWaveform <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
-    DispatchSizeX = WAVE64_DISPATCH_X;
-    DispatchSizeY = WAVE64_DISPATCH_Y;
-  }
-
-  pass PS_RenderLuminanceWaveformToScale
-  {
-    VertexShader = VS_PrepareRenderLuminanceWaveformToScale;
-     PixelShader = PS_RenderLuminanceWaveformToScale;
-    RenderTarget = TextureLuminanceWaveformFinal;
-  }
-
-
 //CIE
   pass PS_CopyCieBgAndOutlines
   {
@@ -2910,11 +2896,20 @@ technique lilium__hdr_analysis
     RenderTarget = TextureCieCurrent;
   }
 
-  pass CS_GenerateCieDiagram
+//Waveform and CIE
+  pass CS_RenderLuminanceWaveformAndGenerateCieDiagram
   {
-    ComputeShader = CS_GenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    ComputeShader = CS_RenderLuminanceWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
     DispatchSizeX = WAVE64_DISPATCH_X;
     DispatchSizeY = WAVE64_DISPATCH_Y;
+  }
+
+//Waveform
+  pass PS_RenderLuminanceWaveformToScale
+  {
+    VertexShader = VS_PrepareRenderLuminanceWaveformToScale;
+     PixelShader = PS_RenderLuminanceWaveformToScale;
+    RenderTarget = TextureLuminanceWaveformFinal;
   }
 
 
