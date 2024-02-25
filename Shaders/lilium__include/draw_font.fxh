@@ -236,10 +236,10 @@ texture2D TextureFontAtlasConsolidated
 {
   Width  =  658;
   Height = 3312;
-  Format = RGBA8;
+  Format = RG8;
 };
 
-storage2D<float4> StorageFontAtlasConsolidated
+sampler2D<float4> SamplerFontAtlasConsolidated
 {
   Texture = TextureFontAtlasConsolidated;
 };

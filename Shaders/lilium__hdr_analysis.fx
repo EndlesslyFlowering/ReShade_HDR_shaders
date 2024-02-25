@@ -1075,7 +1075,7 @@ void DrawChar(uint Char, float2 DrawOffset)
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      float4 pixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset).rgba;
+      float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset);
       tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
     }
   }
@@ -1089,7 +1089,7 @@ void DrawSpace(float2 DrawOffset)
 
   uint outerSpacing = GetOuterSpacing(charSize.x);
 
-  float4 emptyPixel = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0)).rgba;
+  float4 emptyPixel = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0));
 
   for (uint y = 0; y < charSize.y; y++)
   {
@@ -1221,7 +1221,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
                cursorCspYOffset);
 #endif //IS_HDR_CSP
 
-    float4 bgCol = tex2Dfetch(StorageFontAtlasConsolidated, int2(0, 0));
+    float4 bgCol = tex2Dfetch(SamplerFontAtlasConsolidated, int2(0, 0));
 
     uint activeLines = GetActiveLines();
 
@@ -2675,7 +2675,7 @@ void PS_HdrAnalysis(
     {
       if (all(pureCoordAsInt <= CurrentActiveOverlayArea))
       {
-        float4 overlay = tex2Dfetch(SamplerTextOverlay, pureCoordAsInt);
+        float4 overlay = tex2Dfetch(SamplerTextOverlay, pureCoordAsInt).rrrg;
 
         // using gamma 2 as intermediate gamma space
         overlay.rgb *= overlay.rgb;
@@ -2694,7 +2694,7 @@ void PS_HdrAnalysis(
        && pureCoordAsInt.y <= CurrentActiveOverlayArea.y)
       {
         float4 overlay = tex2Dfetch(SamplerTextOverlay,
-                                    int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y));
+                                    int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y)).rrrg;
 
         // using gamma 2 as intermediate gamma space
         overlay.rgb *= overlay.rgb;

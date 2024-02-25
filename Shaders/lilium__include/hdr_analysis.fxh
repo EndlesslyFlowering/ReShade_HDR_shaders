@@ -97,7 +97,7 @@ texture2D TextureTextOverlay
 {
   Width  = TEXTURE_OVERLAY_WIDTH;
   Height = TEXTURE_OVERLAY_HEIGHT;
-  Format = RGBA8;
+  Format = RG8;
 };
 
 sampler2D<float4> SamplerTextOverlay
@@ -290,7 +290,7 @@ texture2D TextureLuminanceWaveformScale
 {
   Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
   Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-  Format = RGBA8;
+  Format = RG8;
 };
 
 sampler2D<float4> SamplerLuminanceWaveformScale
@@ -946,7 +946,7 @@ namespace Waveform
         int2 currentOffset = int2(x, y);
         int2 currentDrawOffset = currentPos + currentOffset;
 
-        float4 currentPixel = tex2Dfetch(StorageFontAtlasConsolidated, charOffset + currentOffset);
+        float4 currentPixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset);
 
         tex2Dstore(StorageLuminanceWaveformScale, currentDrawOffset, currentPixel);
       }
@@ -958,10 +958,10 @@ namespace Waveform
 
 void CS_RenderLuminanceWaveformScale()
 {
-  if (tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X).x       != _LUMINANCE_WAVEFORM_SIZE.x
-   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y).x       != _LUMINANCE_WAVEFORM_SIZE.y
+  if (tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X)       != _LUMINANCE_WAVEFORM_SIZE.x
+   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y)       != _LUMINANCE_WAVEFORM_SIZE.y
 #ifdef IS_HDR_CSP
-   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT).x != LUMINANCE_WAVEFORM_CUTOFF_POINT
+   || tex2Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT) != LUMINANCE_WAVEFORM_CUTOFF_POINT
 #endif
   )
   {
@@ -1314,7 +1314,7 @@ void CS_RenderLuminanceWaveformScale()
       // using gamma 2 as intermediate gamma space
       curGrey = sqrt(curGrey);
 
-      float4 curColour = float4(curGrey.xxx, 1.f);
+      float4 curColour = float4(curGrey, 1.f.xxx);
 
       // draw top and bottom part of the frame
       if (y <  waveDat.frameSize
@@ -1699,15 +1699,15 @@ void PS_RenderLuminanceWaveformToScale(
                                       * (clamp(100.f / _LUMINANCE_WAVEFORM_SIZE, float2(1.f, 0.5f), 2.f))
                                       / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
 
-        float4 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
+        float2 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt).rg;
         // using gamma 2 as intermediate gamma space
-        scaleColour.rgb *= scaleColour.rgb;
+        scaleColour.r *= scaleColour.r;
 
         float4 waveformColour = tex2D(SamplerLuminanceWaveform, waveformSamplerCoords);
         // using gamma 2 as intermediate gamma space
         waveformColour.rgb *= waveformColour.rgb;
 
-        Out = scaleColour
+        Out = scaleColour.rrrg
             + waveformColour;
 
         // using gamma 2 as intermediate gamma space
@@ -1716,7 +1716,7 @@ void PS_RenderLuminanceWaveformToScale(
       }
     }
     //else
-    Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt);
+    Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt).rrrg;
     return;
   }
   discard;
