@@ -618,7 +618,11 @@ static const int UGH = uint(float(BUFFER_HEIGHT) * 0.35f
                           * 10000.f);
 // "minimum of 2 variables" without using functions...
 // https://guru.multimedia.cx/category/optimization/
-static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31));
+#ifdef IS_HDR_CSP
+  static const uint UGH2 = int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31));
+#else
+  static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31));
+#endif
 
 static const precise float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = UGH2
                                                              / 100.f;
@@ -630,7 +634,11 @@ uniform float2 _LUMINANCE_WAVEFORM_SIZE
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      =  50.f;
+#ifdef IS_HDR_CSP
+  ui_max      = 100.f;
+#else
   ui_max      = 200.f;
+#endif
   ui_step     =   0.1f;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 

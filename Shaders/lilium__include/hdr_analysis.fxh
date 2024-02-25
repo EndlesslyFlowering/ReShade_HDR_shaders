@@ -251,7 +251,12 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH  = TEXTURE_LUMINANCE_WA
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
 
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * 2
+#ifdef IS_HDR_CSP
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
+#else
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 2
+#endif
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
                                                           + uint(WAVE_FONT_SIZE_32_CHAR_DIM.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
@@ -677,8 +682,8 @@ namespace Waveform
     #define fontSizeFactor waveformScaleFactor
 #endif
 
-    static const int maxBorderSize = int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f);
-    static const int maxFrameSize  = int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f);
+    static const int maxBorderSize = TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER;
+    static const int maxFrameSize  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME;
 
     waveDat.borderSize = clamp(int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f * borderAndFrameSizeFactor + 0.5f), 10, maxBorderSize);
     waveDat.frameSize  = clamp(int(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f * borderAndFrameSizeFactor + 0.5f),  4, maxFrameSize);
