@@ -4,58 +4,6 @@
 #define CSP_DESC_SPACING_MULTIPLIER 0.5f
 #define SPACING_MULTIPLIER          0.3f
 
-#define SHOW_NITS_VALUES_LINE_COUNT      3
-#define SHOW_NITS_FROM_CURSOR_LINE_COUNT 1
-
-#if defined(IS_HDR10_LIKE_CSP)
-
-  #define SHOW_CSPS_LINE_COUNT 3
-
-#elif defined(IS_HDR_CSP)
-
-  #define SHOW_CSPS_LINE_COUNT 5
-
-#else
-
-  #define SHOW_CSPS_LINE_COUNT 0
-
-#endif //IS_HDR10_LIKE_CSP
-
-#if defined(IS_HDR_CSP)
-  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
-#else
-  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 0
-#endif
-
-#define TEXTURE_OVERLAY_WIDTH  FONT_SIZE_56_CHAR_DIM.x * 26
-#define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * (1                                \
-                                                        + SHOW_NITS_VALUES_LINE_COUNT      \
-                                                        + SHOW_NITS_FROM_CURSOR_LINE_COUNT \
-                                                        + SHOW_CSPS_LINE_COUNT             \
-                                                        + SHOW_CSP_FROM_CURSOR_LINE_COUNT  \
-                                                        + 3)
-
-
-texture2D TextureTextOverlay
-<
-  pooled = true;
->
-{
-  Width  = TEXTURE_OVERLAY_WIDTH;
-  Height = TEXTURE_OVERLAY_HEIGHT;
-  Format = RG8;
-};
-
-sampler2D<float4> SamplerTextOverlay
-{
-  Texture = TextureTextOverlay;
-};
-
-storage2D<float4> StorageTextOverlay
-{
-  Texture = TextureTextOverlay;
-};
-
 
 // outer spacing is half the size of a character rounded up
 uint GetOuterSpacing(const uint CharXDimension)
@@ -153,7 +101,7 @@ void DrawChar(uint Char, float2 DrawOffset)
     {
       uint2 currentOffset = uint2(x, y);
       float4 pixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset);
-      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
+      tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, pixel);
     }
   }
 }
@@ -174,7 +122,7 @@ void DrawSpace(float2 DrawOffset)
     for (uint x = 0; x < charSize.x; x++)
     {
       uint2 currentOffset = uint2(x, y);
-      tex2Dstore(StorageTextOverlay, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, emptyPixel);
+      tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, uint2(DrawOffset * charSize) + outerSpacing + currentOffset, emptyPixel);
     }
   }
 }
@@ -336,11 +284,11 @@ void DrawTextToOverlay()
 
         if (all(xy < activeTextArea))
         {
-          tex2Dstore(StorageTextOverlay, xy, bgCol);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, xy, bgCol);
         }
         else
         {
-          tex2Dstore(StorageTextOverlay, xy, float4(0.f, 0.f, 0.f, 0.f));
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, xy, float4(0.f, 0.f, 0.f, 0.f));
         }
       }
     }
@@ -369,11 +317,11 @@ void DrawTextToOverlay()
         if ((x < 5 || x > 14)
          || (y < 5 || y > 14))
         {
-          tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
         }
         else
         {
-          tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(0.f, 0.f, 0.f, 1.f));
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, int2(x + 220, y), float4(0.f, 0.f, 0.f, 1.f));
         }
       }
     }
@@ -610,7 +558,7 @@ void DrawTextToOverlay()
     {
       for (uint y = 0; y < 20; y++)
       {
-        tex2Dstore(StorageTextOverlay, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
+        tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, int2(x + 220, y), float4(1.f, 1.f, 1.f, 1.f));
       }
     }
   }

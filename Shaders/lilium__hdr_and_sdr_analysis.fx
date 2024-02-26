@@ -1349,7 +1349,7 @@ void PS_HdrAnalysis(
     {
       if (all(pureCoordAsInt <= CurrentActiveOverlayArea))
       {
-        float4 overlay = tex2Dfetch(SamplerTextOverlay, pureCoordAsInt).rrrg;
+        float4 overlay = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale, pureCoordAsInt).rrrg;
 
         // using gamma 2 as intermediate gamma space
         overlay.rgb *= overlay.rgb;
@@ -1367,7 +1367,7 @@ void PS_HdrAnalysis(
       if (pureCoordAsInt.x >= CurrentActiveOverlayArea.x
        && pureCoordAsInt.y <= CurrentActiveOverlayArea.y)
       {
-        float4 overlay = tex2Dfetch(SamplerTextOverlay,
+        float4 overlay = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale,
                                     int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y)).rrrg;
 
         // using gamma 2 as intermediate gamma space

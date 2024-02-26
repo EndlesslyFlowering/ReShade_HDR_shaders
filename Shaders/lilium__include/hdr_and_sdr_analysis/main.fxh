@@ -4,6 +4,9 @@
 #if defined(IS_HDR_COMPATIBLE_API)
 
 
+#include "draw_font.fxh"
+
+
 #define WAVE64_THREAD_SIZE_X 8
 #define WAVE64_THREAD_SIZE_Y 8
 
@@ -59,6 +62,99 @@ texture1D TextureMaxAvgMinNitsAndCspCounter
 storage1D<uint> StorageMaxAvgMinNitsAndCspCounter
 {
   Texture = TextureMaxAvgMinNitsAndCspCounter;
+};
+
+
+#define SHOW_NITS_VALUES_LINE_COUNT      3
+#define SHOW_NITS_FROM_CURSOR_LINE_COUNT 1
+
+#if defined(IS_HDR_CSP)
+  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
+#else
+  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 0
+#endif
+
+#if defined(IS_HDR10_LIKE_CSP)
+
+  #define SHOW_CSPS_LINE_COUNT 3
+
+#elif defined(IS_HDR_CSP)
+
+  #define SHOW_CSPS_LINE_COUNT 5
+
+#else
+
+  #define SHOW_CSPS_LINE_COUNT 0
+
+#endif //IS_HDR10_LIKE_CSP
+
+#define TEXTURE_OVERLAY_WIDTH  FONT_SIZE_56_CHAR_DIM.x * 26
+#define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * (1                                \
+                                                        + SHOW_NITS_VALUES_LINE_COUNT      \
+                                                        + SHOW_NITS_FROM_CURSOR_LINE_COUNT \
+                                                        + SHOW_CSPS_LINE_COUNT             \
+                                                        + SHOW_CSP_FROM_CURSOR_LINE_COUNT  \
+                                                        + 3)
+
+
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = float(BUFFER_WIDTH)
+                                                                   / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
+
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (float(BUFFER_WIDTH)  / 3840.f
+                                                             + float(BUFFER_HEIGHT) / 2160.f)
+                                                            / 2.f;
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f;
+
+//static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
+//  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
+                                                          + (WAVE_FONT_SIZE_32_CHAR_DIM.x * 8) //8 chars for 10000.00
+                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.x / 2.f + 0.5f)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
+
+#ifdef IS_HDR_CSP
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
+#else
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 2
+#endif
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
+                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
+
+// "maximum of 2 variables" without using functions...
+// https://guru.multimedia.cx/category/optimization/
+static const uint TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_WIDTH =
+  TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH -
+  ((TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - uint(TEXTURE_OVERLAY_WIDTH))
+& ((TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - uint(TEXTURE_OVERLAY_WIDTH)) >> 31));
+
+static const uint TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_HEIGHT =
+  uint(TEXTURE_OVERLAY_HEIGHT) + TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
+
+
+texture2D TextureTextOverlayAndLuminanceWaveformScale
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_WIDTH;
+  Height = TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
+  Format = RG8;
+};
+
+sampler2D<float4> SamplerTextOverlayAndLuminanceWaveformScale
+{
+  Texture = TextureTextOverlayAndLuminanceWaveformScale;
+};
+
+storage2D<float4> StorageTextOverlayAndLuminanceWaveformScale
+{
+  Texture = TextureTextOverlayAndLuminanceWaveformScale;
 };
 
 
@@ -173,7 +269,6 @@ storage1D<float> StorageConsolidated
 // consolidated texture end
 
 
-#include "draw_font.fxh"
 #include "luminance.fxh"
 #include "csp.fxh"
 #include "cie.fxh"

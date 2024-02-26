@@ -1,35 +1,6 @@
 #pragma once
 
 
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = float(BUFFER_WIDTH)
-                                                                   / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
-
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (float(BUFFER_WIDTH)  / 3840.f
-                                                             + float(BUFFER_HEIGHT) / 2160.f)
-                                                            / 2.f;
-
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f;
-
-//static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
-//  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
-
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
-                                                          + (WAVE_FONT_SIZE_32_CHAR_DIM.x * 8) //8 chars for 10000.00
-                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.x / 2.f + 0.5f)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
-
-#ifdef IS_HDR_CSP
-  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
-#else
-  #define MAX_WAVEFORM_HEIGHT_FACTOR 2
-#endif
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
-                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
-
 static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - 1.f)
                                                              / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH  - 1);
 
@@ -55,26 +26,6 @@ sampler2D<float4> SamplerLuminanceWaveform
 storage2D<float4> StorageLuminanceWaveform
 {
   Texture = TextureLuminanceWaveform;
-};
-
-texture2D TextureLuminanceWaveformScale
-<
-  pooled = true;
->
-{
-  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
-  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-  Format = RG8;
-};
-
-sampler2D<float4> SamplerLuminanceWaveformScale
-{
-  Texture = TextureLuminanceWaveformScale;
-};
-
-storage2D<float4> StorageLuminanceWaveformScale
-{
-  Texture = TextureLuminanceWaveformScale;
 };
 
 texture2D TextureLuminanceWaveformFinal
@@ -436,11 +387,13 @@ namespace Waveform
       for (int y = 0; y < CharDim.y; y++)
       {
         int2 currentOffset = int2(x, y);
-        int2 currentDrawOffset = currentPos + currentOffset;
 
         float4 currentPixel = tex2Dfetch(SamplerFontAtlasConsolidated, charOffset + currentOffset);
 
-        tex2Dstore(StorageLuminanceWaveformScale, currentDrawOffset, currentPixel);
+        int2 currentDrawOffset = currentPos + currentOffset;
+        currentDrawOffset.y += TEXTURE_OVERLAY_HEIGHT;
+
+        tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, currentDrawOffset, currentPixel);
       }
     }
     return;
@@ -461,9 +414,9 @@ void RenderLuminanceWaveformScale()
     //make background all black
     for (int x = 0; x < TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH; x++)
     {
-      for (int y = 0; y < TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT; y++)
+      for (int y = TEXTURE_OVERLAY_HEIGHT; y < TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_HEIGHT; y++)
       {
-        tex2Dstore(StorageLuminanceWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
+        tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
       }
     }
 
@@ -800,7 +753,8 @@ void RenderLuminanceWaveformScale()
     // draw the frame, ticks and horizontal lines
     for (int y = 0; y < waveDat.endXY.y; y++)
     {
-      int2 curPos = waveDat.offsetToFrame + int2(0, y);
+      int2 curPos = waveDat.offsetToFrame
+                  + int2(0, y);
 
       float curGrey = lerp(0.5f, 0.4f, (float(y + WAVEDAT_CUTOFFSET) / float(waveDat.endYminus1 + WAVEDAT_CUTOFFSET)));
       curGrey = pow(curGrey, 2.2f);
@@ -815,8 +769,9 @@ void RenderLuminanceWaveformScale()
       {
         for (int x = 0; x < waveDat.endXY.x; x++)
         {
-          int2 curXPos = int2(x + curPos.x, curPos.y);
-          tex2Dstore(StorageLuminanceWaveformScale, curXPos, curColour);
+          int2 curXPos = int2(curPos.x + x,
+                              curPos.y + TEXTURE_OVERLAY_HEIGHT);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, curXPos, curColour);
         }
       }
       // draw left and right part of the frame
@@ -824,10 +779,11 @@ void RenderLuminanceWaveformScale()
       {
         for (int x = 0; x < waveDat.frameSize; x++)
         {
-          int2 curLeftPos  = int2(x + curPos.x, curPos.y);
+          int2 curLeftPos  = int2(curPos.x + x,
+                                  curPos.y + TEXTURE_OVERLAY_HEIGHT);
           int2 curRightPos = int2(curLeftPos.x + waveDat.waveformArea.x + waveDat.frameSize, curLeftPos.y);
-          tex2Dstore(StorageLuminanceWaveformScale, curLeftPos,  curColour);
-          tex2Dstore(StorageLuminanceWaveformScale, curRightPos, curColour);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, curLeftPos,  curColour);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, curRightPos, curColour);
         }
       }
 
@@ -858,8 +814,9 @@ void RenderLuminanceWaveformScale()
       {
         for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.frameSize); x++)
         {
-          int2 curTickPos = int2(x, curPos.y);
-          tex2Dstore(StorageLuminanceWaveformScale, curTickPos, curColour);
+          int2 curTickPos = int2(x,
+                                 curPos.y + TEXTURE_OVERLAY_HEIGHT);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, curTickPos, curColour);
         }
       }
 
@@ -942,8 +899,9 @@ void RenderLuminanceWaveformScale()
       {
         for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.endXY.x); x++)
         {
-          int2 curTickPos = int2(x, curPos.y);
-          tex2Dstore(StorageLuminanceWaveformScale, curTickPos, curColour);
+          int2 curTickPos = int2(x,
+                                 curPos.y + TEXTURE_OVERLAY_HEIGHT);
+          tex2Dstore(StorageTextOverlayAndLuminanceWaveformScale, curTickPos, curColour);
         }
       }
     }
@@ -1087,7 +1045,10 @@ void PS_RenderLuminanceWaveformToScale(
   {
     const int2 pureCoordAsInt = int2(VPos.xy);
 
-    int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
+    const int2 scaleCoords = pureCoordAsInt
+                           + int2(0, TEXTURE_OVERLAY_HEIGHT);
+
+    const int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
 
     if (all(waveformCoords >= 0)
      && all(waveformCoords < WaveformActiveArea))
@@ -1127,7 +1088,7 @@ void PS_RenderLuminanceWaveformToScale(
                                       * (clamp(100.f / _LUMINANCE_WAVEFORM_SIZE, float2(1.f, 0.5f), 2.f))
                                       / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
 
-        float2 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt).rg;
+        float2 scaleColour = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale, scaleCoords).rg;
         // using gamma 2 as intermediate gamma space
         scaleColour.r *= scaleColour.r;
 
@@ -1144,7 +1105,7 @@ void PS_RenderLuminanceWaveformToScale(
       }
     }
     //else
-    Out = tex2Dfetch(SamplerLuminanceWaveformScale, pureCoordAsInt).rrrg;
+    Out = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale, scaleCoords).rrrg;
     return;
   }
   discard;
