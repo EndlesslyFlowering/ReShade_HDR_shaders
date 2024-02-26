@@ -449,7 +449,7 @@ namespace Waveform
 }
 
 
-void CS_RenderLuminanceWaveformScale()
+void RenderLuminanceWaveformScale()
 {
   if (tex1Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X)       != _LUMINANCE_WAVEFORM_SIZE.x
    || tex1Dfetch(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y)       != _LUMINANCE_WAVEFORM_SIZE.y
@@ -954,6 +954,7 @@ void CS_RenderLuminanceWaveformScale()
     tex1Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT, LUMINANCE_WAVEFORM_CUTOFF_POINT);
 #endif
   }
+
   return;
 }
 

@@ -68,6 +68,8 @@ void FinaliseMaxAvgMinNits()
   tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxNits);
   tex1Dstore(StorageConsolidated, COORDS_AVG_NITS_VALUE, avgNits);
   tex1Dstore(StorageConsolidated, COORDS_MIN_NITS_VALUE, minNits);
+
+  return;
 }
 
 

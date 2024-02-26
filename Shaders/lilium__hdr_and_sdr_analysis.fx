@@ -1476,22 +1476,17 @@ technique lilium__hdr_and_sdr_analysis
     DispatchSizeY = GET_MAX_AVG_MIN_NITS_DISPATCH_Y;
   }
 
-//Luminance Values and CSP
-  pass CS_FinaliseMaxAvgMinNitsAndCspCounter
+
+//finalise things
+  pass CS_Finalise
   {
-    ComputeShader = CS_FinaliseMaxAvgMinNitsAndCspCounter <1, 1>;
+    ComputeShader = CS_Finalise <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+
 
 //Waveform
-  pass CS_RenderLuminanceWaveformScale
-  {
-    ComputeShader = CS_RenderLuminanceWaveformScale <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
   pass PS_ClearLuminanceWaveformTexture
   {
     VertexShader       = VS_PostProcessWithoutTexCoord;
@@ -1525,21 +1520,6 @@ technique lilium__hdr_and_sdr_analysis
   }
 
 
-  pass CS_CopyShowValues
-  {
-    ComputeShader = ShowValuesCopy <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
-
-  pass CS_DrawTextToOverlay
-  {
-    ComputeShader = CS_DrawTextToOverlay <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
   pass CS_DrawValuesToOverlay
   {
     ComputeShader = CS_DrawValuesToOverlay <1, 1>;
@@ -1557,6 +1537,7 @@ technique lilium__hdr_and_sdr_analysis
      PixelShader = PS_HdrAnalysis;
   }
 }
+
 
 #else //is hdr API and hdr colour space
 

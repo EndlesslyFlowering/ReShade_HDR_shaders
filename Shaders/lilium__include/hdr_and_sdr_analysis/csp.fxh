@@ -69,6 +69,7 @@ void FinaliseCspCounter()
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
 
+  return;
 }
 
 

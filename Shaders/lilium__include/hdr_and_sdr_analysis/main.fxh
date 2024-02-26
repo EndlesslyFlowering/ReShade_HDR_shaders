@@ -283,20 +283,7 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
 }
 
 
-void CS_FinaliseMaxAvgMinNitsAndCspCounter()
-{
-
-  FinaliseMaxAvgMinNits();
-
-#ifdef IS_HDR_CSP
-  FinaliseCspCounter();
-#endif
-
-  return;
-}
-
-
-void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
+void CopyShowValues()
 {
   float frametimeCounter = tex1Dfetch(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES);
   frametimeCounter += FRAMETIME;
@@ -347,6 +334,28 @@ void ShowValuesCopy(uint3 ID : SV_DispatchThreadID)
   {
     tex1Dstore(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES, frametimeCounter);
   }
+
+  return;
+}
+
+
+void CS_Finalise()
+{
+
+  FinaliseMaxAvgMinNits();
+
+#ifdef IS_HDR_CSP
+  FinaliseCspCounter();
+#endif
+
+  DrawTextToOverlay();
+
+  RenderLuminanceWaveformScale();
+
+  groupMemoryBarrier();
+
+  CopyShowValues();
+
   return;
 }
 

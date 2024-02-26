@@ -180,7 +180,7 @@ void DrawSpace(float2 DrawOffset)
 }
 
 
-void CS_DrawTextToOverlay()
+void DrawTextToOverlay()
 {
   //convert UI inputs into floats for comparisons
   const float showNitsValues     = _SHOW_NITS_VALUES;
