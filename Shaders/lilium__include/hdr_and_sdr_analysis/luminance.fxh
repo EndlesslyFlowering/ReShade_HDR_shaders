@@ -128,13 +128,7 @@ float3 HeatmapRgbValues(
 #endif
 
 
-  if (IsNAN(Y))
-  {
-    output.r = 0.f;
-    output.g = 0.f;
-    output.b = 0.f;
-  }
-  else if (Y < 0.f)
+  if (Y < 0.f)
   {
     output.r = 0.f;
     output.g = 0.f;
