@@ -700,13 +700,13 @@ technique lilium__tone_mapping_adaptive_maximum_brightness
   enabled    = false;
 >
 {
-  pass PS_CalcNitsPerPixel
-  {
-    VertexShader = VS_PostProcess;
-     PixelShader = PS_CalcNitsPerPixel;
-    RenderTarget = TextureNitsValues;
-  }
-
+//  pass PS_CalcNitsPerPixel
+//  {
+//    VertexShader = VS_PostProcess;
+//     PixelShader = PS_CalcNitsPerPixel;
+//    RenderTarget = TextureNitsValues;
+//  }
+//
 //  pass CS_GetMaxNits0_NEW
 //  {
 //    ComputeShader = CS_GetMaxNits0_NEW <THREAD_SIZE1, 1>;

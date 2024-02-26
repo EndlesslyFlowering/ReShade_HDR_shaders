@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hdr_and_sdr_analysis.fxh"
+#include "colour_space.fxh"
 
 
 #if (defined(IS_HDR_COMPATIBLE_API) \
