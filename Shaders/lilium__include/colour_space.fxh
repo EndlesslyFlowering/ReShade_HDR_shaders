@@ -338,7 +338,8 @@ uniform int GLOBAL_INFO
 
 #define FP32_MAX asfloat(0x7F7FFFFF)
 
-#define INT_MAX 2147483647
+#define UINT_MAX 4294967295
+#define  INT_MAX 2147483647
 
 #define MIN3(A, B, C) min(A, min(B, C))
 
