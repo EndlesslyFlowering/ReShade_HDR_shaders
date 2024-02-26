@@ -90,7 +90,9 @@ static const uint HEIGHT1 = BUFFER_HEIGHT - HEIGHT0;
 //#endif
 
 
-precise static const float PIXELS = uint(BUFFER_WIDTH) * uint(BUFFER_HEIGHT);
+static const uint  PixelCountInUint  = uint(BUFFER_WIDTH)
+                                     * uint(BUFFER_HEIGHT);
+static const float PixelCountInFloat = PixelCountInUint;
 
 
 uniform float FRAMETIME
@@ -2837,15 +2839,15 @@ void CS_CountCspsX(uint3 ID : SV_DispatchThreadID)
 
     barrier();
 
-    precise float percentageBt709 = counter_BT709  / PIXELS;
-    precise float percentageDciP3 = counter_DCI_P3 / PIXELS;
+    precise float percentageBt709 = counter_BT709  / PixelCountInFloat;
+    precise float percentageDciP3 = counter_DCI_P3 / PixelCountInFloat;
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT709,  percentageBt709);
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_DCI_P3, percentageDciP3);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-    precise float percentageBt2020 = counter_BT2020 / PIXELS;
-    precise float percentageAp0    = counter_AP0    / PIXELS;
+    precise float percentageBt2020 = counter_BT2020 / PixelCountInFloat;
+    precise float percentageAp0    = counter_AP0    / PixelCountInFloat;
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_BT2020, percentageBt2020);
     tex2Dstore(StorageConsolidated, COORDS_CSP_PERCENTAGE_AP0,    percentageAp0);
 
