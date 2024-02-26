@@ -1124,15 +1124,15 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
   const float fontSize          = _TEXT_SIZE;
 
   //get last UI values from the consolidated texture
-  const float showNitsLast       = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0);
-  const float showCursorNitsLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1);
+  const float showNitsLast       = tex1Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0);
+  const float showCursorNitsLast = tex1Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1);
 
 #ifdef IS_HDR_CSP
-  const float showCspsLast      = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2);
-  const float showCursorCspLast = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3);
+  const float showCspsLast      = tex1Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2);
+  const float showCursorCspLast = tex1Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3);
 #endif
 
-  const float fontSizeLast      = tex2Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4);
+  const float fontSizeLast      = tex1Dfetch(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4);
 
   if (showNitsLast       != showNitsValues
    || showCursorNitsLast != showNitsFromCrusor
@@ -1143,13 +1143,13 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
    || fontSizeLast       != fontSize)
   {
     //store all current UI values
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, showNitsValues);
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, showNitsFromCrusor);
+    tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, showNitsValues);
+    tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW1, showNitsFromCrusor);
 #ifdef IS_HDR_CSP
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2, showCsps);
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3, showCspFromCursor);
+    tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW2, showCsps);
+    tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW3, showCspFromCursor);
 #endif
-    tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, fontSize);
+    tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW4, fontSize);
 
     //calculate offset for the cursor nits text in the overlay
     float cursorNitsYOffset = (!_SHOW_NITS_VALUES
@@ -1157,7 +1157,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
                              : SPACING_MULTIPLIER)
                             + CSP_DESC_SPACING_MULTIPLIER;
 
-    tex2Dstore(StorageConsolidated,
+    tex1Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS,
                cursorNitsYOffset);
 
@@ -1179,7 +1179,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
                        : SPACING_MULTIPLIER * 2)
                       + CSP_DESC_SPACING_MULTIPLIER;
 
-    tex2Dstore(StorageConsolidated,
+    tex1Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS,
                cspsYOffset);
 
@@ -1224,7 +1224,7 @@ void CS_DrawTextToOverlay(uint3 ID : SV_DispatchThreadID)
 #endif //IS_HDR10_LIKE_CSP
                            + CSP_DESC_SPACING_MULTIPLIER;
 
-    tex2Dstore(StorageConsolidated,
+    tex1Dstore(StorageConsolidated,
                COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP,
                cursorCspYOffset);
 #endif //IS_HDR_CSP
@@ -1583,19 +1583,19 @@ void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
 #define showMaxNitsValueYOffset       1.f + CSP_DESC_SPACING_MULTIPLIER
 #define showAvgNitsValueYOffset       2.f + CSP_DESC_SPACING_MULTIPLIER
 #define showMinNitsValueYOffset       3.f + CSP_DESC_SPACING_MULTIPLIER
-#define cursorNitsYOffset             4.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS)
-#define cspsBt709PercentageYOffset    5.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsDciP3PercentageYOffset    6.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsBt2020PercentageYOffset   7.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsAp0PercentageYOffset      8.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cspsInvalidPercentageYOffset  9.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
-#define cursorCspYOffset             10.f + tex2Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP)
+#define cursorNitsYOffset             4.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS)
+#define cspsBt709PercentageYOffset    5.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsDciP3PercentageYOffset    6.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsBt2020PercentageYOffset   7.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsAp0PercentageYOffset      8.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cspsInvalidPercentageYOffset  9.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS)
+#define cursorCspYOffset             10.f + tex1Dfetch(StorageConsolidated, COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP)
 
 
 #define DRAW_NUMBERS(SHOW_IT, NUMBER, FETCH_COORDS, DRAW_TYPE, DRAW_OFFSET)   \
   if (SHOW_IT)                                                                \
   {                                                                           \
-    precise float fullNumber = tex2Dfetch(StorageConsolidated, FETCH_COORDS); \
+    precise float fullNumber = tex1Dfetch(StorageConsolidated, FETCH_COORDS); \
     precise uint  curNumber  = NUMBER(fullNumber);                            \
     DRAW_TYPE(curNumber, DRAW_OFFSET);                                        \
   }                                                                           \
@@ -2719,74 +2719,6 @@ void PS_HdrAnalysis(
 
 }
 
-//technique lilium__HDR_analysis_CLL_OLD
-//<
-//  enabled = false;
-//>
-//{
-//  pass PS_CalcNitsPerPixel
-//  {
-//    VertexShader = VS_PostProcess;
-//     PixelShader = PS_CalcNitsPerPixel;
-//    RenderTarget = TextureNitsValues;
-//  }
-//
-//  pass CS_GetMaxAvgMinCll0
-//  {
-//    ComputeShader = CS_GetMaxAvgMinCll0 <THREAD_SIZE1, 1>;
-//    DispatchSizeX = DISPATCH_X1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetMaxAvgMinCll1
-//  {
-//    ComputeShader = CS_GetMaxAvgMinCll1 <1, 1>;
-//    DispatchSizeX = 1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetMaxCll0
-//  {
-//    ComputeShader = CS_GetMaxCll0 <THREAD_SIZE1, 1>;
-//    DispatchSizeX = DISPATCH_X1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetMaxCll1
-//  {
-//    ComputeShader = CS_GetMaxCll1 <1, 1>;
-//    DispatchSizeX = 1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetAvgCll0
-//  {
-//    ComputeShader = CS_GetAvgCll0 <THREAD_SIZE1, 1>;
-//    DispatchSizeX = DISPATCH_X1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetAvgCll1
-//  {
-//    ComputeShader = CS_GetAvgCll1 <1, 1>;
-//    DispatchSizeX = 1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetMinCll0
-//  {
-//    ComputeShader = CS_GetMinCll0 <THREAD_SIZE1, 1>;
-//    DispatchSizeX = DISPATCH_X1;
-//    DispatchSizeY = 1;
-//  }
-//
-//  pass CS_GetMinCll1
-//  {
-//    ComputeShader = CS_GetMinCll1 <1, 1>;
-//    DispatchSizeX = 1;
-//    DispatchSizeY = 1;
-//  }
-//}
 
 #ifdef _TESTY
 technique lilium__hdr_and_sdr_analysis_TESTY
@@ -2805,8 +2737,8 @@ technique lilium__hdr_and_sdr_analysis_TESTY
 
 void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
-  tex2Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
-  tex2Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
+  tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
+  tex1Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
   return;
 }
 
@@ -2851,23 +2783,37 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget = TextureNitsValues;
   }
 
-  pass CS_GetMaxAvgMinNits0_NEW
+
+//CSP
+#ifdef IS_HDR_CSP
+  pass PS_CalcCsps
   {
-    ComputeShader = CS_GetMaxAvgMinNits0_NEW <THREAD_SIZE1, 1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = 2;
+    VertexShader = VS_PostProcess;
+     PixelShader = PS_CalcCsps;
+    RenderTarget = TextureCsps;
   }
 
-  pass CS_GetMaxAvgMinNits1_NEW
+  pass CS_CountCsps
   {
-    ComputeShader = CS_GetMaxAvgMinNits1_NEW <1, 1>;
-    DispatchSizeX = 2;
-    DispatchSizeY = 2;
+    ComputeShader = CS_CountCsps <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = CSP_COUNTER_DISPATCH_X;
+    DispatchSizeY = CSP_COUNTER_DISPATCH_Y;
+  }
+#endif
+
+
+//Luminance Values
+  pass CS_GetMaxAvgMinNits
+  {
+    ComputeShader = CS_GetMaxAvgMinNits <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = GET_MAX_AVG_MIN_NITS_DISPATCH_X;
+    DispatchSizeY = GET_MAX_AVG_MIN_NITS_DISPATCH_Y;
   }
 
-  pass CS_GetFinalMaxAvgMinNits_NEW
+//Luminance Values and CSP
+  pass CS_FinaliseMaxAvgMinNitsAndCspCounter
   {
-    ComputeShader = CS_GetFinalMaxAvgMinNits_NEW <1, 1>;
+    ComputeShader = CS_FinaliseMaxAvgMinNitsAndCspCounter <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
@@ -2911,24 +2857,6 @@ technique lilium__hdr_and_sdr_analysis
      PixelShader = PS_RenderLuminanceWaveformToScale;
     RenderTarget = TextureLuminanceWaveformFinal;
   }
-
-
-//CSP
-#ifdef IS_HDR_CSP
-  pass PS_CalcCsps
-  {
-    VertexShader = VS_PostProcess;
-     PixelShader = PS_CalcCsps;
-    RenderTarget = TextureCsps;
-  }
-
-  pass CS_CountCsps
-  {
-    ComputeShader = CS_CountCsps <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
-    DispatchSizeX = CSP_COUNTER_DISPATCH_X;
-    DispatchSizeY = CSP_COUNTER_DISPATCH_Y;
-  }
-#endif
 
 
   pass CS_CopyShowValues

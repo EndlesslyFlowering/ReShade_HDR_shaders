@@ -376,14 +376,14 @@ void VS_PrepareToneMapping(
 
 #define usedMaxNits TmParms0.x
 
-  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
-  {
+//  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
+//  {
     usedMaxNits = Ui::Tm::StaticMode::MaxNits;
-  }
-  else
-  {
-    usedMaxNits = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_NITS);
-  }
+//  }
+//  else
+//  {
+//    usedMaxNits = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_NITS);
+//  }
 
   usedMaxNits = max(usedMaxNits, Ui::Tm::Global::TargetBrightness);
 
@@ -550,98 +550,98 @@ void PS_ToneMapping(
 }
 
 
-void CS_CalcAdaptiveNits(uint3 ID : SV_DispatchThreadID)
-{
-  static const float currentMaxNitsInPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_1)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_2)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_3)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_4)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_5)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_6)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_7)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_8)
-                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_9)) / 10.f;
-
-#if (SHOW_ADAPTIVE_MAX_NITS == YES)
-
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGED_MAX_NITS, currentMaxNitsInPqAveraged);
-
-#endif
-
-  static const float currentMaxNitsInPq =
-    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_MAX_NITS_VALUE));
-
-  static const float currentAdaptiveMaxNitsInPq =
-    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_NITS));
-
-  static const uint curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_CUR);
-
-  //clamp to our 10 slots
-  static const uint newSlot = (curSlot + 1) % 10;
-
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_CUR, newSlot);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0
-                                + int2(newSlot, 0), currentMaxNitsInPq);
-
-  static const float absFrametime = abs(RuntimeValues::Frametime);
-
-  static const float curDiff = currentMaxNitsInPqAveraged
-                             * 1.0005f
-                             - currentAdaptiveMaxNitsInPq;
-
-  static const float absCurDiff = abs(curDiff);
-
-  float adapt;
-
-  //check if we are at the point where no adaption is needed anymore
-  if (absCurDiff < abs(currentMaxNitsInPqAveraged
-                     - FINAL_ADAPT_STOP * currentMaxNitsInPqAveraged))
-  {
-    //always be slightly above the max Nits
-    adapt = 0.000015f;
-  }
-  //check if we are at the point of "final adaption"
-  else if (absCurDiff < abs(currentMaxNitsInPqAveraged
-                          - Ui::Tm::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxNitsInPqAveraged))
-  {
-    float actualFinalAdapt = absFrametime
-                           * (Ui::Tm::AdaptiveMode::FinalAdaptSteps / 10000.f)
-                           * (Ui::Tm::AdaptiveMode::FinalAdaptSpeed / 1000.f);
-
-    adapt = sign(curDiff) * actualFinalAdapt;
-  }
-  //normal adaption
-  else
-  {
-    adapt = curDiff * (absFrametime / (Ui::Tm::AdaptiveMode::TimeToAdapt * 1000.f));
-  }
-  //else
-  //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
-
-  barrier();
-
-  tex2Dstore(StorageConsolidated,
-             COORDS_ADAPTIVE_NITS,
-             min(Csp::Trc::PqTo::Nits(currentAdaptiveMaxNitsInPq + adapt),
-                 Ui::Tm::AdaptiveMode::MaxNitsCap));
-
-}
-
-
-void CS_ResetAveragedMaxNits(uint3 ID : SV_DispatchThreadID)
-{
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_1, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_2, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_3, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_4, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_5, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_6, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_7, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_8, 10000.f);
-  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_9, 10000.f);
-}
+//void CS_CalcAdaptiveNits(uint3 ID : SV_DispatchThreadID)
+//{
+//  static const float currentMaxNitsInPqAveraged = (tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_1)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_2)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_3)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_4)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_5)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_6)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_7)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_8)
+//                                                 + tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_9)) / 10.f;
+//
+//#if (SHOW_ADAPTIVE_MAX_NITS == YES)
+//
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGED_MAX_NITS, currentMaxNitsInPqAveraged);
+//
+//#endif
+//
+//  static const float currentMaxNitsInPq =
+//    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_MAX_NITS_VALUE));
+//
+//  static const float currentAdaptiveMaxNitsInPq =
+//    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_NITS));
+//
+//  static const uint curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_CUR);
+//
+//  //clamp to our 10 slots
+//  static const uint newSlot = (curSlot + 1) % 10;
+//
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_CUR, newSlot);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0
+//                                + int2(newSlot, 0), currentMaxNitsInPq);
+//
+//  static const float absFrametime = abs(RuntimeValues::Frametime);
+//
+//  static const float curDiff = currentMaxNitsInPqAveraged
+//                             * 1.0005f
+//                             - currentAdaptiveMaxNitsInPq;
+//
+//  static const float absCurDiff = abs(curDiff);
+//
+//  float adapt;
+//
+//  //check if we are at the point where no adaption is needed anymore
+//  if (absCurDiff < abs(currentMaxNitsInPqAveraged
+//                     - FINAL_ADAPT_STOP * currentMaxNitsInPqAveraged))
+//  {
+//    //always be slightly above the max Nits
+//    adapt = 0.000015f;
+//  }
+//  //check if we are at the point of "final adaption"
+//  else if (absCurDiff < abs(currentMaxNitsInPqAveraged
+//                          - Ui::Tm::AdaptiveMode::FinalAdaptStart / 100.f * currentMaxNitsInPqAveraged))
+//  {
+//    float actualFinalAdapt = absFrametime
+//                           * (Ui::Tm::AdaptiveMode::FinalAdaptSteps / 10000.f)
+//                           * (Ui::Tm::AdaptiveMode::FinalAdaptSpeed / 1000.f);
+//
+//    adapt = sign(curDiff) * actualFinalAdapt;
+//  }
+//  //normal adaption
+//  else
+//  {
+//    adapt = curDiff * (absFrametime / (Ui::Tm::AdaptiveMode::TimeToAdapt * 1000.f));
+//  }
+//  //else
+//  //  adapt = adapt > 0.f ? adapt + ADAPT_OFFSET : adapt - ADAPT_OFFSET;
+//
+//  barrier();
+//
+//  tex2Dstore(StorageConsolidated,
+//             COORDS_ADAPTIVE_NITS,
+//             min(Csp::Trc::PqTo::Nits(currentAdaptiveMaxNitsInPq + adapt),
+//                 Ui::Tm::AdaptiveMode::MaxNitsCap));
+//
+//}
+//
+//
+//void CS_ResetAveragedMaxNits(uint3 ID : SV_DispatchThreadID)
+//{
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_0, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_1, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_2, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_3, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_4, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_5, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_6, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_7, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_8, 10000.f);
+//  tex2Dstore(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_9, 10000.f);
+//}
 
 
 //technique lilium__tone_mapping_adaptive_maxNits_OLD
@@ -678,20 +678,20 @@ void CS_ResetAveragedMaxNits(uint3 ID : SV_DispatchThreadID)
 //  }
 //}
 
-technique lilium__reset_averaged_max_nits_values
-<
-  enabled = true;
-  hidden  = true;
-  timeout = 1;
->
-{
-  pass CS_ResetAveragedMaxNits
-  {
-    ComputeShader = CS_ResetAveragedMaxNits <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-}
+//technique lilium__reset_averaged_max_nits_values
+//<
+//  enabled = true;
+//  hidden  = true;
+//  timeout = 1;
+//>
+//{
+//  pass CS_ResetAveragedMaxNits
+//  {
+//    ComputeShader = CS_ResetAveragedMaxNits <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
+//}
 
 technique lilium__tone_mapping_adaptive_maximum_brightness
 <
@@ -707,33 +707,33 @@ technique lilium__tone_mapping_adaptive_maximum_brightness
     RenderTarget = TextureNitsValues;
   }
 
-  pass CS_GetMaxNits0_NEW
-  {
-    ComputeShader = CS_GetMaxNits0_NEW <THREAD_SIZE1, 1>;
-    DispatchSizeX = DISPATCH_X1;
-    DispatchSizeY = 2;
-  }
-
-  pass CS_GetMaxNits1_NEW
-  {
-    ComputeShader = CS_GetMaxNits1_NEW <1, 1>;
-    DispatchSizeX = 2;
-    DispatchSizeY = 2;
-  }
-
-  pass CS_GetFinalMaxNits_NEW
-  {
-    ComputeShader = CS_GetFinalMaxNits_NEW <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
-
-  pass CS_CalcAdaptiveNits
-  {
-    ComputeShader = CS_CalcAdaptiveNits <1, 1>;
-    DispatchSizeX = 1;
-    DispatchSizeY = 1;
-  }
+//  pass CS_GetMaxNits0_NEW
+//  {
+//    ComputeShader = CS_GetMaxNits0_NEW <THREAD_SIZE1, 1>;
+//    DispatchSizeX = DISPATCH_X1;
+//    DispatchSizeY = 2;
+//  }
+//
+//  pass CS_GetMaxNits1_NEW
+//  {
+//    ComputeShader = CS_GetMaxNits1_NEW <1, 1>;
+//    DispatchSizeX = 2;
+//    DispatchSizeY = 2;
+//  }
+//
+//  pass CS_GetFinalMaxNits_NEW
+//  {
+//    ComputeShader = CS_GetFinalMaxNits_NEW <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
+//
+//  pass CS_CalcAdaptiveNits
+//  {
+//    ComputeShader = CS_CalcAdaptiveNits <1, 1>;
+//    DispatchSizeX = 1;
+//    DispatchSizeY = 1;
+//  }
 }
 
 technique lilium__tone_mapping
