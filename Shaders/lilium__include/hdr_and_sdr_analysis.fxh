@@ -186,7 +186,7 @@ storage2D<float> StorageMaxNits0Dot01Percent
 #define CIE_TEXTURE_ENTRY_BT2020_OUTLINE   4
 #define CIE_TEXTURE_ENTRY_AP0_OUTLINE      5
 
-//width and height description are in lilium__hdr_analysis.fx
+//width and height description are in lilium__hdr_and_sdr_analysis.fx
 
 texture2D TextureCieConsolidated
 <

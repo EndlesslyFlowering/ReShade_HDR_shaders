@@ -997,7 +997,7 @@ void PS_Testy(
 
 #define ANALYSIS_ENABLE
 
-#include "lilium__include/hdr_analysis.fxh"
+#include "lilium__include/hdr_and_sdr_analysis.fxh"
 
 
 // outer spacing is half the size of a character rounded up
@@ -2789,7 +2789,7 @@ void PS_HdrAnalysis(
 //}
 
 #ifdef _TESTY
-technique lilium__hdr_analysis_TESTY
+technique lilium__hdr_and_sdr_analysis_TESTY
 <
   ui_label = "Lilium's TESTY";
 >
@@ -2825,7 +2825,7 @@ technique lilium__make_overlay_bg_redraw
   }
 }
 
-technique lilium__hdr_analysis
+technique lilium__hdr_and_sdr_analysis
 <
 #ifdef IS_HDR_CSP
   ui_label = "Lilium's HDR analysis";
@@ -2975,7 +2975,7 @@ technique lilium__hdr_analysis
 
 ERROR_STUFF
 
-technique lilium__hdr_analysis
+technique lilium__hdr_and_sdr_analysis
 <
 #ifdef IS_HDR_CSP
   ui_label = "Lilium's HDR analysis (ERROR)";
