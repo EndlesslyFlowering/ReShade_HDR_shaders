@@ -8,7 +8,7 @@
 
 uniform uint INPUT_TRC
 <
-  ui_label = "input TRC";
+  ui_label = "input Gamma";
   ui_type  = "combo";
   ui_items = "sRGB\0"
              "power Gamma\0";
@@ -16,7 +16,7 @@ uniform uint INPUT_TRC
 
 uniform uint TARGET_TRC
 <
-  ui_label = "target TRC";
+  ui_label = "target Gamma";
   ui_type  = "combo";
   ui_items = "power Gamma\0"
              "sRGB\0";
@@ -43,7 +43,7 @@ uniform float TARGET_POWER_GAMMA
 uniform bool USE_BT1886
 <
   ui_category = "BT.1886";
-  ui_label    = "use BT.1886 gamma for blackpoint correction";
+  ui_label    = "use BT.1886 for blackpoint correction";
 > = false;
 
 uniform float BT1886_TARGET_WHITEPOINT
@@ -63,35 +63,54 @@ uniform float BT1886_TARGET_BLACKPOINT
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 1.f;
-  ui_step     = 0.001f;
+  ui_step     = 0.0001f;
 > = 0.f;
 
 
 float3 Bt1886(
-  float3 V,
-  float  TargetInverseGamma)
+  const float3 V,
+  const float  TargetInverseGamma)
 {
-  float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-  float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
+  static const float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
+  static const float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
 
-  float powLw_minus_powLb = powLw - powLb;
+  static const float powLw_minus_powLb = powLw - powLb;
 
-  float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
-  float b = powLb /
-            (powLw_minus_powLb);
+  static const float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
+  static const float b = powLb
+                       / powLw_minus_powLb;
 
-  float3 L = a * pow(max(V + b.xxx, 0.f.xxx), TARGET_POWER_GAMMA);
+  float3 L = a * pow(max(V + b, 0.f), TARGET_POWER_GAMMA);
 
   return pow(L / BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
 }
 
 
-void PS_SdrTrcFix(
-  in  float4 VPos     : SV_Position,
-  in  float2 TexCoord : TEXCOORD0,
-  out float4 Output   : SV_Target0)
+float3 Bt1886Srgb(
+  const float3 V)
 {
-  float3 fixedGamma = tex2D(ReShade::BackBuffer, TexCoord).rgb;
+  static const float powLw = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_WHITEPOINT);
+  static const float powLb = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_BLACKPOINT);
+
+  static const float powLw_minus_powLb = powLw - powLb;
+
+  static const float a = Csp::Trc::SrgbTo::Linear(powLw_minus_powLb);
+  static const float b = powLb
+                       / powLw_minus_powLb;
+
+  float3 L = a * Csp::Trc::SrgbTo::Linear(max(V + b, 0.f));
+
+  return Csp::Trc::LinearTo::Srgb(L / BT1886_TARGET_WHITEPOINT);
+}
+
+
+void PS_SdrTrcFix(
+  in  float4 VPos   : SV_Position,
+  out float4 Output : SV_Target0)
+{
+  const float4 input = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
+
+  float3 fixedGamma = input.rgb;
 
   if (INPUT_TRC == 0)
   {
@@ -115,10 +134,15 @@ void PS_SdrTrcFix(
   }
   else
   {
-    Csp::Trc::LinearTo::Srgb(fixedGamma);
+    fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
+
+    if (USE_BT1886)
+    {
+      fixedGamma = Bt1886Srgb(fixedGamma);
+    }
   }
 
-  Output = float4(fixedGamma, 1.f);
+  Output = float4(fixedGamma, input.a);
 }
 
 
@@ -129,7 +153,7 @@ technique lilium__sdr_trc_fix
 {
   pass PS_SdrTrcFix
   {
-    VertexShader = VS_PostProcess;
+    VertexShader = VS_PostProcessWithoutTexCoord;
      PixelShader = PS_SdrTrcFix;
   }
 }
