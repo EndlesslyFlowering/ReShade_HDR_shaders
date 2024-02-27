@@ -4,7 +4,7 @@
 #if defined(IS_HDR_COMPATIBLE_API)
 
 
-#include "draw_font.fxh"
+#include "../draw_font.fxh"
 
 
 #define WAVE64_THREAD_SIZE_X 8
