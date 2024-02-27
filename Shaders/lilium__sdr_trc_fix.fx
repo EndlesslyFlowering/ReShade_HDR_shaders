@@ -69,38 +69,22 @@ uniform float BT1886_TARGET_BLACKPOINT
 
 float3 Bt1886(
   const float3 V,
-  const float  TargetInverseGamma)
+  const float gamma)
 {
-  static const float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-  static const float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
+  static const float targetInverseGamma = 1.f / gamma;
+  static const float powLw = pow(BT1886_TARGET_WHITEPOINT, targetInverseGamma);
+  static const float powLb = pow(BT1886_TARGET_BLACKPOINT, targetInverseGamma);
 
   static const float powLw_minus_powLb = powLw - powLb;
 
-  static const float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
+  static const float a = pow(powLw_minus_powLb, gamma);
   static const float b = powLb
                        / powLw_minus_powLb;
 
-  float3 L = a * pow(max(V + b, 0.f), TARGET_POWER_GAMMA);
+  const float3 L = pow(a * max(V + b, 0.f), gamma);
+  const float3 L_norm = (L - BT1886_TARGET_BLACKPOINT) / (BT1886_TARGET_WHITEPOINT - BT1886_TARGET_BLACKPOINT)
 
-  return pow(L / BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-}
-
-
-float3 Bt1886Srgb(
-  const float3 V)
-{
-  static const float powLw = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_WHITEPOINT);
-  static const float powLb = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_BLACKPOINT);
-
-  static const float powLw_minus_powLb = powLw - powLb;
-
-  static const float a = Csp::Trc::SrgbTo::Linear(powLw_minus_powLb);
-  static const float b = powLb
-                       / powLw_minus_powLb;
-
-  float3 L = a * Csp::Trc::SrgbTo::Linear(max(V + b, 0.f));
-
-  return Csp::Trc::LinearTo::Srgb(L / BT1886_TARGET_WHITEPOINT);
+  return L_norm;
 }
 
 
@@ -118,28 +102,22 @@ void PS_SdrTrcFix(
   }
   else
   {
-    fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
+    if (USE_BT1886) {
+      fixedGamma = Bt1886(fixedGamma, INPUT_POWER_GAMMA);
+    }
+    else {
+      fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
+    }
   }
 
   if (TARGET_TRC == 0)
   {
     float targetInverseGamma = 1.f / TARGET_POWER_GAMMA;
-
     fixedGamma = pow(fixedGamma, targetInverseGamma);
-
-    if (USE_BT1886)
-    {
-      fixedGamma = Bt1886(fixedGamma, targetInverseGamma);
-    }
   }
   else
   {
     fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
-
-    if (USE_BT1886)
-    {
-      fixedGamma = Bt1886Srgb(fixedGamma);
-    }
   }
 
   Output = float4(fixedGamma, input.a);
