@@ -81,8 +81,8 @@ float3 Bt1886(
   static const float b = powLb
                        / powLw_minus_powLb;
 
-  const float3 L = pow(a * max(V + b, 0.f), gamma);
-  const float3 L_norm = (L - BT1886_TARGET_BLACKPOINT) / (BT1886_TARGET_WHITEPOINT - BT1886_TARGET_BLACKPOINT)
+  const float3 L = a * pow(max(V + b, 0.f), gamma);
+  const float3 L_norm = (L - BT1886_TARGET_BLACKPOINT) / (BT1886_TARGET_WHITEPOINT - BT1886_TARGET_BLACKPOINT);
 
   return L_norm;
 }
