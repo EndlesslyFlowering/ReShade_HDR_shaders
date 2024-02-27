@@ -10,16 +10,16 @@ uniform uint INPUT_TRC
 <
   ui_label = "input Gamma";
   ui_type  = "combo";
-  ui_items = "sRGB\0"
-             "power Gamma\0";
+  ui_items = "power Gamma\0"
+             "sRGB\0";
 > = 0;
 
 uniform uint TARGET_TRC
 <
   ui_label = "target Gamma";
   ui_type  = "combo";
-  ui_items = "power Gamma\0"
-             "sRGB\0";
+  ui_items = "sRGB\0"
+             "power Gamma\0";
 > = 0;
 
 uniform float INPUT_POWER_GAMMA
@@ -68,39 +68,22 @@ uniform float BT1886_TARGET_BLACKPOINT
 
 
 float3 Bt1886(
-  const float3 V,
-  const float  TargetInverseGamma)
+  const float3 LinearColour)
 {
-  static const float powLw = pow(BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-  static const float powLb = pow(BT1886_TARGET_BLACKPOINT, TargetInverseGamma);
+  float3 V = pow(LinearColour, 1.f / 2.4f);
+
+  static const float powLw = pow(BT1886_TARGET_WHITEPOINT, 1.f / 2.4f);
+  static const float powLb = pow(BT1886_TARGET_BLACKPOINT, 1.f / 2.4f);
 
   static const float powLw_minus_powLb = powLw - powLb;
 
-  static const float a = pow(powLw_minus_powLb, TARGET_POWER_GAMMA);
+  static const float a = pow(powLw_minus_powLb, 2.4f);
   static const float b = powLb
                        / powLw_minus_powLb;
 
-  float3 L = a * pow(max(V + b, 0.f), TARGET_POWER_GAMMA);
+  float3 L = a * pow(max(V + b, 0.f), 2.4f);
 
-  return pow(L / BT1886_TARGET_WHITEPOINT, TargetInverseGamma);
-}
-
-
-float3 Bt1886Srgb(
-  const float3 V)
-{
-  static const float powLw = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_WHITEPOINT);
-  static const float powLb = Csp::Trc::LinearTo::Srgb(BT1886_TARGET_BLACKPOINT);
-
-  static const float powLw_minus_powLb = powLw - powLb;
-
-  static const float a = Csp::Trc::SrgbTo::Linear(powLw_minus_powLb);
-  static const float b = powLb
-                       / powLw_minus_powLb;
-
-  float3 L = a * Csp::Trc::SrgbTo::Linear(max(V + b, 0.f));
-
-  return Csp::Trc::LinearTo::Srgb(L / BT1886_TARGET_WHITEPOINT);
+  return L / BT1886_TARGET_WHITEPOINT;
 }
 
 
@@ -114,32 +97,25 @@ void PS_SdrTrcFix(
 
   if (INPUT_TRC == 0)
   {
-    fixedGamma = Csp::Trc::SrgbTo::Linear(fixedGamma);
+    fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
   }
   else
   {
-    fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
+    fixedGamma = Csp::Trc::SrgbTo::Linear(fixedGamma);
+  }
+
+  if (USE_BT1886)
+  {
+    fixedGamma = Bt1886(fixedGamma);
   }
 
   if (TARGET_TRC == 0)
   {
-    float targetInverseGamma = 1.f / TARGET_POWER_GAMMA;
-
-    fixedGamma = pow(fixedGamma, targetInverseGamma);
-
-    if (USE_BT1886)
-    {
-      fixedGamma = Bt1886(fixedGamma, targetInverseGamma);
-    }
+    fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
   }
   else
   {
-    fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
-
-    if (USE_BT1886)
-    {
-      fixedGamma = Bt1886Srgb(fixedGamma);
-    }
+    fixedGamma = pow(fixedGamma, 1.f / TARGET_POWER_GAMMA);
   }
 
   Output = float4(fixedGamma, input.a);
