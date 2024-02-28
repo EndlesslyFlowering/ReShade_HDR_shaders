@@ -98,7 +98,7 @@ namespace Ui
         ui_category = "BT.2446 Method A";
         ui_label    = "max input brightness";
         ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed."
-                 "\n" "Analyse a good value with the \"scRGB TRC fix\" and \"HDR analysis\" shader"
+                 "\n" "Analyse a good value with the \"map SDR into HDR\" and \"HDR analysis\" shader"
                  "\n" "before applying the inverse tone mapping shader!"
                  "\n"
                  "\n" "If you want to change just the average brightness,"
