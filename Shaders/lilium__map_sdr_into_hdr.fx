@@ -8,17 +8,22 @@
 uniform uint INPUT_TRC
 <
   ui_label    = "input gamma";
+  ui_tooltip  = "\"linear with SDR black floor emulation (scRGB)\" fixes the sRGB<->gamma 2.2 mismatch";
   ui_type     = "combo";
-  ui_items    = "gamma 2.2\0"
-                "gamma 2.4\0"
+  ui_items    = "2.2\0"
+                "2.4\0"
+                "linear (scRGB)\0"
+                "linear with SDR black floor emulation (scRGB)\0"
                 "sRGB\0"
                 "PQ\0";
 > = 0;
 
-#define TRC_GAMMA_22 0
-#define TRC_GAMMA_24 1
-#define TRC_SRGB     2
-#define TRC_PQ       3
+#define TRC_GAMMA_22                    0
+#define TRC_GAMMA_24                    1
+#define TRC_LINEAR                      2
+#define TRC_LINEAR_WITH_BLACK_FLOOR_EMU 3
+#define TRC_SRGB                        4
+#define TRC_PQ                          5
 
 uniform float SDR_WHITEPOINT_NITS
 <
@@ -74,82 +79,110 @@ uniform float CLAMP_POSITIVE_TO
 > = 125.f;
 
 
+// convert BT.709 to BT.2020
+float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
+#endif
+  return Colour;
+}
+
+// convert HDR10 to linear BT.2020
+float3 ConditionallyLineariseHdr10(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
+  Colour = Csp::Trc::PqTo::Linear(Colour);
+#endif
+  return Colour;
+}
+
+// convert BT.2020 to BT.709
+float3 ConditionallyConvertBt2020To709(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
+#endif
+  return Colour;
+}
+
+
 void PS_MapSdrIntoHdr(
-      float4 VPos     : SV_Position,
-  out float4 Output   : SV_Target0)
+      float4 VPos   : SV_Position,
+  out float4 Output : SV_Target0)
 {
   float4 inputColour = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
 
-  float3 fixedGamma = inputColour.rgb;
+  float3 colour = inputColour.rgb;
 
   static const bool inputTrcIsPq = INPUT_TRC == TRC_PQ;
 
   if (INPUT_TRC == TRC_GAMMA_22)
   {
-    fixedGamma = Csp::Trc::ExtendedGamma22To::Linear(fixedGamma);
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-    fixedGamma = Csp::Mat::Bt709To::Bt2020(fixedGamma);
-#endif
+    colour = Csp::Trc::ExtendedGamma22To::Linear(colour);
+    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else if (INPUT_TRC == TRC_GAMMA_24)
   {
-    fixedGamma = Csp::Trc::ExtendedGamma24To::Linear(fixedGamma);
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-    fixedGamma = Csp::Mat::Bt709To::Bt2020(fixedGamma);
-#endif
+    colour = Csp::Trc::ExtendedGamma24To::Linear(colour);
+    colour = ConditionallyConvertBt709ToBt2020(colour);
+  }
+  else if (INPUT_TRC == TRC_LINEAR)
+  {
+    colour = ConditionallyConvertBt709ToBt2020(colour);
+  }
+  else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
+  {
+    colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(colour));
+    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else if (INPUT_TRC == TRC_SRGB)
   {
-      fixedGamma = Csp::Trc::ExtendedSrgbTo::Linear(fixedGamma);
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-    fixedGamma = Csp::Mat::Bt709To::Bt2020(fixedGamma);
-#endif
+    colour = Csp::Trc::ExtendedSrgbTo::Linear(colour);
+    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else //if (inputTrcIsPq)
   {
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
-    fixedGamma = Csp::Trc::PqTo::Linear(fixedGamma);
-#endif
+    colour = ConditionallyLineariseHdr10(colour);
+    colour = ConditionallyConvertBt2020To709(colour);
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-    fixedGamma = Csp::Mat::Bt2020To::Bt709(fixedGamma) * 125.f;
+    colour *= 125.f;
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-    fixedGamma = fixedGamma * 100.f;
+    colour *= 100.f;
 #endif
   }
 
   if (ENABLE_CLAMPING)
   {
-    fixedGamma = clamp(fixedGamma, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
+    colour = clamp(colour, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
   }
 
   if (ENABLE_GAMMA_ADJUST
    && !inputTrcIsPq)
   {
-    fixedGamma = Csp::Trc::ExtendedGammaAdjust(fixedGamma, 1.f + GAMMA_ADJUST);
+    colour = Csp::Trc::ExtendedGammaAdjust(colour, 1.f + GAMMA_ADJUST);
   }
 
-//  if (dot(Bt709ToXYZ[1].rgb, fixedGamma) < 0.f)
-//    fixedGamma = float3(0.f, 0.f, 0.f);
+//  if (dot(Bt709ToXYZ[1].rgb, colour) < 0.f)
+//    colour = float3(0.f, 0.f, 0.f);
 
   if (!inputTrcIsPq)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    fixedGamma *= (SDR_WHITEPOINT_NITS / 80.f);
+    colour *= (SDR_WHITEPOINT_NITS / 80.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    fixedGamma *= (SDR_WHITEPOINT_NITS / 100.f);
+    colour *= (SDR_WHITEPOINT_NITS / 100.f);
 
 #endif
   }
 
-  //fixedGamma = fixNAN(fixedGamma);
+  //colour = fixNAN(colour);
 
-  Output = float4(fixedGamma, inputColour.a);
+  Output = float4(colour, inputColour.a);
 }
 
 
