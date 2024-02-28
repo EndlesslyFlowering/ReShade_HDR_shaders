@@ -66,10 +66,6 @@ void VS_PostProcessWithoutTexCoord(
 #define CSP_PS5     5
 #define CSP_FAIL    255
 
-#ifndef CSP_OVERRIDE
-  #define CSP_OVERRIDE CSP_UNSET
-#endif
-
 #if (BUFFER_COLOR_BIT_DEPTH == 8 || BUFFER_COLOR_BIT_DEPTH == 10)
   #define IS_POSSIBLE_SRGB_BIT_DEPTH
 #endif
@@ -85,6 +81,13 @@ void VS_PostProcessWithoutTexCoord(
 
 #if (BUFFER_COLOR_BIT_DEPTH == 16)
   #define IS_POSSIBLE_PS5_BIT_DEPTH
+#endif
+
+#if (defined(IS_POSSIBLE_HDR10_BIT_DEPTH) \
+  && BUFFER_COLOR_SPACE != CSP_HDR10)
+  #ifndef CSP_OVERRIDE
+    #define CSP_OVERRIDE CSP_UNSET
+  #endif
 #endif
 
 #if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
@@ -186,7 +189,7 @@ void VS_PostProcessWithoutTexCoord(
 #endif
 
 
-#define CSP_UNSET_TEXT "colour space unset! likely "
+#define CSP_UNSET_TEXT "colour space unset! could be "
 
 #if (BUFFER_COLOR_SPACE == CSP_SCRGB)
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SCRGB_TEXT
@@ -194,15 +197,12 @@ void VS_PostProcessWithoutTexCoord(
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HDR10_TEXT
 #elif (BUFFER_COLOR_SPACE == CSP_HLG)
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_HLG_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_SRGB \
-    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
-    && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
-#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN \
-    && defined(IS_POSSIBLE_HDR10_BIT_DEPTH))
-  #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
+#elif (BUFFER_COLOR_SPACE == CSP_UNKNOWN)
+  #if defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)
+    #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
+  #elif defined(IS_POSSIBLE_HDR10_BIT_DEPTH)
+    #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
+  #endif
 #elif (BUFFER_COLOR_SPACE == CSP_SRGB)
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_DEFAULT_TEXT
 #else
@@ -279,8 +279,7 @@ void VS_PostProcessWithoutTexCoord(
 #endif
 
 #if ((HIDE_CSP_OVERRIDE_EXPLANATION == YES) \
-  || defined(IS_FLOAT_HDR_CSP)              \
-  || defined(IS_HDR10_LIKE_CSP)             \
+  || defined(IS_HDR_CSP)                    \
   || (BUFFER_COLOR_BIT_DEPTH <= 8))
   #define INFO_TEXT INFO_TEXT_BACK_BUFFER
 #else
