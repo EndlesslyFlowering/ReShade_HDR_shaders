@@ -83,7 +83,8 @@ float3 Bt1886(
 
   float3 L = a * pow(max(V + b, 0.f), 2.4f);
 
-  return L / BT1886_TARGET_WHITEPOINT;
+  //normalise so that 0 is the black point and 1 the white point of the display
+  return (L - BT1886_TARGET_BLACKPOINT) / (BT1886_TARGET_WHITEPOINT - BT1886_TARGET_BLACKPOINT);
 }
 
 
