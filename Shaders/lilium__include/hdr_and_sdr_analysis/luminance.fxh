@@ -273,17 +273,24 @@ void PS_CalcNitsPerPixel(
   #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / 16 + 1)
 #endif
 
-#define GROUP_MAX_AVG_MIN_SHARED_VARIABLES (64 * 3)
-
-groupshared float GroupMaxAvgMin[GROUP_MAX_AVG_MIN_SHARED_VARIABLES];
-void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
-                         uint3 GTID : SV_GroupThreadID,
+groupshared uint GroupMax;
+groupshared uint GroupAvg;
+groupshared uint GroupMin;
+void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
                          uint3 DTID : SV_DispatchThreadID)
 {
   if (_SHOW_NITS_VALUES
    || (_SHOW_LUMINANCE_WAVEFORM
     && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
+
+    if (all(GTID.xy == 0))
+    {
+      GroupMax = 0;
+      GroupAvg = 0;
+      GroupMin = UINT_MAX;
+    }
+    barrier();
 
     float threadMaxNits = 0.f;
     float threadAvgNits = 0.f;
@@ -338,36 +345,23 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
 
     threadAvgNits /= avgDiv;
 
-    const uint groupMaxAvgMinId = (DTID.x - (GID.x * 8)) | ((DTID.y - (GID.y * 8)) << 3);
-    GroupMaxAvgMin[groupMaxAvgMinId]        = threadMaxNits;
-    GroupMaxAvgMin[groupMaxAvgMinId | 0x40] = threadAvgNits;
-    GroupMaxAvgMin[groupMaxAvgMinId | 0x80] = threadMinNits;
+    atomicMax(GroupMax, asuint(threadMaxNits));
+    atomicAdd(GroupAvg, uint((threadAvgNits + 0.0005f) * 1000.f));
+    atomicMin(GroupMin, asuint(threadMinNits));
 
     barrier();
 
     if (all(GTID.xy == 0))
     {
-      float groupMaxNits = 0.f;
-      float groupAvgNits = 0.f;
-      float groupMinNits = FP32_MAX;
+      const float groupAvgNits = float(GroupAvg)
+                               / 1000.f
+                               / 64.f;
 
-      for (uint i = 0; i < 64; i++)
-      {
-        groupMaxNits = max(GroupMaxAvgMin[i],        groupMaxNits);
-        groupMinNits = min(GroupMaxAvgMin[i | 0x80], groupMinNits);
+      const uint groupAvgNitsUint = uint((groupAvgNits + 0.0005f) * 1000.f);
 
-        groupAvgNits += GroupMaxAvgMin[i | 0x40];
-      }
-
-      groupAvgNits /= 64.f;
-
-      const uint groupMaxNitsAsUintRounded = asuint(groupMaxNits);
-      const uint groupAvgNitsAsUintRounded = uint((groupAvgNits + 0.0005f) * 1000.f);
-      const uint groupMinNitsAsUintRounded = asuint(groupMinNits);
-
-      atomicMax(StorageMaxAvgMinNitsAndCspCounter, 0, groupMaxNitsAsUintRounded);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 1, groupAvgNitsAsUintRounded);
-      atomicMin(StorageMaxAvgMinNitsAndCspCounter, 2, groupMinNitsAsUintRounded);
+      atomicMax(StorageMaxAvgMinNitsAndCspCounter, 0, GroupMax);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 1, groupAvgNitsUint);
+      atomicMin(StorageMaxAvgMinNitsAndCspCounter, 2, GroupMin);
     }
     return;
   }
