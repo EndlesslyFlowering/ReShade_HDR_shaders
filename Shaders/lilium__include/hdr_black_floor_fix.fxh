@@ -154,54 +154,25 @@ void Gamma22Emulation(
 
 #endif //IS_XXX_LIKE_CSP
 
+  const bool3 isInProcessingRange = Colour < WhitePointNormalised;
+  const bool3 isAbove0            = Colour >  0.f;
 
-  switch(Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace)
+  const bool3 needsProcessing = isInProcessingRange && isAbove0;
+
+  if (needsProcessing.r)
   {
-    case HDR_BF_FIX_CSP_BT709:
-    {
-      if (dot(Colour, Csp::Mat::Bt709ToXYZ[1]) <= WhitePointNormalised)
-      {
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
-      }
-      return;
-    }
-    case HDR_BF_FIX_CSP_DCI_P3:
-    {
-      if (dot(Colour, Csp::Mat::DciP3ToXYZ[1]) <= WhitePointNormalised)
-      {
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
-      }
-      return;
-    }
-    //BT.2020
-    default:
-    {
-      if (dot(Colour, Csp::Mat::Bt2020ToXYZ[1]) <= WhitePointNormalised)
-      {
-#if defined(IS_FLOAT_HDR_CSP)
-        Colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised)) * WhitePointNormalised;
-#else
-        Colour = pow(Csp::Trc::LinearTo::Srgb(Colour / WhitePointNormalised), 2.2f) * WhitePointNormalised;
-#endif
-      }
-      return;
-    }
+    Colour.r = pow(Csp::Trc::LinearTo::Srgb(Colour.r / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+  }
+  if (needsProcessing.g)
+  {
+    Colour.g = pow(Csp::Trc::LinearTo::Srgb(Colour.g / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+  }
+  if (needsProcessing.b)
+  {
+    Colour.b = pow(Csp::Trc::LinearTo::Srgb(Colour.b / WhitePointNormalised), 2.2f) * WhitePointNormalised;
   }
 
-//  float3 RgbNormalised = Colour / WhitePointNormalised;
-//
-//  if (Colour.r <= WhitePointNormalised)
-//  {
-//    Colour.r = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.r), 2.2f) * WhitePointNormalised;
-//  }
-//  if (Colour.g <= WhitePointNormalised)
-//  {
-//    Colour.g = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.g), 2.2f) * WhitePointNormalised;
-//  }
-//  if (Colour.b <= WhitePointNormalised)
-//  {
-//    Colour.b = pow(Csp::Trc::LinearTo::Srgb(RgbNormalised.b), 2.2f) * WhitePointNormalised;
-//  }
+  return;
 }
 
 #define BLACK_POINT_ADAPTION(T)                            \
