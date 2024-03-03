@@ -219,7 +219,7 @@ void PS_CalcNitsPerPixel(
   )
   {
 
-    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy)).rgb;
+    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy)).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

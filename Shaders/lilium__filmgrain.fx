@@ -42,7 +42,7 @@ void PS_Filmgrain(
   in  float2 TexCoord : TEXCOORD0,
   out float4 Output   : SV_Target0)
 {
-  float4 input = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
+  float4 input = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
 
   float3 m     = float3(TexCoord, RANDOM / 100000.f) + 1.f;
   float  state = Permute(Permute(m.x) + m.y) + m.z;

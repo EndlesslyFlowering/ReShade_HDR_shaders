@@ -1238,7 +1238,7 @@ void PS_HdrAnalysis(
 {
   const int2 pureCoordAsInt = int2(VPos.xy);
 
-  Output = tex2Dfetch(ReShade::BackBuffer, pureCoordAsInt);
+  Output = tex2Dfetch(SamplerBackBuffer, pureCoordAsInt);
 
   if (_SHOW_HEATMAP
 #ifdef IS_HDR_CSP

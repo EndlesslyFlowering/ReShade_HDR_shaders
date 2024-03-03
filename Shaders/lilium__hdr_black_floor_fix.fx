@@ -80,7 +80,7 @@ void PS_HdrBlackFloorFix(
     discard;
   }
 
-  const float4 inputColour = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy));
+  const float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
 
   float3 colour = inputColour.rgb;
 

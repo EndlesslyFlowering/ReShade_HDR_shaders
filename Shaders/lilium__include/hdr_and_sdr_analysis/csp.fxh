@@ -157,7 +157,7 @@ void PS_CalcCsps(
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
   {
-    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, int2(VPos.xy)).rgb;
+    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy)).rgb;
 
 #if defined(IS_FLOAT_HDR_CSP)
 

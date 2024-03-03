@@ -27,7 +27,7 @@
 // for pixel shader
 float2 GetEfhiCoords(float2 Coords)
 {
-  return Coords + 0.5f * ReShade::PixelSize;
+  return Coords + 0.5f * PixelSize;
 }
 
 
@@ -89,20 +89,20 @@ void CSGetPixels(
   in  const float2           EfhiCoords,
   out       SPixelsToProcess Ptp)
 {
-  float4 efhiR = tex2DgatherR(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiG = tex2DgatherG(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiB = tex2DgatherB(ReShade::BackBuffer, EfhiCoords);
+  float4 efhiR = tex2DgatherR(SamplerBackBuffer, EfhiCoords);
+  float4 efhiG = tex2DgatherG(SamplerBackBuffer, EfhiCoords);
+  float4 efhiB = tex2DgatherB(SamplerBackBuffer, EfhiCoords);
 
   Ptp.e = float3(efhiR.w, efhiG.w, efhiB.w);
   Ptp.f = float3(efhiR.z, efhiG.z, efhiB.z);
   Ptp.h = float3(efhiR.x, efhiG.x, efhiB.x);
   Ptp.i = float3(efhiR.y, efhiG.y, efhiB.y);
 
-  Ptp.a = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1, -1)).rgb;
-  Ptp.b = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 0, -1)).rgb;
-  Ptp.c = tex2Dfetch(ReShade::BackBuffer, Coords + int2( 1, -1)).rgb;
-  Ptp.d = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  0)).rgb;
-  Ptp.g = tex2Dfetch(ReShade::BackBuffer, Coords + int2(-1,  1)).rgb;
+  Ptp.a = tex2Dfetch(SamplerBackBuffer, Coords + int2(-1, -1)).rgb;
+  Ptp.b = tex2Dfetch(SamplerBackBuffer, Coords + int2( 0, -1)).rgb;
+  Ptp.c = tex2Dfetch(SamplerBackBuffer, Coords + int2( 1, -1)).rgb;
+  Ptp.d = tex2Dfetch(SamplerBackBuffer, Coords + int2(-1,  0)).rgb;
+  Ptp.g = tex2Dfetch(SamplerBackBuffer, Coords + int2(-1,  1)).rgb;
 
   return;
 }
@@ -113,20 +113,20 @@ void PSGetPixels(
   in  const float2           EfhiCoords,
   out       SPixelsToProcess Ptp)
 {
-  float4 efhiR = tex2DgatherR(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiG = tex2DgatherG(ReShade::BackBuffer, EfhiCoords);
-  float4 efhiB = tex2DgatherB(ReShade::BackBuffer, EfhiCoords);
+  float4 efhiR = tex2DgatherR(SamplerBackBuffer, EfhiCoords);
+  float4 efhiG = tex2DgatherG(SamplerBackBuffer, EfhiCoords);
+  float4 efhiB = tex2DgatherB(SamplerBackBuffer, EfhiCoords);
 
   Ptp.e = float3(efhiR.w, efhiG.w, efhiB.w);
   Ptp.f = float3(efhiR.z, efhiG.z, efhiB.z);
   Ptp.h = float3(efhiR.x, efhiG.x, efhiB.x);
   Ptp.i = float3(efhiR.y, efhiG.y, efhiB.y);
 
-  Ptp.a = tex2D(ReShade::BackBuffer, Coords, int2(-1, -1)).rgb;
-  Ptp.b = tex2D(ReShade::BackBuffer, Coords, int2( 0, -1)).rgb;
-  Ptp.c = tex2D(ReShade::BackBuffer, Coords, int2( 1, -1)).rgb;
-  Ptp.d = tex2D(ReShade::BackBuffer, Coords, int2(-1,  0)).rgb;
-  Ptp.g = tex2D(ReShade::BackBuffer, Coords, int2(-1,  1)).rgb;
+  Ptp.a = tex2D(SamplerBackBuffer, Coords, int2(-1, -1)).rgb;
+  Ptp.b = tex2D(SamplerBackBuffer, Coords, int2( 0, -1)).rgb;
+  Ptp.c = tex2D(SamplerBackBuffer, Coords, int2( 1, -1)).rgb;
+  Ptp.d = tex2D(SamplerBackBuffer, Coords, int2(-1,  0)).rgb;
+  Ptp.g = tex2D(SamplerBackBuffer, Coords, int2(-1,  1)).rgb;
 
   return;
 }

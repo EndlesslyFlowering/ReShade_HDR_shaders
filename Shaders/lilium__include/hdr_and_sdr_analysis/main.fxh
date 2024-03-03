@@ -329,7 +329,7 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
 
     const int2 fetchPos = int2(fetchPosX, fetchPosY);
 
-    precise const float3 pixel = tex2Dfetch(ReShade::BackBuffer, fetchPos).rgb;
+    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, fetchPos).rgb;
 
     // get XYZ
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)

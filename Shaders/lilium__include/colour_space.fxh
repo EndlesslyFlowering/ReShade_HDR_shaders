@@ -2,15 +2,24 @@
 
 #pragma warning(disable : 3571) // disable warning about potentially using pow on a negative value
 
-#include "../ReShade.fxh"
+
+texture TextureBackBuffer : COLOR;
+
+sampler SamplerBackBuffer
+{
+  Texture = TextureBackBuffer;
+};
 
 
-#ifndef __RESHADE__
-  #include "_no.fxh"
-  #define BUFFER_WIDTH       3840
-  #define BUFFER_HEIGHT      2160
-  #define BUFFER_COLOR_SPACE    2
-#endif
+static const float2 PixelSize = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+
+
+//#ifndef __RESHADE__
+//  #include "_no.fxh"
+//  #define BUFFER_WIDTH       3840
+//  #define BUFFER_HEIGHT      2160
+//  #define BUFFER_COLOR_SPACE    2
+//#endif
 
 
 #if ((__RENDERER__ & 0xB000) == 0xB000)
@@ -41,17 +50,28 @@
 #define STRINGIFY(x) #x
 #define GET_UNKNOWN_NUMBER(x) "unknown (" STRINGIFY(x) ")"
 
-#define VS_PostProcess PostProcessVS
+// Vertex shader generating a triangle covering the entire screen
+// See also https://www.reddit.com/r/gamedev/comments/2j17wk/a_slightly_faster_bufferless_vertex_shader_trick/
+void VS_PostProcess(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position,
+  out float2 TexCoord : TEXCOORD0)
+{
+	TexCoord.x = (VertexID == 2) ? 2.f : 0.f;
+	TexCoord.y = (VertexID == 1) ? 2.f : 0.f;
+
+	Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+}
 
 void VS_PostProcessWithoutTexCoord(
-  in  uint   id    : SV_VertexID,
-  out float4 SVPos : SV_Position0)
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
 {
   float2 texCoord;
-  texCoord.x = (id == 2) ? 2.f : 0.f;
-  texCoord.y = (id == 1) ? 2.f : 0.f;
+  texCoord.x = (VertexID == 2) ? 2.f : 0.f;
+  texCoord.y = (VertexID == 1) ? 2.f : 0.f;
 
-  SVPos = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 }
 
 #define YES 1
