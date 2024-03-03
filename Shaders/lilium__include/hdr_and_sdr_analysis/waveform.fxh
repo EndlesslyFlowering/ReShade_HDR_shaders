@@ -930,7 +930,7 @@ void PS_ClearLuminanceWaveformTexture(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareRenderLuminanceWaveformToScale(
-  in                  uint   Id       : SV_VertexID,
+  in                  uint   VertexID : SV_VertexID,
   out                 float4 Position : SV_Position,
   out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation int4   WaveDat0 : WaveDat0,
@@ -941,10 +941,10 @@ void VS_PrepareRenderLuminanceWaveformToScale(
 #endif
   )
 {
-  TexCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  TexCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  TexCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  TexCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define WaveformActiveArea   WaveDat0.xy

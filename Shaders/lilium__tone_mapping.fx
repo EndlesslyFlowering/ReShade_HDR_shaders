@@ -362,16 +362,16 @@ uniform float TEST_S
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareToneMapping(
-  in                  uint   Id       : SV_VertexID,
+  in                  uint   VertexID : SV_VertexID,
   out                 float4 Position : SV_Position,
   out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation float4 TmParms0 : TmParms0,
   out nointerpolation float3 TmParms1 : TmParms1)
 {
-  TexCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  TexCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  TexCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  TexCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define usedMaxNits TmParms0.x

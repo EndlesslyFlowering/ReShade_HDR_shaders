@@ -5,15 +5,15 @@
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareSetActiveArea(
-  in                  uint   Id                : SV_VertexID,
+  in                  uint   VertexID          : SV_VertexID,
   out                 float4 Position          : SV_Position,
   out nointerpolation float4 PercentagesToCrop : PercentagesToCrop)
 {
   float2 TexCoord;
-  TexCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  TexCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  TexCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  TexCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 

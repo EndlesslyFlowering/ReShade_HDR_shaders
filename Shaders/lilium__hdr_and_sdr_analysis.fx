@@ -852,15 +852,15 @@ precise uniform float TEST_THINGY_Y
 
 
 void VS_Testy(
-  in                  uint   Id         : SV_VertexID,
+  in                  uint   VertexID   : SV_VertexID,
   out                 float4 Position   : SV_Position,
   out                 float2 TexCoord   : TEXCOORD0,
   out nointerpolation float4 TestyStuff : TestyStuff)
 {
-  TexCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  TexCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  TexCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  TexCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
   float2 testAreaSizeDiv2 = TEST_AREA_SIZE / 2.f;
@@ -977,7 +977,7 @@ void PS_Testy(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   Id                : SV_VertexID,
+  in                  uint   VertexID          : SV_VertexID,
   out                 float4 Position          : SV_Position,
   out                 float2 TexCoord          : TEXCOORD0,
   out nointerpolation bool2  PingPongChecks    : PingPongChecks,
@@ -992,10 +992,10 @@ void VS_PrepareHdrAnalysis(
   out nointerpolation float2 CieDiagramTextureActiveSize  : CieDiagramTextureActiveSize,
   out nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize)
 {
-  TexCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  TexCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  TexCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  TexCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define pingpong0Above1   PingPongChecks[0]

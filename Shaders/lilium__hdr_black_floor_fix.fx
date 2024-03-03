@@ -9,16 +9,16 @@
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrBlackFloorFix(
-  in                  uint   Id         : SV_VertexID,
+  in                  uint   VertexID   : SV_VertexID,
   out                 float4 Position   : SV_Position,
   out nointerpolation float4 FuncParms0 : FuncParms0,
   out nointerpolation float  FuncParms1 : FuncParms1)
 {
   float2 texCoord;
-  texCoord.x = (Id == 2) ? 2.f
-                         : 0.f;
-  texCoord.y = (Id == 1) ? 2.f
-                         : 0.f;
+  texCoord.x = (VertexID == 2) ? 2.f
+                               : 0.f;
+  texCoord.y = (VertexID == 1) ? 2.f
+                               : 0.f;
   Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 // black flower lowering
