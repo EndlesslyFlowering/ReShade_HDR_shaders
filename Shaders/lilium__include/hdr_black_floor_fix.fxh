@@ -49,9 +49,17 @@ namespace Ui
         ui_type     = "drag";
         ui_units    = " nits";
         ui_min      = 40.f;
-        ui_max      = 250.f;
+        ui_max      = 300.f;
         ui_step     = 0.5f;
       > = 80.f;
+
+      uniform bool OnlyLowerBlackLevels
+      <
+        ui_category = "SDR black floor emulation";
+        ui_label    = "only lower black levels";
+        ui_tooltip  = "The gamma 2.2 emulation lowers black levels and slightly raises hightlights."
+                 "\n" "This option only enables the lowering of black levels.";
+      > = false;
     }
 
     namespace Lowering
@@ -159,18 +167,40 @@ void Gamma22Emulation(
 
   const bool3 needsProcessing = isInProcessingRange && isAbove0;
 
+  float3 processedColour = Colour;
+
   if (needsProcessing.r)
   {
-    Colour.r = pow(Csp::Trc::LinearTo::Srgb(Colour.r / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+    processedColour.r = pow(Csp::Trc::LinearTo::Srgb(processedColour.r / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
+     && processedColour.r > Colour.r)
+    {
+      processedColour.r = Colour.r;
+    }
   }
   if (needsProcessing.g)
   {
-    Colour.g = pow(Csp::Trc::LinearTo::Srgb(Colour.g / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+    processedColour.g = pow(Csp::Trc::LinearTo::Srgb(processedColour.g / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
+     && processedColour.g > Colour.g)
+    {
+      processedColour.g = Colour.g;
+    }
   }
   if (needsProcessing.b)
   {
-    Colour.b = pow(Csp::Trc::LinearTo::Srgb(Colour.b / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+    processedColour.b = pow(Csp::Trc::LinearTo::Srgb(processedColour.b / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
+     && processedColour.b > Colour.b)
+    {
+      processedColour.b = Colour.b;
+    }
   }
+
+  Colour = processedColour;
 
   return;
 }
