@@ -115,11 +115,11 @@ void GenerateCieDiagram(
 float3 FetchCspOutline(
   const int OutlineTextureOffset,
   const int CieBgWidth,
-  const int VPosXAsInt,
+  const int PositionXAsInt,
   const int FetchPosY) // already calculated
 {
   int2 fetchPos =
-    int2(VPosXAsInt + (CieBgWidth * OutlineTextureOffset),
+    int2(PositionXAsInt + (CieBgWidth * OutlineTextureOffset),
          FetchPosY);
 
   float3 fetchedPixel = tex2Dfetch(SamplerCieConsolidated, fetchPos).rgb;
@@ -131,14 +131,14 @@ float3 FetchCspOutline(
 
 // copy over clean bg and the outlines first every time
 void PS_CopyCieBgAndOutlines(
-  in  float4 VPos     : SV_Position,
+  in  float4 Position : SV_Position,
   in  float2 TexCoord : TEXCOORD0,
   out float4 Out      : SV_Target0)
 {
-  int2 vPosAsInt2 = int2(VPos.xy);
+  int2 positionAsInt2 = int2(Position.xy);
 
-  int2 fetchPos = int2(vPosAsInt2.x + CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
-                       vPosAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(_CIE_DIAGRAM_TYPE));
+  int2 fetchPos = int2(positionAsInt2.x + CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
+                       positionAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(_CIE_DIAGRAM_TYPE));
 
   Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
 
@@ -149,7 +149,7 @@ void PS_CopyCieBgAndOutlines(
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
                                           CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          vPosAsInt2.x,
+                                          positionAsInt2.x,
                                           fetchPos.y);
 
     Out.rgb += fetchedPixel;
@@ -159,7 +159,7 @@ void PS_CopyCieBgAndOutlines(
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
                                           CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          vPosAsInt2.x,
+                                          positionAsInt2.x,
                                           fetchPos.y);
 
     Out.rgb += fetchedPixel;
@@ -168,7 +168,7 @@ void PS_CopyCieBgAndOutlines(
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
                                           CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          vPosAsInt2.x,
+                                          positionAsInt2.x,
                                           fetchPos.y);
 
     Out.rgb += fetchedPixel;
@@ -178,7 +178,7 @@ void PS_CopyCieBgAndOutlines(
   {
     float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
                                           CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          vPosAsInt2.x,
+                                          positionAsInt2.x,
                                           fetchPos.y);
 
     Out.rgb += fetchedPixel;

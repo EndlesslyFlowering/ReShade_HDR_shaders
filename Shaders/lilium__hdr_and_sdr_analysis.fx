@@ -853,7 +853,7 @@ precise uniform float TEST_THINGY_Y
 
 void VS_Testy(
   in                  uint   Id         : SV_VertexID,
-  out                 float4 VPos       : SV_Position,
+  out                 float4 Position   : SV_Position,
   out                 float2 TexCoord   : TEXCOORD0,
   out nointerpolation float4 TestyStuff : TestyStuff)
 {
@@ -861,7 +861,7 @@ void VS_Testy(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
   float2 testAreaSizeDiv2 = TEST_AREA_SIZE / 2.f;
 
@@ -872,12 +872,12 @@ void VS_Testy(
 }
 
 void PS_Testy(
-  in                          float4 VPos       : SV_Position,
+  in                          float4 Position   : SV_Position,
   in                          float2 TexCoord   : TEXCOORD0,
   in  nointerpolation         float4 TestyStuff : TestyStuff,
   out                 precise float4 Output     : SV_Target0)
 {
-  const float2 pureCoord = floor(VPos.xy);
+  const float2 pureCoord = floor(Position.xy);
 
   if(ENABLE_TEST_THINGY
   && pureCoord.x > TestyStuff.x
@@ -978,7 +978,7 @@ void PS_Testy(
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
   in                  uint   Id                : SV_VertexID,
-  out                 float4 VPos              : SV_Position,
+  out                 float4 Position          : SV_Position,
   out                 float2 TexCoord          : TEXCOORD0,
   out nointerpolation bool2  PingPongChecks    : PingPongChecks,
   out nointerpolation float4 HighlightNitRange : HighlightNitRange,
@@ -996,7 +996,7 @@ void VS_PrepareHdrAnalysis(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define pingpong0Above1   PingPongChecks[0]
 #define breathingIsActive PingPongChecks[1]
@@ -1221,7 +1221,7 @@ void MergeOverlay(
 
 
 void PS_HdrAnalysis(
-  in                  float4 VPos              : SV_Position,
+  in                  float4 Position          : SV_Position,
   in                  float2 TexCoord          : TEXCOORD0,
   in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
@@ -1236,7 +1236,7 @@ void PS_HdrAnalysis(
   in  nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize,
   out                 float4 Output                       : SV_Target0)
 {
-  const int2 pureCoordAsInt = int2(VPos.xy);
+  const int2 pureCoordAsInt = int2(Position.xy);
 
   Output = tex2Dfetch(SamplerBackBuffer, pureCoordAsInt);
 
@@ -1298,12 +1298,12 @@ void PS_HdrAnalysis(
   if (_SHOW_CIE)
   {
     // draw the diagram in the bottom left corner
-    if (VPos.x <  CieDiagramTextureActiveSize.x
-     && VPos.y >= CieDiagramTextureActiveSize.y)
+    if (Position.x <  CieDiagramTextureActiveSize.x
+     && Position.y >= CieDiagramTextureActiveSize.y)
     {
       // get coords for the sampler
-      float2 currentSamplerCoords = float2(VPos.x,
-                                           VPos.y - CieDiagramTextureActiveSize.y);
+      float2 currentSamplerCoords = float2(Position.x,
+                                           Position.y - CieDiagramTextureActiveSize.y);
 
       float2 currentCieSamplerCoords = currentSamplerCoords / CieDiagramTextureDisplaySize;
 

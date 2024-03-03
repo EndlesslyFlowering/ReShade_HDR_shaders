@@ -201,7 +201,7 @@ float3 WaveformRgbValues(
 
 
 void PS_CalcNitsPerPixel(
-              float4 VPos     : SV_Position,
+              float4 Position : SV_Position,
               float2 TexCoord : TEXCOORD0,
   out precise float  CurNits  : SV_Target0)
 {
@@ -219,7 +219,7 @@ void PS_CalcNitsPerPixel(
   )
   {
 
-    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy)).rgb;
+    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

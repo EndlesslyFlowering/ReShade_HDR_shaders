@@ -89,10 +89,10 @@ float3 Bt1886(
 
 
 void PS_SdrTrcFix(
-  in  float4 VPos   : SV_Position,
-  out float4 Output : SV_Target0)
+  in  float4 Position : SV_Position,
+  out float4 Output   : SV_Target0)
 {
-  const float4 input = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
+  const float4 input = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 fixedGamma = input.rgb;
 

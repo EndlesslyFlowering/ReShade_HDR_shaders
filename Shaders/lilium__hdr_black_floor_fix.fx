@@ -10,7 +10,7 @@
 // for the pixel shader.
 void VS_PrepareHdrBlackFloorFix(
   in                  uint   Id         : SV_VertexID,
-  out                 float4 VPos       : SV_Position,
+  out                 float4 Position   : SV_Position,
   out nointerpolation float4 FuncParms0 : FuncParms0,
   out nointerpolation float  FuncParms1 : FuncParms1)
 {
@@ -19,7 +19,7 @@ void VS_PrepareHdrBlackFloorFix(
                          : 0.f;
   texCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 // black flower lowering
 #define rollOffStoppingPoint      FuncParms0.x
@@ -69,7 +69,7 @@ void VS_PrepareHdrBlackFloorFix(
 
 
 void PS_HdrBlackFloorFix(
-  in                  float4 VPos       : SV_Position,
+  in                  float4 Position   : SV_Position,
   out                 float4 Output     : SV_Target0,
   in  nointerpolation float4 FuncParms0 : FuncParms0,
   in  nointerpolation float  FuncParms1 : FuncParms1)
@@ -80,7 +80,7 @@ void PS_HdrBlackFloorFix(
     discard;
   }
 
-  const float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
+  const float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 colour = inputColour.rgb;
 

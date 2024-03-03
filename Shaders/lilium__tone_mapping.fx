@@ -363,7 +363,7 @@ uniform float TEST_S
 // for the pixel shader.
 void VS_PrepareToneMapping(
   in                  uint   Id       : SV_VertexID,
-  out                 float4 VPos     : SV_Position,
+  out                 float4 Position : SV_Position,
   out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation float4 TmParms0 : TmParms0,
   out nointerpolation float3 TmParms1 : TmParms1)
@@ -372,7 +372,7 @@ void VS_PrepareToneMapping(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define usedMaxNits TmParms0.x
 
@@ -442,13 +442,13 @@ void VS_PrepareToneMapping(
 
 
 void PS_ToneMapping(
-  in                  float4 VPos     : SV_Position,
+  in                  float4 Position : SV_Position,
   in                  float2 TexCoord : TEXCOORD0,
   in  nointerpolation float4 TmParms0 : TmParms0,
   in  nointerpolation float3 TmParms1 : TmParms1,
   out                 float4 Output   : SV_Target0)
 {
-  float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
+  float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 hdr = inputColour.rgb;
 

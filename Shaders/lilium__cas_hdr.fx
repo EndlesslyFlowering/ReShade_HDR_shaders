@@ -7,7 +7,7 @@
 // for the pixel shader.
 void VS_PrepareCas(
   in                  uint   Id       : SV_VertexID,
-  out                 float4 VPos     : SV_Position,
+  out                 float4 Position : SV_Position,
   out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation float  Peak     : Peak)
 {
@@ -15,13 +15,13 @@ void VS_PrepareCas(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
   Peak = -1.f / (-3.f * SHARPEN_AMOUNT + 8.f);
 }
 
 void PS_Cas(
-  in                 float4 VPos     : SV_Position,
+  in                 float4 Position : SV_Position,
   in                 float2 TexCoord : TEXCOORD0,
   in nointerpolation float  Peak     : Peak,
   out                float4 Output   : SV_Target0)

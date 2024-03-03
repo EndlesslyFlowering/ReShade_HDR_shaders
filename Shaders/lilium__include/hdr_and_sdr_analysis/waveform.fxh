@@ -918,8 +918,8 @@ void RenderLuminanceWaveformScale()
 
 
 void PS_ClearLuminanceWaveformTexture(
-  in  float4 VPos : SV_Position,
-  out float4 Out  : SV_Target0)
+  in  float4 Position : SV_Position,
+  out float4 Out      : SV_Target0)
 {
   Out = 0.f;
   discard;
@@ -931,7 +931,7 @@ void PS_ClearLuminanceWaveformTexture(
 // for the pixel shader.
 void VS_PrepareRenderLuminanceWaveformToScale(
   in                  uint   Id       : SV_VertexID,
-  out                 float4 VPos     : SV_Position,
+  out                 float4 Position : SV_Position,
   out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation int4   WaveDat0 : WaveDat0,
 #ifdef IS_HDR_CSP
@@ -945,7 +945,7 @@ void VS_PrepareRenderLuminanceWaveformToScale(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define WaveformActiveArea   WaveDat0.xy
 #define OffsetToWaveformArea WaveDat0.zw
@@ -1029,7 +1029,7 @@ void VS_PrepareRenderLuminanceWaveformToScale(
 }
 
 void PS_RenderLuminanceWaveformToScale(
-  in                  float4 VPos     : SV_Position,
+  in                  float4 Position : SV_Position,
   in                  float2 TexCoord : TEXCOORD0,
   in  nointerpolation int4   WaveDat0 : WaveDat0,
 #ifdef IS_HDR_CSP
@@ -1043,7 +1043,7 @@ void PS_RenderLuminanceWaveformToScale(
 
   if (_SHOW_LUMINANCE_WAVEFORM)
   {
-    const int2 pureCoordAsInt = int2(VPos.xy);
+    const int2 pureCoordAsInt = int2(Position.xy);
 
     const int2 scaleCoords = pureCoordAsInt
                            + int2(0, TEXTURE_OVERLAY_HEIGHT);

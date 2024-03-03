@@ -6,7 +6,7 @@
 // for the pixel shader.
 void VS_PrepareSetActiveArea(
   in                  uint   Id                : SV_VertexID,
-  out                 float4 VPos              : SV_Position0,
+  out                 float4 Position          : SV_Position,
   out nointerpolation float4 PercentagesToCrop : PercentagesToCrop)
 {
   float2 TexCoord;
@@ -14,7 +14,7 @@ void VS_PrepareSetActiveArea(
                          : 0.f;
   TexCoord.y = (Id == 1) ? 2.f
                          : 0.f;
-  VPos = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 
 #define percentageToCropFromLeft   PercentagesToCrop.x
@@ -35,7 +35,7 @@ void VS_PrepareSetActiveArea(
 }
 
 void PS_SetActiveArea(
-  in                  float4 VPos              : SV_Position0,
+  in                  float4 Position          : SV_Position,
   in  nointerpolation float4 PercentagesToCrop : PercentagesToCrop,
   out                 float4 Output            : SV_Target0)
 {
@@ -43,10 +43,10 @@ void PS_SetActiveArea(
 
   if (_ACTIVE_AREA_ENABLE)
   {
-    if (VPos.x > percentageToCropFromLeft
-     && VPos.y > percentageToCropFromTop
-     && VPos.x < percentageToCropFromRight
-     && VPos.y < percentageToCropFromBottom)
+    if (Position.x > percentageToCropFromLeft
+     && Position.y > percentageToCropFromTop
+     && Position.x < percentageToCropFromRight
+     && Position.y < percentageToCropFromBottom)
     {
       discard;
     }

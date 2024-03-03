@@ -109,10 +109,10 @@ float3 ConditionallyConvertBt2020To709(float3 Colour)
 
 
 void PS_MapSdrIntoHdr(
-      float4 VPos   : SV_Position,
+      float4 Position   : SV_Position,
   out float4 Output : SV_Target0)
 {
-  float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy));
+  float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 colour = inputColour.rgb;
 

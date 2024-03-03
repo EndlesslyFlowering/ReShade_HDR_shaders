@@ -147,7 +147,7 @@ float GetCsp(precise float3 Rgb)
 
 
 void PS_CalcCsps(
-              float4 VPos     : SV_Position,
+              float4 Position : SV_Position,
               float2 TexCoord : TEXCOORD0,
   out precise float  CurCsp   : SV_Target0)
 {
@@ -157,7 +157,7 @@ void PS_CalcCsps(
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
   {
-    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(VPos.xy)).rgb;
+    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
 
 #if defined(IS_FLOAT_HDR_CSP)
 
