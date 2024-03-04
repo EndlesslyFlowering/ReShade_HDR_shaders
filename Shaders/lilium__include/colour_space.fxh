@@ -78,12 +78,12 @@ void VS_PostProcessWithoutTexCoord(
 #define NO  0
 
 #define CSP_UNKNOWN 0
-#define CSP_UNSET   CSP_UNKNOWN
 #define CSP_SRGB    1
 #define CSP_SCRGB   2
 #define CSP_HDR10   3
 #define CSP_HLG     4
 #define CSP_PS5     5
+#define CSP_UNSET   254
 #define CSP_FAIL    255
 
 #if (BUFFER_COLOR_BIT_DEPTH == 8 || BUFFER_COLOR_BIT_DEPTH == 10)
@@ -108,6 +108,8 @@ void VS_PostProcessWithoutTexCoord(
   #ifndef CSP_OVERRIDE
     #define CSP_OVERRIDE CSP_UNSET
   #endif
+#else
+  #define CSP_OVERRIDE CSP_UNSET
 #endif
 
 #if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
@@ -209,7 +211,7 @@ void VS_PostProcessWithoutTexCoord(
 #endif
 
 
-#define CSP_UNSET_TEXT "colour space unset! could be "
+#define CSP_UNSET_TEXT "colour space unset! could be: "
 
 #if (BUFFER_COLOR_SPACE == CSP_SCRGB)
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SCRGB_TEXT
@@ -222,6 +224,10 @@ void VS_PostProcessWithoutTexCoord(
     #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SCRGB_TEXT
   #elif defined(IS_POSSIBLE_HDR10_BIT_DEPTH)
     #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_HDR10_TEXT
+  #elif defined(IS_POSSIBLE_SRGB_BIT_DEPTH)
+    #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_UNSET_TEXT CSP_SRGB_DEFAULT_TEXT
+  #else
+    #define BACK_BUFFER_COLOUR_SPACE_TEXT GET_UNKNOWN_NUMBER(BUFFER_COLOR_SPACE)
   #endif
 #elif (BUFFER_COLOR_SPACE == CSP_SRGB)
   #define BACK_BUFFER_COLOUR_SPACE_TEXT CSP_SRGB_DEFAULT_TEXT
