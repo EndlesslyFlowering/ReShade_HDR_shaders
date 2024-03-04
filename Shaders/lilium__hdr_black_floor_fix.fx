@@ -105,16 +105,16 @@ void PS_HdrBlackFloorFix(
 
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    Gamma22Emulation(colour,
-                     whitePointNormalised);
+    colour = Gamma22Emulation(colour,
+                              whitePointNormalised);
 
     if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
     {
-      LowerBlackFloor(colour,
-                      rollOffStoppingPoint,
-                      oldBlackPoint,
-                      rollOffMinusOldBlackPoint,
-                      minLum);
+      colour = LowerBlackFloor(colour,
+                               rollOffStoppingPoint,
+                               oldBlackPoint,
+                               rollOffMinusOldBlackPoint,
+                               minLum);
     }
     else
     {
@@ -158,11 +158,11 @@ void PS_HdrBlackFloorFix(
   }
   else
   {
-    LowerBlackFloor(colour,
-                    rollOffStoppingPoint,
-                    oldBlackPoint,
-                    rollOffMinusOldBlackPoint,
-                    minLum);
+    colour = LowerBlackFloor(colour,
+                             rollOffStoppingPoint,
+                             oldBlackPoint,
+                             rollOffMinusOldBlackPoint,
+                             minLum);
   }
 
   Output = float4(colour, inputColour.a);
