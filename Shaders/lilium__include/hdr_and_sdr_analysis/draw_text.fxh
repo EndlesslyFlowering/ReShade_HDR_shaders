@@ -569,20 +569,20 @@ void DrawTextToOverlay()
 
 
 //extract all digits without causing float issues
-#define _6th(Val) Val / 100000.f
-#define _5th(Val) Val /  10000.f
-#define _4th(Val) Val /   1000.f
-#define _3rd(Val) Val /    100.f
-#define _2nd(Val) Val /     10.f
-#define _1st(Val) Val %     10.f
+#define _6th(Float) uint(Float) / 100000
+#define _5th(Float) uint(Float) /  10000
+#define _4th(Float) uint(Float) /   1000
+#define _3rd(Float) uint(Float) /    100
+#define _2nd(Float) uint(Float) /     10
+#define _1st(Float) uint(Float) %     10
 
-#define d1st(Val) Val % 1.f *     10.f
-#define d2nd(Val) Val % 1.f *    100.f % 10.f
-#define d3rd(Val) Val % 1.f *   1000.f % 10.f
-#define d4th(Val) Val % 1.f *  10000.f % 10.f
-#define d5th(Val) Val % 1.f * 100000.f % 10.f
-#define d6th(Val) Val % 1.f * 100000.f %  1.f  *  10.f
-#define d7th(Val) Val % 1.f * 100000.f %  0.1f * 100.f
+#define d1st(Float) uint(Float % 1.f *       10.f) % 10
+#define d2nd(Float) uint(Float % 1.f *      100.f) % 10
+#define d3rd(Float) uint(Float % 1.f *     1000.f) % 10
+#define d4th(Float) uint(Float % 1.f *    10000.f) % 10
+#define d5th(Float) uint(Float % 1.f *   100000.f) % 10
+#define d6th(Float) uint(Float % 1.f *  1000000.f) % 10
+#define d7th(Float) uint(Float % 1.f * 10000000.f) % 10
 
 
 void DrawNumberAboveZero(precise uint CurNumber, float2 Offset)
