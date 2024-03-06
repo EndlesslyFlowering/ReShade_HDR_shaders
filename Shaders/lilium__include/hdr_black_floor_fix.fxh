@@ -263,22 +263,22 @@ float GetNits(const float3 Colour)
 }
 
 
-float3 ConvertToWorkingCsp(const float3 Colour)
+void ConvertToWorkingCsp(inout float3 Colour)
 {
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
     {
-      return Csp::Mat::Bt709To::Bt2020(Colour);
+      Colour = Csp::Mat::Bt709To::Bt2020(Colour);
     }
     else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
-      return Csp::Mat::DciP3To::Bt2020(Colour);
+      Colour = Csp::Mat::DciP3To::Bt2020(Colour);
     }
   }
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Mat::Bt709To::Bt2020(Colour);
+  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
 
 #endif
 }
@@ -370,7 +370,7 @@ float3 ConvertToOutputCspWithoutProcessing(const float3 Colour)
 
 
 float3 LowerBlackFloor(
-  const float3 Rgb,
+        float3 Rgb,
   const float  RollOffStoppingPoint,
   const float  OldBlackPoint,
   const float  RollOffMinusOldBlackPoint,
@@ -437,7 +437,8 @@ float3 LowerBlackFloor(
   // YCbCr mode
   else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YCBCR)
   {
-    float3 inputInPq = Csp::Trc::LinearTo::Pq(ConvertToWorkingCsp(Rgb));
+    ConvertToWorkingCsp(Rgb);
+    float3 inputInPq = Csp::Trc::LinearTo::Pq(Rgb);
 
     float y1 = dot(inputInPq, KBt2020);
 
@@ -500,7 +501,8 @@ float3 LowerBlackFloor(
 
     if (nits <= RollOffStoppingPoint)
     {
-      float3 rgbInPq1 = Csp::Trc::LinearTo::Pq(ConvertToWorkingCsp(Rgb));
+      ConvertToWorkingCsp(Rgb);
+      float3 rgbInPq1 = Csp::Trc::LinearTo::Pq(Rgb);
 
       float3 rgbInPq2 = BlackPointAdaption(rgbInPq1,
                                            OldBlackPoint,
@@ -527,9 +529,9 @@ float3 LowerBlackFloor(
   {
     if (GetNits(Rgb) <= RollOffStoppingPoint)
     {
-      float3 rgb1 = ConvertToWorkingCsp(Rgb);
+      ConvertToWorkingCsp(Rgb);
 
-      float3 rgb2 = BlackPointAdaption(rgb1,
+      float3 rgb2 = BlackPointAdaption(Rgb,
                                        OldBlackPoint,
                                        RollOffMinusOldBlackPoint,
                                        MinLum);
