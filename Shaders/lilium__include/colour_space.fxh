@@ -11,8 +11,27 @@ sampler SamplerBackBuffer
 };
 
 
-static const float2 PixelSize = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+static const float2 PIXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 
+static const  uint BUFFER_WIDTH_UINT   =  uint(BUFFER_WIDTH);
+static const  uint BUFFER_HEIGHT_UINT  =  uint(BUFFER_HEIGHT);
+static const   int BUFFER_WIDTH_INT    =   int(BUFFER_WIDTH);
+static const   int BUFFER_HEIGHT_INT   =   int(BUFFER_HEIGHT);
+static const float BUFFER_WIDTH_FLOAT  = float(BUFFER_WIDTH);
+static const float BUFFER_HEIGHT_FLOAT = float(BUFFER_HEIGHT);
+
+static const  uint2 BUFFER_SIZE_UINT  =  uint2(BUFFER_WIDTH_UINT,  BUFFER_HEIGHT_UINT);
+static const   int2 BUFFER_SIZE_INT   =   int2(BUFFER_WIDTH_INT,   BUFFER_HEIGHT_INT);
+static const float2 BUFFER_SIZE_FLOAT = float2(BUFFER_WIDTH_FLOAT, BUFFER_HEIGHT_FLOAT);
+
+static const uint BUFFER_WIDTH_MINUS_1_UINT  = BUFFER_WIDTH_UINT  - 1;
+static const uint BUFFER_HEIGHT_MINUS_1_UINT = BUFFER_HEIGHT_UINT - 1;
+
+static const float BUFFER_WIDTH_MINUS_1_FLOAT  = float(BUFFER_WIDTH_MINUS_1_UINT);
+static const float BUFFER_HEIGHT_MINUS_1_FLOAT = float(BUFFER_HEIGHT_MINUS_1_UINT);
+
+static const  uint2 BUFFER_SIZE_MINUS_1_UINT  =  uint2(BUFFER_WIDTH_MINUS_1_UINT,  BUFFER_HEIGHT_MINUS_1_UINT);
+static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOAT, BUFFER_HEIGHT_MINUS_1_FLOAT);
 
 //#ifndef __RESHADE__
 //  #include "_no.fxh"
@@ -37,6 +56,12 @@ static const float2 PixelSize = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
   && BUFFER_WIDTH <= 1280   \
   && BUFFER_HEIGHT <= 800)
   #define POSSIBLE_DECK_VULKAN_USAGE
+#endif
+
+
+#if (BUFFER_WIDTH  >= 2560) \
+ && (BUFFER_HEIGHT >= 1440)
+  #define IS_QHD_OR_HIGHER_RES
 #endif
 
 
@@ -357,6 +382,13 @@ uniform int GLOBAL_INFO
       DispatchSizeY = 1;              \
     }                                 \
   }
+
+
+#if (__RESHADE_PERFORMANCE_MODE__ == 0)
+  #define BRANCH(x) [branch]
+#else
+  #define BRANCH(x)
+#endif
 
 
 #define PI 3.1415927410125732421875f

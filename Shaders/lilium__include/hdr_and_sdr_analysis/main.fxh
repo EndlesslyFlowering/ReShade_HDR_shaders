@@ -34,8 +34,8 @@
 #define SMALLEST_UINT10 asfloat(0x3AC0300C)
 
 
-static const uint  PixelCountInUint  = uint(BUFFER_WIDTH)
-                                     * uint(BUFFER_HEIGHT);
+static const uint  PixelCountInUint  = BUFFER_WIDTH_UINT
+                                     * BUFFER_HEIGHT_UINT;
 static const float PixelCountInFloat = PixelCountInUint;
 
 
@@ -46,22 +46,64 @@ uniform float FRAMETIME
 
 
 #if defined(IS_FLOAT_HDR_CSP)
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_WIDTH 8
+
+  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 11 + 5 * 6)
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3 + 5 + NITS_AND_CSP_ENTRIES_AMOUNT)
+
+  #define   BT709_PERCENTAGE_POS 3
+  #define   DCIP3_PERCENTAGE_POS 4
+  #define  BT2020_PERCENTAGE_POS 5
+  #define     AP0_PERCENTAGE_POS 6
+  #define INVALID_PERCENTAGE_POS 7
+
+  #define NITS_NUMBERS_START_POS 8
+
+  #define CSP_PERCENTAGES_START_POS (8 + 11 * 4)
+
 #elif defined(IS_HDR10_LIKE_CSP)
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_WIDTH 6
+
+  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 11 + 3 * 6)
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3 + 3 + NITS_AND_CSP_ENTRIES_AMOUNT)
+
+  #define  BT709_PERCENTAGE_POS 3
+  #define  DCIP3_PERCENTAGE_POS 4
+  #define BT2020_PERCENTAGE_POS 5
+
+  #define NITS_NUMBERS_START_POS 6
+
+  #define CSP_PERCENTAGES_START_POS (6 + 11 * 4)
+
 #else
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_WIDTH 3
+
+  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 9)
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3     + NITS_AND_CSP_ENTRIES_AMOUNT)
+
+  #define NITS_NUMBERS_START_POS 3
+
 #endif
 
-texture1D TextureMaxAvgMinNitsAndCspCounter
+#define MAX_NITS_POS 0
+#define AVG_NITS_POS 1
+#define MIN_NITS_POS 2
+
+
+texture1D TextureMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
-  Width  = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_WIDTH;
+  Width  = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH;
   Format = R32U;
 };
 
-storage1D<uint> StorageMaxAvgMinNitsAndCspCounter
+storage1D<uint> StorageMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
-  Texture = TextureMaxAvgMinNitsAndCspCounter;
+  Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+};
+
+sampler1D<uint> SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
+{
+  Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
 };
 
 
@@ -88,20 +130,12 @@ storage1D<uint> StorageMaxAvgMinNitsAndCspCounter
 
 #endif //IS_HDR10_LIKE_CSP
 
-#define TEXTURE_OVERLAY_WIDTH  FONT_SIZE_56_CHAR_DIM.x * 26
-#define TEXTURE_OVERLAY_HEIGHT FONT_SIZE_56_CHAR_DIM.y * (1                                \
-                                                        + SHOW_NITS_VALUES_LINE_COUNT      \
-                                                        + SHOW_NITS_FROM_CURSOR_LINE_COUNT \
-                                                        + SHOW_CSPS_LINE_COUNT             \
-                                                        + SHOW_CSP_FROM_CURSOR_LINE_COUNT  \
-                                                        + 3)
 
-
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = float(BUFFER_WIDTH)
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = BUFFER_WIDTH_FLOAT
                                                                    / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
 
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (float(BUFFER_WIDTH)  / 3840.f
-                                                             + float(BUFFER_HEIGHT) / 2160.f)
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (BUFFER_WIDTH_FLOAT  / 3840.f
+                                                             + BUFFER_HEIGHT_FLOAT / 2160.f)
                                                             / 2.f;
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
@@ -110,51 +144,42 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WA
 //static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
 //  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
 
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH  = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
-                                                          + (WAVE_FONT_SIZE_32_CHAR_DIM.x * 8) //8 chars for 10000.00
-                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.x / 2.f + 0.5f)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
+                                                         + (CHAR_DIM_FLOAT.x * 8) //8 chars for 10000.00
+                                                         + uint(CHAR_DIM_FLOAT.x / 2.f + 0.5f)
+                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
 
 #ifdef IS_HDR_CSP
   #define MAX_WAVEFORM_HEIGHT_FACTOR 1
 #else
   #define MAX_WAVEFORM_HEIGHT_FACTOR 2
 #endif
+
 static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
-                                                          + uint(WAVE_FONT_SIZE_32_CHAR_DIM.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
+                                                          + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
                                                           + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
 
-// "maximum of 2 variables" without using functions...
-// https://guru.multimedia.cx/category/optimization/
-static const uint TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_WIDTH =
-  TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH -
-  ((TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - uint(TEXTURE_OVERLAY_WIDTH))
-& ((TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - uint(TEXTURE_OVERLAY_WIDTH)) >> 31));
 
-static const uint TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_HEIGHT =
-  uint(TEXTURE_OVERLAY_HEIGHT) + TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-
-
-texture2D TextureTextOverlayAndLuminanceWaveformScale
+texture2D TextureLuminanceWaveformScale
 <
   pooled = true;
 >
 {
-  Width  = TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_WIDTH;
-  Height = TEXTURE_TEXT_OVERLAY_AND_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
+  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
+  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
   Format = RG8;
 };
 
-sampler2D<float4> SamplerTextOverlayAndLuminanceWaveformScale
+sampler2D<float4> SamplerLuminanceWaveformScale
 {
-  Texture = TextureTextOverlayAndLuminanceWaveformScale;
+  Texture = TextureLuminanceWaveformScale;
 };
 
-storage2D<float4> StorageTextOverlayAndLuminanceWaveformScale
+storage2D<float4> StorageLuminanceWaveformScale
 {
-  Texture = TextureTextOverlayAndLuminanceWaveformScale;
+  Texture = TextureLuminanceWaveformScale;
 };
 
 
@@ -206,20 +231,9 @@ static const int COORDS_SHOW_PERCENTAGE_AP0     = int(6 + SHOW_VALUES_X_OFFSET);
 static const int COORDS_SHOW_PERCENTAGE_INVALID = int(7 + SHOW_VALUES_X_OFFSET);
 
 
-// check if redraw of text is needed for overlay
-#define CHECK_OVERLAY_REDRAW_COUNT 5
-#define CHECK_OVERLAY_REDRAW_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
-#define CHECK_OVERLAY_REDRAW_Y_OFFSET 0
-static const int COORDS_CHECK_OVERLAY_REDRAW0 = int(    CHECK_OVERLAY_REDRAW_X_OFFSET);
-static const int COORDS_CHECK_OVERLAY_REDRAW1 = int(1 + CHECK_OVERLAY_REDRAW_X_OFFSET);
-static const int COORDS_CHECK_OVERLAY_REDRAW2 = int(2 + CHECK_OVERLAY_REDRAW_X_OFFSET);
-static const int COORDS_CHECK_OVERLAY_REDRAW3 = int(3 + CHECK_OVERLAY_REDRAW_X_OFFSET);
-static const int COORDS_CHECK_OVERLAY_REDRAW4 = int(4 + CHECK_OVERLAY_REDRAW_X_OFFSET);
-
-
 // offsets for overlay text blocks
 #define OVERLAY_TEXT_Y_OFFSETS_COUNT 3
-#define OVERLAY_TEXT_Y_OFFSETS_X_OFFSET (CHECK_OVERLAY_REDRAW_COUNT + CHECK_OVERLAY_REDRAW_X_OFFSET)
+#define OVERLAY_TEXT_Y_OFFSETS_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
 #define OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET 0
 static const int COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS = int(    OVERLAY_TEXT_Y_OFFSETS_X_OFFSET);
 static const int COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS        = int(1 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET);
@@ -267,6 +281,110 @@ storage1D<float> StorageConsolidated
 };
 
 // consolidated texture end
+
+
+void VS_Clear(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  Position = float4(-2.f, -2.f, 0.f, 1.f);
+}
+
+void PS_Clear(
+  in  float4 Position : SV_Position,
+  out float4 Out      : SV_Target0)
+{
+  Out = 0.f;
+  discard;
+}
+
+
+void ExtendedReinhardTmo(
+  inout float3 Colour,
+  in    float  WhitePoint)
+{
+#ifdef IS_HDR_CSP
+  float maxWhite = 10000.f / WhitePoint;
+#else
+  float maxWhite = 100.f / WhitePoint;
+#endif
+
+  Colour = (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
+         / (1.f + Colour);
+}
+
+float3 MergeOverlay(
+  float3 Output,
+  float3 Overlay,
+  float  OverlayBrightness,
+  float  Alpha)
+{
+  // tone map pixels below the overlay area
+  //
+  // first set 1.0 to be equal to OverlayBrightness
+  float adjustFactor;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  adjustFactor = OverlayBrightness / 80.f;
+
+  Output = Csp::Mat::Bt709To::Bt2020(Output / adjustFactor);
+
+  // safety clamp colours outside of BT.2020
+  Output = max(Output, 0.f);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  adjustFactor = OverlayBrightness / 10000.f;
+
+  Output = Csp::Trc::PqTo::Linear(Output);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  adjustFactor = OverlayBrightness / 100.f;
+
+  Output = DECODE_SDR(Output);
+
+#endif
+
+#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB)
+
+  Output /= adjustFactor;
+
+#endif
+
+  // then tone map to 1.0 at max
+  ExtendedReinhardTmo(Output, OverlayBrightness);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  // safety clamp for the case that there are values that represent above 10000 nits
+  Output.rgb = min(Output.rgb, 1.f);
+
+#endif
+
+  // apply the overlay
+  Output = lerp(Output, Overlay, Alpha);
+
+  // map everything back to the used colour space
+  Output *= adjustFactor;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  Output = Csp::Mat::Bt2020To::Bt709(Output);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  Output = Csp::Trc::LinearTo::Pq(Output);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  Output = ENCODE_SDR(Output);
+
+#endif
+
+  return Output;
+}
 
 
 #include "luminance.fxh"
@@ -318,13 +436,13 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
 #ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
     const int fetchPosX = DTID.x;
 #else
-    const int fetchPosX = min(DTID.x, uint(BUFFER_WIDTH - 1));
+    const int fetchPosX = min(DTID.x, BUFFER_WIDTH_MINUS_1_UINT);
 #endif
 
 #ifndef WAVE64_FETCH_Y_NEEDS_CLAMPING
     const int fetchPosY = DTID.y;
 #else
-    const int fetchPosY = min(DTID.y, uint(BUFFER_HEIGHT - 1));
+    const int fetchPosY = min(DTID.y, BUFFER_HEIGHT_MINUS_1_UINT);
 #endif
 
     const int2 fetchPos = int2(fetchPosX, fetchPosY);
@@ -360,16 +478,19 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
 
 //ignore negative luminance and luminance being 0
 
+    BRANCH(x)
     if (XYZ.y <= 0.f)
     {
       return;
     }
 
+    BRANCH(x)
     if (_SHOW_CIE)
     {
       GenerateCieDiagram(XYZ);
     }
 
+    BRANCH(x)
     if (_SHOW_LUMINANCE_WAVEFORM)
     {
       RenderLuminanceWaveform(fetchPos);
@@ -442,8 +563,6 @@ void CS_Finalise()
 #ifdef IS_HDR_CSP
   FinaliseCspCounter();
 #endif
-
-  DrawTextToOverlay();
 
   RenderLuminanceWaveformScale();
 

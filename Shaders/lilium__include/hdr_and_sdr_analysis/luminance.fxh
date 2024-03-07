@@ -52,12 +52,12 @@ storage2D<float> StorageNitsValues
 
 void FinaliseMaxAvgMinNits()
 {
-  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 0, 0));
-  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 2, UINT_MAX));
+  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, 0));
+  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, UINT_MAX));
 
-  float avgNits = float(atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 1, 0)) / 1000.f;
+  float avgNits = float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, 0)) / 1000.f;
 
-  static const float2 dispatchWxH = float2(BUFFER_WIDTH, BUFFER_HEIGHT)
+  static const float2 dispatchWxH = BUFFER_SIZE_FLOAT
                                   / 16.f;
 
   static const float dispatchArea = dispatchWxH.x
@@ -300,14 +300,14 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
 #ifndef GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
     const int xStop  = xStart + 2;
 #else
-    const int xStop  = min(xStart + 2, BUFFER_WIDTH);
+    const int xStop  = min(xStart + 2, BUFFER_WIDTH_INT);
 #endif
 
     const int yStart = DTID.y * 2;
 #ifndef GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING
     const int yStop  = yStart + 2;
 #else
-    const int yStop  = min(yStart + 2, BUFFER_HEIGHT);
+    const int yStop  = min(yStart + 2, BUFFER_HEIGHT_INT);
 #endif
 
     for (int x = xStart; x < xStop; x++)
@@ -325,8 +325,8 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
 
     static const float avgXDiv =
 #ifdef GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
-                                 (xStop == BUFFER_WIDTH)
-                               ? (uint(BUFFER_WIDTH) - uint(xStart))
+                                 (xStop == BUFFER_WIDTH_INT)
+                               ? (BUFFER_WIDTH_UINT - uint(xStart))
                                : 2.f;
 #else
                                  2.f;
@@ -334,8 +334,8 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
 
     static const float avgYDiv =
 #ifdef GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING
-                                 (yStop == BUFFER_HEIGHT)
-                               ? (uint(BUFFER_HEIGHT) - uint(yStart))
+                                 (yStop == BUFFER_HEIGHT_INT)
+                               ? (BUFFER_WIDTH_UINT - uint(yStart))
                                : 2.f;
 #else
                                  2.f;
@@ -359,9 +359,9 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
 
       const uint groupAvgNitsUint = uint((groupAvgNits + 0.0005f) * 1000.f);
 
-      atomicMax(StorageMaxAvgMinNitsAndCspCounter, 0, GroupMax);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 1, groupAvgNitsUint);
-      atomicMin(StorageMaxAvgMinNitsAndCspCounter, 2, GroupMin);
+      atomicMax(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, GroupMax);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, groupAvgNitsUint);
+      atomicMin(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, GroupMin);
     }
     return;
   }

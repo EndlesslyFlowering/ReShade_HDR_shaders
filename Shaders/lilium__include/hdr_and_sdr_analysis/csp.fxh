@@ -29,14 +29,14 @@ void FinaliseCspCounter()
 
 #ifdef IS_HDR_CSP
 
-  precise uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 3, 0);
-  precise uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 4, 0);
-  precise uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 5, 0);
+  precise uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, 0);
+  precise uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, 0);
+  precise uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, 0);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-  precise uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 6, 0);
-  precise uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounter, 7, 0);
+  precise uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, 0);
+  precise uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, 0);
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -321,12 +321,12 @@ void CS_CountCsps(uint3 GID  : SV_GroupID,
         counterInvalid += GroupCspCounter[i | 0x100];
 #endif
       }
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 3, counterBt709);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 4, counterDciP3);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 5, counterBt2020);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, counterBt709);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, counterDciP3);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, counterBt2020);
 #if defined(IS_FLOAT_HDR_CSP)
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 6, counterAp0);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounter, 7, counterInvalid);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, counterAp0);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, counterInvalid);
 #endif
     }
   }

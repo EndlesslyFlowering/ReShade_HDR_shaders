@@ -17,11 +17,6 @@
   //#define _TESTY
 #endif
 
-#if (BUFFER_WIDTH  >= 2560) \
- && (BUFFER_HEIGHT >= 1440)
-  #define IS_QHD_OR_HIGHER_RES
-#endif
-
 
 #define DEFAULT_BRIGHTNESS 80.f
 
@@ -141,36 +136,16 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 
-uniform uint _TEXT_SIZE
+uniform float _TEXT_SIZE
 <
   ui_category = "Global";
   ui_label    = "text size";
-  ui_type     = "combo";
-  ui_items    = "13\0"
-                "14\0"
-                "16\0"
-                "18\0"
-                "20\0"
-                "22\0"
-                "24\0"
-                "26\0"
-                "28\0"
-                "30\0"
-                "32\0"
-                "34\0"
-                "36\0"
-                "38\0"
-                "40\0"
-                "42\0"
-                "44\0"
-                "46\0"
-                "48\0"
-                "50\0"
-                "52\0"
-                "54\0"
-                "56\0"
-                "58\0";
-> = TEXT_SIZE_DEFAULT;
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.75f;
+  ui_max      = 2.f;
+  ui_step     = 0.00001f;
+> = 1.f;
 
 uniform float _TEXT_BRIGHTNESS
 <
@@ -404,16 +379,25 @@ uniform float _CIE_DIAGRAM_ALPHA
 
 static const float2 CIE_CONSOLIDATED_TEXTURE_SIZE = float2(CIE_TEXTURE_WIDTH, CIE_TEXTURE_HEIGHT);
 
-static const int2 CIE_1931_SIZE = int2(CIE_1931_WIDTH, CIE_1931_HEIGHT);
-static const int2 CIE_1976_SIZE = int2(CIE_1976_WIDTH, CIE_1976_HEIGHT);
+static const int2 CIE_1931_SIZE_INT = int2(CIE_1931_WIDTH, CIE_1931_HEIGHT);
+static const int2 CIE_1976_SIZE_INT = int2(CIE_1976_WIDTH, CIE_1976_HEIGHT);
 
-static const float CIE_BG_WIDTH[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
-static const float CIE_BG_HEIGHT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+static const float2 CIE_1931_BG_SIZE_FLOAT = float2(CIE_1931_BG_WIDTH, CIE_1931_BG_HEIGHT);
+static const float2 CIE_1976_BG_SIZE_FLOAT = float2(CIE_1976_BG_WIDTH, CIE_1976_BG_HEIGHT);
 
-static const int CIE_BG_WIDTH_AS_INT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
-static const int CIE_BG_HEIGHT_AS_INT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+static const float CIE_BG_WIDTH_FLOAT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
+static const float CIE_BG_HEIGHT_FLOAT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
 
-static const float CIE_DIAGRAM_DEFAULT_SIZE = (float(BUFFER_HEIGHT) * 0.375f)
+static const int CIE_BG_WIDTH_INT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
+static const int CIE_BG_HEIGHT_INT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+
+static const float2 CIE_BG_SIZE_FLOAT[2] =
+{
+  CIE_1931_BG_SIZE_FLOAT,
+  CIE_1976_BG_SIZE_FLOAT
+};
+
+static const float CIE_DIAGRAM_DEFAULT_SIZE = (BUFFER_HEIGHT_FLOAT * 0.375f)
                                               / CIE_1931_BG_HEIGHT
                                               * 100.f;
 
@@ -574,7 +558,7 @@ uniform float _LUMINANCE_WAVEFORM_ALPHA
   ui_step     = 0.5f;
 > = DEFAULT_ALPHA_LEVEL;
 
-static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 4.f) * 2;
+static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 4.f) * 2;
 
 #ifdef IS_HDR_CSP
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
@@ -613,7 +597,7 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(float(BUFFER_WIDTH) / 
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
 
-static const int UGH = uint(float(BUFFER_HEIGHT) * 0.35f
+static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
                           / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
                           * 10000.f);
 // "minimum of 2 variables" without using functions...
@@ -624,8 +608,14 @@ static const int UGH = uint(float(BUFFER_HEIGHT) * 0.35f
   static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31));
 #endif
 
-static const precise float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = UGH2
-                                                             / 100.f;
+static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH2
+                                                       / 100.f;
+
+#ifndef IS_HDR_CSP
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 - 100.f;
+#else
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0;
+#endif
 
 uniform float2 _LUMINANCE_WAVEFORM_SIZE
 <
@@ -634,11 +624,7 @@ uniform float2 _LUMINANCE_WAVEFORM_SIZE
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      =  50.f;
-#ifdef IS_HDR_CSP
   ui_max      = 100.f;
-#else
-  ui_max      = 200.f;
-#endif
   ui_step     =   0.1f;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
@@ -680,6 +666,7 @@ uniform float _HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   ui_min      = 10.f;
   ui_max      = 100.f;
 #endif
+  ui_step     = 0.5f;
 > = DEFAULT_BRIGHTNESS;
 
 uniform float _HIGHLIGHT_NIT_RANGE_START_POINT
@@ -977,26 +964,20 @@ void PS_Testy(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   VertexID          : SV_VertexID,
-  out                 float4 Position          : SV_Position,
-  out                 float2 TexCoord          : TEXCOORD0,
-  out nointerpolation bool2  PingPongChecks    : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange : HighlightNitRange,
-#if (!defined(GAMESCOPE) \
-  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
-  out nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
-#else
-  out nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
+  in                  uint   VertexID                                 : SV_VertexID,
+  out                 float4 Position                                 : SV_Position,
+  out nointerpolation bool2  PingPongChecks                           : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
   out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-#endif
-  out nointerpolation float2 CieDiagramTextureActiveSize  : CieDiagramTextureActiveSize,
-  out nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize)
+  out nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
+  out nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1)
 {
-  TexCoord.x = (VertexID == 2) ? 2.f
+  float2 texCoord;
+  texCoord.x = (VertexID == 2) ? 2.f
                                : 0.f;
-  TexCoord.y = (VertexID == 1) ? 2.f
+  texCoord.y = (VertexID == 1) ? 2.f
                                : 0.f;
-  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define pingpong0Above1   PingPongChecks[0]
 #define breathingIsActive PingPongChecks[1]
@@ -1004,19 +985,15 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-#if (!defined(GAMESCOPE) \
-  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
-  #define CurrentActiveOverlayArea                 TextureDisplaySizes.xy
-  #define LuminanceWaveformTextureDisplayAreaBegin TextureDisplaySizes.zw
-#endif
-
   pingpong0Above1                          = false;
   breathingIsActive                        = false;
   HighlightNitRange                        = 0.f;
-  CurrentActiveOverlayArea                 = 0;
   LuminanceWaveformTextureDisplayAreaBegin = 0;
-  CieDiagramTextureActiveSize              = 0.f;
-  CieDiagramTextureDisplaySize             = 0.f;
+  CieDiagramSizes0                         = 0.f;
+  CieDiagramSizes1                         = 0.f;
+
+#define CieDiagramTextureActiveSize  CieDiagramSizes0.xy
+#define CieDiagramTextureDisplaySize CieDiagramSizes0.zw
 
   if (_HIGHLIGHT_NIT_RANGE)
   {
@@ -1067,174 +1044,36 @@ void VS_PrepareHdrAnalysis(
 
   if (_SHOW_LUMINANCE_WAVEFORM)
   {
-    LuminanceWaveformTextureDisplayAreaBegin = int2(BUFFER_WIDTH, BUFFER_HEIGHT) - Waveform::GetActiveArea();
+    LuminanceWaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
   }
 
   if (_SHOW_CIE)
   {
     float cieDiagramSizeFrac = _CIE_DIAGRAM_SIZE / 100.f;
 
-    CieDiagramTextureActiveSize =
-      round(float2(CIE_BG_WIDTH[_CIE_DIAGRAM_TYPE], CIE_BG_HEIGHT[_CIE_DIAGRAM_TYPE]) * cieDiagramSizeFrac);
+    float2 cieDiagramTextureActiveSize = CIE_BG_SIZE_FLOAT[_CIE_DIAGRAM_TYPE]
+                                       * cieDiagramSizeFrac;
 
-    CieDiagramTextureActiveSize.y = float(BUFFER_HEIGHT) - CieDiagramTextureActiveSize.y;
+    CieDiagramTextureActiveSize = float2(cieDiagramTextureActiveSize.x,
+                                         BUFFER_HEIGHT_FLOAT - cieDiagramTextureActiveSize.y);
 
-    CieDiagramTextureDisplaySize =
-      float2(CIE_1931_BG_WIDTH, CIE_1931_BG_HEIGHT) * cieDiagramSizeFrac;
+    CieDiagramTextureDisplaySize = CIE_1931_BG_SIZE_FLOAT * cieDiagramSizeFrac;
+
+    CieDiagramSizes1.x = float(_CIE_DIAGRAM_TYPE) * float(CIE_1931_BG_HEIGHT) * cieDiagramSizeFrac;
+
+    CieDiagramSizes1.yz = CIE_CONSOLIDATED_TEXTURE_SIZE * cieDiagramSizeFrac;
   }
-
-  {
-    uint activeLines = GetActiveLines();
-
-    uint activeCharacters = GetActiveCharacters();
-
-    static const uint atlasEntry = GetAtlasEntry();
-
-    uint2 charSize = GetCharSize(atlasEntry);
-
-    uint outerSpacing = GetOuterSpacing(charSize.x);
-
-    uint2 currentOverlayDimensions = charSize
-                                   * uint2(activeCharacters, activeLines);
-
-    currentOverlayDimensions.y += uint(max(_SHOW_NITS_VALUES
-                                         + _SHOW_NITS_FROM_CURSOR
-#ifdef IS_HDR_CSP
-                                         + SHOW_CSPS
-                                         + SHOW_CSP_FROM_CURSOR
-#endif
-                                         - 1, 0)
-                                     * charSize.y * SPACING_MULTIPLIER);
-
-    if (_SHOW_NITS_VALUES
-     || _SHOW_NITS_FROM_CURSOR
-#ifdef IS_HDR_CSP
-     || SHOW_CSPS
-     || SHOW_CSP_FROM_CURSOR
-#endif
-    )
-    {
-      currentOverlayDimensions.y += charSize.y * CSP_DESC_SPACING_MULTIPLIER;
-    }
-
-    currentOverlayDimensions += outerSpacing + outerSpacing;
-
-    if (_TEXT_POSITION == TEXT_POSITION_TOP_RIGHT)
-    {
-      currentOverlayDimensions.x = uint(BUFFER_WIDTH) - currentOverlayDimensions.x;
-    }
-
-    CurrentActiveOverlayArea = int2(currentOverlayDimensions);
-  }
-
-}
-
-
-void ExtendedReinhardTmo(
-  inout float3 Colour,
-  in    float  WhitePoint)
-{
-#ifdef IS_HDR_CSP
-  float maxWhite = 10000.f / WhitePoint;
-#else
-  float maxWhite = 100.f / WhitePoint;
-#endif
-
-  Colour = (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
-         / (1.f + Colour);
-}
-
-void MergeOverlay(
-  inout float3 Output,
-  in    float3 Overlay,
-  in    float  OverlayBrightness,
-  in    float  Alpha)
-{
-#ifdef IS_HDR_CSP
-  Overlay = Csp::Mat::Bt709To::Bt2020(Overlay);
-#endif
-
-  // tone map pixels below the overlay area
-  //
-  // first set 1.0 to be equal to OverlayBrightness
-  float adjustFactor;
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  adjustFactor = OverlayBrightness / 80.f;
-
-  Output = Csp::Mat::Bt709To::Bt2020(Output / adjustFactor);
-
-  // safety clamp colours outside of BT.2020
-  Output = max(Output, 0.f);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-  adjustFactor = OverlayBrightness / 10000.f;
-
-  Output = Csp::Trc::PqTo::Linear(Output);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-  adjustFactor = OverlayBrightness / 100.f;
-
-  Output = DECODE_SDR(Output);
-
-#endif
-
-#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB)
-
-  Output /= adjustFactor;
-
-#endif
-
-  // then tone map to 1.0 at max
-  ExtendedReinhardTmo(Output, OverlayBrightness);
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  // safety clamp for the case that there are values that represent above 10000 nits
-  Output.rgb = min(Output.rgb, 1.f);
-
-#endif
-
-  // apply the overlay
-  Output = lerp(Output, Overlay, Alpha);
-
-  // map everything back to the used colour space
-  Output *= adjustFactor;
-
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  Output = Csp::Mat::Bt2020To::Bt709(Output);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-  Output = Csp::Trc::LinearTo::Pq(Output);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-  Output = ENCODE_SDR(Output);
-
-#endif
 }
 
 
 void PS_HdrAnalysis(
-  in                  float4 Position          : SV_Position,
-  in                  float2 TexCoord          : TEXCOORD0,
-  in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
-#if (!defined(GAMESCOPE) \
-  && !defined(POSSIBLE_DECK_VULKAN_USAGE))
-  in  nointerpolation int4   TextureDisplaySizes : TextureDisplaySizes,
-#else
-  in  nointerpolation int2   CurrentActiveOverlayArea                 : CurrentActiveOverlayArea,
+  in                  float4 Position                                 : SV_Position,
+  in  nointerpolation bool2  PingPongChecks                           : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
   in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-#endif
-  in  nointerpolation float2 CieDiagramTextureActiveSize  : CieDiagramTextureActiveSize,
-  in  nointerpolation float2 CieDiagramTextureDisplaySize : CieDiagramTextureDisplaySize,
-  out                 float4 Output                       : SV_Target0)
+  in  nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
+  in  nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1,
+  out                 float4 Output                                   : SV_Target0)
 {
   const int2 pureCoordAsInt = int2(Position.xy);
 
@@ -1304,22 +1143,91 @@ void PS_HdrAnalysis(
      && Position.y >= CieDiagramTextureActiveSize.y)
     {
       // get coords for the sampler
-      float2 currentSamplerCoords = float2(Position.x,
-                                           Position.y - CieDiagramTextureActiveSize.y);
+      float2 cieSamplerCoords = float2(Position.x,
+                                       Position.y - CieDiagramTextureActiveSize.y);
 
-      float2 currentCieSamplerCoords = currentSamplerCoords / CieDiagramTextureDisplaySize;
+      float2 bgSamplerCoords = float2(Position.x + CieDiagramTextureActiveSize.x,
+                                      cieSamplerCoords.y + CieDiagramSizes1.x);
 
-      float3 currentPixelToDisplay = tex2D(SamplerCieCurrent, currentCieSamplerCoords).rgb;
+      cieSamplerCoords /= CieDiagramTextureDisplaySize;
+
+      bgSamplerCoords /= CieDiagramSizes1.yz;
+
+      float3 cieColour = tex2D(SamplerCieCurrent, cieSamplerCoords).rgb;
+
+      float3 bgColour = tex2D(SamplerCieConsolidated, bgSamplerCoords).rgb;
 
       // using gamma 2 as intermediate gamma space
-      currentPixelToDisplay *= currentPixelToDisplay;
+      cieColour *= cieColour;
+      bgColour  *= bgColour;
 
-      float alpha = min(ceil(MAXRGB(currentPixelToDisplay)) + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+      cieColour += bgColour;
 
-      MergeOverlay(Output.rgb,
-                   currentPixelToDisplay,
-                   _CIE_DIAGRAM_BRIGHTNESS,
-                   alpha);
+      if (_SHOW_CIE_CSP_BT709_OUTLINE)
+      {
+        float2 bt709OutlineSamplerCoords = float2(Position.x + (2.f * CieDiagramTextureActiveSize.x),
+                                                  bgSamplerCoords.y);
+
+        bt709OutlineSamplerCoords.x /= CieDiagramSizes1.y;
+
+        float3 bt709OutlineColour = tex2D(SamplerCieConsolidated, bt709OutlineSamplerCoords).rgb;
+
+        bt709OutlineColour *= bt709OutlineColour;
+
+        cieColour += bt709OutlineColour;
+      }
+#ifdef IS_HDR_CSP
+      if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
+      {
+        float2 dciP3OutlineSamplerCoords = float2(Position.x + (3.f * CieDiagramTextureActiveSize.x),
+                                                  bgSamplerCoords.y);
+
+        dciP3OutlineSamplerCoords.x /= CieDiagramSizes1.y;
+
+        float3 dciP3OutlineColour = tex2D(SamplerCieConsolidated, dciP3OutlineSamplerCoords).rgb;
+
+        dciP3OutlineColour *= dciP3OutlineColour;
+
+        cieColour += dciP3OutlineColour;
+      }
+      if (SHOW_CIE_CSP_BT2020_OUTLINE)
+      {
+        float2 bt2020OutlineSamplerCoords = float2(Position.x + (4.f * CieDiagramTextureActiveSize.x),
+                                                   bgSamplerCoords.y);
+
+        bt2020OutlineSamplerCoords.x /= CieDiagramSizes1.y;
+
+        float3 bt2020OutlineColour = tex2D(SamplerCieConsolidated, bt2020OutlineSamplerCoords).rgb;
+
+        bt2020OutlineColour *= bt2020OutlineColour;
+
+        cieColour += bt2020OutlineColour;
+      }
+#ifdef IS_FLOAT_HDR_CSP
+      if (SHOW_CIE_CSP_AP0_OUTLINE)
+      {
+        float2 ap0OutlineSamplerCoords = float2(Position.x + (5.f * CieDiagramTextureActiveSize.x),
+                                                bgSamplerCoords.y);
+
+        ap0OutlineSamplerCoords.x /= CieDiagramSizes1.y;
+
+        float3 ap0OutlineColour = tex2D(SamplerCieConsolidated, ap0OutlineSamplerCoords).rgb;
+
+        ap0OutlineColour *= ap0OutlineColour;
+
+        cieColour += ap0OutlineColour;
+      }
+#endif //IS_FLOAT_HDR_CSP
+#endif //IS_HDR_CSP
+
+      cieColour = min(cieColour, 1.f);
+
+      float alpha = min(ceil(MAXRGB(cieColour)) + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+
+      Output.rgb = MergeOverlay(Output.rgb,
+                                cieColour,
+                                _CIE_DIAGRAM_BRIGHTNESS,
+                                alpha);
     }
   }
 
@@ -1339,52 +1247,12 @@ void PS_HdrAnalysis(
 
       float alpha = min(_LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
 
-      MergeOverlay(Output.rgb,
-                   currentPixelToDisplay.rgb,
-                   _LUMINANCE_WAVEFORM_BRIGHTNESS,
-                   alpha);
+      Output.rgb = MergeOverlay(Output.rgb,
+                                currentPixelToDisplay.rgb,
+                                _LUMINANCE_WAVEFORM_BRIGHTNESS,
+                                alpha);
     }
   }
-
-  {
-    if (_TEXT_POSITION == TEXT_POSITION_TOP_LEFT)
-    {
-      if (all(pureCoordAsInt <= CurrentActiveOverlayArea))
-      {
-        float4 overlay = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale, pureCoordAsInt).rrrg;
-
-        // using gamma 2 as intermediate gamma space
-        overlay.rgb *= overlay.rgb;
-
-        float alpha = min(_TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
-
-        MergeOverlay(Output.rgb,
-                     overlay.rgb,
-                     _TEXT_BRIGHTNESS,
-                     alpha);
-      }
-    }
-    else
-    {
-      if (pureCoordAsInt.x >= CurrentActiveOverlayArea.x
-       && pureCoordAsInt.y <= CurrentActiveOverlayArea.y)
-      {
-        float4 overlay = tex2Dfetch(SamplerTextOverlayAndLuminanceWaveformScale,
-                                    int2(pureCoordAsInt.x - CurrentActiveOverlayArea.x, pureCoordAsInt.y)).rrrg;
-
-        // using gamma 2 as intermediate gamma space
-        overlay.rgb *= overlay.rgb;
-
-        float alpha = min(_TEXT_BG_ALPHA / 100.f + overlay.a, 1.f);
-
-        MergeOverlay(Output.rgb,
-                     overlay.rgb,
-                     _TEXT_BRIGHTNESS,
-                     alpha);
-      }
-    }
-  }
-
 }
 
 
@@ -1405,7 +1273,6 @@ technique lilium__hdr_and_sdr_analysis_TESTY
 
 void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
-  tex1Dstore(StorageConsolidated, COORDS_CHECK_OVERLAY_REDRAW0, 3.f);
   tex1Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
   return;
 }
@@ -1491,18 +1358,21 @@ technique lilium__hdr_and_sdr_analysis
 //Waveform
   pass PS_ClearLuminanceWaveformTexture
   {
-    VertexShader       = VS_PostProcessWithoutTexCoord;
-     PixelShader       = PS_ClearLuminanceWaveformTexture;
+    VertexShader       = VS_Clear;
+     PixelShader       = PS_Clear;
     RenderTarget       = TextureLuminanceWaveform;
     ClearRenderTargets = true;
+    VertexCount        = 1;
   }
 
 //CIE
-  pass PS_CopyCieBgAndOutlines
+  pass PS_ClearCieCurrentTexture
   {
-    VertexShader = VS_PostProcess;
-     PixelShader = PS_CopyCieBgAndOutlines;
-    RenderTarget = TextureCieCurrent;
+    VertexShader       = VS_Clear;
+     PixelShader       = PS_Clear;
+    RenderTarget       = TextureCieCurrent;
+    ClearRenderTargets = true;
+    VertexCount        = 1;
   }
 
 //Waveform and CIE
@@ -1521,22 +1391,50 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget = TextureLuminanceWaveformFinal;
   }
 
-
-  pass CS_DrawValuesToOverlay
+  pass CS_GetNumbersNits
   {
-    ComputeShader = CS_DrawValuesToOverlay <1, 1>;
-#ifdef IS_HDR_CSP
-    DispatchSizeX = 70;
-#else
-    DispatchSizeX = 38;
-#endif
-    DispatchSizeY = 1;
+    ComputeShader = CS_GetNumbersNits<1, 1>;
+    DispatchSizeX = MAX_NUMBERS_NITS;
+    DispatchSizeY = 4;
   }
+
+#ifdef IS_HDR_CSP
+  pass CS_GetNumbersCsps
+  {
+    ComputeShader = CS_GetNumbersCsps<1, 1>;
+    DispatchSizeX = 6;
+#ifdef IS_FLOAT_HDR_CSP
+    DispatchSizeY = 5;
+#else
+    DispatchSizeY = 3;
+#endif
+  }
+#endif
 
   pass PS_HdrAnalysis
   {
     VertexShader = VS_PrepareHdrAnalysis;
      PixelShader = PS_HdrAnalysis;
+  }
+
+#ifdef IS_HDR_CSP
+  #define FONT_TEXT_VERTEX_COUNT (5 * 6)
+#else
+  #define FONT_TEXT_VERTEX_COUNT (3 * 6)
+#endif
+
+  pass PS_RenderText
+  {
+    VertexShader = VS_RenderText;
+    PixelShader  = PS_RenderText;
+    VertexCount  = (3 + FONT_TEXT_VERTEX_COUNT);
+  }
+
+  pass PS_RenderNumbers
+  {
+    VertexShader = VS_RenderNumbers;
+    PixelShader  = PS_RenderNumbers;
+    VertexCount  = (NUMBERS_COUNT * 6);
   }
 }
 

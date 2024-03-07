@@ -67,7 +67,7 @@ void GenerateCieDiagram(
     xy += CIE_BG_BORDER;
 
     // clamp to borders
-    xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE + CIE_BG_BORDER);
+    xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE_INT + CIE_BG_BORDER);
 
     // leave this as sampler and not storage
     // otherwise d3d complains about the resource still being bound on input
@@ -94,7 +94,7 @@ void GenerateCieDiagram(
     uv += CIE_BG_BORDER;
 
     // clamp to borders
-    uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE + CIE_BG_BORDER);
+    uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE_INT + CIE_BG_BORDER);
 
     const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
 
@@ -109,85 +109,4 @@ void GenerateCieDiagram(
                uv,
                uvColour);
   }
-}
-
-
-float3 FetchCspOutline(
-  const int OutlineTextureOffset,
-  const int CieBgWidth,
-  const int PositionXAsInt,
-  const int FetchPosY) // already calculated
-{
-  int2 fetchPos =
-    int2(PositionXAsInt + (CieBgWidth * OutlineTextureOffset),
-         FetchPosY);
-
-  float3 fetchedPixel = tex2Dfetch(SamplerCieConsolidated, fetchPos).rgb;
-
-  // using gamma 2 as intermediate gamma space
-  return fetchedPixel * fetchedPixel;
-}
-
-
-// copy over clean bg and the outlines first every time
-void PS_CopyCieBgAndOutlines(
-  in  float4 Position : SV_Position,
-  in  float2 TexCoord : TEXCOORD0,
-  out float4 Out      : SV_Target0)
-{
-  int2 positionAsInt2 = int2(Position.xy);
-
-  int2 fetchPos = int2(positionAsInt2.x + CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE] * int(CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG),
-                       positionAsInt2.y + int(CIE_1931_BG_HEIGHT)               * int(_CIE_DIAGRAM_TYPE));
-
-  Out = tex2Dfetch(SamplerCieConsolidated, fetchPos);
-
-  // using gamma 2 as intermediate gamma space
-  Out.rgb *= Out.rgb;
-
-  if (_SHOW_CIE_CSP_BT709_OUTLINE)
-  {
-    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          positionAsInt2.x,
-                                          fetchPos.y);
-
-    Out.rgb += fetchedPixel;
-  }
-#ifdef IS_HDR_CSP
-  if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
-  {
-    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          positionAsInt2.x,
-                                          fetchPos.y);
-
-    Out.rgb += fetchedPixel;
-  }
-  if (SHOW_CIE_CSP_BT2020_OUTLINE)
-  {
-    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          positionAsInt2.x,
-                                          fetchPos.y);
-
-    Out.rgb += fetchedPixel;
-  }
-#ifdef IS_FLOAT_HDR_CSP
-  if (SHOW_CIE_CSP_AP0_OUTLINE)
-  {
-    float3 fetchedPixel = FetchCspOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
-                                          CIE_BG_WIDTH_AS_INT[_CIE_DIAGRAM_TYPE],
-                                          positionAsInt2.x,
-                                          fetchPos.y);
-
-    Out.rgb += fetchedPixel;
-  }
-#endif
-#endif
-
-  // using gamma 2 as intermediate gamma space
-  Out.rgb = sqrt(Out.rgb);
-
-  return;
 }

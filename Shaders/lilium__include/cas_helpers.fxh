@@ -27,7 +27,7 @@
 // for pixel shader
 float2 GetEfhiCoords(float2 Coords)
 {
-  return Coords + 0.5f * PixelSize;
+  return Coords + 0.5f * PIXEL_SIZE;
 }
 
 
