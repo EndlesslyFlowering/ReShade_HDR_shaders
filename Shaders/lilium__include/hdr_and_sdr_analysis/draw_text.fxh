@@ -78,19 +78,12 @@ uint GetAtlasEntry()
 }
 
 
-uint GetCharArrayEntry()
-{
-  return GetAtlasEntry() * 2;
-}
-
-
 void DrawChar(uint Char, float2 DrawOffset)
 {
-  uint atlasEntry     = GetAtlasEntry();
-  uint charArrayEntry = atlasEntry * 2;
+  uint atlasEntry = GetAtlasEntry();
 
-  uint2 charSize     = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
-  uint  atlasXOffset = AtlasXOffset[atlasEntry];
+  uint2 charSize     = GetCharSize(atlasEntry);
+  uint  atlasXOffset = GetAtlasXOffset(atlasEntry);
   uint2 charOffset   = uint2(atlasXOffset, Char * charSize.y);
 
   uint outerSpacing = GetOuterSpacing(charSize.x);
@@ -109,9 +102,9 @@ void DrawChar(uint Char, float2 DrawOffset)
 
 void DrawSpace(float2 DrawOffset)
 {
-  uint charArrayEntry = GetCharArrayEntry();
+  uint atlasEntry = GetAtlasEntry();
 
-  uint2 charSize = uint2(CharSize[charArrayEntry], CharSize[charArrayEntry + 1]);
+  uint2 charSize = GetCharSize(atlasEntry);
 
   uint outerSpacing = GetOuterSpacing(charSize.x);
 
@@ -253,9 +246,9 @@ void DrawTextToOverlay()
 
     uint activeCharacters = GetActiveCharacters();
 
-    static const uint charArrayEntry = GetCharArrayEntry();
+    static const uint atlasEntry = GetAtlasEntry();
 
-    uint2 charSize = GetCharSize(charArrayEntry);
+    uint2 charSize = GetCharSize(atlasEntry);
 
     uint outerSpacing = GetOuterSpacing(charSize.x);
 

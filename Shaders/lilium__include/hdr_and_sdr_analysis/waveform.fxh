@@ -144,17 +144,13 @@ namespace Waveform
 #endif
                                                                         ) / 2.f * fontSizeFactor + 0.5f)) * 2, 12, maxFontSize);
 
-    const uint charArrayEntry = 32 - fontSize;
-
-    const uint atlasEntry = charArrayEntry / 2;
+    const uint atlasEntry = (32 - fontSize) / 2;
 
 #ifndef IS_HDR_CSP
-    waveDat.charDimensionXForPercent = WaveCharSize[charArrayEntry];
-
-    waveDat.charDimensions = int2(waveDat.charDimensionXForPercent - 2, WaveCharSize[charArrayEntry + 1]);
-#else
-    waveDat.charDimensions = int2(WaveCharSize[charArrayEntry] - 2, WaveCharSize[charArrayEntry + 1]);
+    waveDat.charDimensionXForPercent = WaveCharSize[atlasEntry].x;
 #endif
+
+    waveDat.charDimensions = int2(WaveCharSize[atlasEntry] - uint2(2, 0));
 
     waveDat.atlasOffset = int2(WaveAtlasXOffset[atlasEntry], WAVE_TEXTURE_OFFSET.y);
 

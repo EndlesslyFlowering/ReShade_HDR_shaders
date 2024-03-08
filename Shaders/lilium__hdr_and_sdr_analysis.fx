@@ -1088,9 +1088,9 @@ void VS_PrepareHdrAnalysis(
 
     uint activeCharacters = GetActiveCharacters();
 
-    static const uint charArrayEntry = GetCharArrayEntry();
+    static const uint atlasEntry = GetAtlasEntry();
 
-    uint2 charSize = GetCharSize(charArrayEntry);
+    uint2 charSize = GetCharSize(atlasEntry);
 
     uint outerSpacing = GetOuterSpacing(charSize.x);
 
