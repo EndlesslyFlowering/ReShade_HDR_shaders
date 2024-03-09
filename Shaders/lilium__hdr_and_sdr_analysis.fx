@@ -1248,7 +1248,7 @@ void PS_HdrAnalysis(
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK)
   {
-    const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
+    static const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
 
     if (_SHOW_HEATMAP)
     {
@@ -1268,14 +1268,16 @@ void PS_HdrAnalysis(
     }
 #endif
 
-    if (_HIGHLIGHT_NIT_RANGE
-     && pixelNits >= _HIGHLIGHT_NIT_RANGE_START_POINT
-     && pixelNits <= _HIGHLIGHT_NIT_RANGE_END_POINT
-     && pingpong0Above1
-     && breathingIsActive)
+    if (_HIGHLIGHT_NIT_RANGE)
     {
-      //Output.rgb = HighlightNitRangeOut;
-      Output.rgb = lerp(Output.rgb, highlightNitRangeOut, breathing);
+      if (pixelNits >= _HIGHLIGHT_NIT_RANGE_START_POINT
+       && pixelNits <= _HIGHLIGHT_NIT_RANGE_END_POINT
+       && pingpong0Above1
+       && breathingIsActive)
+      {
+        //Output.rgb = HighlightNitRangeOut;
+        Output.rgb = lerp(Output.rgb, highlightNitRangeOut, breathing);
+      }
     }
 
     if (_DRAW_ABOVE_NITS_AS_BLACK)
