@@ -70,6 +70,7 @@ uniform float2 NIT_PINGPONG2
   #define _TEXT_BRIGHTNESS                        SDR_TEXT_BRIGHTNESS
   #define _TEXT_BG_ALPHA                          SDR_TEXT_BG_ALPHA
   #define _TEXT_POSITION                          SDR_TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                     SDR_VALUES_UPDATE_RATE
   #define _ACTIVE_AREA_ENABLE                     SDR_ACTIVE_AREA_ENABLE
   #define _TACTIVE_AREA_CROP_LEFT                 SDR_ACTIVE_AREA_CROP_LEFT
   #define _ACTIVE_AREA_CROP_TOP                   SDR_ACTIVE_AREA_CROP_TOP
@@ -104,6 +105,7 @@ uniform float2 NIT_PINGPONG2
   #define _TEXT_BRIGHTNESS                        TEXT_BRIGHTNESS
   #define _TEXT_BG_ALPHA                          TEXT_BG_ALPHA
   #define _TEXT_POSITION                          TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                     VALUES_UPDATE_RATE
   #define _ACTIVE_AREA_ENABLE                     ACTIVE_AREA_ENABLE
   #define _ACTIVE_AREA_CROP_LEFT                  ACTIVE_AREA_CROP_LEFT
   #define _ACTIVE_AREA_CROP_TOP                   ACTIVE_AREA_CROP_TOP
@@ -194,6 +196,16 @@ uniform uint _TEXT_POSITION
                 "top right\0";
 > = 0;
 
+uniform float _VALUES_UPDATE_RATE
+<
+  ui_category = "Global";
+  ui_label    = "values update rate";
+  ui_type     = "slider";
+  ui_units    = " ms";
+  ui_min      = 0.f;
+  ui_max      = 1000.f;
+  ui_step     = 1.f;
+> = 500.f;
 
 // Active Area
 uniform bool _ACTIVE_AREA_ENABLE
