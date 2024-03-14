@@ -258,19 +258,33 @@ void PS_CalcNitsPerPixel(
 }
 
 
-// 8 * 2
-#if (BUFFER_WIDTH % 16 == 0)
-  #define GET_MAX_AVG_MIN_NITS_DISPATCH_X (BUFFER_WIDTH / 16)
+#if (BUFFER_WIDTH  % 6 == 0  \
+  && BUFFER_HEIGHT % 6 == 0)
+  #define GET_MAX_AVG_MIN_NITS_THREAD 6
+#elif (BUFFER_WIDTH  % 4 == 0  \
+    && BUFFER_HEIGHT % 4 == 0)
+  #define GET_MAX_AVG_MIN_NITS_THREAD 4
 #else
-  #define GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
-  #define GET_MAX_AVG_MIN_NITS_DISPATCH_X (BUFFER_WIDTH / 16 + 1)
+  #define GET_MAX_AVG_MIN_NITS_THREAD 2
 #endif
 
-#if (BUFFER_HEIGHT % 16 == 0)
-  #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / 16)
+#define GET_MAX_AVG_MIN_NITS_THREAD_SIZE (GET_MAX_AVG_MIN_NITS_THREAD * GET_MAX_AVG_MIN_NITS_THREAD)
+
+#define GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X (GET_MAX_AVG_MIN_NITS_THREAD * WAVE64_THREAD_SIZE_X)
+#define GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y (GET_MAX_AVG_MIN_NITS_THREAD * WAVE64_THREAD_SIZE_Y)
+
+#if (BUFFER_WIDTH % GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X == 0)
+  #define GET_MAX_AVG_MIN_NITS_DISPATCH_X (BUFFER_WIDTH / GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X)
+#else
+  #define GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
+  #define GET_MAX_AVG_MIN_NITS_DISPATCH_X (BUFFER_WIDTH / GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X + 1)
+#endif
+
+#if (BUFFER_HEIGHT % GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y == 0)
+  #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y)
 #else
   #define GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING
-  #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / 16 + 1)
+  #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y + 1)
 #endif
 
 groupshared uint GroupMax;
@@ -296,52 +310,67 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
     float threadAvgNits = 0.f;
     float threadMinNits = FP32_MAX;
 
-    const int xStart = DTID.x * 2;
-#ifndef GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
-    const int xStop  = xStart + 2;
+#if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
+  || defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
+
+    float avgDiv = 0.f;
+
 #else
-    const int xStop  = min(xStart + 2, BUFFER_WIDTH_INT);
+
+    static const float avgDiv = GET_MAX_AVG_MIN_NITS_THREAD_SIZE;
+
 #endif
 
-    const int yStart = DTID.y * 2;
-#ifndef GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING
-    const int yStop  = yStart + 2;
-#else
-    const int yStop  = min(yStart + 2, BUFFER_HEIGHT_INT);
-#endif
+    int2 curThreadPos = DTID.xy * GET_MAX_AVG_MIN_NITS_THREAD;
 
-    for (int x = xStart; x < xStop; x++)
+    [unroll]
+    for (int x = 0; x < GET_MAX_AVG_MIN_NITS_THREAD; x++)
     {
-      for (int y = yStart; y < yStop; y++)
+      [unroll]
+      for (int y = 0; y < GET_MAX_AVG_MIN_NITS_THREAD; y++)
       {
-        const float curNits = tex2Dfetch(SamplerNitsValues, int2(x, y));
+        int2 curFetchPos = curThreadPos + int2(x, y);
 
-        threadMaxNits = max(curNits, threadMaxNits);
-        threadMinNits = min(curNits, threadMinNits);
+        const float curNits = tex2Dfetch(SamplerNitsValues, curFetchPos);
 
-        threadAvgNits += curNits;
+#if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
+  && defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
+
+        [branch]
+        if (curFetchPos.x < BUFFER_WIDTH_INT
+         && curFetchPos.y < BUFFER_HEIGHT_INT)
+
+#elif (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
+    || defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
+
+  #if defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)
+
+        [branch]
+        if (curFetchPos.x < BUFFER_WIDTH_INT)
+
+  #else //defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING)
+
+        [branch]
+        if (curFetchPos.y < BUFFER_HEIGHT_INT)
+
+  #endif
+
+#endif
+        {
+          threadMaxNits = max(curNits, threadMaxNits);
+          threadMinNits = min(curNits, threadMinNits);
+
+          threadAvgNits += curNits;
+
+#if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
+  || defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
+
+          avgDiv += 1.f;
+
+#endif
+        }
       }
     }
-
-    static const float avgXDiv =
-#ifdef GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING
-                                 (xStop == BUFFER_WIDTH_INT)
-                               ? (BUFFER_WIDTH_UINT - uint(xStart))
-                               : 2.f;
-#else
-                                 2.f;
-#endif
-
-    static const float avgYDiv =
-#ifdef GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING
-                                 (yStop == BUFFER_HEIGHT_INT)
-                               ? (BUFFER_WIDTH_UINT - uint(yStart))
-                               : 2.f;
-#else
-                                 2.f;
-#endif
-
-    static const float avgDiv = avgXDiv * avgYDiv;
 
     threadAvgNits /= avgDiv;
 
