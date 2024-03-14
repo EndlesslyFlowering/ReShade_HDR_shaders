@@ -230,37 +230,60 @@ void PS_CalcCsps(
 }
 
 
-// 8 * 4
-#if (BUFFER_WIDTH % 32 == 0)
-  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / 32)
+#if (BUFFER_WIDTH  % 6 == 0  \
+  && BUFFER_HEIGHT % 6 == 0)
+  #define CSP_COUNTER_THREAD 6
+#elif (BUFFER_WIDTH  % 4 == 0  \
+    && BUFFER_HEIGHT % 4 == 0)
+  #define CSP_COUNTER_THREAD 4
+#else
+  #define CSP_COUNTER_THREAD 2
+#endif
+
+#define CSP_COUNTER_THREAD_SIZE (CSP_COUNTER_THREAD * CSP_COUNTER_THREAD)
+
+#define CSP_COUNTER_GROUP_PIXELS_X (CSP_COUNTER_THREAD * WAVE64_THREAD_SIZE_X)
+#define CSP_COUNTER_GROUP_PIXELS_Y (CSP_COUNTER_THREAD * WAVE64_THREAD_SIZE_Y)
+
+#if (BUFFER_WIDTH % CSP_COUNTER_GROUP_PIXELS_X == 0)
+  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / CSP_COUNTER_GROUP_PIXELS_X)
 #else
   #define CSP_COUNTER_FETCH_X_NEEDS_CLAMPING
-  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / 32 + 1)
+  #define CSP_COUNTER_DISPATCH_X (BUFFER_WIDTH / CSP_COUNTER_GROUP_PIXELS_X + 1)
 #endif
 
-#if (BUFFER_HEIGHT % 32 == 0)
-  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / 32)
+#if (BUFFER_HEIGHT % CSP_COUNTER_GROUP_PIXELS_Y == 0)
+  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / CSP_COUNTER_GROUP_PIXELS_Y)
 #else
   #define CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING
-  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / 32 + 1)
+  #define CSP_COUNTER_DISPATCH_Y (BUFFER_HEIGHT / CSP_COUNTER_GROUP_PIXELS_Y + 1)
 #endif
 
+
+groupshared uint GroupBt709;
+groupshared uint GroupDciP3;
+groupshared uint GroupBt2020;
 #if defined(IS_FLOAT_HDR_CSP)
-  #define COUNTED_CSPS 5
-#elif defined(IS_HDR10_LIKE_CSP)
-  #define COUNTED_CSPS 3
+groupshared uint GroupAp0;
+groupshared uint GroupInvalid;
 #endif
-
-#define GROUP_CSP_COUNTER_SHARED_VARIABLES (64 * COUNTED_CSPS)
-
-
-groupshared uint GroupCspCounter[GROUP_CSP_COUNTER_SHARED_VARIABLES];
-void CS_CountCsps(uint3 GID  : SV_GroupID,
-                  uint3 GTID : SV_GroupThreadID,
+void CS_CountCsps(uint3 GTID : SV_GroupThreadID,
                   uint3 DTID : SV_DispatchThreadID)
 {
   if (SHOW_CSPS)
   {
+
+    if (all(GTID.xy == 0))
+    {
+      GroupBt709   = 0;
+      GroupDciP3   = 0;
+      GroupBt2020  = 0;
+#if defined(IS_FLOAT_HDR_CSP)
+      GroupAp0     = 0;
+      GroupInvalid = 0;
+#endif
+    }
+    barrier();
 
 #if defined(IS_FLOAT_HDR_CSP)
     uint counter[5] = {0,0,0,0,0};
@@ -268,65 +291,66 @@ void CS_CountCsps(uint3 GID  : SV_GroupID,
     uint counter[3] = {0,0,0};
 #endif
 
-    const int xStart = DTID.x * 4;
-#ifndef CSP_COUNTER_FETCH_X_NEEDS_CLAMPING
-    const int xStop  = xStart + 4;
-#else
-    const int xStop  = min(xStart + 4, BUFFER_WIDTH);
-#endif
+    int2 curThreadPos = DTID.xy * CSP_COUNTER_THREAD;
 
-    const int yStart = DTID.y * 4;
-#ifndef CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING
-    const int yStop  = yStart + 4;
-#else
-    const int yStop  = min(yStart + 4, BUFFER_HEIGHT);
-#endif
-
-    for (int x = xStart; x < xStop; x++)
+    [unroll]
+    for (int x = 0; x < CSP_COUNTER_THREAD; x++)
     {
-      for (int y = yStart; y < yStop; y++)
+      [unroll]
+      for (int y = 0; y < CSP_COUNTER_THREAD; y++)
       {
-        uint curCsp = uint(tex2Dfetch(SamplerCsps, int2(x, y)) * 255.f);
-        counter[curCsp]++;
+        int2 curFetchPos = curThreadPos + int2(x, y);
+
+        uint curCsp = uint(tex2Dfetch(SamplerCsps, curFetchPos) * 255.f);
+
+        #if (defined(CSP_COUNTER_FETCH_X_NEEDS_CLAMPING)  \
+  && defined(CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING))
+
+        [branch]
+        if (curFetchPos.x < BUFFER_WIDTH_INT
+         && curFetchPos.y < BUFFER_HEIGHT_INT)
+
+#elif (defined(CSP_COUNTER_FETCH_X_NEEDS_CLAMPING)  \
+    || defined(CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING))
+
+  #if defined(CSP_COUNTER_FETCH_X_NEEDS_CLAMPING)
+
+        [branch]
+        if (curFetchPos.x < BUFFER_WIDTH_INT)
+
+  #else //defined(CSP_COUNTER_FETCH_Y_NEEDS_CLAMPING)
+
+        [branch]
+        if (curFetchPos.y < BUFFER_HEIGHT_INT)
+
+  #endif
+
+#endif
+        {
+          counter[curCsp]++;
+        }
       }
     }
 
-    const uint groupCspCounterId = (DTID.x - (GID.x * 8)) | ((DTID.y - (GID.y * 8)) << 3);
-    GroupCspCounter[groupCspCounterId]         = counter[0];
-    GroupCspCounter[groupCspCounterId | 0x40]  = counter[1];
-    GroupCspCounter[groupCspCounterId | 0x80]  = counter[2];
+//    const uint groupCspCounterId = (DTID.x - (GID.x * 8)) | ((DTID.y - (GID.y * 8)) << 3);
+    atomicAdd(GroupBt709,   counter[0]);
+    atomicAdd(GroupDciP3,   counter[1]);
+    atomicAdd(GroupBt2020,  counter[2]);
 #if defined(IS_FLOAT_HDR_CSP)
-    GroupCspCounter[groupCspCounterId | 0xC0]  = counter[3];
-    GroupCspCounter[groupCspCounterId | 0x100] = counter[4];
+    atomicAdd(GroupAp0,     counter[3]);
+    atomicAdd(GroupInvalid, counter[4]);
 #endif
 
     barrier();
 
     if (all(GTID.xy == 0))
     {
-      uint counterBt709   = 0;
-      uint counterDciP3   = 0;
-      uint counterBt2020  = 0;
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, GroupBt709);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, GroupDciP3);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, GroupBt2020);
 #if defined(IS_FLOAT_HDR_CSP)
-      uint counterAp0     = 0;
-      uint counterInvalid = 0;
-#endif
-      for (uint i = 0; i < 64; i++)
-      {
-        counterBt709   += GroupCspCounter[i];
-        counterDciP3   += GroupCspCounter[i | 0x40];
-        counterBt2020  += GroupCspCounter[i | 0x80];
-#if defined(IS_FLOAT_HDR_CSP)
-        counterAp0     += GroupCspCounter[i | 0xC0];
-        counterInvalid += GroupCspCounter[i | 0x100];
-#endif
-      }
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, counterBt709);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, counterDciP3);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, counterBt2020);
-#if defined(IS_FLOAT_HDR_CSP)
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, counterAp0);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, counterInvalid);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, GroupAp0);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, GroupInvalid);
 #endif
     }
   }
