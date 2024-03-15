@@ -339,6 +339,15 @@ namespace Waveform
                 ActiveBorderSize + ActiveFontSpacer + ActiveFrameSize + YOffset);
   } //GetNitsOffset
 
+// workaround so that the driver shader compiler doesn't
+// unroll the loops and it taking 14 minutes or longer
+#if ((!defined(API_IS_D3D11) && !defined(API_IS_D3D12)) \
+  || ((defined(API_IS_D3D11) || defined(API_IS_D3D12)) && (BUFFER_WIDTH >= 1600 || BUFFER_HEIGHT >= 900) && __RESHADE_PERFORMANCE_MODE__ == 0))
+
+  #define NO_WORKAROUND_NEEDED
+
+#endif
+
   void DrawCharToScale(
     const uint   Char,
     const float2 CharDim,
@@ -357,9 +366,15 @@ namespace Waveform
     [loop]
     while (currentOffset.x < ceilCharDim.x)
     {
+#ifndef NO_WORKAROUND_NEEDED
+      currentOffset.x += floor(FRAMETIME / 100000.f + 0.1f);
+#endif
       [loop]
       while (currentOffset.y < ceilCharDim.y)
       {
+#ifndef NO_WORKAROUND_NEEDED
+        currentOffset.y += floor(FRAMETIME / 100000.f);
+#endif
         float2 currentSamplePos = charFetchPos
                                 + float2(currentOffset) * (min(WAVEFORM_CHAR_DIM_FLOAT / CharDim, 2.f));
 
