@@ -388,7 +388,9 @@ float3 MergeOverlay(
 
 
 #include "luminance.fxh"
-#include "csp.fxh"
+#ifdef IS_HDR_CSP
+  #include "csp.fxh"
+#endif
 #include "cie.fxh"
 #include "waveform.fxh"
 #include "draw_text.fxh"
