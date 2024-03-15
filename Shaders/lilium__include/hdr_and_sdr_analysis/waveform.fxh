@@ -4,8 +4,8 @@
 static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - 1.f)
                                                              / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH  - 1);
 
-static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT     - 1.f)
-                                                             / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT - 1);
+static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT - 1.f)
+                                                             / float(TEXTURE_LUMINANCE_WAVEFORM_HEIGHT  - 1);
 
 texture2D TextureLuminanceWaveform
 <
@@ -103,12 +103,13 @@ namespace Waveform
   {
     SWaveformData waveDat;
 
-#ifdef IS_HDR_CSP
-  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f.xx
-  #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX 1.f.xx
-#else
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN float2(0.5f, 1.5f)
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX float2(1.f,  2.f)
+#else
+  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f.xx
+  #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX 1.f.xx
 #endif
 
     float2 waveformScaleFactorXY = clamp(_LUMINANCE_WAVEFORM_SIZE / 100.f, 0.5f, 1.f);
@@ -153,7 +154,8 @@ namespace Waveform
     waveDat.offsetToFrame = int2(waveDat.borderSize + textWidth + tickSpacer + waveDat.frameSize,
                                  waveDat.borderSize + waveDat.fontSpacer);
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
     waveformScaleFactorXY.y += 1.f;
     waveformScaleFactorXY.y  = clamp(waveformScaleFactorXY.y, 1.5f, 2.f);
 #endif
@@ -1097,12 +1099,13 @@ void PS_RenderLuminanceWaveformToScale(
       const bool showMaxNitsLineActive = waveformCoordsGTEMaxNitsLine && _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE;
       const bool showMinNitsLineActive = waveformCoordsSTEMinNitsLine && _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE;
 
-#ifdef IS_HDR_CSP
-  #define WAVEFORM_SAMPLER_CLAMP_MIN 1.f
-  #define WAVEFORM_SAMPLER_CLAMP_MAX 2.f
-#else
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
   #define WAVEFORM_SAMPLER_CLAMP_MIN float2(1.f, 0.5f)
   #define WAVEFORM_SAMPLER_CLAMP_MAX float2(2.f, (2.f / 3.f))
+#else
+  #define WAVEFORM_SAMPLER_CLAMP_MIN 1.f
+  #define WAVEFORM_SAMPLER_CLAMP_MAX 2.f
 #endif
 
       if (( showMaxNitsLineActive                  &&  showMinNitsLineActive)
@@ -1112,7 +1115,8 @@ void PS_RenderLuminanceWaveformToScale(
       {
         float2 luminanceWaveformSize = _LUMINANCE_WAVEFORM_SIZE;
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
         luminanceWaveformSize.y += 100.f;
 #endif
 

@@ -623,7 +623,8 @@ static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
 static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH2
                                                        / 100.f;
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
   static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 - 100.f;
 #else
   static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0;
