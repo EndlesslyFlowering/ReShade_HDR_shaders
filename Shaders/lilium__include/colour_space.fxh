@@ -135,6 +135,7 @@ void VS_PostProcessWithoutTexCoord(
     #define CSP_OVERRIDE CSP_UNSET
   #endif
 #else
+  #undef CSP_OVERRIDE //for some reason this workaround is needed in DS1PTDE...
   #define CSP_OVERRIDE CSP_UNSET
 #endif
 
