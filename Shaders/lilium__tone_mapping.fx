@@ -756,6 +756,6 @@ technique lilium__tone_mapping
 <
   ui_label = "Lilium's tone mapping (ERROR)";
 >
-CS_ERROR
+VS_ERROR
 
 #endif //is hdr API and hdr colour space

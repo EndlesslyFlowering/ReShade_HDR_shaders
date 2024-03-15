@@ -1463,6 +1463,6 @@ technique lilium__hdr_and_sdr_analysis
   ui_label = "Lilium's SDR analysis (ERROR)";
 #endif
 >
-CS_ERROR
+VS_ERROR
 
 #endif //is hdr API and hdr colour space

@@ -206,6 +206,6 @@ technique lilium__map_SDR_into_HDR
 <
   ui_label = "Lilium's map SDR into HDR (ERROR)";
 >
-CS_ERROR
+VS_ERROR
 
 #endif //is hdr API and hdr colour space

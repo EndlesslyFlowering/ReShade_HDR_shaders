@@ -189,6 +189,6 @@ technique lilium__hdr_black_floor_fix
 <
   ui_label = "Lilium's HDR black floor fix (ERROR)";
 >
-CS_ERROR
+VS_ERROR
 
 #endif //is hdr API and hdr colour space

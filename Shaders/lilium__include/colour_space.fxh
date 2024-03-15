@@ -33,6 +33,7 @@ static const float BUFFER_HEIGHT_MINUS_1_FLOAT = float(BUFFER_HEIGHT_MINUS_1_UIN
 static const  uint2 BUFFER_SIZE_MINUS_1_UINT  =  uint2(BUFFER_WIDTH_MINUS_1_UINT,  BUFFER_HEIGHT_MINUS_1_UINT);
 static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOAT, BUFFER_HEIGHT_MINUS_1_FLOAT);
 
+
 //#ifndef __RESHADE__
 //  #include "_no.fxh"
 //  #define BUFFER_WIDTH       3840
@@ -359,28 +360,35 @@ uniform int GLOBAL_INFO
   #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
 #endif
 
-#define ERROR_STUFF           \
-  uniform int ERROR_MESSAGE   \
-  <                           \
-    ui_category = "ERROR";    \
-    ui_label    = " ";        \
-    ui_type     = "radio";    \
-    ui_text     = ERROR_TEXT; \
-  >;                          \
-                              \
-  void CS_Error()             \
-  {                           \
-    return;                   \
+#define ERROR_STUFF                                \
+  uniform int ERROR_MESSAGE                        \
+  <                                                \
+    ui_category = "ERROR";                         \
+    ui_label    = " ";                             \
+    ui_type     = "radio";                         \
+    ui_text     = ERROR_TEXT;                      \
+  >;                                               \
+                                                   \
+  void VS_Error(out float4 Position : SV_Position) \
+  {                                                \
+    Position = -2.f;                               \
+    return;                                        \
+  }                                                \
+  void PS_Error(out float4 Output : SV_Target0)    \
+  {                                                \
+    Output = 0.f;                                  \
+    discard;                                       \
   }
 
-#define CS_ERROR                      \
-  {                                   \
-    pass CS_Error                     \
-    {                                 \
-      ComputeShader = CS_Error<1, 1>; \
-      DispatchSizeX = 1;              \
-      DispatchSizeY = 1;              \
-    }                                 \
+#define VS_ERROR                     \
+  {                                  \
+    pass Error                       \
+    {                                \
+      VertexShader      = VS_Error;  \
+      PixelShader       = PS_Error;  \
+      PrimitiveTopology = POINTLIST; \
+      VertexCount       = 1;         \
+    }                                \
   }
 
 
