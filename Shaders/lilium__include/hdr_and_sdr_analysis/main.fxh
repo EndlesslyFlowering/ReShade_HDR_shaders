@@ -515,10 +515,8 @@ void CopyShowValues()
     float avgNits = tex1Dfetch(StorageConsolidated, COORDS_AVG_NITS_VALUE);
     float minNits = tex1Dfetch(StorageConsolidated, COORDS_MIN_NITS_VALUE);
 
-//    // avoid average being higher than max in extreme edge cases
-//    avgNits = min(avgNits, maxNits);
-//    // avoid average being lower than min in extreme edge cases
-//    avgNits = max(avgNits, minNits);
+    // avoid average nits being higher than max nits in and lower than min extreme edge cases
+    avgNits = clamp(avgNits, minNits, maxNits);
 
 #ifdef IS_HDR_CSP
 
