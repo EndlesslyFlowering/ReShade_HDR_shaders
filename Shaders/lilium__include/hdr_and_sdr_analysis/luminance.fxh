@@ -50,29 +50,6 @@ storage2D<float> StorageNitsValues
 //#endif
 
 
-void FinaliseMaxAvgMinNits()
-{
-  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, 0));
-  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, UINT_MAX));
-
-  float avgNits = float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, 0)) / 1000.f;
-
-  static const float2 dispatchWxH = BUFFER_SIZE_FLOAT
-                                  / 16.f;
-
-  static const float dispatchArea = dispatchWxH.x
-                                  * dispatchWxH.y;
-
-  avgNits /= dispatchArea;
-
-  tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxNits);
-  tex1Dstore(StorageConsolidated, COORDS_AVG_NITS_VALUE, avgNits);
-  tex1Dstore(StorageConsolidated, COORDS_MIN_NITS_VALUE, minNits);
-
-  return;
-}
-
-
 static const float4x3 HeatmapSteps0 = float4x3(
   100.f, 203.f, 400.f,
   100.f, 203.f, 400.f,
@@ -394,5 +371,29 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
     }
     return;
   }
+  return;
+}
+
+
+void FinaliseMaxAvgMinNits()
+{
+  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, 0));
+  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, UINT_MAX));
+
+  float avgNits = float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, 0)) / 1000.f;
+
+  static const float2 dispatchWxH = BUFFER_SIZE_FLOAT
+                                  / float2(GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X,
+                                           GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y);
+
+  static const float dispatchArea = dispatchWxH.x
+                                  * dispatchWxH.y;
+
+  avgNits /= dispatchArea;
+
+  tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxNits);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_NITS_VALUE, avgNits);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_NITS_VALUE, minNits);
+
   return;
 }
