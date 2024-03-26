@@ -452,7 +452,7 @@ float GetMaxChars()
   float maxChars = MAX_CHARS;
 
   if (_SHOW_NITS_VALUES
-   && _SHOW_NITS_FROM_CURSOR)
+   || _SHOW_NITS_FROM_CURSOR)
   {
     maxChars = max(TEXT_OFFSET_ANALYIS_HEADER.x, TEXT_OFFSET_NITS_CURSOR.x + NITS_EXTRA_CHARS);
   }
