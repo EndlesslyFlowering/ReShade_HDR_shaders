@@ -422,8 +422,8 @@ float3 LowerBlackFloor(
 
       //to RGB
       float3 outputRgb = Csp::Ictcp::IctcpTo::Bt2020(float3(i2,
-                                                            dot(pqLms, PqLmsToIctcp[1]),
-                                                            dot(pqLms, PqLmsToIctcp[2])));
+                                                            dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
+                                                            dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2])));
 
       outputRgb = max(outputRgb, 0.f);
 
@@ -440,7 +440,7 @@ float3 LowerBlackFloor(
     ConvertToWorkingCsp(Rgb);
     float3 inputInPq = Csp::Trc::LinearTo::Pq(Rgb);
 
-    float y1 = dot(inputInPq, KBt2020);
+    float y1 = dot(inputInPq, Csp::Ycbcr::KBt2020);
 
     if (y1 <= RollOffStoppingPoint)
     {
@@ -451,8 +451,8 @@ float3 LowerBlackFloor(
 
       //to RGB
       float3 outputRgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(y2,
-                                                               (inputInPq.b - y1) / KbBt2020,
-                                                               (inputInPq.r - y1) / KrBt2020));
+                                                               (inputInPq.b - y1) / Csp::Ycbcr::KbBt2020,
+                                                               (inputInPq.r - y1) / Csp::Ycbcr::KrBt2020));
 
       outputRgb = max(outputRgb, 0.f);
 

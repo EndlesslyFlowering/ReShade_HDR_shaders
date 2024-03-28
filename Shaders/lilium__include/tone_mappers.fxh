@@ -330,8 +330,8 @@ namespace Tmos
         //i2 *= SrcMaxPq;
 
         float3 ictcp = float3(i2,
-                              dot(pqLms, PqLmsToIctcp[1]),
-                              dot(pqLms, PqLmsToIctcp[2]));
+                              dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
+                              dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
 
         if (EnableBlowingOutHighlights)
         {
@@ -358,7 +358,7 @@ namespace Tmos
       {
         float3 Rgb = ConditionallyConvertScrgbToHdr10(Colour);
 
-        float y1 = dot(Rgb, KBt2020);
+        float y1 = dot(Rgb, Csp::Ycbcr::KBt2020);
         //E1
         float y2 = (y1 - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
         //float y2 = y1 / SrcMaxPq;
@@ -383,8 +383,8 @@ namespace Tmos
         //y2 *= SrcMaxPq;
 
         float3 ycbcr = float3(y2,
-                              (Rgb.b - y1) / KbBt2020,
-                              (Rgb.r - y1) / KrBt2020);
+                              (Rgb.b - y1) / Csp::Ycbcr::KbBt2020,
+                              (Rgb.r - y1) / Csp::Ycbcr::KrBt2020);
 
         if (EnableBlowingOutHighlights)
         {
@@ -591,8 +591,8 @@ namespace Tmos
           float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
 
           float3 ictcp = float3(i2,
-                                dot(pqLms, PqLmsToIctcp[1]),
-                                dot(pqLms, PqLmsToIctcp[2]));
+                                dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
+                                dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
 
           if (EnableBlowingOutHighlights)
           {
@@ -619,7 +619,7 @@ namespace Tmos
       {
         float3 Rgb = ConditionallyConvertScrgbToHdr10(Colour);
 
-        float y1 = dot(Rgb, KBt2020);
+        float y1 = dot(Rgb, Csp::Ycbcr::KBt2020);
 
         if (y1 < ShoulderStartInPq)
         {
@@ -632,8 +632,8 @@ namespace Tmos
           float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
 
           float3 ycbcr = float3(y2,
-                                (Colour.b - y1) / KbBt2020,
-                                (Colour.r - y1) / KrBt2020);
+                                (Colour.b - y1) / Csp::Ycbcr::KbBt2020,
+                                (Colour.r - y1) / Csp::Ycbcr::KrBt2020);
 
           if (EnableBlowingOutHighlights)
           {
