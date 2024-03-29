@@ -235,11 +235,11 @@ void PS_CalcNitsPerPixel(
 }
 
 
-#if (BUFFER_WIDTH  % 6 == 0  \
-  && BUFFER_HEIGHT % 6 == 0)
+#if (BUFFER_WIDTH  % WAVE_SIZE_6_X == 0  \
+  && BUFFER_HEIGHT % WAVE_SIZE_6_Y == 0)
   #define GET_MAX_AVG_MIN_NITS_THREAD 6
-#elif (BUFFER_WIDTH  % 4 == 0  \
-    && BUFFER_HEIGHT % 4 == 0)
+#elif (BUFFER_WIDTH  % WAVE_SIZE_4_X == 0  \
+    && BUFFER_HEIGHT % WAVE_SIZE_4_Y == 0)
   #define GET_MAX_AVG_MIN_NITS_THREAD 4
 #else
   #define GET_MAX_AVG_MIN_NITS_THREAD 2
