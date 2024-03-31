@@ -615,17 +615,19 @@ static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
 // "minimum of 2 variables" without using functions...
 // https://guru.multimedia.cx/category/optimization/
 #ifdef IS_HDR_CSP
-  static const uint UGH2 = int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31));
+  static const int UGH2 = uint(int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31)));
 #else
-  static const uint UGH2 = int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31));
+  static const int UGH2 = uint(int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31)));
 #endif
 
-static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH2
+static const uint UGH3 = UGH2 - ((UGH2 - int(5000)) & ((UGH2 - int(5000)) >> 31));
+
+static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH3
                                                        / 100.f;
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 - 100.f;
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 + 100.f) / 3.f;
 #else
   static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0;
 #endif

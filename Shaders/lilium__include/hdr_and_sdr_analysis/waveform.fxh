@@ -105,8 +105,8 @@ namespace Waveform
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN float2(0.5f, 1.5f)
-  #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX float2(1.f,  2.f)
+  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f
+  #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX float2(1.f, 2.f)
 #else
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f.xx
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX 1.f.xx
@@ -156,8 +156,8 @@ namespace Waveform
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-    waveformScaleFactorXY.y += 1.f;
-    waveformScaleFactorXY.y  = clamp(waveformScaleFactorXY.y, 1.5f, 2.f);
+    waveformScaleFactorXY.y += 1.f - (1.f - waveformScaleFactorXY.y) * 2.f;
+    waveformScaleFactorXY.y  = clamp(waveformScaleFactorXY.y, WAVEFORM_SCALE_FACTOR_CLAMP_MIN, WAVEFORM_SCALE_FACTOR_CLAMP_MAX.y);
 #endif
 
 #ifdef IS_HDR_CSP
@@ -378,7 +378,7 @@ namespace Waveform
         currentOffset.y += floor(FRAMETIME / 100000.f);
 #endif
         float2 currentSamplePos = charFetchPos
-                                + float2(currentOffset) * (min(WAVEFORM_CHAR_DIM_FLOAT / CharDim, 2.f));
+                                + float2(currentOffset) * (min(WAVEFORM_CHAR_DIM_FLOAT / CharDim, 2.f)) + 0.5f;
 
         float2 fract = frac(currentSamplePos);
 
@@ -996,10 +996,10 @@ void VS_PrepareRenderLuminanceWaveformToScale(
     float luminanceWaveformSizeY = _LUMINANCE_WAVEFORM_SIZE.y;
 
 #ifndef IS_HDR_CSP
-    luminanceWaveformSizeY += 100.f;
+    luminanceWaveformSizeY += 100.f - (100.f - luminanceWaveformSizeY) * 2.f;
 #endif
 
-    const float waveformScaleFactorY = clamp(luminanceWaveformSizeY / 100.f, WAVEFORM_SCALE_FACTOR_CLAMP_MIN.y, WAVEFORM_SCALE_FACTOR_CLAMP_MAX.y);
+    const float waveformScaleFactorY = clamp(luminanceWaveformSizeY / 100.f, WAVEFORM_SCALE_FACTOR_CLAMP_MIN, WAVEFORM_SCALE_FACTOR_CLAMP_MAX.y);
 
     if (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE)
     {
@@ -1101,11 +1101,11 @@ void PS_RenderLuminanceWaveformToScale(
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  #define WAVEFORM_SAMPLER_CLAMP_MIN float2(1.f, 0.5f)
-  #define WAVEFORM_SAMPLER_CLAMP_MAX float2(2.f, (2.f / 3.f))
+  #define WAVEFORM_SAMPLER_CLAMP_MIN 50.f
+  #define WAVEFORM_SAMPLER_CLAMP_MAX float2(100.f, 200.f)
 #else
-  #define WAVEFORM_SAMPLER_CLAMP_MIN 1.f
-  #define WAVEFORM_SAMPLER_CLAMP_MAX 2.f
+  #define WAVEFORM_SAMPLER_CLAMP_MIN  50.f
+  #define WAVEFORM_SAMPLER_CLAMP_MAX 100.f
 #endif
 
       if (( showMaxNitsLineActive                  &&  showMinNitsLineActive)
@@ -1117,12 +1117,14 @@ void PS_RenderLuminanceWaveformToScale(
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-        luminanceWaveformSize.y += 100.f;
+        luminanceWaveformSize.y += 100.f - (100.f - luminanceWaveformSize.y) * 2.f;
 #endif
 
+        luminanceWaveformSize = clamp(luminanceWaveformSize, WAVEFORM_SAMPLER_CLAMP_MIN, WAVEFORM_SAMPLER_CLAMP_MAX);
+
         float2 waveformSamplerCoords = (float2(waveformCoords + int2(0, WaveformCutoffOffset)) + 0.5f)
-                                      * (clamp(100.f / luminanceWaveformSize, WAVEFORM_SAMPLER_CLAMP_MIN, WAVEFORM_SAMPLER_CLAMP_MAX))
-                                      / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH - 1, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1);
+                                      * (100.f / luminanceWaveformSize)
+                                      / float2(TEXTURE_LUMINANCE_WAVEFORM_WIDTH, TEXTURE_LUMINANCE_WAVEFORM_HEIGHT);
 
         float2 scaleColour = tex2Dfetch(SamplerLuminanceWaveformScale, scaleCoords).rg;
         // using gamma 2 as intermediate gamma space

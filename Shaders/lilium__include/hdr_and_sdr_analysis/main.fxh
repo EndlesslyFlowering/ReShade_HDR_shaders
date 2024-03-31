@@ -156,10 +156,11 @@ static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH = TEXTURE_LUMINANCE_WAV
                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
 
-#ifdef IS_HDR_CSP
-  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
-#else
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
   #define MAX_WAVEFORM_HEIGHT_FACTOR 2
+#else
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
 #endif
 
 static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
