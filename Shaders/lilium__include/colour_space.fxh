@@ -1061,7 +1061,7 @@ namespace Csp
       {
         return float3(
           Colour.x + KrBt709    * Colour.z,
-          Colour.x + KgBt709[0] * Colour.y + KgBt709[1] * Colour.z,
+          Colour.x - KgBt709[0] * Colour.y - KgBt709[1] * Colour.z,
           Colour.x + KbBt709    * Colour.y);
       }
 
@@ -1069,7 +1069,7 @@ namespace Csp
       {
         return float3(
           Colour.x + KrBt2020    * Colour.z,
-          Colour.x + KgBt2020[0] * Colour.y + KgBt2020[1] * Colour.z,
+          Colour.x - KgBt2020[0] * Colour.y - KgBt2020[1] * Colour.z,
           Colour.x + KbBt2020    * Colour.y);
       }
 
