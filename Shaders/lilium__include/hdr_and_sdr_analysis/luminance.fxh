@@ -179,7 +179,6 @@ float3 WaveformRgbValues(
 
 void PS_CalcNitsPerPixel(
               float4 Position : SV_Position,
-              float2 TexCoord : TEXCOORD0,
   out precise float  CurNits  : SV_Target0)
 {
   CurNits = 0.f;

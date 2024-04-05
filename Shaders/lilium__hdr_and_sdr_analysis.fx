@@ -1328,7 +1328,7 @@ technique lilium__hdr_and_sdr_analysis
 //Luminance Values
   pass PS_CalcNitsPerPixel
   {
-    VertexShader = VS_PostProcess;
+    VertexShader = VS_PostProcessWithoutTexCoord;
      PixelShader = PS_CalcNitsPerPixel;
     RenderTarget = TextureNitsValues;
   }
@@ -1338,7 +1338,7 @@ technique lilium__hdr_and_sdr_analysis
 #ifdef IS_HDR_CSP
   pass PS_CalcCsps
   {
-    VertexShader = VS_PostProcess;
+    VertexShader = VS_PostProcessWithoutTexCoord;
      PixelShader = PS_CalcCsps;
     RenderTarget = TextureCsps;
   }

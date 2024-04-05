@@ -148,7 +148,6 @@ float GetCsp(precise float3 Rgb)
 
 void PS_CalcCsps(
               float4 Position : SV_Position,
-              float2 TexCoord : TEXCOORD0,
   out precise float  CurCsp   : SV_Target0)
 {
   CurCsp = 0.f;
