@@ -10,6 +10,8 @@
 #define WAVE64_THREAD_SIZE_X 8
 #define WAVE64_THREAD_SIZE_Y 8
 
+#define WAVE64_THREAD_SIZE (WAVE64_THREAD_SIZE_X * WAVE64_THREAD_SIZE_Y)
+
 #if (BUFFER_WIDTH % WAVE64_THREAD_SIZE_X == 0)
   #define WAVE64_DISPATCH_X (BUFFER_WIDTH / WAVE64_THREAD_SIZE_X)
 #else
@@ -50,64 +52,58 @@ uniform float FRAMETIME
   source = "frametime";
 >;
 
+#if defined(IS_HDR_CSP)
 
-#if defined(IS_FLOAT_HDR_CSP)
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  17
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 5)
 
-  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 11 + 5 * 6)
+  #define NITS_NUMBERS (4 * 11)
 
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3 + 5 + NITS_AND_CSP_ENTRIES_AMOUNT)
-
-  #define   BT709_PERCENTAGE_POS 3
-  #define   DCIP3_PERCENTAGE_POS 4
-  #define  BT2020_PERCENTAGE_POS 5
-  #define     AP0_PERCENTAGE_POS 6
-  #define INVALID_PERCENTAGE_POS 7
-
-  #define NITS_NUMBERS_START_POS 8
-
-  #define CSP_PERCENTAGES_START_POS (8 + 11 * 4)
-
-#elif defined(IS_HDR10_LIKE_CSP)
-
-  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 11 + 3 * 6)
-
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3 + 3 + NITS_AND_CSP_ENTRIES_AMOUNT)
-
-  #define  BT709_PERCENTAGE_POS 3
-  #define  DCIP3_PERCENTAGE_POS 4
-  #define BT2020_PERCENTAGE_POS 5
-
-  #define NITS_NUMBERS_START_POS 6
-
-  #define CSP_PERCENTAGES_START_POS (6 + 11 * 4)
+  #define POS_MAX_NITS int2(0, 20)
+  #define POS_MIN_NITS int2(1, 20)
 
 #else
 
-  #define NITS_AND_CSP_ENTRIES_AMOUNT (4 * 9)
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  16
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 4)
 
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH (3     + NITS_AND_CSP_ENTRIES_AMOUNT)
+  #define NITS_NUMBERS (4 * 9)
 
-  #define NITS_NUMBERS_START_POS 3
+  #define POS_MAX_NITS int2(0, 19)
+  #define POS_MIN_NITS int2(1, 19)
 
 #endif
 
-#define MAX_NITS_POS 0
-#define AVG_NITS_POS 1
-#define MIN_NITS_POS 2
+#if defined(IS_FLOAT_HDR_CSP)
+
+  #define POS_BT709_PERCENTAGE   int2(2, 20)
+  #define POS_DCIP3_PERCENTAGE   int2(3, 20)
+  #define POS_BT2020_PERCENTAGE  int2(4, 20)
+  #define POS_AP0_PERCENTAGE     int2(5, 20)
+  #define POS_INVALID_PERCENTAGE int2(6, 20)
+
+#elif defined(IS_HDR10_LIKE_CSP)
+
+  #define POS_BT709_PERCENTAGE  int2(2, 20)
+  #define POS_DCIP3_PERCENTAGE  int2(3, 20)
+  #define POS_BT2020_PERCENTAGE int2(4, 20)
+
+#endif
 
 
-texture1D TextureMaxAvgMinNitsAndCspCounterAndShowNumbers
+texture2D TextureMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
   Width  = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH;
+  Height = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT;
   Format = R32U;
 };
 
-storage1D<uint> StorageMaxAvgMinNitsAndCspCounterAndShowNumbers
+storage2D<uint> StorageMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
   Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
 };
 
-sampler1D<uint> SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
+sampler2D<uint> SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
   Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
 };

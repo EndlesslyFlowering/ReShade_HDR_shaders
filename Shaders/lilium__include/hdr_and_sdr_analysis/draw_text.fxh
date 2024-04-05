@@ -123,12 +123,11 @@ uint GetNumberAboveZero(precise uint CurNumber)
 #endif
 
 groupshared float GroupNits;
-void CS_GetNumbersNits(uint  GI   : SV_GroupIndex,
-                       uint3 GID  : SV_GroupID,
+void CS_GetNumbersNits(uint3 GID  : SV_GroupID,
                        uint3 GTID : SV_GroupThreadID,
                        uint3 DTID : SV_DispatchThreadID)
 {
-  static const uint offset = NITS_NUMBERS_START_POS + GID.y * MAX_NUMBERS_NITS;
+  static const int storeYPos = GID.y + 16;
 
   if (GID.y ==  0)
   {
@@ -158,67 +157,67 @@ void CS_GetNumbersNits(uint  GI   : SV_GroupIndex,
     case 0:
     {
       precise const uint _00 = GetNumberAboveZero(_5th(GroupNits));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _00);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _00);
     }
     break;
     case 1:
     {
       precise const uint _01 = GetNumberAboveZero(_4th(GroupNits));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _01);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _01);
     }
     break;
     case 2:
     {
       precise const uint _02 = GetNumberAboveZero(_3rd(GroupNits));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _02);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _02);
     }
     break;
     case 3:
     {
       precise const uint _03 = GetNumberAboveZero(_2nd(GroupNits));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _03);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _03);
     }
     break;
     case 4:
     {
       precise const uint _04 = _1st(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _04);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _04);
     }
     break;
     case 5:
     {
       precise const uint _05 = d1st(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _05);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _05);
     }
     break;
     case 6:
     {
       precise const uint _06 = d2nd(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _06);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _06);
     }
     break;
     case 7:
     {
       precise const uint _07 = d3rd(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _07);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _07);
     }
     break;
     case 8:
     {
       precise const uint _08 = d4th(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _08);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _08);
     }
     break;
     case 9:
     {
       precise const uint _09 = d5th(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _09);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _09);
     }
     break;
     default:
     {
       precise const uint _10 = d6th(GroupNits);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _10);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _10);
     }
     break;
   }
@@ -227,12 +226,11 @@ void CS_GetNumbersNits(uint  GI   : SV_GroupIndex,
 
 #ifdef IS_HDR_CSP
 groupshared float GroupCsp;
-void CS_GetNumbersCsps(uint  GI   : SV_GroupIndex,
-                       uint3 GID  : SV_GroupID,
+void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
                        uint3 GTID : SV_GroupThreadID,
                        uint3 DTID : SV_DispatchThreadID)
 {
-  static const uint offset = CSP_PERCENTAGES_START_POS + GID.y * 6;
+  static const int2 storePosOffset = int2(11, GID.y + 16);
 
   if (GID.y == 0)
   {
@@ -268,37 +266,37 @@ void CS_GetNumbersCsps(uint  GI   : SV_GroupIndex,
     case 0:
     {
       precise const uint _00 = GetNumberAboveZero(_3rd(GroupCsp));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _00);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _00);
     }
     break;
     case 1:
     {
       precise const uint _01 = GetNumberAboveZero(_2nd(GroupCsp));
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _01);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _01);
     }
     break;
     case 2:
     {
       precise const uint _02 = _1st(GroupCsp);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _02);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _02);
     }
     break;
     case 3:
     {
       precise const uint _03 = d1st(GroupCsp);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _03);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _03);
     }
     break;
     case 4:
     {
       precise const uint _04 = d2nd(GroupCsp);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _04);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _04);
     }
     break;
     default:
     {
       precise const uint _05 = _d3rd(GroupCsp);
-      tex1Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, offset + DTID.x, _05);
+      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _05);
     }
     break;
   }
@@ -738,7 +736,29 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 {
   uint currentNumberID = VertexID / 6;
 
-  static const uint curNumber = tex1Dfetch(SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers, NITS_NUMBERS_START_POS + currentNumberID);
+  int2 fetchPos;
+
+#ifdef IS_HDR_CSP
+  [branch]
+  if (currentNumberID < NITS_NUMBERS)
+  {
+    fetchPos = int2(currentNumberID % 11, currentNumberID / 11);
+  }
+  else
+  {
+    uint currentCspNumberID = currentNumberID - NITS_NUMBERS;
+
+    fetchPos = int2(currentCspNumberID % 6, currentCspNumberID / 6);
+
+    fetchPos.x += 11;
+  }
+#else
+  fetchPos = int2(currentNumberID % 9, currentNumberID / 9);
+#endif
+
+  fetchPos.y += 16;
+
+  static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers, fetchPos);
 
   BRANCH(x)
   if (curNumber < 10)
@@ -747,7 +767,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     float2 vertexOffset;
 
-  //max/avg/min nits
+    //max/avg/min nits
     BRANCH(x)
     if (currentNumberID < (MAX_NUMBERS_NITS * 3))
     {

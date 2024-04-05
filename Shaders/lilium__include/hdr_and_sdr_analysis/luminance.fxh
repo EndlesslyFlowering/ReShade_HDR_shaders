@@ -268,7 +268,8 @@ void PS_CalcNitsPerPixel(
 groupshared uint GroupMax;
 groupshared uint GroupAvg;
 groupshared uint GroupMin;
-void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
+void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
+                         uint3 GTID : SV_GroupThreadID,
                          uint3 DTID : SV_DispatchThreadID)
 {
   if (_SHOW_NITS_VALUES
@@ -362,13 +363,13 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
     {
       const float groupAvgNits = float(GroupAvg)
                                / 1000.f
-                               / 64.f;
+                               / float(WAVE64_THREAD_SIZE);
 
       const uint groupAvgNitsUint = uint((groupAvgNits + 0.0005f) * 1000.f);
 
-      atomicMax(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, GroupMax);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, groupAvgNitsUint);
-      atomicMin(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, GroupMin);
+      atomicMax(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MAX_NITS,      GroupMax);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(GID.xy % 16), groupAvgNitsUint);
+      atomicMin(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MIN_NITS,      GroupMin);
     }
     return;
   }
@@ -378,10 +379,19 @@ void CS_GetMaxAvgMinNits(uint3 GTID : SV_GroupThreadID,
 
 void FinaliseMaxAvgMinNits()
 {
-  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MAX_NITS_POS, 0));
-  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, MIN_NITS_POS, UINT_MAX));
+  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MAX_NITS, 0));
+  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MIN_NITS, UINT_MAX));
 
-  float avgNits = float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, AVG_NITS_POS, 0)) / 1000.f;
+  float avgNits = 0;
+
+  [unroll]
+  for (int x = 0; x < 16; x++)
+  {
+    for (int y = 0; y < 16; y++)
+    {
+      avgNits += float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(x, y), 0)) / 1000.f;
+    }
+  }
 
   static const float2 dispatchWxH = BUFFER_SIZE_FLOAT
                                   / float2(GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X,

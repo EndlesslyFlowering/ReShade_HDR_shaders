@@ -29,14 +29,14 @@ void FinaliseCspCounter()
 
 #ifdef IS_HDR_CSP
 
-  precise uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, 0);
-  precise uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, 0);
-  precise uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, 0);
+  precise uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT709_PERCENTAGE,   0);
+  precise uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   0);
+  precise uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT2020_PERCENTAGE,  0);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-  precise uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, 0);
-  precise uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, 0);
+  precise uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_AP0_PERCENTAGE,     0);
+  precise uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_INVALID_PERCENTAGE, 0);
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -345,12 +345,12 @@ void CS_CountCsps(uint3 GTID : SV_GroupThreadID,
 
     if (all(GTID.xy == 0))
     {
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   BT709_PERCENTAGE_POS, GroupBt709);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,   DCIP3_PERCENTAGE_POS, GroupDciP3);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,  BT2020_PERCENTAGE_POS, GroupBt2020);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT709_PERCENTAGE,   GroupBt709);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   GroupDciP3);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT2020_PERCENTAGE,  GroupBt2020);
 #if defined(IS_FLOAT_HDR_CSP)
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers,     AP0_PERCENTAGE_POS, GroupAp0);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, INVALID_PERCENTAGE_POS, GroupInvalid);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_AP0_PERCENTAGE,     GroupAp0);
+      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_INVALID_PERCENTAGE, GroupInvalid);
 #endif
     }
   }
