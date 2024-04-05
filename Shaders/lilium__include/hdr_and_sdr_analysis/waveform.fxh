@@ -108,7 +108,7 @@ namespace Waveform
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX float2(1.f, 2.f)
 #else
-  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f.xx
+  #define WAVEFORM_SCALE_FACTOR_CLAMP_MIN 0.5f
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX 1.f.xx
 #endif
 
