@@ -103,7 +103,6 @@ uint d7th(precise const float Float)
 }
 
 
-
 uint GetNumberAboveZero(precise uint CurNumber)
 {
   if (CurNumber > 0)

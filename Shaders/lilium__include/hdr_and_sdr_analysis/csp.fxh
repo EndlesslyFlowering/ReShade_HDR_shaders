@@ -29,14 +29,14 @@ void FinaliseCspCounter()
 
 #ifdef IS_HDR_CSP
 
-  precise uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT709_PERCENTAGE,   0);
-  precise uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   0);
-  precise uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT2020_PERCENTAGE,  0);
+  uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT709_PERCENTAGE,   0);
+  uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   0);
+  uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT2020_PERCENTAGE,  0);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-  precise uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_AP0_PERCENTAGE,     0);
-  precise uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_INVALID_PERCENTAGE, 0);
+  uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_AP0_PERCENTAGE,     0);
+  uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_INVALID_PERCENTAGE, 0);
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -46,14 +46,14 @@ void FinaliseCspCounter()
   #define TIMES_100 100.f
 #endif
 
-    precise float percentageBt709   = float(counterBt709)   / PixelCountInFloat * TIMES_100;
-    precise float percentageDciP3   = float(counterDciP3)   / PixelCountInFloat * TIMES_100;
-    precise float percentageBt2020  = float(counterBt2020)  / PixelCountInFloat * TIMES_100;
+    float percentageBt709   = float(counterBt709)   / PixelCountInFloat * TIMES_100;
+    float percentageDciP3   = float(counterDciP3)   / PixelCountInFloat * TIMES_100;
+    float percentageBt2020  = float(counterBt2020)  / PixelCountInFloat * TIMES_100;
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-    precise float percentageAp0     = float(counterAp0)     / PixelCountInFloat * TIMES_100;
-    precise float percentageInvalid = float(counterInvalid) / PixelCountInFloat * TIMES_100;
+    float percentageAp0     = float(counterAp0)     / PixelCountInFloat * TIMES_100;
+    float percentageInvalid = float(counterInvalid) / PixelCountInFloat * TIMES_100;
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -73,7 +73,7 @@ void FinaliseCspCounter()
 }
 
 
-bool IsCsp(precise float3 Rgb)
+bool IsCsp(float3 Rgb)
 {
   if (all(Rgb >= 0.f))
   {
@@ -107,7 +107,7 @@ bool IsCsp(precise float3 Rgb)
 #endif
 
 
-float GetCsp(precise float3 Rgb)
+float GetCsp(float3 Rgb)
 {
   if (IsCsp(_IS_CSP_BT709(Rgb)))
   {
@@ -147,8 +147,8 @@ float GetCsp(precise float3 Rgb)
 
 
 void PS_CalcCsps(
-              float4 Position : SV_Position,
-  out precise float  CurCsp   : SV_Target0)
+      float4 Position : SV_Position,
+  out float  CurCsp   : SV_Target0)
 {
   CurCsp = 0.f;
 
@@ -156,7 +156,7 @@ void PS_CalcCsps(
    || SHOW_CSP_FROM_CURSOR
    || SHOW_CSP_MAP)
   {
-    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
+    const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
 
 #if defined(IS_FLOAT_HDR_CSP)
 
@@ -192,9 +192,9 @@ void PS_CalcCsps(
      && pixel.b > SMALLEST_UINT10)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      precise const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+      const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-      precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
+      const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
       CurCsp = GetCsp(curPixel);
     }
@@ -207,9 +207,9 @@ void PS_CalcCsps(
 #else
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    precise const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+    const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-    precise const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
+    const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
     CurCsp = GetCsp(curPixel);
 

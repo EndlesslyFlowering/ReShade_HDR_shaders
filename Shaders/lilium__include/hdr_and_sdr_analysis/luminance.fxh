@@ -178,8 +178,8 @@ float3 WaveformRgbValues(
 
 
 void PS_CalcNitsPerPixel(
-              float4 Position : SV_Position,
-  out precise float  CurNits  : SV_Target0)
+      float4 Position : SV_Position,
+  out float  CurNits  : SV_Target0)
 {
   CurNits = 0.f;
 
@@ -196,27 +196,27 @@ void PS_CalcNitsPerPixel(
   )
   {
 
-    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
+    const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    precise float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
+    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    precise float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    precise float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    precise float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-    precise float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], DECODE_SDR(pixel)) * 100.f;
+    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], DECODE_SDR(pixel)) * 100.f;
 
 #else
 
