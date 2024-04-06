@@ -79,6 +79,7 @@ uniform float2 NIT_PINGPONG2
   #define _SHOW_NITS_VALUES                       SDR_SHOW_NITS_VALUES
   #define _SHOW_NITS_FROM_CURSOR                  SDR_SHOW_NITS_FROM_CURSOR
   #define _SHOW_CIE                               SDR_SHOW_CIE
+  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
   #define _CIE_DIAGRAM_TYPE                       SDR_CIE_DIAGRAM_TYPE
   #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      SDR_CIE_DIAGRAM_ALPHA
@@ -114,6 +115,7 @@ uniform float2 NIT_PINGPONG2
   #define _SHOW_NITS_VALUES                       SHOW_NITS_VALUES
   #define _SHOW_NITS_FROM_CURSOR                  SHOW_NITS_FROM_CURSOR
   #define _SHOW_CIE                               SHOW_CIE
+  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SHOW_CROSSHAIR_ON_CIE_DIAGRAM
   #define _CIE_DIAGRAM_TYPE                       CIE_DIAGRAM_TYPE
   #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      CIE_DIAGRAM_ALPHA
@@ -306,6 +308,13 @@ uniform bool _SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
+> = true;
+
+uniform bool _SHOW_CROSSHAIR_ON_CIE_DIAGRAM
+<
+  ui_category = "CIE diagram visualisation";
+  ui_label    = "show crosshair of cursor gamut on CIE diagram";
+  ui_tooltip  = "it disappears when the colour is 100% black!";
 > = true;
 
 #define CIE_1931 0
@@ -1161,86 +1170,17 @@ void PS_HdrAnalysis(
       float2 cieSamplerCoords = float2(Position.x,
                                        Position.y - CieDiagramTextureActiveSize.y);
 
-      float2 bgSamplerCoords = float2(Position.x + CieDiagramTextureActiveSize.x,
-                                      cieSamplerCoords.y + CieDiagramSizes1.x);
-
       cieSamplerCoords /= CieDiagramTextureDisplaySize;
 
-      bgSamplerCoords /= CieDiagramSizes1.yz;
-
-      float3 cieColour = tex2D(SamplerCieCurrent, cieSamplerCoords).rgb;
-
-      float3 bgColour = tex2D(SamplerCieConsolidated, bgSamplerCoords).rgb;
+      float4 cieColour = tex2D(SamplerCieFinal, cieSamplerCoords);
 
       // using gamma 2 as intermediate gamma space
-      cieColour *= cieColour;
-      bgColour  *= bgColour;
+      cieColour.rgb *= cieColour.rgb;
 
-      cieColour += bgColour;
-
-      if (_SHOW_CIE_CSP_BT709_OUTLINE)
-      {
-        float2 bt709OutlineSamplerCoords = float2(Position.x + (2.f * CieDiagramTextureActiveSize.x),
-                                                  bgSamplerCoords.y);
-
-        bt709OutlineSamplerCoords.x /= CieDiagramSizes1.y;
-
-        float3 bt709OutlineColour = tex2D(SamplerCieConsolidated, bt709OutlineSamplerCoords).rgb;
-
-        bt709OutlineColour *= bt709OutlineColour;
-
-        cieColour += bt709OutlineColour;
-      }
-#ifdef IS_HDR_CSP
-      if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
-      {
-        float2 dciP3OutlineSamplerCoords = float2(Position.x + (3.f * CieDiagramTextureActiveSize.x),
-                                                  bgSamplerCoords.y);
-
-        dciP3OutlineSamplerCoords.x /= CieDiagramSizes1.y;
-
-        float3 dciP3OutlineColour = tex2D(SamplerCieConsolidated, dciP3OutlineSamplerCoords).rgb;
-
-        dciP3OutlineColour *= dciP3OutlineColour;
-
-        cieColour += dciP3OutlineColour;
-      }
-      if (SHOW_CIE_CSP_BT2020_OUTLINE)
-      {
-        float2 bt2020OutlineSamplerCoords = float2(Position.x + (4.f * CieDiagramTextureActiveSize.x),
-                                                   bgSamplerCoords.y);
-
-        bt2020OutlineSamplerCoords.x /= CieDiagramSizes1.y;
-
-        float3 bt2020OutlineColour = tex2D(SamplerCieConsolidated, bt2020OutlineSamplerCoords).rgb;
-
-        bt2020OutlineColour *= bt2020OutlineColour;
-
-        cieColour += bt2020OutlineColour;
-      }
-#ifdef IS_FLOAT_HDR_CSP
-      if (SHOW_CIE_CSP_AP0_OUTLINE)
-      {
-        float2 ap0OutlineSamplerCoords = float2(Position.x + (5.f * CieDiagramTextureActiveSize.x),
-                                                bgSamplerCoords.y);
-
-        ap0OutlineSamplerCoords.x /= CieDiagramSizes1.y;
-
-        float3 ap0OutlineColour = tex2D(SamplerCieConsolidated, ap0OutlineSamplerCoords).rgb;
-
-        ap0OutlineColour *= ap0OutlineColour;
-
-        cieColour += ap0OutlineColour;
-      }
-#endif //IS_FLOAT_HDR_CSP
-#endif //IS_HDR_CSP
-
-      cieColour = min(cieColour, 1.f);
-
-      float alpha = min(ceil(MAXRGB(cieColour)) + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+      float alpha = min(cieColour.a + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
 
       Output.rgb = MergeOverlay(Output.rgb,
-                                cieColour,
+                                cieColour.rgb,
                                 _CIE_DIAGRAM_BRIGHTNESS,
                                 alpha);
     }
@@ -1380,15 +1320,17 @@ technique lilium__hdr_and_sdr_analysis
     VertexCount        = 1;
   }
 
+
 //CIE
   pass PS_ClearCieCurrentTexture
   {
     VertexShader       = VS_Clear;
      PixelShader       = PS_Clear;
-    RenderTarget       = TextureCieCurrent;
+    RenderTarget       = TextureCieIntermediate;
     ClearRenderTargets = true;
     VertexCount        = 1;
   }
+
 
 //Waveform and CIE
   pass CS_RenderLuminanceWaveformAndGenerateCieDiagram
@@ -1398,6 +1340,21 @@ technique lilium__hdr_and_sdr_analysis
     DispatchSizeY = WAVE64_DISPATCH_Y;
   }
 
+  pass PS_DrawCieGamutOutlines
+  {
+    VertexShader = VS_PostProcessWithoutTexCoord;
+     PixelShader = PS_DrawCieGamutOutlines;
+    RenderTarget = TextureCieFinal;
+  }
+
+  pass CS_RenderCrosshairToCieDiagram
+  {
+    ComputeShader = CS_RenderCrosshairToCieDiagram <14, 11>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+
+
 //Waveform
   pass PS_RenderLuminanceWaveformToScale
   {
@@ -1406,6 +1363,8 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget = TextureLuminanceWaveformFinal;
   }
 
+
+//get numbers for text drawing
   pass CS_GetNumbersNits
   {
     ComputeShader = CS_GetNumbersNits<1, 1>;
@@ -1425,6 +1384,7 @@ technique lilium__hdr_and_sdr_analysis
 #endif
   }
 #endif
+
 
   pass PS_HdrAnalysis
   {

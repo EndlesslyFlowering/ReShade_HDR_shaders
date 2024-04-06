@@ -452,38 +452,13 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
 
     const int2 fetchPos = int2(fetchPosX, fetchPosY);
 
-    precise const float3 pixel = tex2Dfetch(SamplerBackBuffer, fetchPos).rgb;
+    const float3 pixel = tex2Dfetch(SamplerBackBuffer, fetchPos).rgb;
 
     // get XYZ
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    const float3 XYZ = GetXYZFromRgb(pixel);
 
-    precise const float3 XYZ = Csp::Mat::Bt709To::XYZ(pixel);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::PqTo::Linear(pixel));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(pixel));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-
-    precise const float3 XYZ = Csp::Mat::Bt2020To::XYZ(pixel);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-    precise const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(pixel));
-
-#else
-
-    precise const float3 XYZ = float3(0.f, 0.f, 0.f);
-
-#endif
-
-//ignore negative luminance and luminance being 0
-
-    BRANCH(x)
+    //ignore negative luminance and luminance being 0
+    [branch]
     if (XYZ.y <= 0.f)
     {
       return;
