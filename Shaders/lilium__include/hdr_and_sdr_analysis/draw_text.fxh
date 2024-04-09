@@ -770,7 +770,6 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
     BRANCH(x)
     if (currentNumberID < (MAX_NUMBERS_NITS * 3))
     {
-      BRANCH(x)
       if (_SHOW_NITS_VALUES)
       {
 
@@ -795,7 +794,6 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
     //cursor nits
     else if (currentNumberID < (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1))
     {
-      BRANCH(x)
       if (_SHOW_NITS_FROM_CURSOR)
       {
         currentNumberID -= (MAX_NUMBERS_NITS * 3);
@@ -829,7 +827,6 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 #endif
     //gamut percentages
     {
-      BRANCH(x)
       if (SHOW_CSPS)
       {
         currentNumberID -= (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1);
