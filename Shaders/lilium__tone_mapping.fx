@@ -10,7 +10,7 @@
 #endif
 
 
-#if (defined(IS_HDR_COMPATIBLE_API) \
+#if (defined(IS_COMPUTE_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
 #if 0

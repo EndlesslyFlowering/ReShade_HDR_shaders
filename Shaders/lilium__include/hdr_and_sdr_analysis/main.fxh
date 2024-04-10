@@ -1,8 +1,3 @@
-#pragma once
-
-
-#if defined(IS_HDR_COMPATIBLE_API)
-
 
 #include "../draw_font.fxh"
 
@@ -52,12 +47,23 @@ uniform float FRAMETIME
   source = "frametime";
 >;
 
+
+#if defined(IS_HDR_CSP)
+
+  #define NITS_NUMBERS (4 * 11)
+
+#else
+
+  #define NITS_NUMBERS (4 * 9)
+
+#endif
+
+#ifdef IS_COMPUTE_CAPABLE_API
+
 #if defined(IS_HDR_CSP)
 
   #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  17
   #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 5)
-
-  #define NITS_NUMBERS (4 * 11)
 
   #define POS_MAX_NITS int2(0, 20)
   #define POS_MIN_NITS int2(1, 20)
@@ -67,12 +73,42 @@ uniform float FRAMETIME
   #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  16
   #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 4)
 
-  #define NITS_NUMBERS (4 * 9)
-
   #define POS_MAX_NITS int2(0, 19)
   #define POS_MIN_NITS int2(1, 19)
 
 #endif
+
+#else //IS_COMPUTE_CAPABLE_API
+
+#define NITS_HEIGHT 4
+
+#if defined(IS_HDR_CSP)
+
+  #define NITS_WIDTH 11
+
+  #define CSPS_Y_OFFSET NITS_HEIGHT
+
+  #define CSPS_WIDTH 6
+
+#ifdef IS_FLOAT_HDR_CSP
+  #define CSPS_NUMBERS 5
+#else
+  #define CSPS_NUMBERS 3
+#endif
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  NITS_WIDTH
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (NITS_HEIGHT + CSPS_NUMBERS)
+
+#else
+
+  #define NITS_WIDTH 9
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  NITS_WIDTH
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT NITS_HEIGHT
+
+#endif
+
+#endif //IS_COMPUTE_CAPABLE_API
 
 #if defined(IS_FLOAT_HDR_CSP)
 
@@ -95,18 +131,30 @@ texture2D TextureMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
   Width  = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH;
   Height = TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT;
+#ifdef IS_COMPUTE_CAPABLE_API
   Format = R32U;
+#else
+  Format = R8;
+#endif
 };
 
+sampler2D
+#ifdef IS_COMPUTE_CAPABLE_API
+         <uint>
+#else
+         <float>
+#endif
+                 SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
+{
+  Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+};
+
+#ifdef IS_COMPUTE_CAPABLE_API
 storage2D<uint> StorageMaxAvgMinNitsAndCspCounterAndShowNumbers
 {
   Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
 };
-
-sampler2D<uint> SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
-{
-  Texture = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
-};
+#endif //IS_COMPUTE_CAPABLE_API
 
 
 #define SHOW_NITS_VALUES_LINE_COUNT      3
@@ -133,64 +181,19 @@ sampler2D<uint> SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers
 #endif //IS_HDR10_LIKE_CSP
 
 
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = BUFFER_WIDTH_FLOAT
-                                                                   / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
-
-static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (BUFFER_WIDTH_FLOAT  / 3840.f
-                                                             + BUFFER_HEIGHT_FLOAT / 2160.f)
-                                                            / 2.f;
-
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f;
-
-//static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
-//  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
-
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
-                                                         + (CHAR_DIM_FLOAT.x * 8) //8 chars for 10000.00
-                                                         + uint(CHAR_DIM_FLOAT.x / 2.f + 0.5f)
-                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
-                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
-
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-  #define MAX_WAVEFORM_HEIGHT_FACTOR 2
-#else
-  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
-#endif
-
-static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
-                                                          + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
-                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
-
-
-texture2D TextureLuminanceWaveformScale
-<
-  pooled = true;
->
-{
-  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
-  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
-  Format = RG8;
-};
-
-sampler2D<float4> SamplerLuminanceWaveformScale
-{
-  Texture = TextureLuminanceWaveformScale;
-};
-
-storage2D<float4> StorageLuminanceWaveformScale
-{
-  Texture = TextureLuminanceWaveformScale;
-};
-
-
 // consolidated texture start
+
+
+// update Nits values and CSP percentages for the overlay
+#define UPDATE_OVERLAY_PERCENTAGES_COUNT 1
+#define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET 0
+#define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 0
+static const int COORDS_UPDATE_OVERLAY_PERCENTAGES = int(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET);
+
 
 // max, avg and min Nits
 #define MAX_AVG_MIN_NITS_VALUES_COUNT 3
-#define MAX_AVG_MIN_NITS_VALUES_X_OFFSET 0
+#define MAX_AVG_MIN_NITS_VALUES_X_OFFSET (UPDATE_OVERLAY_PERCENTAGES_COUNT + UPDATE_OVERLAY_PERCENTAGES_X_OFFSET)
 #define MAX_AVG_MIN_NITS_VALUES_Y_OFFSET 0
 static const int COORDS_MAX_NITS_VALUE = int(    MAX_AVG_MIN_NITS_VALUES_X_OFFSET);
 static const int COORDS_AVG_NITS_VALUE = int(1 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET);
@@ -222,7 +225,11 @@ static const int COORDS_PERCENTAGE_INVALID = int(4 + CSP_PERCENTAGES_X_OFFSET);
 #else
   #define SHOW_VALUES_COUNT 3
 #endif
-#define SHOW_VALUES_X_OFFSET (CSP_PERCENTAGES_COUNT + CSP_PERCENTAGES_X_OFFSET)
+#if defined(IS_COMPUTE_CAPABLE_API)
+  #define SHOW_VALUES_X_OFFSET (CSP_PERCENTAGES_COUNT + CSP_PERCENTAGES_X_OFFSET)
+#else
+  #define SHOW_VALUES_X_OFFSET 1
+#endif
 #define SHOW_VALUES_Y_OFFSET 0
 static const int COORDS_SHOW_MAX_NITS           = int(    SHOW_VALUES_X_OFFSET);
 static const int COORDS_SHOW_AVG_NITS           = int(1 + SHOW_VALUES_X_OFFSET);
@@ -234,56 +241,126 @@ static const int COORDS_SHOW_PERCENTAGE_AP0     = int(6 + SHOW_VALUES_X_OFFSET);
 static const int COORDS_SHOW_PERCENTAGE_INVALID = int(7 + SHOW_VALUES_X_OFFSET);
 
 
-// offsets for overlay text blocks
-#define OVERLAY_TEXT_Y_OFFSETS_COUNT 3
-#define OVERLAY_TEXT_Y_OFFSETS_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
-#define OVERLAY_TEXT_Y_OFFSETS_Y_OFFSET 0
-static const int COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_NITS = int(    OVERLAY_TEXT_Y_OFFSETS_X_OFFSET);
-static const int COORDS_OVERLAY_TEXT_Y_OFFSET_CSPS        = int(1 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET);
-static const int COORDS_OVERLAY_TEXT_Y_OFFSET_CURSOR_CSP  = int(2 + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET);
-
-
-// update Nits values and CSP percentages for the overlay
-#define UPDATE_OVERLAY_PERCENTAGES_COUNT 1
-#define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET (OVERLAY_TEXT_Y_OFFSETS_COUNT + OVERLAY_TEXT_Y_OFFSETS_X_OFFSET)
-#define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 0
-static const int COORDS_UPDATE_OVERLAY_PERCENTAGES = int(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET);
-
-
+#ifdef IS_COMPUTE_CAPABLE_API
 // luminance waveform variables
 #define LUMINANCE_WAVEFORM_VARIABLES_COUNT 3
-#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET (UPDATE_OVERLAY_PERCENTAGES_COUNT + UPDATE_OVERLAY_PERCENTAGES_X_OFFSET)
+#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
 #define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 0
 static const int COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X       = int(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
 static const int COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y       = int(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
 static const int COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT = int(2 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
+#endif
 
 
-#define CONSOLIDATED_TEXTURE_SIZE_WIDTH  (LUMINANCE_WAVEFORM_VARIABLES_COUNT + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
-#define CONSOLIDATED_TEXTURE_SIZE_HEIGHT 0
+#ifdef IS_COMPUTE_CAPABLE_API
+  #define CONSOLIDATED_TEXTURE_WIDTH (LUMINANCE_WAVEFORM_VARIABLES_COUNT + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
+#else
+  #define CONSOLIDATED_TEXTURE_WIDTH (CSP_PERCENTAGES_COUNT + CSP_PERCENTAGES_X_OFFSET)
+#endif
+
+#define CONSOLIDATED_TEXTURE_HEIGHT 1
 
 
-texture1D TextureConsolidated
+#ifdef IS_COMPUTE_CAPABLE_API
+texture1D
+#else
+texture2D
+#endif
+          TextureConsolidated
 <
   pooled = true;
 >
 {
-  Width  = CONSOLIDATED_TEXTURE_SIZE_WIDTH;
-//  Height = CONSOLIDATED_TEXTURE_SIZE_HEIGHT;
+  Width  = CONSOLIDATED_TEXTURE_WIDTH;
+#ifndef IS_COMPUTE_CAPABLE_API
+  Height = CONSOLIDATED_TEXTURE_HEIGHT;
+#endif
   Format = R32F;
 };
 
-sampler1D<float> SamplerConsolidated
+#ifdef IS_COMPUTE_CAPABLE_API
+sampler1D
+#else
+sampler2D
+#endif
+         <float> SamplerConsolidated
 {
   Texture = TextureConsolidated;
 };
 
+#ifdef IS_COMPUTE_CAPABLE_API
 storage1D<float> StorageConsolidated
 {
   Texture = TextureConsolidated;
 };
+#endif
+
 
 // consolidated texture end
+
+
+#ifndef IS_COMPUTE_CAPABLE_API
+
+texture2D TextureTransfer
+<
+  pooled = true;
+>
+{
+  Width  = 9;
+  Height = 1;
+  Format = R32F;
+};
+
+sampler2D<float> SamplerTransfer
+{
+  Texture = TextureTransfer;
+};
+
+#define TEXTURE_INTERMEDIATE_WIDTH  8
+#define TEXTURE_INTERMEDIATE_HEIGHT 8
+
+texture2D TextureIntermediate
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_INTERMEDIATE_WIDTH;
+  Height = TEXTURE_INTERMEDIATE_HEIGHT;
+  Format = RGBA32F;
+};
+
+sampler2D<float4> SamplerIntermediate
+{
+  Texture = TextureIntermediate;
+};
+
+
+float GetPositonXCoordFromRegularXCoord(const float RegularXCoord)
+{
+  float positionXCoord = RegularXCoord / CONSOLIDATED_TEXTURE_WIDTH * 2;
+
+  return positionXCoord - 1.f;
+}
+
+
+#define INTERMEDIATE_X_0 (BUFFER_WIDTH / TEXTURE_INTERMEDIATE_WIDTH)
+#define INTERMEDIATE_X_1 (BUFFER_WIDTH - INTERMEDIATE_X_0 * (TEXTURE_INTERMEDIATE_WIDTH - 1))
+
+static const int INTERMEDIATE_X[2] =
+{
+  INTERMEDIATE_X_0,
+  INTERMEDIATE_X_1
+};
+
+#define INTERMEDIATE_Y_0 (BUFFER_HEIGHT / TEXTURE_INTERMEDIATE_HEIGHT)
+#define INTERMEDIATE_Y_1 (BUFFER_HEIGHT - INTERMEDIATE_Y_0 * (TEXTURE_INTERMEDIATE_HEIGHT - 1))
+
+static const int INTERMEDIATE_Y[2] =
+{
+  INTERMEDIATE_Y_0,
+  INTERMEDIATE_Y_1
+};
+#endif //!IS_COMPUTE_CAPABLE_API
 
 
 void VS_Clear(
@@ -394,8 +471,10 @@ float3 MergeOverlay(
 #ifdef IS_HDR_CSP
   #include "csp.fxh"
 #endif
+#ifdef IS_COMPUTE_CAPABLE_API
 #include "cie.fxh"
 #include "waveform.fxh"
+#endif
 #include "draw_text.fxh"
 #include "active_area.fxh"
 
@@ -431,6 +510,8 @@ float3 MapBt709IntoCurrentCsp(
 #endif
 }
 
+
+#ifdef IS_COMPUTE_CAPABLE_API
 
 void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
 {
@@ -553,4 +634,109 @@ void CS_Finalise()
   return;
 }
 
-#endif //is hdr API and hdr colour space
+#else //IS_COMPUTE_CAPABLE_API
+
+void VS_Transfer(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  Position = float4(-0.99f, 0.f, 0.f, 1.f);
+}
+
+void PS_Transfer(
+  in  float4 Position : SV_Position,
+  out float  Transfer : SV_Target0)
+{
+  Transfer = tex2Dfetch(SamplerConsolidated, int2(COORDS_UPDATE_OVERLAY_PERCENTAGES, 0));
+}
+
+void VS_PrepareFinalise(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  static const float positions[2] =
+  {
+    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_MAX_NITS),
+#if defined(IS_FLOAT_HDR_CSP)
+    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_PERCENTAGE_INVALID + 1)
+#elif defined(IS_HDR10_LIKE_CSP)
+    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_PERCENTAGE_BT2020 + 1)
+#else
+    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_MIN_NITS + 1)
+#endif
+  };
+
+  Position = float4(positions[VertexID], 0.f, 0.f, 1.f);
+
+  return;
+}
+
+void PS_Finalise(
+  in  float4 Position : SV_Position,
+  out float4 Output   : SV_Target0)
+{
+  float frametimeCounter = tex2Dfetch(SamplerConsolidated, int2(COORDS_UPDATE_OVERLAY_PERCENTAGES, 0));
+
+  // only update every 1/2 of a second
+  [branch]
+  if (frametimeCounter >= _VALUES_UPDATE_RATE)
+  {
+    const uint id = uint(Position.x);
+
+#ifdef IS_FLOAT_HDR_CSP
+    [branch]
+    if (id != COORDS_SHOW_PERCENTAGE_INVALID)
+    {
+#endif
+      Output = float4(tex2Dfetch(SamplerConsolidated, int2(id, 0)), 0.f, 0.f, 0.f);
+#ifdef IS_FLOAT_HDR_CSP
+    }
+    else
+    {
+      const float percentageBt709  = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_BT709,  0));
+      const float percentageDciP3  = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_DCI_P3, 0));
+      const float percentageBt2020 = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_BT2020, 0));
+      const float percentageAp0    = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_AP0,    0));
+
+      const float percentageInvalid = TIMES_100 - (percentageBt709
+                                                 + percentageDciP3
+                                                 + percentageBt2020
+                                                 + percentageAp0);
+
+      Output = float4(percentageInvalid, 0.f, 0.f, 0.f);
+    }
+#endif
+
+    return;
+  }
+  else
+  {
+    discard;
+  }
+}
+
+void VS_Transfer2(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  Position = float4(-0.99f, 0.f, 0.f, 1.f);
+}
+
+void PS_Transfer2(
+  in  float4 Position : SV_Position,
+  out float  Transfer : SV_Target0)
+{
+  float frametimeCounter = tex2Dfetch(SamplerTransfer, int2(0, 0));
+
+  [branch]
+  if (frametimeCounter >= _VALUES_UPDATE_RATE)
+  {
+    Transfer = 0.f;
+  }
+  else
+  {
+    Transfer = frametimeCounter + FRAMETIME;
+  }
+}
+
+#endif //IS_COMPUTE_CAPABLE_API

@@ -1,11 +1,64 @@
 #pragma once
 
 
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_WIDTH_FACTOR  = BUFFER_WIDTH_FLOAT
+                                                                   / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH);
+
+static const float TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR = (BUFFER_WIDTH_FLOAT  / 3840.f
+                                                             + BUFFER_HEIGHT_FLOAT / 2160.f)
+                                                            / 2.f;
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 35.f + 0.5f;
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  = TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR *  7.f + 0.5f;
+
+//static const uint TEXTURE_LUMINANCE_WAVEFORM_FONT_SIZE =
+//  clamp(uint(round(TEXTURE_LUMINANCE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH = TEXTURE_LUMINANCE_WAVEFORM_WIDTH
+                                                         + (CHAR_DIM_FLOAT.x * 8) //8 chars for 10000.00
+                                                         + uint(CHAR_DIM_FLOAT.x / 2.f + 0.5f)
+                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                         + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 3);
+
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 2
+#else
+  #define MAX_WAVEFORM_HEIGHT_FACTOR 1
+#endif
+
+static const uint TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
+                                                          + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME + 0.5f)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_BORDER * 2)
+                                                          + (TEXTURE_LUMINANCE_WAVEFORM_SCALE_FRAME  * 2);
+
 static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH - 1.f)
                                                              / float(TEXTURE_LUMINANCE_WAVEFORM_WIDTH  - 1);
 
 static const float TEXTURE_LUMINANCE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT - 1.f)
                                                              / float(TEXTURE_LUMINANCE_WAVEFORM_HEIGHT  - 1);
+
+
+texture2D TextureLuminanceWaveformScale
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_LUMINANCE_WAVEFORM_SCALE_WIDTH;
+  Height = TEXTURE_LUMINANCE_WAVEFORM_SCALE_HEIGHT;
+  Format = RG8;
+};
+
+sampler2D<float4> SamplerLuminanceWaveformScale
+{
+  Texture = TextureLuminanceWaveformScale;
+};
+
+storage2D<float4> StorageLuminanceWaveformScale
+{
+  Texture = TextureLuminanceWaveformScale;
+};
+
 
 texture2D TextureLuminanceWaveform
 <
@@ -27,6 +80,7 @@ storage2D<float4> StorageLuminanceWaveform
 {
   Texture = TextureLuminanceWaveform;
 };
+
 
 texture2D TextureLuminanceWaveformFinal
 <

@@ -3,7 +3,7 @@
 #include "colour_space.fxh"
 
 
-#if (defined(IS_HDR_COMPATIBLE_API) \
+#if (defined(IS_COMPUTE_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
 // normalise so that 10000 = 1

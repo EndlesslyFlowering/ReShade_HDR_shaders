@@ -7,6 +7,7 @@
 
 
 #ifdef IS_HDR_CSP
+
 texture2D TextureCsps
 <
   pooled = true;
@@ -24,10 +25,16 @@ sampler2D<float> SamplerCsps
 };
 
 
+#if (__VENDOR__ == 0x1002)
+  #define TIMES_100 100.0001f
+#else
+  #define TIMES_100 100.f
+#endif
+
 void FinaliseCspCounter()
 {
 
-#ifdef IS_HDR_CSP
+#if defined(IS_COMPUTE_CAPABLE_API)
 
   uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_BT709_PERCENTAGE,   0);
   uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   0);
@@ -39,12 +46,6 @@ void FinaliseCspCounter()
   uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_INVALID_PERCENTAGE, 0);
 
 #endif //IS_FLOAT_HDR_CSP
-
-#if (__VENDOR__ == 0x1002)
-  #define TIMES_100 100.0001f
-#else
-  #define TIMES_100 100.f
-#endif
 
     float percentageBt709   = float(counterBt709)   / PixelCountInFloat * TIMES_100;
     float percentageDciP3   = float(counterDciP3)   / PixelCountInFloat * TIMES_100;
@@ -67,7 +68,7 @@ void FinaliseCspCounter()
   tex1Dstore(StorageConsolidated, COORDS_PERCENTAGE_INVALID, percentageInvalid);
 
 #endif //IS_FLOAT_HDR_CSP
-#endif //IS_HDR_CSP
+#endif //IS_COMPUTE_CAPABLE_API
 
   return;
 }
@@ -229,6 +230,8 @@ void PS_CalcCsps(
 }
 
 
+#ifdef IS_COMPUTE_CAPABLE_API
+
 #if (BUFFER_WIDTH  % WAVE_SIZE_6_X == 0  \
   && BUFFER_HEIGHT % WAVE_SIZE_6_Y == 0)
   #define CSP_COUNTER_THREAD 6
@@ -355,6 +358,98 @@ void CS_CountCsps(uint3 GTID : SV_GroupThreadID,
   }
 }
 
+#else //IS_COMPUTE_CAPABLE_API
+
+void PS_CountCsps(
+  in  float4 Position : SV_Position,
+  out float4 Output   : SV_Target0)
+{
+  const uint2 id = uint2(Position.xy);
+
+  const uint2 arrayId = id - 2;
+
+#ifdef IS_FLOAT_HDR_CSP
+  uint cspCounter[5] = {0, 0, 0, 0, 0};
+#else
+  uint cspCounter[3] = {0, 0, 0};
+#endif
+
+  [loop]
+  for (int x = 0; x < INTERMEDIATE_X[arrayId.x]; x++)
+  {
+    [loop]
+    for (int y = 0; y < INTERMEDIATE_Y[arrayId.y]; y++)
+    {
+      int2 xy = int2(x + INTERMEDIATE_X_0 * id.x,
+                     y + INTERMEDIATE_Y_0 * id.y);
+
+      uint curCsp = uint(tex2Dfetch(SamplerCsps, xy) * 255.f);
+
+      cspCounter[curCsp]++;
+    }
+  }
+
+#ifdef IS_FLOAT_HDR_CSP
+
+  Output = float4(float(cspCounter[0]),
+                  float(cspCounter[1]),
+                  float(cspCounter[2]),
+                  float(cspCounter[3]));
+
+#else
+
+  Output = float4(float(cspCounter[0]),
+                  float(cspCounter[1]),
+                  float(cspCounter[2]),
+                  1.f);
+
+#endif
+}
+
+
+void VS_PrepareFinaliseCountCsps(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  static const float positions[2] =
+  {
+    GetPositonXCoordFromRegularXCoord(COORDS_PERCENTAGE_BT709),
+#ifdef IS_FLOAT_HDR_CSP
+    GetPositonXCoordFromRegularXCoord(COORDS_PERCENTAGE_AP0 + 1)
+#else
+    GetPositonXCoordFromRegularXCoord(COORDS_PERCENTAGE_BT2020 + 1)
+#endif
+  };
+
+  Position = float4(positions[VertexID], 0.f, 0.f, 1.f);
+
+  return;
+}
+
+void PS_FinaliseCountCsps(
+  in  float4 Position : SV_Position,
+  out float  Output   : SV_Target0)
+{
+  const uint id = uint(Position.x - COORDS_PERCENTAGE_BT709);
+
+  uint cspCounter = 0;
+
+  [loop]
+  for (int x = 0; x < TEXTURE_INTERMEDIATE_WIDTH; x++)
+  {
+    [loop]
+    for (int y = 0; y < TEXTURE_INTERMEDIATE_HEIGHT; y++)
+    {
+      uint4 curCsps = tex2Dfetch(SamplerIntermediate, int2(x, y));
+
+      cspCounter += curCsps[id];
+    }
+  }
+
+  Output = float(cspCounter) / PixelCountInFloat * TIMES_100;
+}
+
+#endif //IS_COMPUTE_CAPABLE_API
 
 float3 CreateCspMap(
   uint  Csp,
@@ -431,4 +526,5 @@ float3 CreateCspMap(
     return output;
   }
 }
+
 #endif //IS_HDR_CSP

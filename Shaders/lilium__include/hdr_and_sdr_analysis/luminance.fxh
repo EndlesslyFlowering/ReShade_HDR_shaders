@@ -164,6 +164,7 @@ float3 HeatmapRgbValues(
 }
 
 
+#ifdef IS_COMPUTE_CAPABLE_API
 // calls HeatmapRgbValues with predefined parameters
 float3 WaveformRgbValues(
   const float Y)
@@ -175,6 +176,7 @@ float3 WaveformRgbValues(
   return HeatmapRgbValues(Y, true);
 #endif
 }
+#endif
 
 
 void PS_CalcNitsPerPixel(
@@ -186,7 +188,9 @@ void PS_CalcNitsPerPixel(
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR
    || _SHOW_HEATMAP
+#ifdef IS_COMPUTE_CAPABLE_API
    || _SHOW_LUMINANCE_WAVEFORM
+#endif
    || _HIGHLIGHT_NIT_RANGE
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK
@@ -234,6 +238,8 @@ void PS_CalcNitsPerPixel(
   discard;
 }
 
+
+#ifdef IS_COMPUTE_CAPABLE_API
 
 #if (BUFFER_WIDTH  % WAVE_SIZE_6_X == 0  \
   && BUFFER_HEIGHT % WAVE_SIZE_6_Y == 0)
@@ -407,3 +413,90 @@ void FinaliseMaxAvgMinNits()
 
   return;
 }
+
+#else //IS_COMPUTE_CAPABLE_API
+
+void PS_GetMaxAvgMinNits(
+  in  float4 Position : SV_Position,
+  out float4 Output   : SV_Target0)
+{
+  const uint2 id = uint2(Position.xy);
+
+  const uint2 arrayId = max(id - 2, 0);
+
+  float maxNits = 0.f;
+  float avgNits = 0.f;
+  float minNits = FP32_MAX;
+
+  const int intermediateXStop = INTERMEDIATE_X[arrayId.x];
+  const int intermediateYStop = INTERMEDIATE_Y[arrayId.y];
+
+  [loop]
+  for (int x = 0; x < intermediateXStop; x++)
+  {
+    [loop]
+    for (int y = 0; y < intermediateYStop; y++)
+    {
+      int2 xy = int2(x + INTERMEDIATE_X_0 * id.x,
+                     y + INTERMEDIATE_Y_0 * id.y);
+
+      const float curNits = tex2Dfetch(SamplerNitsValues, xy);
+
+      maxNits  = max(curNits, maxNits);
+      avgNits += curNits;
+      minNits  = min(curNits, minNits);
+    }
+  }
+
+  avgNits /= float(intermediateXStop * intermediateYStop);
+
+  Output = float4(maxNits,
+                  avgNits,
+                  minNits,
+                  1.f);
+}
+
+
+void VS_PrepareFinaliseGetMaxAvgMinNits(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  static const float positions[2] =
+  {
+    GetPositonXCoordFromRegularXCoord(COORDS_MAX_NITS_VALUE),
+    GetPositonXCoordFromRegularXCoord(COORDS_MIN_NITS_VALUE + 1)
+  };
+
+  Position = float4(positions[VertexID], 0.f, 0.f, 1.f);
+
+  return;
+}
+
+void PS_FinaliseGetMaxAvgMinNits(
+  in  float4 Position : SV_Position,
+  out float  Output   : SV_Target0)
+{
+  const uint id = uint(Position.x - COORDS_MAX_NITS_VALUE);
+
+  float3 maxAvgMinNits = float3(0.f, 0.f, FP32_MAX);
+
+  [loop]
+  for (int x = 0; x < TEXTURE_INTERMEDIATE_WIDTH; x++)
+  {
+    [loop]
+    for (int y = 0; y < TEXTURE_INTERMEDIATE_HEIGHT; y++)
+    {
+      float3 curMaxAvgMinNits = tex2Dfetch(SamplerIntermediate, int2(x, y)).xyz;
+
+      maxAvgMinNits[0]  = max(curMaxAvgMinNits[0], maxAvgMinNits[0]);
+      maxAvgMinNits[1] += curMaxAvgMinNits[1];
+      maxAvgMinNits[2]  = min(curMaxAvgMinNits[2], maxAvgMinNits[2]);
+    }
+  }
+
+  maxAvgMinNits[1] /= (TEXTURE_INTERMEDIATE_WIDTH * TEXTURE_INTERMEDIATE_HEIGHT);
+
+  Output = maxAvgMinNits[id];
+}
+
+#endif //IS_COMPUTE_CAPABLE_API

@@ -1,7 +1,7 @@
 #include "lilium__include/hdr_black_floor_fix.fxh"
 
 
-#if (defined(IS_HDR_COMPATIBLE_API) \
+#if (defined(IS_ANALYSIS_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
 

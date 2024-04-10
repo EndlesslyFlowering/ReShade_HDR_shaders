@@ -1,7 +1,7 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if defined(IS_HDR_COMPATIBLE_API)
+#if defined(IS_ANALYSIS_CAPABLE_API)
 
 #undef TEXT_BRIGHTNESS
 
@@ -303,6 +303,7 @@ uniform bool SHOW_CSP_MAP
 > = false;
 #endif // IS_HDR_CSP
 
+#ifdef IS_COMPUTE_CAPABLE_API
 // CIE
 uniform bool _SHOW_CIE
 <
@@ -460,6 +461,8 @@ uniform bool SHOW_CIE_CSP_AP0_OUTLINE
 > = true;
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
+#endif //IS_COMPUTE_CAPABLE_API
+
 
 // heatmap
 uniform bool _SHOW_HEATMAP
@@ -526,6 +529,8 @@ uniform uint HEATMAP_CUTOFF_POINT
 > = 0;
 #endif //IS_HDR_CSP
 
+
+#ifdef IS_COMPUTE_CAPABLE_API
 uniform bool _SHOW_LUMINANCE_WAVEFORM
 <
   ui_category = "Luminance waveform";
@@ -667,6 +672,8 @@ uniform bool _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
   ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
            "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
 > = true;
+#endif //IS_COMPUTE_CAPABLE_API
+
 
 // highlight a certain nit range
 uniform bool _HIGHLIGHT_NIT_RANGE
@@ -991,10 +998,14 @@ void VS_PrepareHdrAnalysis(
   in                  uint   VertexID                                 : SV_VertexID,
   out                 float4 Position                                 : SV_Position,
   out nointerpolation bool2  PingPongChecks                           : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange
+#ifdef IS_COMPUTE_CAPABLE_API
+                                                                                         ,
   out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
   out nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
-  out nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1)
+  out nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1
+#endif
+  )
 {
   float2 texCoord;
   texCoord.x = (VertexID == 2) ? 2.f
@@ -1012,12 +1023,14 @@ void VS_PrepareHdrAnalysis(
   pingpong0Above1                          = false;
   breathingIsActive                        = false;
   HighlightNitRange                        = 0.f;
+#ifdef IS_COMPUTE_CAPABLE_API
   LuminanceWaveformTextureDisplayAreaBegin = 0;
   CieDiagramSizes0                         = 0.f;
   CieDiagramSizes1                         = 0.f;
 
 #define CieDiagramTextureActiveSize  CieDiagramSizes0.xy
 #define CieDiagramTextureDisplaySize CieDiagramSizes0.zw
+#endif //IS_COMPUTE_CAPABLE_API
 
   if (_HIGHLIGHT_NIT_RANGE)
   {
@@ -1066,6 +1079,7 @@ void VS_PrepareHdrAnalysis(
     }
   }
 
+#ifdef IS_COMPUTE_CAPABLE_API
   if (_SHOW_LUMINANCE_WAVEFORM)
   {
     LuminanceWaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
@@ -1087,6 +1101,7 @@ void VS_PrepareHdrAnalysis(
 
     CieDiagramSizes1.yz = CIE_CONSOLIDATED_TEXTURE_SIZE * cieDiagramSizeFrac;
   }
+#endif //IS_COMPUTE_CAPABLE_API
 }
 
 
@@ -1094,9 +1109,11 @@ void PS_HdrAnalysis(
   in                  float4 Position                                 : SV_Position,
   in  nointerpolation bool2  PingPongChecks                           : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+#ifdef IS_COMPUTE_CAPABLE_API
   in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
   in  nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
   in  nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1,
+#endif
   out                 float4 Output                                   : SV_Target0)
 {
   const int2 pureCoordAsInt = int2(Position.xy);
@@ -1127,7 +1144,7 @@ void PS_HdrAnalysis(
 #ifdef IS_HDR_CSP
     if (SHOW_CSP_MAP)
     {
-      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt).x * 255.f, pixelNits);
+      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt) * 255.f, pixelNits);
     }
 #endif
 
@@ -1160,6 +1177,7 @@ void PS_HdrAnalysis(
     }
   }
 
+#ifdef IS_COMPUTE_CAPABLE_API
   if (_SHOW_CIE)
   {
     // draw the diagram in the bottom left corner
@@ -1208,6 +1226,7 @@ void PS_HdrAnalysis(
                                 alpha);
     }
   }
+#endif //IS_COMPUTE_CAPABLE_API
 }
 
 
@@ -1226,6 +1245,8 @@ technique lilium__hdr_and_sdr_analysis_TESTY
 }
 #endif //_TESTY
 
+
+#ifdef IS_COMPUTE_CAPABLE_API
 void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
   tex1Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
@@ -1246,6 +1267,7 @@ technique lilium__make_overlay_bg_redraw
     DispatchSizeY = 1;
   }
 }
+#endif //IS_COMPUTE_CAPABLE_API
 
 technique lilium__hdr_and_sdr_analysis
 <
@@ -1256,6 +1278,17 @@ technique lilium__hdr_and_sdr_analysis
 #endif
 >
 {
+
+#ifndef IS_COMPUTE_CAPABLE_API
+  pass PS_Transfer
+  {
+    VertexShader      = VS_Transfer;
+     PixelShader      = PS_Transfer;
+    RenderTarget      = TextureTransfer;
+    PrimitiveTopology = POINTLIST;
+    VertexCount       = 1;
+  }
+#endif
 
 //Active Area
   pass PS_SetActiveArea
@@ -1275,41 +1308,91 @@ technique lilium__hdr_and_sdr_analysis
 
 
 //CSP
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP))
   pass PS_CalcCsps
   {
     VertexShader = VS_PostProcessWithoutTexCoord;
      PixelShader = PS_CalcCsps;
     RenderTarget = TextureCsps;
   }
+#endif
 
+#if defined(IS_HDR_CSP)
+#if defined(IS_COMPUTE_CAPABLE_API)
   pass CS_CountCsps
   {
     ComputeShader = CS_CountCsps <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
     DispatchSizeX = CSP_COUNTER_DISPATCH_X;
     DispatchSizeY = CSP_COUNTER_DISPATCH_Y;
   }
-#endif
+#else
+  pass PS_CountCsps
+  {
+    VertexShader = VS_PostProcessWithoutTexCoord;
+     PixelShader = PS_CountCsps;
+    RenderTarget = TextureIntermediate;
+  }
+
+  pass PS_FinaliseCountCsps
+  {
+    VertexShader      = VS_PrepareFinaliseCountCsps;
+     PixelShader      = PS_FinaliseCountCsps;
+    RenderTarget      = TextureConsolidated;
+    PrimitiveTopology = LINELIST;
+    VertexCount       = 2;
+  }
+#endif //defined(IS_COMPUTE_CAPABLE_API)
+#endif //defined(IS_HDR_CSP)
 
 
 //Luminance Values
+#ifdef IS_COMPUTE_CAPABLE_API
   pass CS_GetMaxAvgMinNits
   {
     ComputeShader = CS_GetMaxAvgMinNits <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
     DispatchSizeX = GET_MAX_AVG_MIN_NITS_DISPATCH_X;
     DispatchSizeY = GET_MAX_AVG_MIN_NITS_DISPATCH_Y;
   }
+#else
+  pass PS_GetMaxAvgMinNits
+  {
+    VertexShader = VS_PostProcessWithoutTexCoord;
+     PixelShader = PS_GetMaxAvgMinNits;
+    RenderTarget = TextureIntermediate;
+  }
+
+  pass PS_FinaliseGetMaxAvgMinNits
+  {
+    VertexShader      = VS_PrepareFinaliseGetMaxAvgMinNits;
+     PixelShader      = PS_FinaliseGetMaxAvgMinNits;
+    RenderTarget      = TextureConsolidated;
+    PrimitiveTopology = LINELIST;
+    VertexCount       = 2;
+  }
+#endif //IS_COMPUTE_CAPABLE_API
 
 
 //finalise things
+#ifdef IS_COMPUTE_CAPABLE_API
   pass CS_Finalise
   {
     ComputeShader = CS_Finalise <1, 1>;
     DispatchSizeX = 1;
     DispatchSizeY = 1;
   }
+#else
+  pass PS_Finalise
+  {
+    VertexShader      = VS_PrepareFinalise;
+     PixelShader      = PS_Finalise;
+    RenderTarget      = TextureTransfer;
+    PrimitiveTopology = LINELIST;
+    VertexCount       = 2;
+  }
+#endif
 
 
+#ifdef IS_COMPUTE_CAPABLE_API
 //Waveform
   pass PS_ClearLuminanceWaveformTexture
   {
@@ -1363,8 +1446,11 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget = TextureLuminanceWaveformFinal;
   }
 
+#endif //IS_COMPUTE_CAPABLE_API
+
 
 //get numbers for text drawing
+#ifdef IS_COMPUTE_CAPABLE_API
   pass CS_GetNumbersNits
   {
     ComputeShader = CS_GetNumbersNits<1, 1>;
@@ -1384,6 +1470,29 @@ technique lilium__hdr_and_sdr_analysis
 #endif
   }
 #endif
+
+#else //IS_COMPUTE_CAPABLE_API
+
+  pass PS_GetNumbersNits
+  {
+#ifdef IS_HDR_CSP
+    VertexShader = VS_PrepareGetNumbersNits;
+#else
+    VertexShader = VS_PostProcessWithoutTexCoord;
+#endif
+     PixelShader = PS_GetNumbersNits;
+    RenderTarget = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+  }
+
+#ifdef IS_HDR_CSP
+  pass PS_GetNumbersCsps
+  {
+    VertexShader = VS_PrepareGetNumbersCsps;
+     PixelShader = PS_GetNumbersCsps;
+    RenderTarget = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+  }
+#endif
+#endif //IS_COMPUTE_CAPABLE_API
 
 
   pass PS_HdrAnalysis
@@ -1411,6 +1520,17 @@ technique lilium__hdr_and_sdr_analysis
     PixelShader  = PS_RenderNumbers;
     VertexCount  = (NUMBERS_COUNT * 6);
   }
+
+#ifndef IS_COMPUTE_CAPABLE_API
+  pass PS_Transfer2
+  {
+    VertexShader      = VS_Transfer2;
+     PixelShader      = PS_Transfer2;
+    RenderTarget      = TextureConsolidated;
+    PrimitiveTopology = POINTLIST;
+    VertexCount       = 1;
+  }
+#endif
 }
 
 

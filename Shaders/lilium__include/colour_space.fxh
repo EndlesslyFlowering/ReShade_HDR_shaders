@@ -45,13 +45,23 @@ static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOA
 //#endif
 
 
-#if ((__RENDERER__ & 0xB000) == 0xB000)
+#if (__RENDERER__ >= 0x9000  \
+  && __RENDERER__ <  0xA000)
+  #define API_IS_D3D9
+#elif (__RENDERER__ >= 0xA000  \
+    && __RENDERER__ <  0xB000)
+  #define API_IS_D3D10
+#elif (__RENDERER__ >= 0xB000  \
+    && __RENDERER__ <  0xC000)
   #define API_IS_D3D11
-#elif ((__RENDERER__ & 0xC000) == 0xC000)
+#elif (__RENDERER__ >= 0xC000  \
+    && __RENDERER__ <  0xD000)
   #define API_IS_D3D12
-#elif ((__RENDERER__ & 0x10000) == 0x10000)
+#elif (__RENDERER__ >= 0x10000  \
+    && __RENDERER__ <  0x20000)
   #define API_IS_OPENGL
-#elif ((__RENDERER__ & 0x20000) == 0x20000)
+#elif (__RENDERER__ >= 0x20000  \
+    && __RENDERER__ <  0x30000)
   #define API_IS_VULKAN
 #endif
 
@@ -183,6 +193,7 @@ void VS_PostProcessWithoutTexCoord(
   #define ACTUAL_COLOUR_SPACE CSP_UNKNOWN
   #define FONT_BRIGHTNESS 1.f
 #endif
+
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
@@ -358,11 +369,26 @@ uniform int GLOBAL_INFO
   || defined(API_IS_D3D12)   \
   || defined(API_IS_OPENGL)  \
   || defined(API_IS_VULKAN))
-  #define IS_HDR_COMPATIBLE_API
-  #define ERROR_TEXT "Only HDR colour spaces are supported!"
-#else
-  #define ERROR_TEXT "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
+
+  #define IS_COMPUTE_CAPABLE_API
+
 #endif
+
+#if (defined(API_IS_D3D10)   \
+  || defined(API_IS_D3D11)   \
+  || defined(API_IS_D3D12)   \
+  || defined(API_IS_OPENGL)  \
+  || defined(API_IS_VULKAN))
+
+  #define IS_ANALYSIS_CAPABLE_API
+
+#endif
+
+
+#define ERROR_TEXT "Only HDR colour spaces are supported!"
+#define ERROR_TEXT_1 "Only DirectX 11, 12, OpenGL and Vulkan are supported!"
+#define ERROR_TEXT_2 "Only DirectX 10, 11, 12, OpenGL and Vulkan are supported!"
+
 
 #define ERROR_STUFF                                \
   uniform int ERROR_MESSAGE                        \
@@ -2958,30 +2984,30 @@ float3 GetXYZfromxyY(float2 xy, float Y)
 //}
 
 
-bool IsNAN(float Input)
-{
-  if (isnan(Input) || isinf(Input))
-    return true;
-  else
-    return false;
-}
-
-float fixNAN(float Input)
-{
-  if (IsNAN(Input))
-    return 0.f;
-  else
-    return Input;
-}
-
-float3 fixNAN(float3 Input)
-{
-  if (IsNAN(Input.r))
-    Input.r = 0.f;
-  else if (IsNAN(Input.g))
-    Input.g = 0.f;
-  else if (IsNAN(Input.b))
-    Input.b = 0.f;
-
-  return Input;
-}
+//bool IsNAN(float Input)
+//{
+//  if (isnan(Input) || isinf(Input))
+//    return true;
+//  else
+//    return false;
+//}
+//
+//float fixNAN(float Input)
+//{
+//  if (IsNAN(Input))
+//    return 0.f;
+//  else
+//    return Input;
+//}
+//
+//float3 fixNAN(float3 Input)
+//{
+//  if (IsNAN(Input.r))
+//    Input.r = 0.f;
+//  else if (IsNAN(Input.g))
+//    Input.g = 0.f;
+//  else if (IsNAN(Input.b))
+//    Input.b = 0.f;
+//
+//  return Input;
+//}

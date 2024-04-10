@@ -10,6 +10,22 @@ uint GetOuterSpacing(const uint CharXDimension)
 }
 
 
+float2 GetTexCoordsFromRegularCoords(const float2 TexCoordOffset)
+{
+  return TexCoordOffset / float2(FONT_TEXTURE_WIDTH - 1, FONT_TEXTURE_HEIGHT - 1);
+}
+
+float2 GetPositonCoordsFromRegularCoords(
+  const float2 RegularCoords,
+  const float2 TextureSize)
+{
+  float2 positionCoords = RegularCoords / TextureSize * 2;
+
+  return float2(positionCoords.x - 1.f,
+                1.f              - positionCoords.y);
+}
+
+
 //extract all digits without causing float issues
 uint _6th(precise const float Float)
 {
@@ -120,6 +136,8 @@ uint GetNumberAboveZero(precise uint CurNumber)
 #else
   #define MAX_NUMBERS_NITS  9
 #endif
+
+#ifdef IS_COMPUTE_CAPABLE_API
 
 groupshared float GroupNits;
 void CS_GetNumbersNits(uint3 GID  : SV_GroupID,
@@ -302,6 +320,183 @@ void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
 }
 #endif //IS_HDR_CSP
 
+#else //IS_COMPUTE_CAPABLE_API
+
+static const float2 ShowNumbersTextureSize =
+ float2(TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH,
+        TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT);
+
+void VS_PrepareGetNumbersNits(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  static const float2 positions[3] =
+  {
+    GetPositonCoordsFromRegularCoords(float2( NITS_WIDTH,  NITS_HEIGHT), ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2(-NITS_WIDTH,  NITS_HEIGHT), ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2( NITS_WIDTH, -NITS_HEIGHT), ShowNumbersTextureSize)
+  };
+
+  Position = float4(positions[VertexID], 0.f, 1.f);
+
+  return;
+}
+
+void PS_GetNumbersNits(
+  in  float4 Position : SV_Position,
+  out float  Number   : SV_Target0)
+{
+  const int2 positionAsInt2 = int2(Position.xy);
+
+  precise float nitsValue;
+
+  if (positionAsInt2.y < 3)
+  {
+    nitsValue = tex2Dfetch(SamplerTransfer, int2(COORDS_SHOW_MAX_NITS + positionAsInt2.y, 0)).x;
+  }
+  else
+  {
+    nitsValue = tex2Dfetch(SamplerNitsValues, MOUSE_POSITION);
+  }
+
+  precise uint number;
+
+#ifdef IS_HDR_CSP
+  switch(positionAsInt2.x)
+#else
+  switch(positionAsInt2.x + 2)
+#endif
+  {
+    case 0:
+    {
+      number = GetNumberAboveZero(_5th(nitsValue));
+    }
+    break;
+    case 1:
+    {
+      number = GetNumberAboveZero(_4th(nitsValue));
+    }
+    break;
+    case 2:
+    {
+      number = GetNumberAboveZero(_3rd(nitsValue));
+    }
+    break;
+    case 3:
+    {
+      number = GetNumberAboveZero(_2nd(nitsValue));
+    }
+    break;
+    case 4:
+    {
+      number = _1st(nitsValue);
+    }
+    break;
+    case 5:
+    {
+      number = d1st(nitsValue);
+    }
+    break;
+    case 6:
+    {
+      number = d2nd(nitsValue);
+    }
+    break;
+    case 7:
+    {
+      number = d3rd(nitsValue);
+    }
+    break;
+    case 8:
+    {
+      number = d4th(nitsValue);
+    }
+    break;
+    case 9:
+    {
+      number = d5th(nitsValue);
+    }
+    break;
+    default:
+    {
+      number = d6th(nitsValue);
+    }
+    break;
+  }
+
+  Number = float(number) / 255.f;
+}
+
+
+#ifdef IS_HDR_CSP
+void VS_PrepareGetNumbersCsps(
+  in  uint   VertexID : SV_VertexID,
+  out float4 Position : SV_Position)
+{
+  static const float2 positions[3] =
+  {
+    GetPositonCoordsFromRegularCoords(float2( CSPS_WIDTH, CSPS_Y_OFFSET),                      ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2(-CSPS_WIDTH, CSPS_Y_OFFSET),                      ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2( CSPS_WIDTH, (CSPS_Y_OFFSET + CSPS_NUMBERS * 2)), ShowNumbersTextureSize)
+  };
+
+  Position = float4(positions[VertexID], 0.f, 1.f);
+
+  return;
+}
+
+
+void PS_GetNumbersCsps(
+  in  float4 Position : SV_Position,
+  out float  Number   : SV_Target0)
+{
+  const int2 positionAsInt2 = int2(Position.xy);
+
+  precise const float cspCount = tex2Dfetch(SamplerTransfer,
+                                            int2(COORDS_SHOW_PERCENTAGE_BT709 - 4 + positionAsInt2.y, 0)).x;
+
+  precise uint number;
+
+  switch(positionAsInt2.x)
+  {
+    case 0:
+    {
+      number = GetNumberAboveZero(_3rd(cspCount));
+    }
+    break;
+    case 1:
+    {
+      number = GetNumberAboveZero(_2nd(cspCount));
+    }
+    break;
+    case 2:
+    {
+      number = _1st(cspCount);
+    }
+    break;
+    case 3:
+    {
+      number = d1st(cspCount);
+    }
+    break;
+    case 4:
+    {
+      number = d2nd(cspCount);
+    }
+    break;
+    default:
+    {
+      number = _d3rd(cspCount);
+    }
+    break;
+  }
+
+  Number = float(number) / 255.f;
+}
+#endif //IS_HDR_CSP
+
+#endif //IS_COMPUTE_CAPABLE_API
+
 
 float3 MergeText(
   float3 Output,
@@ -385,25 +580,6 @@ float3 MergeText(
 
   return Output;
 }
-
-
-float2 GetTexCoordsFromRegularCoords(const float2 TexCoordOffset)
-{
-  return TexCoordOffset / float2(FONT_TEXTURE_WIDTH - 1, FONT_TEXTURE_HEIGHT - 1);
-}
-
-#define GET_POSITION_COORDS_FROM_REGULAR_COORDS(T)                                   \
-          float2 GetPositonCoordsFromRegularCoords(const T RegularCoords)            \
-          {                                                                          \
-            float2 positionCoords = RegularCoords / BUFFER_SIZE_MINUS_1_FLOAT * 2;   \
-                                                                                     \
-            return float2(positionCoords.x - 1.f,                                    \
-                          1.f              - positionCoords.y);                      \
-          }
-
-GET_POSITION_COORDS_FROM_REGULAR_COORDS(float2)
-GET_POSITION_COORDS_FROM_REGULAR_COORDS(uint2)
-//GET_POSITION_COORDS_FROM_REGULAR_COORDS(int2)
 
 
 struct VertexCoordsAndTexCoords
@@ -526,16 +702,14 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       float2 pos = float2(_max.maxChars * CharSize.x,
                           _max.maxLines * CharSize.y);
 
-      switch(VertexID)
+      [branch]
+      if (VertexID == 1)
       {
-        case 1:
-          pos.x = -pos.x;
-          break;
-        case 2:
-          pos.y = -pos.y;
-          break;
-        default:
-          break;
+        pos.x = -pos.x;
+      }
+      else if (VertexID == 2)
+      {
+        pos.y = -pos.y;
       }
 
       if (_TEXT_POSITION != 0)
@@ -545,7 +719,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 
       VertexCoordsAndTexCoords ret;
 
-      ret.vertexCoords = GetPositonCoordsFromRegularCoords(pos);
+      ret.vertexCoords = GetPositonCoordsFromRegularCoords(pos, BUFFER_SIZE_MINUS_1_FLOAT);
 //      ret.vertexCoords = float2(-2.f, -2.f);
       ret.texCoords    = float2(-1.f, -1.f);
 
@@ -684,7 +858,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 
       VertexCoordsAndTexCoords ret;
 
-      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset);
+      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
       ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
 
       return ret;
@@ -749,15 +923,25 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     fetchPos = int2(currentCspNumberID % 6, currentCspNumberID / 6);
 
+#ifdef IS_COMPUTE_CAPABLE_API
     fetchPos.x += 11;
+#else
+    fetchPos.y += 4;
+#endif
   }
 #else
   fetchPos = int2(currentNumberID % 9, currentNumberID / 9);
 #endif
 
+#ifdef IS_COMPUTE_CAPABLE_API
   fetchPos.y += 16;
+#endif
 
-  static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers, fetchPos);
+  static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers, fetchPos)
+#ifndef IS_COMPUTE_CAPABLE_API
+                              * 255.f
+#endif
+                                     ;
 
   BRANCH(x)
   if (curNumber < 10)
@@ -888,7 +1072,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     VertexCoordsAndTexCoords ret;
 
-    ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset);
+    ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
     ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
 
     return ret;
@@ -985,7 +1169,7 @@ void VS_RenderNumbers(
         vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * charSize.x - 1.f));
       }
 
-      vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset);
+      vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
       vertexCoordsAndTexCoords.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
     }
     else
