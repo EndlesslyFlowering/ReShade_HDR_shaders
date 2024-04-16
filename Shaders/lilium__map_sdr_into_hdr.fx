@@ -98,6 +98,15 @@ float3 ConditionallyLineariseHdr10(float3 Colour)
   return Colour;
 }
 
+// convert linear BT.2020 to HDR10
+float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour = Csp::Trc::LinearTo::Pq(Colour);
+#endif
+  return Colour;
+}
+
 // convert BT.2020 to BT.709
 float3 ConditionallyConvertBt2020To709(float3 Colour)
 {
@@ -121,28 +130,20 @@ void PS_MapSdrIntoHdr(
   if (INPUT_TRC == TRC_GAMMA_22)
   {
     colour = Csp::Trc::ExtendedGamma22To::Linear(colour);
-    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else if (INPUT_TRC == TRC_GAMMA_24)
   {
     colour = Csp::Trc::ExtendedGamma24To::Linear(colour);
-    colour = ConditionallyConvertBt709ToBt2020(colour);
-  }
-  else if (INPUT_TRC == TRC_LINEAR)
-  {
-    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
   {
     colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(colour));
-    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
   else if (INPUT_TRC == TRC_SRGB)
   {
     colour = Csp::Trc::ExtendedSrgbTo::Linear(colour);
-    colour = ConditionallyConvertBt709ToBt2020(colour);
   }
-  else //if (inputTrcIsPq)
+  else if (inputTrcIsPq)
   {
     colour = ConditionallyLineariseHdr10(colour);
     colour = ConditionallyConvertBt2020To709(colour);
@@ -164,6 +165,11 @@ void PS_MapSdrIntoHdr(
     colour = Csp::Trc::ExtendedGammaAdjust(colour, 1.f + GAMMA_ADJUST);
   }
 
+  if (!inputTrcIsPq)
+  {
+    colour = ConditionallyConvertBt709ToBt2020(colour);
+  }
+
 //  if (dot(Bt709ToXYZ[1].rgb, colour) < 0.f)
 //    colour = float3(0.f, 0.f, 0.f);
 
@@ -173,12 +179,18 @@ void PS_MapSdrIntoHdr(
 
     colour *= (SDR_WHITEPOINT_NITS / 80.f);
 
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    colour *= (SDR_WHITEPOINT_NITS / 10000.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
     colour *= (SDR_WHITEPOINT_NITS / 100.f);
 
 #endif
   }
+
+  colour = ConditionallyConvertLinearBt2020ToHdr10(colour);
 
   //colour = fixNAN(colour);
 
