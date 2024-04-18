@@ -463,6 +463,7 @@ namespace Csp
       // IEC 61966-2-1
       float Linear(float C)
       {
+        [branch]
         if (C <= 0.04045f)
         {
           return C / 12.92f;
@@ -486,13 +487,14 @@ namespace Csp
     {
       float Srgb(float C)
       {
+        [branch]
         if (C <= 0.0031308f)
         {
           return C * 12.92f;
         }
         else
         {
-          return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
+          return 1.055f * pow(C, 1.f / 2.4f) - 0.055f;
         }
       }
 
@@ -505,7 +507,7 @@ namespace Csp
     } //LinearTo
 
 
-    namespace ExtendedSrgbTo
+    namespace ExtendedSrgbSCurveTo
     {
       //#define X_sRGB_1 1.19417654368084505707
       //#define X_sRGB_x 0.039815307380813555
@@ -516,6 +518,7 @@ namespace Csp
         static const float absC  = abs(C);
         static const float signC = sign(C);
 
+        [branch]
         if (absC > 1.f)
         {
           return signC * ((1.055f * pow(absC - 0.940277040004730224609375f, (1.f / 2.4f)) - 0.055f) + 0.728929579257965087890625f);
@@ -549,19 +552,54 @@ namespace Csp
 
       float3 Linear(float3 Colour)
       {
-        return float3(Csp::Trc::ExtendedSrgbTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedSrgbTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedSrgbTo::Linear(Colour.b));
+        return float3(Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.b));
       }
-    } //ExtendedSrgbTo
+    } //ExtendedSrgbSCurveTo
+
+
+    namespace ExtendedSrgbLinearTo
+    {
+      //#define X_sRGB_1 1.19417654368084505707
+      //#define X_sRGB_x 0.039815307380813555
+      //#define X_sRGB_y_adjust 1.21290538811
+      // extended sRGB gamma including above 1 and below -1
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        [branch]
+        if (absC > 1.f)
+        {
+          return C;
+        }
+        else if (absC > 0.04045f)
+        {
+          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+        }
+        else
+        {
+          return C / 12.92f;
+        }
+      }
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.b));
+      }
+    } //ExtendedSrgbLinearTo
 
 
 // DO NOT USE!!!
-// it does not match the ExtendedSrgbToLinear version!
+// it does not match the ExtendedSrgbSCurveToLinear version!
 //
 //    namespace LinearTo
 //    {
-//      float ExtendedSrgb(float C)
+//      float ExtendedSrgbSCurve(float C)
 //      {
 //        static const float absC  = abs(C);
 //        static const float signC = sign(C);
@@ -580,11 +618,11 @@ namespace Csp
 //        }
 //      }
 //
-//      float3 ExtendedSrgb(float3 Colour)
+//      float3 ExtendedSrgbSCurve(float3 Colour)
 //      {
-//        return float3(Csp::Trc::LinearTo::ExtendedSrgb(Colour.r),
-//                      Csp::Trc::LinearTo::ExtendedSrgb(Colour.g),
-//                      Csp::Trc::LinearTo::ExtendedSrgb(Colour.b));
+//        return float3(Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.r),
+//                      Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.g),
+//                      Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.b));
 //      }
 //    }
 
@@ -598,6 +636,7 @@ namespace Csp
 
       float Linear(float C)
       {
+        [branch]
         if (C <= SrgbX)
         {
           return C / SrgbPhi;
@@ -621,6 +660,7 @@ namespace Csp
     {
       float SrgbAccurate(float C)
       {
+        [branch]
         if (C <= SrgbXDivPhi)
         {
           return C * SrgbPhi;
@@ -640,70 +680,67 @@ namespace Csp
     } //LinearTo
 
 
-    namespace ExtendedSrgbAccurateTo
-    {
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
+//    namespace ExtendedSrgbSCurveAccurateTo
+//    {
+//      float Linear(float C)
+//      {
+//        static const float absC  = abs(C);
+//        static const float signC = sign(C);
+//
+//        if (absC > 1.f)
+//        {
+//          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+//        }
+//        else if (absC > SrgbX)
+//        {
+//          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+//        }
+//        else
+//        {
+//          return C / SrgbPhi;
+//        }
+//      }
+//
+//      float3 Linear(float3 Colour)
+//      {
+//        return float3(Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.r),
+//                      Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.g),
+//                      Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.b));
+//      }
+//    } //ExtendedSrgbSCurveAccurateTo
+//
+//
+//    namespace LinearTo
+//    {
+//      float ExtendedSrgbSCurveAccurate(float C)
+//      {
+//        static const float absC  = abs(C);
+//        static const float signC = sign(C);
+//
+//        if (absC > 1.f)
+//        {
+//          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
+//        }
+//        else if (absC > SrgbXDivPhi)
+//        {
+//          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
+//        }
+//        else
+//        {
+//          return C * SrgbPhi;
+//        }
+//      }
+//
+//      float3 ExtendedSrgbSCurveAccurate(float3 Colour)
+//      {
+//        return float3(Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.r),
+//                      Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.g),
+//                      Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.b));
+//      }
+//    } //LinearTo
 
-        if (absC > 1.f)
-        {
-          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-        }
-        else if (absC > SrgbX)
-        {
-          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-        }
-        else
-        {
-          return C / SrgbPhi;
-        }
-      }
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedSrgbAccurateTo::Linear(Colour.b));
-      }
-    } //ExtendedSrgbAccurateTo
-
-
-    namespace LinearTo
-    {
-      float ExtendedSrgbAccurate(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
-
-        if (absC > 1.f)
-        {
-          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-        }
-        else if (absC > SrgbXDivPhi)
-        {
-          return signC * (1.055f * pow(absC, (1.f / 2.4f)) - 0.055f);
-        }
-        else
-        {
-          return C * SrgbPhi;
-        }
-      }
-
-      float3 ExtendedSrgbAccurate(float3 Colour)
-      {
-        return float3(Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.r),
-                      Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.g),
-                      Csp::Trc::LinearTo::ExtendedSrgbAccurate(Colour.b));
-      }
-    } //LinearTo
-
-
-    static const float RemoveGamma22 = 2.2f;
-    static const float ApplyGamma22  = 1.f / 2.2f;
-
-    namespace ExtendedGamma22To
+    namespace ExtendedGamma22SCurveTo
     {
       //#define X_22_1 1.20237927370128566986
       //#define X_22_x 0.0370133892172524
@@ -714,25 +751,26 @@ namespace Csp
         static const float absC  = abs(C);
         static const float signC = sign(C);
 
+        [branch]
         if (absC <= 1.f)
         {
-          return signC * pow(absC, Csp::Trc::RemoveGamma22);
+          return signC * pow(absC, 2.2f);
         }
         else
         {
-          return signC * (pow(absC - 0.944479882717132568359375f, Csp::Trc::ApplyGamma22) + 0.731282770633697509765625f);
+          return signC * (pow(absC - 0.944479882717132568359375f, 1.f / 2.2f) + 0.731282770633697509765625f);
         }
       }
       //{
       //  if (C < -X_22_1)
       //    return
-      //      -(pow(-C - X_22_1 + X_22_x, Csp::Trc::ApplyGamma22) + X_22_y_adjust);
+      //      -(pow(-C - X_22_1 + X_22_x, 1.f / 2.2f) + X_22_y_adjust);
       //  else if (C < 0)
       //    return
-      //      -pow(-C, Csp::Trc::RemoveGamma22);
+      //      -pow(-C, 2.2f);
       //  else if (C <= X_22_1)
       //    return
-      //      pow(C, Csp::Trc::RemoveGamma22);
+      //      pow(C, 2.2f);
       //  else
       //    return
       //      (pow(C - X_22_1 + X_22_x, Csp::Trc::ApplyGamma22) + X_22_y_adjust);
@@ -740,58 +778,118 @@ namespace Csp
 
       float3 Linear(float3 Colour)
       {
-        return float3(Csp::Trc::ExtendedGamma22To::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma22To::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma22To::Linear(Colour.b));
+        return float3(Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.b));
       }
-    } //ExtendedGamma22To
+    } //ExtendedGamma22SCurveTo
 
 
-    static const float RemoveGamma24 = 2.4f;
-    static const float ApplyGamma24  = 1.f / 2.4f;
+    namespace ExtendedGamma22LinearTo
+    {
+      //#define X_22_1 1.20237927370128566986
+      //#define X_22_x 0.0370133892172524
+      //#define X_22_y_adjust 1.5f - pow(X_22_x, Csp::Trc::ApplyGamma22)
+      // extended gamma 2.2 including above 1 and below 0
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
 
-    namespace ExtendedGamma24To
+        [branch]
+        if (absC <= 1.f)
+        {
+          return signC * pow(absC, 2.2f);
+        }
+        else
+        {
+          return C;
+        }
+      }
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.b));
+      }
+    } //ExtendedGamma22LinearTo
+
+
+    namespace ExtendedGamma24SCurveTo
     {
       //#define X_24_1 1.1840535873752085849
       //#define X_24_x 0.033138075
-      //#define X_24_y_adjust 1.5f - pow(X_24_x, Csp::Trc::ApplyGamma24)
+      //#define X_24_y_adjust 1.5f - pow(X_24_x, 1.f / 2.4f)
       // extended gamma 2.4 including above 1 and below 0
       float Linear(float C)
       {
         static const float absC  = abs(C);
         static const float signC = sign(C);
 
+        [branch]
         if (absC <= 1.f)
         {
-          return signC * pow(absC, Csp::Trc::RemoveGamma24);
+          return signC * pow(absC, 2.4f);
         }
         else
         {
-          return signC * (pow(absC - 0.950292885303497314453125f, Csp::Trc::ApplyGamma24) + 0.71368694305419921875f);
+          return signC * (pow(absC - 0.950292885303497314453125f, 1.f / 2.4f) + 0.71368694305419921875f);
         }
       }
       //{
       //  if (C < -X_24_1)
       //    return
-      //      -(pow(-C - X_24_1 + X_24_x, Csp::Trc::ApplyGamma24) + X_24_y_adjust);
+      //      -(pow(-C - X_24_1 + X_24_x, 1.f / 2.4f) + X_24_y_adjust);
       //  else if (C < 0)
       //    return
-      //      -pow(-C, Csp::Trc::RemoveGamma24);
+      //      -pow(-C, 2.4f);
       //  else if (C <= X_24_1)
       //    return
-      //      pow(C, Csp::Trc::RemoveGamma24);
+      //      pow(C, 2.4f);
       //  else
       //    return
-      //      (pow(C - X_24_1 + X_24_x, Csp::Trc::ApplyGamma24) + X_24_y_adjust);
+      //      (pow(C - X_24_1 + X_24_x, 1.f / 2.4f) + X_24_y_adjust);
       //}
 
       float3 Linear(float3 Colour)
       {
-        return float3(Csp::Trc::ExtendedGamma24To::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma24To::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma24To::Linear(Colour.b));
+        return float3(Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.b));
       }
-    } //ExtendedGamma24To
+    } //ExtendedGamma24SCurveTo
+
+
+    namespace ExtendedGamma24LinearTo
+    {
+      //#define X_24_1 1.1840535873752085849
+      //#define X_24_x 0.033138075
+      //#define X_24_y_adjust 1.5f - pow(X_24_x, 1.f / 2.4f)
+      // extended gamma 2.4 including above 1 and below 0
+      float Linear(float C)
+      {
+        static const float absC  = abs(C);
+        static const float signC = sign(C);
+
+        [branch]
+        if (absC <= 1.f)
+        {
+          return signC * pow(absC, 2.4f);
+        }
+        else
+        {
+          return C;
+        }
+      }
+
+      float3 Linear(float3 Colour)
+      {
+        return float3(Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.r),
+                      Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.g),
+                      Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.b));
+      }
+    } //ExtendedGamma24LinearTo
 
 
     //float X_power_TRC(float C, float pow_gamma)
@@ -829,6 +927,7 @@ namespace Csp
       static const float absC = abs(C);
       static const float signC = sign(C);
 
+      [branch]
       if (absC > 1.f)
       {
         return signC * pow(absC, inverseAdjust);

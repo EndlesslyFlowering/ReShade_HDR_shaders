@@ -129,19 +129,19 @@ void PS_MapSdrIntoHdr(
 
   if (INPUT_TRC == TRC_GAMMA_22)
   {
-    colour = Csp::Trc::ExtendedGamma22To::Linear(colour);
+    colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
   }
   else if (INPUT_TRC == TRC_GAMMA_24)
   {
-    colour = Csp::Trc::ExtendedGamma24To::Linear(colour);
+    colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
   }
   else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
   {
-    colour = Csp::Trc::ExtendedGamma22To::Linear(Csp::Trc::LinearTo::Srgb(colour));
+    colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
   }
   else if (INPUT_TRC == TRC_SRGB)
   {
-    colour = Csp::Trc::ExtendedSrgbTo::Linear(colour);
+    colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
   }
   else if (inputTrcIsPq)
   {
