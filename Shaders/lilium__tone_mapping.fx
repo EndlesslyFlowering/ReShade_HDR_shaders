@@ -119,14 +119,14 @@ namespace Ui
       <
         ui_category = "BT.2446 Method A";
         ui_label    = "gamut compression";
-        ui_tooltip  = "1.10 is the default of the BT.2446 specification"
-                 "\n" "1.05 about matches the input colour space"
-                 "\n" "1.00 slightly expands the colour space";
+        ui_tooltip  = "1.100 is the default of the BT.2446 specification"
+                 "\n" "1.025 about matches the input colour space"
+                 "\n" "1.000 slightly expands the colour space";
         ui_type     = "drag";
         ui_min      = 1.f;
-        ui_max      = 2.f;
-        ui_step     = 0.005f;
-      > = 1.1f;
+        ui_max      = 1.2f;
+        ui_step     = 0.001f;
+      > = 1.025f;
     } //Bt2446A
 
     namespace Bt2390
@@ -186,7 +186,7 @@ namespace Ui
         ui_type     = "drag";
         ui_min      = 0.5f;
         ui_max      = 1.0f;
-        ui_step     = 0.005f;
+        ui_step     = 0.001f;
       > = 0.5f;
     } //Bt2390
 
