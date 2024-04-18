@@ -25,6 +25,25 @@ uniform uint INPUT_TRC
 #define TRC_SRGB                        4
 #define TRC_PQ                          5
 
+uniform uint OVERBRIGHT_HANDLING
+<
+  ui_label    = "overbright bits handling";
+  ui_tooltip  = "- filmic roll off uses the inverse of the gamma function to create a smooth roll off"
+           "\n" "- linear takes the input value as is without applying any modifications"
+           "\n" "- apply gamma applies the gamma normally, which leads to an exponential increase of the brightness that may be undesireable"
+           "\n" "- clamp clamps the overbright bits away (mostly for testing)";
+  ui_type     = "combo";
+  ui_items    = "filmic roll off (S-curve)\0"
+                "linear\0"
+                "apply gamma\0"
+                "clamp\0";
+> = 0;
+
+#define OVERBRIGHT_HANDLING_S_CURVE     0
+#define OVERBRIGHT_HANDLING_LINEAR      1
+#define OVERBRIGHT_HANDLING_APPLY_GAMMA 2
+#define OVERBRIGHT_HANDLING_CLAMP       3
+
 uniform float SDR_WHITEPOINT_NITS
 <
   ui_label   = "SDR whitepoint";
@@ -127,21 +146,106 @@ void PS_MapSdrIntoHdr(
 
   static const bool inputTrcIsPq = INPUT_TRC == TRC_PQ;
 
+  BRANCH(x)
   if (INPUT_TRC == TRC_GAMMA_22)
   {
-    colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
+    BRANCH(x)
+    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    {
+      colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+    {
+      colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    {
+      colour = pow(colour, 2.2f);
+    }
+    else
+    {
+      colour = saturate(colour);
+      colour = pow(colour, 2.2f);
+    }
   }
   else if (INPUT_TRC == TRC_GAMMA_24)
   {
-    colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
+    BRANCH(x)
+    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    {
+      colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+    {
+      colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    {
+      colour = pow(colour, 2.4f);
+    }
+    else
+    {
+      colour = saturate(colour);
+      colour = pow(colour, 2.4f);
+    }
   }
   else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
   {
-    colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
+    BRANCH(x)
+    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    {
+      colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+    {
+      float3 absColour  = abs(colour);
+      float3 signColour = sign(colour);
+      [branch]
+      if (absColour.r < 1.f)
+      {
+        colour.r = signColour.r * pow(Csp::Trc::LinearTo::Srgb(absColour.r), 2.2f);
+      }
+      [branch]
+      if (absColour.g < 1.f)
+      {
+        colour.g = signColour.g * pow(Csp::Trc::LinearTo::Srgb(absColour.g), 2.2f);
+      }
+      [branch]
+      if (absColour.b < 1.f)
+      {
+        colour.b = signColour.b * pow(Csp::Trc::LinearTo::Srgb(absColour.b), 2.2f);
+      }
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    {
+      colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+    }
+    else
+    {
+      colour = saturate(colour);
+      colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+    }
   }
   else if (INPUT_TRC == TRC_SRGB)
   {
-    colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
+    BRANCH(x)
+    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    {
+      colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+    {
+      colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
+    }
+    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    {
+      colour = Csp::Trc::SrgbTo::Linear(colour);
+    }
+    else
+    {
+      colour = saturate(colour);
+      colour = Csp::Trc::SrgbTo::Linear(colour);
+    }
   }
   else if (inputTrcIsPq)
   {
