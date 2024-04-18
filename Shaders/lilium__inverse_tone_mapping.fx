@@ -26,14 +26,18 @@ namespace Ui
                  "\n" "BT.2446 Methoc C:"
                  "\n" "  Maps the brightness level directly rather than using a curve to do the expansion."
                  "\n" "  The input brightness alone dictactes the target brightness."
+#ifdef ENABLE_DICE
                  "\n" "Dice inverse:"
                  "\n" "  Not yet finished..."
-                 "\n" "map SDR into HDR:"
-                 "\n" "  Straight up map the SDR image into the HDR container according to the target brightness set.";
+#endif
+                 ;
         ui_type     = "combo";
         ui_items    = "BT.2446 Method A\0"
                       "BT.2446 Methoc C\0"
-                      "Dice inverse\0";
+#ifdef ENABLE_DICE
+                      "Dice inverse\0"
+#endif
+                      ;
       > = 0;
 
 #define ITM_METHOD_BT2446A          0
@@ -143,14 +147,14 @@ namespace Ui
       <
         ui_category = "BT.2446 Method A";
         ui_label    = "gamut expansion";
-        ui_tooltip  = "1.10 is the default of the spec"
-                 "\n" "1.05 about matches the input colour space"
-                 "\n" "1.00 slightly reduces the colour space";
+        ui_tooltip  = "1.100 is the default of the BT.2446 specification"
+                 "\n" "1.025 about matches the input colour space"
+                 "\n" "1.000 slightly reduces the colour space";
         ui_type     = "drag";
         ui_min      = 1.f;
         ui_max      = 1.2f;
-        ui_step     = 0.005f;
-      > = 1.1f;
+        ui_step     = 0.001f;
+      > = 1.025f;
 
       uniform float GammaIn
       <
@@ -407,22 +411,6 @@ void PS_InverseToneMapping(
 
   //colour = gamut(colour, EXPAND_GAMUT);
 
-#ifdef ENABLE_DICE
-  float diceReferenceWhite = (Ui::Itm::Dice::DiceInputBrightness / 80.f);
-#endif //ENABLE_DICE
-
-  if (Ui::Itm::Global::ItmMethod != ITM_METHOD_DICE_INVERSE)
-  {
-    colour = Csp::Mat::Bt709To::Bt2020(colour);
-  }
-
-#ifdef ENABLE_DICE
-  else
-  {
-    colour = max(Csp::Mat::Bt709To::Ap0D65(colour * diceReferenceWhite / 125.f), 0.f);
-  }
-#endif //ENABLE_DICE
-
   switch (Ui::Itm::Global::ItmMethod)
   {
     case ITM_METHOD_BT2446A:
@@ -469,43 +457,6 @@ void PS_InverseToneMapping(
 
 #endif //ENABLE_DICE
   }
-
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-#ifdef ENABLE_DICE
-
-  if (Ui::Itm::Global::ItmMethod == ITM_METHOD_DICE_INVERSE)
-  {
-    colour = Csp::Mat::Ap0D65To::Bt2020(colour);
-  }
-
-#endif //ENABLE_DICE
-
-  colour = Csp::Trc::LinearTo::Pq(colour);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  if (Ui::Itm::Global::ItmMethod != ITM_METHOD_DICE_INVERSE)
-  {
-    colour = Csp::Mat::Bt2020To::Bt709(colour);
-  }
-
-#ifdef ENABLE_DICE
-
-  else
-  {
-    colour = Csp::Mat::Ap0D65To::Bt709(colour);
-  }
-
-#endif //ENABLE_DICE
-
-  colour *= 125.f; // 125 = 10000 / 80
-
-#else //ACTUAL_COLOUR_SPACE ==
-
-  colour = float3(0.f, 0.f, 0.f);
-
-#endif //ACTUAL_COLOUR_SPACE ==
 
   Output = float4(colour, inputColour.a);
 }

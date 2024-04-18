@@ -3,6 +3,34 @@
 #include "colour_space.fxh"
 
 
+// convert BT.2020 to BT.709
+float3 ConditionallyConvertBt2020To709(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
+#endif
+  return Colour;
+}
+
+// convert normalised BT.709 to scRGB
+float3 ConditionallyConvertNormalisedBt709ToScrgb(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  Colour *= 125.f;
+#endif
+  return Colour;
+}
+
+// convert linear BT.2020 to HDR10
+float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour = Csp::Trc::LinearTo::Pq(Colour);
+#endif
+  return Colour;
+}
+
+
 #if (defined(IS_ANALYSIS_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
@@ -38,15 +66,17 @@ namespace Itmos
 {
   // outputs normalised values
   float3 Bt2446A(
-    float3 Input,
-    float  Lhdr,
-    float  Lsdr,
-    float  InputNitsFactor,
-    float  GamutExpansion,
-    float  GammaIn,
-    float  GammaOut)
+    const float3 Input,
+    const float  Lhdr,
+    const float  Lsdr,
+    const float  InputNitsFactor,
+    const float  GamutExpansion,
+    const float  GammaIn,
+    const float  GammaOut)
   {
-    float3 sdr = saturate(Input / InputNitsFactor);
+    float3 sdr = Input / InputNitsFactor;
+
+    sdr = Csp::Mat::Bt709To::Bt2020(sdr);
 
     //RGB->R'G'B' gamma compression
     sdr = pow(sdr, 1.f / (2.4f + GammaIn));
@@ -57,53 +87,53 @@ namespace Itmos
 
     // adjusted luma component (inverse)
     // get Y'sdr
-    float ySdr = ycbcrTmo.x + max(0.1f * ycbcrTmo.z, 0.f);
+    float ySdr = ycbcrTmo.x
+               + max(0.1f * ycbcrTmo.z, 0.f);
 
     // Tone mapping step 3 (inverse)
     // get Y'c
-    float pSdr = 1.f + 32.f * pow(
-                                  Lsdr /
-                                  10000.f
-                              , 1.f / 2.4f);
+    static const float pSdr = 1.f + 32.f * pow(Lsdr
+                                             / 10000.f
+                                           , 1.f / 2.4f);
 
     //Y'c
     //if pSdr == 1 there is a division by zero
     //this happens when Lsdr == 0
-    float yC = log((ySdr * (pSdr - 1)) + 1) /
-               log(pSdr); //log = ln
+    float yC = log((ySdr * (pSdr - 1.f)) + 1.f)
+             / log(pSdr); //log = ln
 
     // Tone mapping step 2 (inverse)
     // get Y'p
-    float yP0 = yC / 1.0770f;
-    float yP2 = (yC - 0.5000f) /
-                0.5000f;
+    float yP0 = yC
+              / 1.0770f;
+    float yP2 = (yC - 0.5000f)
+              / 0.5000f;
 
     //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
 
     float yP = yP0 <= 0.7399f ? yP0
              : yP2 >= 0.9909f ? yP2
-                              : (-2.7811f + sqrt(4.83307641f - 4.604f * yC)) /
-                                -2.302f;
+                              : (-2.7811f + sqrt(4.83307641f - 4.604f * yC))
+                              / -2.302f;
 
     // Tone mapping step 1 (inverse)
     // get Y'
-    float pHdr = 1.f + 32.f * pow(
-                                  Lhdr /
-                                  10000.f
-                              , 1.f / 2.4f);
+    static const float pHdr = 1.f + 32.f * pow(Lhdr
+                                             / 10000.f
+                                           , 1.f / 2.4f);
     //Y'hdr
     //if pHdr == 1 there is a division by zero
     //this happens when Lhdr == 0
-    float yHdr = (pow(pHdr, yP) - 1.f) /
-                 (pHdr - 1.f);
+    float yHdr = (pow(pHdr, yP) - 1.f)
+               / (pHdr - 1.f);
 
     // Colour scaling function
     // TODO: analyse behaviour of colourScale being 1 or 0.00000001
     //float colourScale = 0.0000001f;
     //if (yHdr > 0.f && ySdr > 0.f) // avoid division by zero
     // this is actually fine to be infinite because it will create 0 as a result in the next step
-    float colourScale = ySdr /
-                        (GamutExpansion * yHdr);
+    float colourScale = ySdr
+                      / (GamutExpansion * yHdr);
 
     // Colour difference signals (inverse) and Luma (inverse)
     // get R'G'B'
@@ -116,10 +146,9 @@ namespace Itmos
   //          Csp::KHelpers::Bt2020::K.g;
 
     // produces the same results
-    float cbHdr = ycbcrTmo.y / colourScale;
-    float crHdr = ycbcrTmo.z / colourScale;
+    float2 cbcrHdr = ycbcrTmo.yz / colourScale;
 
-    float3 hdr = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yHdr, cbHdr, crHdr));
+    float3 hdr = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yHdr, cbcrHdr));
 
     hdr = max(hdr, 0.f); //on edge cases the YCbCr->RGB conversion isn't accurate enough
 
@@ -129,6 +158,13 @@ namespace Itmos
 
     //expand to target luminance
     hdr *= (Lhdr / 10000.f);
+
+    //scRGB
+    hdr = ConditionallyConvertBt2020To709(hdr);
+    hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
+
+    //HDR10
+    hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
 
     return hdr;
   } //Bt2446a
@@ -368,9 +404,9 @@ namespace Itmos
 
   // outputs normalised values
   float3 Bt2446c(
-    float3 Input,
-    float  SdrRelativeBrightness,
-    float  Alpha)
+    const float3 Input,
+    const float  SdrRelativeBrightness,
+    const float  Alpha)
   //  float  k1,
   //  float  inf_point,
   //  bool   UseAchromaticCorrection,
@@ -387,13 +423,15 @@ namespace Itmos
     //153.7 is just under 10000 nits for Alpha == 0 and above it starts clipping
     float3 sdr = Input * SdrRelativeBrightness;
 
+    sdr = Csp::Mat::Bt709To::Bt2020(sdr);
+
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
     //float Alpha = 0.f; //hardcode for now as it gives the best results imo
-    float xlpha = 1.f - 2.f * Alpha;
-    float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
-                                        Alpha, xlpha, Alpha,
-                                        Alpha, Alpha, xlpha);
+    static const float xlpha = 1.f - 2.f * Alpha;
+    static const float3x3 crosstalkMatrix = float3x3(xlpha, Alpha, Alpha,
+                                                     Alpha, xlpha, Alpha,
+                                                     Alpha, Alpha, xlpha);
 
     sdr = mul(crosstalkMatrix, sdr);
 
@@ -402,10 +440,10 @@ namespace Itmos
     sdr = Csp::Mat::Bt2020To::XYZ(sdr);
     float YSdr = sdr.y;
     float xyz  = sdr.x + sdr.y + sdr.z;
-    float xSdr = sdr.x /
-                 xyz;
-    float ySdr = sdr.y /
-                 xyz;
+    float xSdr = sdr.x
+               / xyz;
+    float ySdr = sdr.y
+               / xyz;
 
     //6.1.4 (inverse)
     //inverse tone mapping
@@ -429,14 +467,16 @@ namespace Itmos
 
     float YHdr = YSdr / k1;
 
-    if (YHdr >= YHdrIp) {
+    [branch]
+    if (YHdr >= YHdrIp)
+    {
       YHdr = (exp((YSdr * 100.f - k4) / k2) + k3) * YHdrIp;
     }
 
     //6.1.3 (inverse) part 1
     //convert to XYZ
-    float  XHdrUncorrected = (xSdr / ySdr) * YHdr;
-    float  ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
+    float XHdrUncorrected = (xSdr / ySdr) * YHdr;
+    float ZHdrUncorrected = ((1.f - xSdr - ySdr) / ySdr) * YHdr;
 
     float3 hdr = float3(XHdrUncorrected, YHdr, ZHdrUncorrected);
 
@@ -582,14 +622,21 @@ namespace Itmos
 
     //6.1.2 (inverse)
     //inverse crosstalk matrix from 6.1.6
-    float mlpha = 1.f - Alpha;
-    float3x3 inverseCrosstalkMatrix =
+    static const float mlpha = 1.f - Alpha;
+    static const float3x3 inverseCrosstalkMatrix =
       mul(1.f / (1.f - 3.f * Alpha), float3x3(mlpha, -Alpha, -Alpha,
                                              -Alpha,  mlpha, -Alpha,
                                              -Alpha, -Alpha,  mlpha));
     hdr = mul(inverseCrosstalkMatrix, hdr);
 
-    hdr = saturate(hdr);
+    hdr = max(hdr, 0.f);
+
+    //scRGB
+    hdr = ConditionallyConvertBt2020To709(hdr);
+    hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
+
+    //HDR10
+    hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
 
     return hdr;
   } //Bt2446c
