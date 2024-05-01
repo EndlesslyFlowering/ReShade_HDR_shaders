@@ -146,124 +146,136 @@ void PS_MapSdrIntoHdr(
 
   static const bool inputTrcIsPq = INPUT_TRC == TRC_PQ;
 
-  BRANCH(x)
-  if (INPUT_TRC == TRC_GAMMA_22)
+  switch(INPUT_TRC)
   {
-    BRANCH(x)
-    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    case TRC_GAMMA_22:
     {
-      colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
-    }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
-    {
-      colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
-    }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
-    {
-      colour = sign(colour) * pow(abs(colour), 2.2f);
-    }
-    else
-    {
-      colour = saturate(colour);
-      colour = pow(colour, 2.2f);
-    }
-  }
-  else if (INPUT_TRC == TRC_GAMMA_24)
-  {
-    BRANCH(x)
-    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
-    {
-      colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
-    }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
-    {
-      colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
-    }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
-    {
-      colour = sign(colour) * pow(abs(colour), 2.4f);
-    }
-    else
-    {
-      colour = saturate(colour);
-      colour = pow(colour, 2.4f);
-    }
-  }
-  else if (INPUT_TRC == TRC_LINEAR)
-  {
-    BRANCH(x)
-    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
-    {
-      colour = saturate(colour);
-    }
-  }
-  else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
-  {
-    BRANCH(x)
-    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
-    {
-      colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
-    }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
-    {
-      float3 absColour  = abs(colour);
-      float3 signColour = sign(colour);
-      [branch]
-      if (absColour.r < 1.f)
+      BRANCH(x)
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
-        colour.r = signColour.r * pow(Csp::Trc::LinearTo::Srgb(absColour.r), 2.2f);
+        colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
       }
-      [branch]
-      if (absColour.g < 1.f)
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       {
-        colour.g = signColour.g * pow(Csp::Trc::LinearTo::Srgb(absColour.g), 2.2f);
+        colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
       }
-      [branch]
-      if (absColour.b < 1.f)
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
-        colour.b = signColour.b * pow(Csp::Trc::LinearTo::Srgb(absColour.b), 2.2f);
+        colour = sign(colour) * pow(abs(colour), 2.2f);
+      }
+      else
+      {
+        colour = saturate(colour);
+        colour = pow(colour, 2.2f);
       }
     }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    break;
+    case TRC_GAMMA_24:
     {
-      colour = sign(colour) * pow(Csp::Trc::LinearTo::Srgb(abs(colour)), 2.2f);
+      BRANCH(x)
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+      {
+        colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      {
+        colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      {
+        colour = sign(colour) * pow(abs(colour), 2.4f);
+      }
+      else
+      {
+        colour = saturate(colour);
+        colour = pow(colour, 2.4f);
+      }
     }
-    else
+    break;
+    case TRC_LINEAR:
     {
-      colour = saturate(colour);
-      colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+      BRANCH(x)
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
+      {
+        colour = saturate(colour);
+      }
     }
-  }
-  else if (INPUT_TRC == TRC_SRGB)
-  {
-    BRANCH(x)
-    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+    break;
+    case TRC_LINEAR_WITH_BLACK_FLOOR_EMU:
     {
-      colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
+      BRANCH(x)
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+      {
+        colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      {
+        float3 absColour  = abs(colour);
+        float3 signColour = sign(colour);
+        [branch]
+        if (absColour.r < 1.f)
+        {
+          colour.r = signColour.r * pow(Csp::Trc::LinearTo::Srgb(absColour.r), 2.2f);
+        }
+        [branch]
+        if (absColour.g < 1.f)
+        {
+          colour.g = signColour.g * pow(Csp::Trc::LinearTo::Srgb(absColour.g), 2.2f);
+        }
+        [branch]
+        if (absColour.b < 1.f)
+        {
+          colour.b = signColour.b * pow(Csp::Trc::LinearTo::Srgb(absColour.b), 2.2f);
+        }
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      {
+        colour = sign(colour) * pow(Csp::Trc::LinearTo::Srgb(abs(colour)), 2.2f);
+      }
+      else
+      {
+        colour = saturate(colour);
+        colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+      }
     }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+    break;
+    case TRC_SRGB:
     {
-      colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
+      BRANCH(x)
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+      {
+        colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      {
+        colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
+      }
+      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      {
+        colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
+      }
+      else
+      {
+        colour = saturate(colour);
+        colour = Csp::Trc::SrgbTo::Linear(colour);
+      }
     }
-    else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+    break;
+    case TRC_PQ:
     {
-      colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
-    }
-    else
-    {
-      colour = saturate(colour);
-      colour = Csp::Trc::SrgbTo::Linear(colour);
-    }
-  }
-  else if (inputTrcIsPq)
-  {
-    colour = ConditionallyLineariseHdr10(colour);
-    colour = ConditionallyConvertBt2020To709(colour);
+      //scRGB
+      colour = ConditionallyLineariseHdr10(colour);
+      colour = ConditionallyConvertBt2020To709(colour);
+
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-    colour *= 125.f;
+      colour *= 125.f;
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
-    colour *= 100.f;
+      colour *= 100.f;
 #endif
+    }
+    break;
+    default:
+      break;
   }
 
   if (ENABLE_CLAMPING)
