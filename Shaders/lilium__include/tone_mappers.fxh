@@ -101,6 +101,7 @@ namespace Tmos
     inout       float3 Colour,
           const float  MaxNits,
           const float  TargetNits,
+          const float  LumaPostAdjust,
           const float  GamutCompression)
   {
     float3 Rgb = Colour;
@@ -155,7 +156,7 @@ namespace Tmos
     float crTmo = colourScaling * ycbcr.z;
 
     //Y'tmo
-    float yTmo = ySdr - max(0.1f * crTmo, 0.f);
+    float yTmo = ySdr - max(LumaPostAdjust * crTmo, 0.f);
 
     Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
                                                 cbTmo,
@@ -177,6 +178,7 @@ namespace Tmos
     inout       float3 Colour,
           const float  MaxNits,
           const float  TargetNits,
+          const float  LumaPostAdjust,
           const float  GamutCompression,
           const float  TestH,
           const float  TestS)
@@ -234,7 +236,7 @@ namespace Tmos
     float crTmo = colourScaling * ycbcr.z;
 
     //Y'tmo
-    float yTmo = ySdr - max(0.1f * crTmo, 0.f);
+    float yTmo = ySdr - max(LumaPostAdjust * crTmo, 0.f);
 
     Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
                                                 cbTmo,

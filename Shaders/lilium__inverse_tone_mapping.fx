@@ -143,13 +143,26 @@ namespace Ui
       //  ui_label    = "automatically calculate \"reference white luminance\"";
       //> = false;
 
+      uniform float Bt2446ALumaPreAdjust
+      <
+        ui_category = "BT.2446 Method A";
+        ui_label    = "luma pre adjust";
+        ui_tooltip  = "0.1 is the default of the BT.2446 specification."
+            "\n" "\n" "Set this to 0 and \"gamut expansion\" to 1 to not adjust the gamut.";
+        ui_type     = "drag";
+        ui_min      = 0.f;
+        ui_max      = 0.2f;
+        ui_step     = 0.001f;
+      > = 0.1f;
+
       uniform float Bt2446AGamutExpansion
       <
         ui_category = "BT.2446 Method A";
         ui_label    = "gamut expansion";
-        ui_tooltip  = "1.100 is the default of the BT.2446 specification"
+        ui_tooltip  = "1.100 is the default of the BT.2446 specification."
                  "\n" "1.025 about matches the input colour space"
-                 "\n" "1.000 slightly reduces the colour space";
+                 "\n" "1.000 slightly reduces the colour space"
+            "\n" "\n" "Set this to 1 and \"luma pre adjust\" to 0 to not adjust the gamut.";
         ui_type     = "drag";
         ui_min      = 1.f;
         ui_max      = 1.2f;
@@ -437,6 +450,7 @@ void PS_InverseToneMapping(
                               Ui::Itm::Global::TargetBrightness,
                               referenceWhiteNits,
                               inputNitsFactor,
+                              Ui::Itm::Bt2446A::Bt2446ALumaPreAdjust,
                               Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
                               Ui::Itm::Bt2446A::GammaIn,
                               Ui::Itm::Bt2446A::GammaOut);

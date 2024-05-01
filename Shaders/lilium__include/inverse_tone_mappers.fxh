@@ -4,7 +4,7 @@
 
 
 // convert BT.2020 to BT.709
-float3 ConditionallyConvertBt2020To709(float3 Colour)
+float3 ConditionallyConvertBt2020ToBt709(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   Colour = Csp::Mat::Bt2020To::Bt709(Colour);
@@ -70,6 +70,7 @@ namespace Itmos
     const float  Lhdr,
     const float  Lsdr,
     const float  InputNitsFactor,
+    const float  LumaPreAdjust,
     const float  GamutExpansion,
     const float  GammaIn,
     const float  GammaOut)
@@ -88,7 +89,7 @@ namespace Itmos
     // adjusted luma component (inverse)
     // get Y'sdr
     float ySdr = ycbcrTmo.x
-               + max(0.1f * ycbcrTmo.z, 0.f);
+               + max(LumaPreAdjust * ycbcrTmo.z, 0.f);
 
     // Tone mapping step 3 (inverse)
     // get Y'c
@@ -160,7 +161,7 @@ namespace Itmos
     hdr *= (Lhdr / 10000.f);
 
     //scRGB
-    hdr = ConditionallyConvertBt2020To709(hdr);
+    hdr = ConditionallyConvertBt2020ToBt709(hdr);
     hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
 
     //HDR10
@@ -632,7 +633,7 @@ namespace Itmos
     hdr = max(hdr, 0.f);
 
     //scRGB
-    hdr = ConditionallyConvertBt2020To709(hdr);
+    hdr = ConditionallyConvertBt2020ToBt709(hdr);
     hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
 
     //HDR10

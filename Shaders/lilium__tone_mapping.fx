@@ -115,13 +115,26 @@ namespace Ui
 
     namespace Bt2446A
     {
+      uniform float LumaPostAdjust
+      <
+        ui_category = "BT.2446 Method A";
+        ui_label    = "luma post adjust";
+        ui_tooltip  = "0.1 is the default of the BT.2446 specification."
+            "\n" "\n" "Set this to 0 and \"gamut compression\" to 1 to not adjust the gamut.";
+        ui_type     = "drag";
+        ui_min      = 0.f;
+        ui_max      = 0.2f;
+        ui_step     = 0.001f;
+      > = 0.1f;
+
       uniform float GamutCompression
       <
         ui_category = "BT.2446 Method A";
         ui_label    = "gamut compression";
         ui_tooltip  = "1.100 is the default of the BT.2446 specification"
                  "\n" "1.025 about matches the input colour space"
-                 "\n" "1.000 slightly expands the colour space";
+                 "\n" "1.000 slightly expands the colour space"
+            "\n" "\n" "Set this to 1 and \"luma post adjust\" to 0 to not adjust the gamut.";
         ui_type     = "drag";
         ui_min      = 1.f;
         ui_max      = 1.2f;
@@ -459,6 +472,7 @@ void PS_ToneMapping(
       Tmos::Bt2446A(hdr,
                     usedMaxNits,
                     Ui::Tm::Global::TargetBrightness,
+                    Ui::Tm::Bt2446A::LumaPostAdjust,
                     Ui::Tm::Bt2446A::GamutCompression);
     }
     break;
@@ -496,6 +510,7 @@ void PS_ToneMapping(
       Tmos::Bt2446A_MOD1(hdr,
                          usedMaxNits,
                          Ui::Tm::Global::TargetBrightness,
+                         Ui::Tm::Bt2446A::LumaPostAdjust,
                          Ui::Tm::Bt2446A::GamutCompression,
                          testH,
                          testS);
