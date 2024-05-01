@@ -339,8 +339,7 @@ namespace Tmos
         {
           float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // max to avoid invalid colours
 
-          ictcp = float3(ictcp.x,
-                         ictcp.yz * minI);
+          ictcp.yz *= minI;
         }
 
         //to RGB
@@ -392,8 +391,7 @@ namespace Tmos
         {
           float minY = min((y1 / y2), (y2 / y1));
 
-          ycbcr = float3(ycbcr.x,
-                         ycbcr.yz * minY);
+          ycbcr.yz *= minY;
         }
 
         Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr);
@@ -408,7 +406,7 @@ namespace Tmos
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb, Csp::Mat::Bt709ToXYZ[1].rgb);
+        float y1 = dot(Rgb / 125.f, Csp::Mat::Bt709ToXYZ[1].rgb);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1].rgb);
 #endif
@@ -660,7 +658,7 @@ namespace Tmos
         Rgb = ConditionallyLineariseHdr10(Rgb);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb, Csp::Mat::Bt709ToXYZ[1].rgb);
+        float y1 = dot(Rgb / 125.f, Csp::Mat::Bt709ToXYZ[1].rgb);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1].rgb);
 #endif
