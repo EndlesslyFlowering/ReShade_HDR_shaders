@@ -160,7 +160,7 @@ void PS_MapSdrIntoHdr(
     }
     else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
     {
-      colour = pow(colour, 2.2f);
+      colour = sign(colour) * pow(abs(colour), 2.2f);
     }
     else
     {
@@ -181,12 +181,20 @@ void PS_MapSdrIntoHdr(
     }
     else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
     {
-      colour = pow(colour, 2.4f);
+      colour = sign(colour) * pow(abs(colour), 2.4f);
     }
     else
     {
       colour = saturate(colour);
       colour = pow(colour, 2.4f);
+    }
+  }
+  else if (INPUT_TRC == TRC_LINEAR)
+  {
+    BRANCH(x)
+    if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
+    {
+      colour = saturate(colour);
     }
   }
   else if (INPUT_TRC == TRC_LINEAR_WITH_BLACK_FLOOR_EMU)
@@ -218,7 +226,7 @@ void PS_MapSdrIntoHdr(
     }
     else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
     {
-      colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+      colour = sign(colour) * pow(Csp::Trc::LinearTo::Srgb(abs(colour)), 2.2f);
     }
     else
     {
@@ -239,7 +247,7 @@ void PS_MapSdrIntoHdr(
     }
     else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
     {
-      colour = Csp::Trc::SrgbTo::Linear(colour);
+      colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
     }
     else
     {
