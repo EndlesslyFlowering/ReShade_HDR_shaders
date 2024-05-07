@@ -149,12 +149,10 @@ namespace Ui
         ui_category = "BT.2390 EETF";
         ui_label    = "processing mode";
         ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YCbCr: process in YCbCr space"
                  "\n" "YRGB:  process RGB according to brightness"
                  "\n" "RGB:   process each channel individually";
         ui_type     = "combo";
         ui_items    = "ICtCp\0"
-                      "YCbCr\0"
                       "YRGB\0"
                       "RGB\0";
       > = 0;
@@ -163,8 +161,7 @@ namespace Ui
       <
         ui_category = "BT.2390 EETF";
         ui_label    = "enable blowing out highlights";
-        ui_tooltip  = "Enables blowing out highlights for"
-                 "\n" "ICtCp and YCbCr";
+        ui_tooltip  = "Enables blowing out highlights for the ICtCp mode.";
       > = true;
 
       uniform float OldBlackPoint
@@ -210,11 +207,9 @@ namespace Ui
         ui_category = "Dice";
         ui_label    = "processing mode";
         ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YCbCr: process in YCbCr space"
                  "\n" "YRGB:  process RGB according to brightness";
         ui_type     = "combo";
         ui_items    = "ICtCp\0"
-                      "YCbCr\0"
                       "YRGB\0";
       > = 0;
 
@@ -222,8 +217,7 @@ namespace Ui
       <
         ui_category = "Dice";
         ui_label    = "enable blowing out highlights";
-        ui_tooltip  = "Enables blowing out highlights for"
-                 "\n" "ICtCp and YCbCr";
+        ui_tooltip  = "Enables blowing out highlights for the ICtCp mode.";
       > = true;
 
       uniform float ShoulderStart
@@ -238,9 +232,9 @@ namespace Ui
         ui_type     = "drag";
         ui_units    = "%%";
         ui_min      = 10.f;
-        ui_max      = 90.f;
+        ui_max      = 50.f;
         ui_step     = 0.1f;
-      > = 50.f;
+      > = 25.f;
 
 //      uniform uint WorkingColourSpace
 //      <

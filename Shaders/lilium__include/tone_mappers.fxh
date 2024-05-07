@@ -277,9 +277,8 @@ namespace Tmos
     }
 
 #define BT2390_PRO_MODE_ICTCP 0
-#define BT2390_PRO_MODE_YCBCR 1
-#define BT2390_PRO_MODE_YRGB  2
-#define BT2390_PRO_MODE_RGB   3
+#define BT2390_PRO_MODE_YRGB  1
+#define BT2390_PRO_MODE_RGB   2
 
     // works in PQ
     void Eetf(
@@ -293,6 +292,7 @@ namespace Tmos
             const float  KneeStart, // KS
             const bool   EnableBlowingOutHighlights)
     {
+      BRANCH(x)
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
         float3 Rgb = Colour;
@@ -313,6 +313,7 @@ namespace Tmos
         //float i2 = i1 / SrcMaxPq;
 
         //E2
+        [branch]
         if (i2 >= KneeStart)
         {
           i2 = HermiteSpline(i2, KneeStart, MaxLum);
@@ -325,7 +326,10 @@ namespace Tmos
 #endif
 
         //E3
-        i2 += MinLum * pow((1.f - i2), 4.f);
+        float e3;
+        e3 = 1.f - i2;
+        e3 = e3*e3*e3*e3;
+        i2 += MinLum * e3;
 
         //E4
         i2 = i2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
@@ -355,52 +359,6 @@ namespace Tmos
         Colour = Rgb;
 
       }
-      else if (ProcessingMode == BT2390_PRO_MODE_YCBCR)
-      {
-        float3 Rgb = ConditionallyConvertScrgbToHdr10(Colour);
-
-        float y1 = dot(Rgb, Csp::Ycbcr::KBt2020);
-        //E1
-        float y2 = (y1 - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
-        //float y2 = y1 / SrcMaxPq;
-
-        //E2
-        if (y2 >= KneeStart)
-        {
-          y2 = HermiteSpline(y2, KneeStart, MaxLum);
-        }
-#if (SHOW_ADAPTIVE_MAX_NITS == NO)
-        else if (MinLum == 0.f)
-        {
-          discard;
-        }
-#endif
-
-        //E3
-        y2 += MinLum * pow((1.f - y2), 4.f);
-
-        //E4
-        y2 = max(y2 * SrcMaxPqMinusSrcMinPq + SrcMinPq, 0.f); // max to avoid invalid colours
-        //y2 *= SrcMaxPq;
-
-        float3 ycbcr = float3(y2,
-                              (Rgb.b - y1) / Csp::Ycbcr::KbBt2020,
-                              (Rgb.r - y1) / Csp::Ycbcr::KrBt2020);
-
-        if (EnableBlowingOutHighlights)
-        {
-          float minY = min((y1 / y2), (y2 / y1));
-
-          ycbcr.yz *= minY;
-        }
-
-        Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr);
-
-        Rgb = ConditionallyConvertHdr10ToScrgb(Rgb);
-
-        Colour = Rgb;
-
-      }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
@@ -415,6 +373,7 @@ namespace Tmos
         //float y2 = Csp::Trc::LinearTo::Pq(y1) / SrcMaxPq;
 
         //E2
+        [branch]
         if (y2 >= KneeStart)
         {
           y2 = HermiteSpline(y2, KneeStart, MaxLum);
@@ -427,7 +386,10 @@ namespace Tmos
 #endif
 
         //E3
-        y2 += MinLum * pow((1.f - y2), 4.f);
+        float e3;
+        e3 = 1.f - y2;
+        e3 = e3*e3*e3*e3;
+        y2 += MinLum * e3;
 
         //E4
         y2 = y2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
@@ -451,14 +413,17 @@ namespace Tmos
         //Rgb /= SrcMaxPq;
 
         //E2
+        [branch]
         if (Rgb.r >= KneeStart)
         {
           Rgb.r = HermiteSpline(Rgb.r, KneeStart, MaxLum);
         }
+        [branch]
         if (Rgb.g >= KneeStart)
         {
           Rgb.g = HermiteSpline(Rgb.g, KneeStart, MaxLum);
         }
+        [branch]
         if (Rgb.b >= KneeStart)
         {
           Rgb.b = HermiteSpline(Rgb.b, KneeStart, MaxLum);
@@ -482,8 +447,7 @@ namespace Tmos
   namespace Dice
   {
 #define DICE_PRO_MODE_ICTCP 0
-#define DICE_PRO_MODE_YCBCR 1
-#define DICE_PRO_MODE_YRGB  2
+#define DICE_PRO_MODE_YRGB  1
 
 #define DICE_WORKING_COLOUR_SPACE_BT2020  0
 #define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
@@ -499,9 +463,11 @@ namespace Tmos
       const float TargetCllInPq,
       const float ShoulderStartInPq)
     {
-      return (TargetCllInPq - ShoulderStartInPq)
-           * RangeCompress((Channel       - ShoulderStartInPq)
-                         / (TargetCllInPq - ShoulderStartInPq))
+      static const float targetCllInPqMinusShoulderStartInPq = TargetCllInPq - ShoulderStartInPq;
+
+      return RangeCompress((Channel - ShoulderStartInPq)
+                         / targetCllInPqMinusShoulderStartInPq)
+           * targetCllInPqMinusShoulderStartInPq
            + ShoulderStartInPq;
 
 //      return Channel < ShoulderStartInPq
@@ -562,7 +528,8 @@ namespace Tmos
 //        KgHelper = Csp::KHelpers::Ap0D65::Kg;
 //      }
 
-      // ICtCp, YCbCr and YRGB method copied from BT.2390
+      // ICtCp and YRGB method copied from BT.2390
+      BRANCH(x)
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
         float3 Rgb = Colour;
@@ -598,8 +565,7 @@ namespace Tmos
           {
             float minI = clamp(min((i1 / i2), (i2 / i1)) * 1.1f, 0.f, 1.f); // max to avoid invalid colours
 
-            ictcp = float3(ictcp.x,
-                           ictcp.yz * minI);
+            ictcp.yz *= minI;
           }
 
           //to RGB
@@ -611,42 +577,6 @@ namespace Tmos
 
           Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
           Rgb = ConditionallyConvertNormalisedBt709ToScrgb(Rgb);
-
-          Colour = Rgb;
-        }
-      }
-      else if (ProcessingMode == DICE_PRO_MODE_YCBCR)
-      {
-        float3 Rgb = ConditionallyConvertScrgbToHdr10(Colour);
-
-        float y1 = dot(Rgb, Csp::Ycbcr::KBt2020);
-
-        if (y1 < ShoulderStartInPq)
-        {
-#if (SHOW_ADAPTIVE_MAX_NITS == NO)
-          discard;
-#endif
-        }
-        else
-        {
-          float y2 = LuminanceCompress(y1, TargetCllInPq, ShoulderStartInPq);
-
-          float3 ycbcr = float3(y2,
-                                (Colour.b - y1) / Csp::Ycbcr::KbBt2020,
-                                (Colour.r - y1) / Csp::Ycbcr::KrBt2020);
-
-          if (EnableBlowingOutHighlights)
-          {
-            float minY = clamp(min((y1 / y2), (y2 / y1)) * 1.1f, 0.f, 1.f); // max to avoid invalid colours
-
-            ycbcr = float3(ycbcr.x,
-                           ycbcr.yz * minY);
-          }
-
-          //to RGB
-          Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr);
-
-          Rgb = ConditionallyConvertHdr10ToScrgb(Rgb);
 
           Colour = Rgb;
         }
