@@ -2348,6 +2348,36 @@ namespace Csp
 //      -1.2684380046f,  2.6097574011f, -0.3413193965f, \
 //      -0.0041960863f, -0.7034186147f,  1.7076147010f) \
 
+    namespace OkLabTo
+    {
+
+      //OKLab->OKLCh°
+      float3 OkLch(const float3 OkLab)
+      {
+        float C = sqrt(OkLab.y * OkLab.y
+                     + OkLab.z * OkLab.z);
+
+        float h = atan2(OkLab.z, OkLab.y);
+
+        return float3(OkLab.x, C, h);
+      }
+
+    } //OkLabTo
+
+    namespace OkLchTo
+    {
+
+      //OKLCh°->OKLab
+      float3 OkLab(const float3 OkLch)
+      {
+        float2 ab = OkLch.y * float2(cos(OkLch.z),
+                                     sin(OkLch.z));
+
+        return float3(OkLch.x, ab);
+      }
+
+    } //OkLchTo
+
     namespace OkLmsTo
     {
 
