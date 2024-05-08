@@ -289,16 +289,12 @@ void PS_MapSdrIntoHdr(
     colour = Csp::Trc::ExtendedGammaAdjust(colour, 1.f + GAMMA_ADJUST);
   }
 
-  if (!inputTrcIsPq)
-  {
-    colour = ConditionallyConvertBt709ToBt2020(colour);
-  }
-
 //  if (dot(Bt709ToXYZ[1].rgb, colour) < 0.f)
 //    colour = float3(0.f, 0.f, 0.f);
 
   if (!inputTrcIsPq)
   {
+
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
     colour *= (SDR_WHITEPOINT_NITS / 80.f);
@@ -312,9 +308,11 @@ void PS_MapSdrIntoHdr(
     colour *= (SDR_WHITEPOINT_NITS / 100.f);
 
 #endif
-  }
 
-  colour = ConditionallyConvertLinearBt2020ToHdr10(colour);
+    //HDR10
+    colour = ConditionallyConvertBt709ToBt2020(colour);
+    colour = ConditionallyConvertLinearBt2020ToHdr10(colour);
+  }
 
   //colour = fixNAN(colour);
 
