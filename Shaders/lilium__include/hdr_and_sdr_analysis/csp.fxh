@@ -482,13 +482,18 @@ float3 CreateCspMap(
                         Y,
                         0.f);
       } break;
+#if defined(IS_HDR10_LIKE_CSP)
+      default:
+#elif defined(IS_FLOAT_HDR_CSP)
       case IS_CSP_BT2020:
+#endif
       {
         // blue
         output = float3(0.f,
                         0.f,
                         Y);
       } break;
+#if defined(IS_FLOAT_HDR_CSP)
       case IS_CSP_AP0:
       {
         // red
@@ -503,6 +508,7 @@ float3 CreateCspMap(
                         0.f,
                         Y);
       } break;
+#endif
     }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
