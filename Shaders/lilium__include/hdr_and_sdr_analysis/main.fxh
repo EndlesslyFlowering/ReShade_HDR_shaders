@@ -363,18 +363,16 @@ static const int INTERMEDIATE_Y[2] =
 #endif //!IS_COMPUTE_CAPABLE_API
 
 
-void VS_Clear(
-  in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+void VS_Clear
+(
+  out float4 Position : SV_Position
+)
 {
   Position = float4(-2.f, -2.f, 0.f, 1.f);
 }
 
-void PS_Clear(
-  in  float4 Position : SV_Position,
-  out float4 Out      : SV_Target0)
+void PS_Clear()
 {
-  Out = 0.f;
   discard;
 }
 
