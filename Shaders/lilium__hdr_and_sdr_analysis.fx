@@ -1137,7 +1137,7 @@ void PS_HdrAnalysis(
 #ifdef IS_HDR_CSP
     if (SHOW_GAMUT_MAP)
     {
-      Output.rgb = CreateGamutMap(tex2Dfetch(SamplerGamuts, pureCoordAsInt) * 255.f, pixelNits);
+      Output.rgb = CreateGamutMap(tex2Dfetch(SamplerGamuts, pureCoordAsInt) * 256.f, pixelNits); // *256 for safety
     }
 #endif
 

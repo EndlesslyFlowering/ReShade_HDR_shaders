@@ -116,34 +116,34 @@ float GetGamut(float3 Rgb)
   }
   else if (IsGamut(_IS_GAMUT_DCI_P3(Rgb)))
   {
-    return IS_GAMUT_DCI_P3 / 255.f;
+    return IS_GAMUT_DCI_P3 / 256.f; // /256 for safety
   }
 
 #if defined(IS_HDR10_LIKE_CSP)
 
   else
   {
-    return IS_GAMUT_BT2020 / 255.f;
+    return IS_GAMUT_BT2020 / 256.f; // /256 for safety
   }
 
 #else
 
   else if (IsGamut(_IS_GAMUT_BT2020(Rgb)))
   {
-    return IS_GAMUT_BT2020 / 255.f;
+    return IS_GAMUT_BT2020 / 256.f; // /256 for safety
   }
   else if (IsGamut(_IS_GAMUT_AP0(Rgb)))
   {
-    return IS_GAMUT_AP0 / 255.f;
+    return IS_GAMUT_AP0 / 256.f; // /256 for safety
   }
   else
   {
-    return IS_GAMUT_INVALID / 255.f;
+    return IS_GAMUT_INVALID / 256.f; // /256 for safety
   }
 
 #endif //IS_HDR10_LIKE_CSP
 
-  return IS_GAMUT_INVALID / 255.f;
+  return IS_GAMUT_INVALID / 256.f; // /256 for safety
 }
 
 
@@ -221,7 +221,7 @@ void PS_CalcGamuts(
 
 #else
 
-    CurGamut = IS_GAMUT_INVALID / 255.f;
+    CurGamut = IS_GAMUT_INVALID / 256.f; // /256 for safety
 
     return;
 
@@ -304,7 +304,7 @@ void CS_CountGamuts(uint3 GTID : SV_GroupThreadID,
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
 
-        uint curGamut = uint(tex2Dfetch(SamplerGamuts, curFetchPos) * 255.f);
+        uint curGamut = uint(tex2Dfetch(SamplerGamuts, curFetchPos) * 256.f); // *256 for safety
 
 #if (defined(GAMUT_COUNTER_FETCH_X_NEEDS_CLAMPING)  \
   && defined(GAMUT_COUNTER_FETCH_Y_NEEDS_CLAMPING))
@@ -384,7 +384,7 @@ void PS_CountGamuts(
       int2 xy = int2(x + INTERMEDIATE_X_0 * id.x,
                      y + INTERMEDIATE_Y_0 * id.y);
 
-      uint curGamut = uint(tex2Dfetch(SamplerGamuts, xy) * 255.f);
+      uint curGamut = uint(tex2Dfetch(SamplerGamuts, xy) * 256.f); // *256 for safety
 
       gamutCounter[curGamut]++;
     }

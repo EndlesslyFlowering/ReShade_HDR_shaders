@@ -424,7 +424,7 @@ void PS_GetNumbersNits(
     break;
   }
 
-  Number = float(number) / 255.f;
+  Number = float(number) / 256.f; // /256 for safety
 }
 
 
@@ -491,7 +491,7 @@ void PS_GetGamutNumbers(
     break;
   }
 
-  Number = float(number) / 255.f;
+  Number = float(number) / 256.f; // /256 for safety
 }
 #endif //IS_HDR_CSP
 
@@ -939,7 +939,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
   static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPos)
 #ifndef IS_COMPUTE_CAPABLE_API
-                              * 255.f
+                              * 256.f
 #endif
                                      ;
 
@@ -1115,7 +1115,7 @@ void VS_RenderNumbers(
     BRANCH(x)
     if (SHOW_GAMUT_FROM_CURSOR)
     {
-      const uint gamut = tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 255.f;
+      const float gamut = floor(tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 256.f); // *256 for safety
 
       const uint currentVertexID = VertexID % 6;
 
@@ -1135,7 +1135,7 @@ void VS_RenderNumbers(
 
       vertexOffset *= charSize;
 
-      float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + float(gamut));
+      float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + gamut);
 
       texCoordOffset.y *= CHAR_DIM_FLOAT.y;
 
