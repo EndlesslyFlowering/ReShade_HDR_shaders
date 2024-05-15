@@ -115,31 +115,17 @@ namespace Ui
 
     namespace Bt2446A
     {
-      uniform float LumaPostAdjust
+      uniform uint ProcessingModeBt2446A
       <
         ui_category = "BT.2446 Method A";
-        ui_label    = "luma post adjust";
-        ui_tooltip  = "0.1 is the default of the BT.2446 specification."
-            "\n" "\n" "Set this to 0 and \"gamut compression\" to 1 to not adjust the gamut.";
-        ui_type     = "drag";
-        ui_min      = 0.f;
-        ui_max      = 0.2f;
-        ui_step     = 0.001f;
-      > = 0.1f;
+        ui_label    = "processing mode";
+        ui_tooltip  = "YRGB:  process RGB according to brightness"
+                 "\n" "YCbCr: processes in YCbCr colour space (this is the original mode from the ITU Report)";
+        ui_type     = "combo";
+        ui_items    = "YRGB\0"
+                      "YCbCr\0";
+      > = 0;
 
-      uniform float GamutCompression
-      <
-        ui_category = "BT.2446 Method A";
-        ui_label    = "gamut compression";
-        ui_tooltip  = "1.100 is the default of the BT.2446 specification"
-                 "\n" "1.025 about matches the input colour space"
-                 "\n" "1.000 slightly expands the colour space"
-            "\n" "\n" "Set this to 1 and \"luma post adjust\" to 0 to not adjust the gamut.";
-        ui_type     = "drag";
-        ui_min      = 1.f;
-        ui_max      = 1.2f;
-        ui_step     = 0.001f;
-      > = 1.025f;
     } //Bt2446A
 
     namespace Bt2390
@@ -464,10 +450,9 @@ void PS_ToneMapping(
     case TM_METHOD_BT2446A:
     {
       Tmos::Bt2446A(hdr,
+                    Ui::Tm::Bt2446A::ProcessingModeBt2446A,
                     usedMaxNits,
-                    Ui::Tm::Global::TargetBrightness,
-                    Ui::Tm::Bt2446A::LumaPostAdjust,
-                    Ui::Tm::Bt2446A::GamutCompression);
+                    Ui::Tm::Global::TargetBrightness);
     }
     break;
     case TM_METHOD_BT2390:

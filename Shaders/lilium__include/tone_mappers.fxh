@@ -89,89 +89,167 @@ float3 ConditionallyConvertHdr10ToScRgb(float3 Colour)
   return Colour;
 }
 
+// get luminance for the current colour space
+float GetLuminance(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  return dot(Colour, Csp::Mat::Bt709ToXYZ[1]);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  return dot(Colour, Csp::Mat::Bt2020ToXYZ[1]);
+#else
+  return 0;
+#endif
+}
+
 
 namespace Tmos
 {
-  // gamma
-  static const float removeGamma = 2.4f;
-  static const float applyGamma  = 1.f / removeGamma;
+
+#define BT2446A_PRO_MODE_YRGB  0
+#define BT2446A_PRO_MODE_YCBCR 1
 
   // Rep. ITU-R BT.2446-1 Table 2 & 3
   void Bt2446A(
     inout       float3 Colour,
+          const uint   PorcessingMode,
           const float  MaxNits,
-          const float  TargetNits,
-          const float  LumaPostAdjust,
-          const float  GamutCompression)
+          const float  TargetNits)
   {
-    float3 Rgb = Colour;
+    switch (PorcessingMode)
+    {
+      case BT2446A_PRO_MODE_YRGB:
+      {
+        //scRGB
+        Colour = ConditionallyNormaliseScRgb(Colour);
+        //HDR10
+        Colour = ConditionallyLineariseHdr10(Colour);
 
-    Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Rgb);
-    Rgb = ConditionallyLineariseHdr10(Rgb);
+        // adjust the max of 1 according to maxCLL
+        Colour *= (10000.f / MaxNits);
 
-    // adjust the max of 1 according to maxCLL
-    Rgb *= (10000.f / MaxNits);
+        // non-linear transfer function RGB->R'G'B'
+        Colour = pow(Colour, 1.f / 2.4f);
 
-    // non-linear transfer function RGB->R'G'B'
-    Rgb = pow(Rgb, applyGamma);
+        // get luminance
+        float y = max(GetLuminance(Colour), 1e-20);
 
-    //to Y'C'bC'r
-    float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Rgb);
+        // tone mapping step 1
+        //pHDR
+        static const float pHdr = 1.f
+                                + 32.f * pow(MaxNits
+                                           / 10000.f
+                                         , 1.f / 2.4f);
 
-    // tone mapping step 1
-    //pHDR
-    float pHdr = 1.f + 32.f * pow(MaxNits /
-                                  10000.f
-                              , applyGamma);
+        //Y'p
+        float yP = log(1.f + (pHdr - 1.f) * y)
+                 / log(pHdr);
 
-    //Y'p
-    float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
-               log(pHdr);
+        // tone mapping step 2
+        //Y'c
+        float yC = yP <= 0.7399f ? 1.0770f * yP
+                 : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
+                                 : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
 
-    // tone mapping step 2
-    //Y'c
-    float yC = yP <= 0.7399f ? 1.0770f * yP
-             : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
-                             : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
+        // tone mapping step 3
+        //pSDR
+        static const float pSdr = 1.f
+                                + 32.f * pow(TargetNits
+                                           / 10000.f
+                                         , 1.f / 2.4f);
 
-    // tone mapping step 3
-    //pSDR
-    float pSdr = 1.f + 32.f * pow(
-                                  TargetNits /
-                                  10000.f
-                              , applyGamma);
+        //Y'SDR
+        float ySdr = (pow(pSdr, yC) - 1.f)
+                   / (pSdr - 1.f);
 
-    //Y'SDR
-    float ySdr = (pow(pSdr, yC) - 1.f) /
-                 (pSdr - 1.f);
+        //clamp to avoid invalid numbers
+        y = max(y, 1e-20);
 
-    //f(Y'SDR)
-    float colourScaling = ySdr /
-                          (GamutCompression * ycbcr.x);
+        Colour *= ySdr / y;
 
-    //C'b,tmo
-    float cbTmo = colourScaling * ycbcr.y;
+        // gamma decompression and adjust to TargetNits
+        Colour = pow(Colour, 2.4f) * (TargetNits / 10000.f);
 
-    //C'r,tmo
-    float crTmo = colourScaling * ycbcr.z;
+        //scRGB
+        Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
+        //HDR10
+        Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
 
-    //Y'tmo
-    float yTmo = ySdr - max(LumaPostAdjust * crTmo, 0.f);
+        return;
+      }
+      case BT2446A_PRO_MODE_YCBCR:
+      {
+        //scRGB
+        Colour = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
+        //HDR10
+        Colour = ConditionallyLineariseHdr10(Colour);
 
-    Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
-                                                cbTmo,
-                                                crTmo));
+        // adjust the max of 1 according to maxCLL
+        Colour *= (10000.f / MaxNits);
 
-    // avoid invalid colours
-    Rgb = max(Rgb, 0.f);
+        // non-linear transfer function RGB->R'G'B'
+        Colour = pow(Colour, 1.f / 2.4f);
 
-    // gamma decompression and adjust to TargetNits
-    Rgb = pow(Rgb, removeGamma) * (TargetNits / 10000.f);
+        //to Y'C'bC'r
+        float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
 
-    Rgb = ConditionallyConvertNormalisedBt2020ToScRgb(Rgb);
-    Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+        // tone mapping step 1
+        //pHDR
+        static const float pHdr = 1.f
+                                + 32.f * pow(MaxNits
+                                           / 10000.f
+                                         , 1.f / 2.4f);
 
-    Colour = Rgb;
+        //Y'p
+        float yP = log(1.f + (pHdr - 1.f) * ycbcr[0])
+                 / log(pHdr);
+
+        // tone mapping step 2
+        //Y'c
+        float yC = yP <= 0.7399f ? 1.0770f * yP
+                 : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
+                                 : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
+
+        // tone mapping step 3
+        //pSDR
+        static const float pSdr = 1.f
+                                + 32.f * pow(TargetNits
+                                           / 10000.f
+                                         , 1.f / 2.4f);
+
+        //Y'SDR
+        float ySdr = (pow(pSdr, yC) - 1.f)
+                   / (pSdr - 1.f);
+
+        //clamp to avoid invalid numbers
+        ycbcr[0] = max(ycbcr[0], 1e-20);
+        //f(Y'SDR)
+        float colourScaling = ySdr
+                            / (ycbcr[0]);
+
+        //C'bC'r,tmo
+        float2 cbcrTmo = colourScaling * ycbcr.yz;
+
+        //Y'tmo
+        float yTmo = ySdr;
+
+        Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo, cbcrTmo));
+
+        // avoid invalid colours
+        //Colour = max(Colour, 0.f);
+
+        // gamma decompression and adjust to TargetNits
+        Colour = pow(Colour, 2.4f) * (TargetNits / 10000.f);
+
+        //scRGB
+        Colour = ConditionallyConvertNormalisedBt2020ToScRgb(Colour);
+        //HDR10
+        Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
+
+        return;
+      }
+      default:
+        return;
+    }
   }
 
   float3 Bt2446A_MOD1(
@@ -192,7 +270,7 @@ namespace Tmos
     Rgb *= (10000.f / MaxNits);
 
     // non-linear transfer function RGB->R'G'B'
-    Rgb = pow(Rgb, applyGamma);
+    Rgb = pow(Rgb, 1.f / 2.4f);
 
     //to Y'C'bC'r
     float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Rgb);
@@ -202,7 +280,7 @@ namespace Tmos
     float pHdr = 1.f + 32.f * pow(
                                   TestH /
                                   10000.f
-                              , applyGamma);
+                              , 1.f / 2.4f);
 
     //Y'p
     float yP = (log(1.f + (pHdr - 1.f) * ycbcr.x)) /
@@ -219,7 +297,7 @@ namespace Tmos
     float pSdr = 1.f + 32.f * pow(
                                   TestS /
                                   10000.f
-                              , applyGamma);
+                              , 1.f / 2.4f);
 
     //Y'SDR
     float ySdr = (pow(pSdr, yC) - 1.f) /
@@ -246,7 +324,7 @@ namespace Tmos
     Rgb = max(Rgb, 0.f);
 
     // gamma decompression and adjust to TargetNits
-    Rgb = pow(Rgb, removeGamma) * (TargetNits / 10000.f);
+    Rgb = pow(Rgb, 2.4f) * (TargetNits / 10000.f);
 
     Rgb = ConditionallyConvertNormalisedBt2020ToScRgb(Rgb);
     Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
