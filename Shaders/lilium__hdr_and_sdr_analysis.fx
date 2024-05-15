@@ -1002,8 +1002,7 @@ void VS_PrepareHdrAnalysis(
 #ifdef IS_COMPUTE_CAPABLE_API
                                                                                          ,
   out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-  out nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
-  out nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1
+  out nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0
 #endif
   )
 {
@@ -1026,7 +1025,6 @@ void VS_PrepareHdrAnalysis(
 #ifdef IS_COMPUTE_CAPABLE_API
   LuminanceWaveformTextureDisplayAreaBegin = 0;
   CieDiagramSizes0                         = 0.f;
-  CieDiagramSizes1                         = 0.f;
 
 #define CieDiagramTextureActiveSize  CieDiagramSizes0.xy
 #define CieDiagramTextureDisplaySize CieDiagramSizes0.zw
@@ -1096,10 +1094,6 @@ void VS_PrepareHdrAnalysis(
                                          BUFFER_HEIGHT_FLOAT - cieDiagramTextureActiveSize.y);
 
     CieDiagramTextureDisplaySize = CIE_1931_BG_SIZE_FLOAT * cieDiagramSizeFrac;
-
-    CieDiagramSizes1.x = float(_CIE_DIAGRAM_TYPE) * float(CIE_1931_BG_HEIGHT) * cieDiagramSizeFrac;
-
-    CieDiagramSizes1.yz = CIE_CONSOLIDATED_TEXTURE_SIZE * cieDiagramSizeFrac;
   }
 #endif //IS_COMPUTE_CAPABLE_API
 }
@@ -1112,7 +1106,6 @@ void PS_HdrAnalysis(
 #ifdef IS_COMPUTE_CAPABLE_API
   in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
   in  nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
-  in  nointerpolation float3 CieDiagramSizes1                         : CieDiagramSizes1,
 #endif
   out                 float4 Output                                   : SV_Target0)
 {
