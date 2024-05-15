@@ -195,7 +195,7 @@ void PS_CalcNitsPerPixel(
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK
 #ifdef IS_HDR_CSP
-   || SHOW_CSP_MAP
+   || SHOW_GAMUT_MAP
 #endif //IS_HDR_CSP
   )
   {
@@ -372,9 +372,9 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
 
       const uint groupAvgNitsUint = uint((groupAvgNits + 0.0005f) * 1000.f);
 
-      atomicMax(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MAX_NITS,      GroupMax);
-      atomicAdd(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(GID.xy % 16), groupAvgNitsUint);
-      atomicMin(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MIN_NITS,      GroupMin);
+      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS,      GroupMax);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(GID.xy % 16), groupAvgNitsUint);
+      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS,      GroupMin);
     }
     return;
   }
@@ -384,8 +384,8 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
 
 void FinaliseMaxAvgMinNits()
 {
-  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MAX_NITS, 0));
-  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, POS_MIN_NITS, UINT_MAX));
+  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS, 0));
+  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS, UINT_MAX));
 
   float avgNits = 0;
 
@@ -394,7 +394,7 @@ void FinaliseMaxAvgMinNits()
   {
     for (int y = 0; y < 16; y++)
     {
-      avgNits += float(atomicExchange(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(x, y), 0)) / 1000.f;
+      avgNits += float(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(x, y), 0)) / 1000.f;
     }
   }
 

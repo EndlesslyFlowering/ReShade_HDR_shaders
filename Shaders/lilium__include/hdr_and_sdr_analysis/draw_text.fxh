@@ -140,9 +140,9 @@ uint GetNumberAboveZero(precise uint CurNumber)
 #ifdef IS_COMPUTE_CAPABLE_API
 
 groupshared float GroupNits;
-void CS_GetNumbersNits(uint3 GID  : SV_GroupID,
-                       uint3 GTID : SV_GroupThreadID,
-                       uint3 DTID : SV_DispatchThreadID)
+void CS_GetNitNumbers(uint3 GID  : SV_GroupID,
+                      uint3 GTID : SV_GroupThreadID,
+                      uint3 DTID : SV_DispatchThreadID)
 {
   static const int storeYPos = GID.y + 16;
 
@@ -174,67 +174,67 @@ void CS_GetNumbersNits(uint3 GID  : SV_GroupID,
     case 0:
     {
       precise const uint _00 = GetNumberAboveZero(_5th(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _00);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _00);
     }
     break;
     case 1:
     {
       precise const uint _01 = GetNumberAboveZero(_4th(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _01);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _01);
     }
     break;
     case 2:
     {
       precise const uint _02 = GetNumberAboveZero(_3rd(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _02);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _02);
     }
     break;
     case 3:
     {
       precise const uint _03 = GetNumberAboveZero(_2nd(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _03);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _03);
     }
     break;
     case 4:
     {
       precise const uint _04 = _1st(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _04);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _04);
     }
     break;
     case 5:
     {
       precise const uint _05 = d1st(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _05);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _05);
     }
     break;
     case 6:
     {
       precise const uint _06 = d2nd(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _06);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _06);
     }
     break;
     case 7:
     {
       precise const uint _07 = d3rd(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _07);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _07);
     }
     break;
     case 8:
     {
       precise const uint _08 = d4th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _08);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _08);
     }
     break;
     case 9:
     {
       precise const uint _09 = d5th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _09);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _09);
     }
     break;
     default:
     {
       precise const uint _10 = d6th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, int2(DTID.x, storeYPos), _10);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _10);
     }
     break;
   }
@@ -242,20 +242,20 @@ void CS_GetNumbersNits(uint3 GID  : SV_GroupID,
 }
 
 #ifdef IS_HDR_CSP
-groupshared float GroupCsp;
-void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
-                       uint3 GTID : SV_GroupThreadID,
-                       uint3 DTID : SV_DispatchThreadID)
+groupshared float GroupGamut;
+void CS_GetGamutNumbers(uint3 GID  : SV_GroupID,
+                        uint3 GTID : SV_GroupThreadID,
+                        uint3 DTID : SV_DispatchThreadID)
 {
   static const int2 storePosOffset = int2(11, GID.y + 16);
 
   if (GID.y == 0)
   {
-    GroupCsp = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
+    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
   }
   else if (GID.y == 1)
   {
-    GroupCsp = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
+    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
   }
 #ifdef IS_HDR10_LIKE_CSP
   else
@@ -263,16 +263,16 @@ void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
   else if (GID.y == 2)
 #endif
   {
-    GroupCsp = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
+    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
   }
 #ifdef IS_FLOAT_HDR_CSP
   else if (GID.y == 3)
   {
-    GroupCsp = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
+    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
   }
   else // if (GID.y == 4)
   {
-    GroupCsp = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
+    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
   }
 #endif
 
@@ -282,38 +282,38 @@ void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
   {
     case 0:
     {
-      precise const uint _00 = GetNumberAboveZero(_3rd(GroupCsp));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _00);
+      precise const uint _00 = GetNumberAboveZero(_3rd(GroupGamut));
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _00);
     }
     break;
     case 1:
     {
-      precise const uint _01 = GetNumberAboveZero(_2nd(GroupCsp));
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _01);
+      precise const uint _01 = GetNumberAboveZero(_2nd(GroupGamut));
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _01);
     }
     break;
     case 2:
     {
-      precise const uint _02 = _1st(GroupCsp);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _02);
+      precise const uint _02 = _1st(GroupGamut);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _02);
     }
     break;
     case 3:
     {
-      precise const uint _03 = d1st(GroupCsp);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _03);
+      precise const uint _03 = d1st(GroupGamut);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _03);
     }
     break;
     case 4:
     {
-      precise const uint _04 = d2nd(GroupCsp);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _04);
+      precise const uint _04 = d2nd(GroupGamut);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _04);
     }
     break;
     default:
     {
-      precise const uint _05 = _d3rd(GroupCsp);
-      tex2Dstore(StorageMaxAvgMinNitsAndCspCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _05);
+      precise const uint _05 = _d3rd(GroupGamut);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _05);
     }
     break;
   }
@@ -323,8 +323,8 @@ void CS_GetNumbersCsps(uint3 GID  : SV_GroupID,
 #else //IS_COMPUTE_CAPABLE_API
 
 static const float2 ShowNumbersTextureSize =
- float2(TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH,
-        TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT);
+ float2(TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH,
+        TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT);
 
 void VS_PrepareGetNumbersNits(
   in  uint   VertexID : SV_VertexID,
@@ -429,15 +429,15 @@ void PS_GetNumbersNits(
 
 
 #ifdef IS_HDR_CSP
-void VS_PrepareGetNumbersCsps(
+void VS_PrepareGetGamutNumbers(
   in  uint   VertexID : SV_VertexID,
   out float4 Position : SV_Position)
 {
   static const float2 positions[3] =
   {
-    GetPositonCoordsFromRegularCoords(float2( CSPS_WIDTH, CSPS_Y_OFFSET),                      ShowNumbersTextureSize),
-    GetPositonCoordsFromRegularCoords(float2(-CSPS_WIDTH, CSPS_Y_OFFSET),                      ShowNumbersTextureSize),
-    GetPositonCoordsFromRegularCoords(float2( CSPS_WIDTH, (CSPS_Y_OFFSET + CSPS_NUMBERS * 2)), ShowNumbersTextureSize)
+    GetPositonCoordsFromRegularCoords(float2( GAMUTS_NUMBERS_COUNT, GAMUTS_Y_OFFSET),                             ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2(-GAMUTS_NUMBERS_COUNT, GAMUTS_Y_OFFSET),                             ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2( GAMUTS_NUMBERS_COUNT, (GAMUTS_Y_OFFSET + GAMUTS_NUMBERS_ROWS * 2)), ShowNumbersTextureSize)
   };
 
   Position = float4(positions[VertexID], 0.f, 1.f);
@@ -446,14 +446,14 @@ void VS_PrepareGetNumbersCsps(
 }
 
 
-void PS_GetNumbersCsps(
+void PS_GetGamutNumbers(
   in  float4 Position : SV_Position,
   out float  Number   : SV_Target0)
 {
   const int2 positionAsInt2 = int2(Position.xy);
 
-  precise const float cspCount = tex2Dfetch(SamplerTransfer,
-                                            int2(COORDS_SHOW_PERCENTAGE_BT709 - 4 + positionAsInt2.y, 0)).x;
+  precise const float gamutCount = tex2Dfetch(SamplerTransfer,
+                                              int2(COORDS_SHOW_PERCENTAGE_BT709 - 4 + positionAsInt2.y, 0)).x;
 
   precise uint number;
 
@@ -461,32 +461,32 @@ void PS_GetNumbersCsps(
   {
     case 0:
     {
-      number = GetNumberAboveZero(_3rd(cspCount));
+      number = GetNumberAboveZero(_3rd(gamutCount));
     }
     break;
     case 1:
     {
-      number = GetNumberAboveZero(_2nd(cspCount));
+      number = GetNumberAboveZero(_2nd(gamutCount));
     }
     break;
     case 2:
     {
-      number = _1st(cspCount);
+      number = _1st(gamutCount);
     }
     break;
     case 3:
     {
-      number = d1st(cspCount);
+      number = d1st(gamutCount);
     }
     break;
     case 4:
     {
-      number = d2nd(cspCount);
+      number = d2nd(gamutCount);
     }
     break;
     default:
     {
-      number = _d3rd(cspCount);
+      number = _d3rd(gamutCount);
     }
     break;
   }
@@ -631,8 +631,8 @@ float GetMaxChars()
   }
 
 #ifdef IS_HDR_CSP
-  if (SHOW_CSPS
-   || SHOW_CSP_FROM_CURSOR)
+  if (SHOW_GAMUTS
+   || SHOW_GAMUT_FROM_CURSOR)
   {
     maxChars = max(maxChars, TEXT_OFFSET_GAMUT_PERCENTAGES.x + TEXT_BLOCK_DRAW_X_OFFSET[3]);
   }
@@ -666,18 +666,18 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
 
 #ifdef IS_HDR_CSP
 
-  if (SHOW_CSPS
-   || SHOW_CSP_FROM_CURSOR)
+  if (SHOW_GAMUTS
+   || SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxChars = max(ret.maxChars, uint(TEXT_OFFSET_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
   }
 
-  if (!SHOW_CSPS)
+  if (!SHOW_GAMUTS)
   {
     ret.maxLines -= GAMUT_PERCENTAGES_LINES;
   }
 
-  if (!SHOW_CSP_FROM_CURSOR)
+  if (!SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxLines -= 1;
   }
@@ -781,7 +781,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       else if (currentTextBlockID == 3)
       {
         BRANCH(x)
-        if (SHOW_CSPS)
+        if (SHOW_GAMUTS)
         {
           vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
                          : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
@@ -797,14 +797,14 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       else //if (currentTextBlockID == 4)
       {
         BRANCH(x)
-        if (SHOW_CSP_FROM_CURSOR)
+        if (SHOW_GAMUT_FROM_CURSOR)
         {
           vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
                          : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
                          : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
                                                                            : 1.f;
 
-          if (SHOW_CSPS)
+          if (SHOW_GAMUTS)
           {
             vertexOffset.y += GAMUT_PERCENTAGES_LINES;
           }
@@ -919,9 +919,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
   }
   else
   {
-    uint currentCspNumberID = currentNumberID - NITS_NUMBERS;
+    uint currentGamutNumberID = currentNumberID - NITS_NUMBERS;
 
-    fetchPos = int2(currentCspNumberID % 6, currentCspNumberID / 6);
+    fetchPos = int2(currentGamutNumberID % 6, currentGamutNumberID / 6);
 
 #ifdef IS_COMPUTE_CAPABLE_API
     fetchPos.x += 11;
@@ -937,7 +937,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
   fetchPos.y += 16;
 #endif
 
-  static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndCspCounterAndShowNumbers, fetchPos)
+  static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPos)
 #ifndef IS_COMPUTE_CAPABLE_API
                               * 255.f
 #endif
@@ -1011,7 +1011,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 #endif
     //gamut percentages
     {
-      if (SHOW_CSPS)
+      if (SHOW_GAMUTS)
       {
         currentNumberID -= (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1);
 
@@ -1113,9 +1113,9 @@ void VS_RenderNumbers(
   else
   {
     BRANCH(x)
-    if (SHOW_CSP_FROM_CURSOR)
+    if (SHOW_GAMUT_FROM_CURSOR)
     {
-      const uint csp = tex2Dfetch(SamplerCsps, MOUSE_POSITION) * 255.f;
+      const uint gamut = tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 255.f;
 
       const uint currentVertexID = VertexID % 6;
 
@@ -1128,14 +1128,14 @@ void VS_RenderNumbers(
                      : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
                                                                        : 1.f;
 
-      if (SHOW_CSPS)
+      if (SHOW_GAMUTS)
       {
         vertexOffset.y += GAMUT_PERCENTAGES_LINES;
       }
 
       vertexOffset *= charSize;
 
-      float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + float(csp));
+      float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + float(gamut));
 
       texCoordOffset.y *= CHAR_DIM_FLOAT.y;
 

@@ -114,7 +114,7 @@ void PS_DrawCieGamutOutlines(
   Out += cieCurrent;
 
   BRANCH(x)
-  if (_SHOW_CIE_CSP_BT709_OUTLINE)
+  if (_CIE_SHOW_GAMUT_BT709_OUTLINE)
   {
     float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
                                             CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
@@ -125,7 +125,7 @@ void PS_DrawCieGamutOutlines(
   }
 #ifdef IS_HDR_CSP
   BRANCH(x)
-  if (SHOW_CIE_CSP_DCI_P3_OUTLINE)
+  if (CIE_SHOW_GAMUT_DCI_P3_OUTLINE)
   {
     float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
                                             CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
@@ -135,7 +135,7 @@ void PS_DrawCieGamutOutlines(
     Out += fetchedPixel;
   }
   BRANCH(x)
-  if (SHOW_CIE_CSP_BT2020_OUTLINE)
+  if (CIE_SHOW_GAMUT_BT2020_OUTLINE)
   {
     float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
                                             CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
@@ -146,7 +146,7 @@ void PS_DrawCieGamutOutlines(
   }
 #ifdef IS_FLOAT_HDR_CSP
   BRANCH(x)
-  if (SHOW_CIE_CSP_AP0_OUTLINE)
+  if (CIE_SHOW_GAMUT_AP0_OUTLINE)
   {
     float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
                                             CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],

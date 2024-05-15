@@ -84,7 +84,7 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      SDR_CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       SDR_CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_CIE_CSP_BT709_OUTLINE         SDR_SHOW_CIE_CSP_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
   #define _SHOW_HEATMAP                           SDR_SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
   #define _SHOW_LUMINANCE_WAVEFORM                SDR_SHOW_LUMINANCE_WAVEFORM
@@ -120,7 +120,7 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       CIE_DIAGRAM_SIZE
-  #define _SHOW_CIE_CSP_BT709_OUTLINE             SHOW_CIE_CSP_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SHOW_CIE_CSP_BT709_OUTLINE
   #define _SHOW_HEATMAP                           SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
   #define _SHOW_LUMINANCE_WAVEFORM                SHOW_LUMINANCE_WAVEFORM
@@ -275,25 +275,25 @@ uniform bool _SHOW_NITS_FROM_CURSOR
 > = true;
 
 
-// TextureCsps
+// gamuts
 #ifdef IS_HDR_CSP
-uniform bool SHOW_CSPS
+uniform bool SHOW_GAMUTS
 <
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour spaces used";
+  ui_category = "Gamut analysis";
+  ui_label    = "show gamuts used";
   ui_tooltip  = "in %";
 > = true;
 
-uniform bool SHOW_CSP_FROM_CURSOR
+uniform bool SHOW_GAMUT_FROM_CURSOR
 <
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour space from cursor position";
+  ui_category = "Gamut analysis";
+  ui_label    = "show gamut from cursor position";
 > = true;
 
-uniform bool SHOW_CSP_MAP
+uniform bool SHOW_GAMUT_MAP
 <
-  ui_category = "Colour Space analysis";
-  ui_label    = "show colour space map";
+  ui_category = "Gamut analysis";
+  ui_label    = "show gamut map";
   ui_tooltip  = "        colours:"
            "\n" "black and white: BT.709"
            "\n" "         yellow: DCI-P3"
@@ -434,30 +434,30 @@ uniform float _CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = CIE_DIAGRAM_DEFAULT_SIZE;
 
-uniform bool _SHOW_CIE_CSP_BT709_OUTLINE
+uniform bool _CIE_SHOW_GAMUT_BT709_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "show BT.709 colour space outline";
+  ui_label    = "show BT.709 gamut outline";
 > = true;
 
 #ifdef IS_HDR_CSP
-uniform bool SHOW_CIE_CSP_DCI_P3_OUTLINE
+uniform bool CIE_SHOW_GAMUT_DCI_P3_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "show DCI-P3 colour space outline";
+  ui_label    = "show DCI-P3 gamut outline";
 > = true;
 
-uniform bool SHOW_CIE_CSP_BT2020_OUTLINE
+uniform bool CIE_SHOW_GAMUT_BT2020_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "show BT.2020 colour space outline";
+  ui_label    = "show BT.2020 gamut outline";
 > = true;
 
 #ifdef IS_FLOAT_HDR_CSP
-uniform bool SHOW_CIE_CSP_AP0_OUTLINE
+uniform bool CIE_SHOW_GAMUT_AP0_OUTLINE
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "show AP0 colour space outline";
+  ui_label    = "show AP0 gamut outline";
 > = true;
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
@@ -1115,7 +1115,7 @@ void PS_HdrAnalysis(
 
   if (_SHOW_HEATMAP
 #ifdef IS_HDR_CSP
-   || SHOW_CSP_MAP
+   || SHOW_GAMUT_MAP
 #endif
    || _HIGHLIGHT_NIT_RANGE
    || _DRAW_ABOVE_NITS_AS_BLACK
@@ -1135,9 +1135,9 @@ void PS_HdrAnalysis(
     }
 
 #ifdef IS_HDR_CSP
-    if (SHOW_CSP_MAP)
+    if (SHOW_GAMUT_MAP)
     {
-      Output.rgb = CreateCspMap(tex2Dfetch(SamplerCsps, pureCoordAsInt) * 255.f, pixelNits);
+      Output.rgb = CreateGamutMap(tex2Dfetch(SamplerGamuts, pureCoordAsInt) * 255.f, pixelNits);
     }
 #endif
 
@@ -1302,34 +1302,34 @@ technique lilium__hdr_and_sdr_analysis
 
 //CSP
 #if (defined(IS_HDR_CSP))
-  pass PS_CalcCsps
+  pass PS_CalcGamuts
   {
     VertexShader = VS_PostProcessWithoutTexCoord;
-     PixelShader = PS_CalcCsps;
-    RenderTarget = TextureCsps;
+     PixelShader = PS_CalcGamuts;
+    RenderTarget = TextureGamuts;
   }
 #endif
 
 #if defined(IS_HDR_CSP)
 #if defined(IS_COMPUTE_CAPABLE_API)
-  pass CS_CountCsps
+  pass CS_CountGamuts
   {
-    ComputeShader = CS_CountCsps <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
-    DispatchSizeX = CSP_COUNTER_DISPATCH_X;
-    DispatchSizeY = CSP_COUNTER_DISPATCH_Y;
+    ComputeShader = CS_CountGamuts <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = GAMUT_COUNTER_DISPATCH_X;
+    DispatchSizeY = GAMUT_COUNTER_DISPATCH_Y;
   }
 #else
-  pass PS_CountCsps
+  pass PS_CountGamuts
   {
     VertexShader = VS_PostProcessWithoutTexCoord;
-     PixelShader = PS_CountCsps;
+     PixelShader = PS_CountGamuts;
     RenderTarget = TextureIntermediate;
   }
 
-  pass PS_FinaliseCountCsps
+  pass PS_FinaliseCountGamuts
   {
-    VertexShader      = VS_PrepareFinaliseCountCsps;
-     PixelShader      = PS_FinaliseCountCsps;
+    VertexShader      = VS_PrepareFinaliseCountGamuts;
+     PixelShader      = PS_FinaliseCountGamuts;
     RenderTarget      = TextureConsolidated;
     PrimitiveTopology = LINELIST;
     VertexCount       = 2;
@@ -1444,17 +1444,17 @@ technique lilium__hdr_and_sdr_analysis
 
 //get numbers for text drawing
 #ifdef IS_COMPUTE_CAPABLE_API
-  pass CS_GetNumbersNits
+  pass CS_GetNitNumbers
   {
-    ComputeShader = CS_GetNumbersNits<1, 1>;
+    ComputeShader = CS_GetNitNumbers<1, 1>;
     DispatchSizeX = MAX_NUMBERS_NITS;
     DispatchSizeY = 4;
   }
 
 #ifdef IS_HDR_CSP
-  pass CS_GetNumbersCsps
+  pass CS_GetGamutNumbers
   {
-    ComputeShader = CS_GetNumbersCsps<1, 1>;
+    ComputeShader = CS_GetGamutNumbers<1, 1>;
     DispatchSizeX = 6;
 #ifdef IS_FLOAT_HDR_CSP
     DispatchSizeY = 5;
@@ -1474,15 +1474,15 @@ technique lilium__hdr_and_sdr_analysis
     VertexShader = VS_PostProcessWithoutTexCoord;
 #endif
      PixelShader = PS_GetNumbersNits;
-    RenderTarget = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+    RenderTarget = TextureMaxAvgMinNitsAndGamutCounterAndShowNumbers;
   }
 
 #ifdef IS_HDR_CSP
-  pass PS_GetNumbersCsps
+  pass PS_GetGamutNumbers
   {
-    VertexShader = VS_PrepareGetNumbersCsps;
-     PixelShader = PS_GetNumbersCsps;
-    RenderTarget = TextureMaxAvgMinNitsAndCspCounterAndShowNumbers;
+    VertexShader = VS_PrepareGetGamutNumbers;
+     PixelShader = PS_GetGamutNumbers;
+    RenderTarget = TextureMaxAvgMinNitsAndGamutCounterAndShowNumbers;
   }
 #endif
 #endif //IS_COMPUTE_CAPABLE_API
