@@ -13,7 +13,7 @@ float3 ConditionallyConvertBt2020ToBt709(float3 Colour)
 }
 
 // convert normalised BT.709 to scRGB
-float3 ConditionallyConvertNormalisedBt709ToScrgb(float3 Colour)
+float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   Colour *= 125.f;
@@ -162,7 +162,7 @@ namespace Itmos
 
     //scRGB
     hdr = ConditionallyConvertBt2020ToBt709(hdr);
-    hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
+    hdr = ConditionallyConvertNormalisedBt709ToScRgb(hdr);
 
     //HDR10
     hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
@@ -634,7 +634,7 @@ namespace Itmos
 
     //scRGB
     hdr = ConditionallyConvertBt2020ToBt709(hdr);
-    hdr = ConditionallyConvertNormalisedBt709ToScrgb(hdr);
+    hdr = ConditionallyConvertNormalisedBt709ToScRgb(hdr);
 
     //HDR10
     hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);

@@ -3098,7 +3098,7 @@ namespace Csp
     namespace Bt709Into
     {
 
-      float3 Scrgb(
+      float3 ScRgb(
         const float3 Colour,
         const float  Brightness)
       {

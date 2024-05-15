@@ -483,7 +483,7 @@ float3 MapBt709IntoCurrentCsp(
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Map::Bt709Into::Scrgb(Colour, Brightness);
+  return Csp::Map::Bt709Into::ScRgb(Colour, Brightness);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
