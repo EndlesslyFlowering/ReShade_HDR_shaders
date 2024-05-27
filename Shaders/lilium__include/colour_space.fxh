@@ -34,6 +34,7 @@ static const float BUFFER_WIDTH_MINUS_1_FLOAT  = float(BUFFER_WIDTH_MINUS_1_UINT
 static const float BUFFER_HEIGHT_MINUS_1_FLOAT = float(BUFFER_HEIGHT_MINUS_1_UINT);
 
 static const  uint2 BUFFER_SIZE_MINUS_1_UINT  =  uint2(BUFFER_WIDTH_MINUS_1_UINT,  BUFFER_HEIGHT_MINUS_1_UINT);
+static const  uint2 BUFFER_SIZE_MINUS_1_INT   =  uint2(BUFFER_WIDTH_MINUS_1_INT,   BUFFER_HEIGHT_MINUS_1_INT);
 static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOAT, BUFFER_HEIGHT_MINUS_1_FLOAT);
 
 
@@ -3199,26 +3200,26 @@ float3 GetXYZfromxyY(float2 xy, float Y)
 #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
 
   #define ENCODE_SDR(COLOUR) \
-    pow(COLOUR, 1.f / 2.4f)
+            pow(COLOUR, 1.f / 2.4f)
 
   #define DECODE_SDR(COLOUR) \
-    pow(COLOUR, 2.4f)
+            pow(COLOUR, 2.4f)
 
 #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
 
   #define ENCODE_SDR(COLOUR) \
-    Csp::Trc::LinearTo::Srgb(COLOUR)
+            Csp::Trc::LinearTo::Srgb(COLOUR)
 
   #define DECODE_SDR(COLOUR) \
-    Csp::Trc::SrgbTo::Linear(COLOUR)
+            Csp::Trc::SrgbTo::Linear(COLOUR)
 
 #else
 
   #define ENCODE_SDR(COLOUR) \
-    pow(COLOUR, 1.f / 2.2f)
+            pow(COLOUR, 1.f / 2.2f)
 
   #define DECODE_SDR(COLOUR) \
-    pow(COLOUR, 2.2f)
+            pow(COLOUR, 2.2f)
 
 #endif
 
