@@ -57,14 +57,353 @@ uniform float FRAMETIME
 >;
 
 
-#define AVG_NITS_WIDTH  16
-#define AVG_NITS_HEIGHT 16
+//16:9
+//examples:
+// - 1920x1080
+// - 2560x1440
+// - 3200x1800
+// - 3840x2160
+// - 5120x2880
+// - 7680x4320
+#if (BUFFER_WIDTH  % 16 == 0 \
+  && BUFFER_HEIGHT %  9 == 0 \
+  && ((BUFFER_WIDTH / 16) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  16
+  #define AVG_NITS_HEIGHT  9
+
+//9:16
+#elif (BUFFER_WIDTH  %  9 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 9) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH   9
+  #define AVG_NITS_HEIGHT 16
+
+//16:10
+//examples:
+// - 1920x1200
+// - 2560x1600
+// - 3840x2400
+// - 5120x3200
+// - 7680x4800
+#elif (BUFFER_WIDTH  % 16 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 16) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  16
+  #define AVG_NITS_HEIGHT 10
+
+//10:16
+#elif (BUFFER_WIDTH  % 10 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 10) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH  10
+  #define AVG_NITS_HEIGHT 16
+
+//32:9
+//can be 2x 16:9 stacked horizontally
+//examples:
+// - 3840x1080
+// - 5120x1440
+#elif (BUFFER_WIDTH  % 32 == 0 \
+    && BUFFER_HEIGHT %  9 == 0 \
+    && ((BUFFER_WIDTH / 32) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  32
+  #define AVG_NITS_HEIGHT  9
+
+//32:10
+//can be 2x 16:10 stacked horizontally
+//examples:
+// - 3840x1200
+// - 5120x1600
+#elif (BUFFER_WIDTH  % 32 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 32) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  32
+  #define AVG_NITS_HEIGHT 10
+
+//48:9
+//can be 3x 16:9 stacked horizontally
+//examples:
+// - 5760x1080
+// - 7680x1440
+#elif (BUFFER_WIDTH  % 48 == 0 \
+    && BUFFER_HEIGHT %  9 == 0 \
+    && ((BUFFER_WIDTH / 48) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  48
+  #define AVG_NITS_HEIGHT  9
+
+//48:10
+//can be 3x 16:10 stacked horizontally
+//examples:
+// - 5760x1200
+// - 7680x1600
+#elif (BUFFER_WIDTH  % 48 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 48) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  48
+  #define AVG_NITS_HEIGHT 10
+
+//27:16
+//3x 16:9 turned by 90° and stacked horizontally
+//example:
+// - 3240x1920
+#elif (BUFFER_WIDTH  % 27 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 27) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH  27
+  #define AVG_NITS_HEIGHT 16
+
+//45:16
+//5x 16:9 turned by 90° and stacked horizontally
+//example:
+// - 5400x1920
+#elif (BUFFER_WIDTH  % 45 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 45) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH  45
+  #define AVG_NITS_HEIGHT 16
+
+//30:16
+//3x 16:10 turned by 90° and stacked horizontally
+//example:
+// - 3600x1920
+#elif (BUFFER_WIDTH  % 30 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 30) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH  30
+  #define AVG_NITS_HEIGHT 16
+
+//50:16
+//5x 16:10 turned by 90° and stacked horizontally
+//example:
+// - 6000x1920
+#elif (BUFFER_WIDTH  % 50 == 0 \
+    && BUFFER_HEIGHT % 16 == 0 \
+    && ((BUFFER_WIDTH / 50) == (BUFFER_HEIGHT / 16)))
+
+  #define AVG_NITS_WIDTH  50
+  #define AVG_NITS_HEIGHT 16
+
+//24:10
+//example:
+// - 3840x1600
+#elif (BUFFER_WIDTH  % 24 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 24) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  24
+  #define AVG_NITS_HEIGHT 10
+
+//10:24
+#elif (BUFFER_WIDTH  % 10 == 0 \
+    && BUFFER_HEIGHT % 24 == 0 \
+    && ((BUFFER_WIDTH / 10) == (BUFFER_HEIGHT / 24)))
+
+  #define AVG_NITS_WIDTH  10
+  #define AVG_NITS_HEIGHT 24
+
+//48:10
+//example:
+// - 7680x1600 (2x 3840x1600)
+#elif (BUFFER_WIDTH  % 48 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 48) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  48
+  #define AVG_NITS_HEIGHT 10
+
+//72:10
+//example:
+// - 11520x1600 (3x 3840x1600)
+#elif (BUFFER_WIDTH  % 72 == 0 \
+    && BUFFER_HEIGHT % 10 == 0 \
+    && ((BUFFER_WIDTH / 72) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  72
+  #define AVG_NITS_HEIGHT 10
+
+//21:9 (~2.37 variant; it's really 21.34:9)
+//examples:
+// - 2560x1080
+// - 5120x2160
+#elif (BUFFER_HEIGHT % 9 == 0 \
+    && (((BUFFER_WIDTH * 100000) / 2133333) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  22
+  #define AVG_NITS_HEIGHT  9
+
+//9:21 (~2.37 variant; it's really 9:21.34)
+//examples:
+// - 1080x2560
+// - 2160x5120
+#elif (BUFFER_WIDTH % 9 == 0 \
+    && ((BUFFER_WIDTH / 9) == ((BUFFER_HEIGHT * 100000) / 2133333)))
+
+  #define AVG_NITS_WIDTH   9
+  #define AVG_NITS_HEIGHT 22
+
+//42:9 (~4.67 variant; it's really 42.67:9)
+//examples:
+// -  5120x1080 (2x 2560x1080)
+// - 10240x2160 (2x 5120x2160)
+#elif (BUFFER_HEIGHT % 9 == 0 \
+    && (((BUFFER_WIDTH * 100000) / 4266666) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  43
+  #define AVG_NITS_HEIGHT  9
+
+//63:9 (~7.1 variant; it's really 64:9)
+//examples:
+// -  7680x1080 (3x 2560x1080)
+// - 15360x2160 (3x 5120x2160)
+#elif (BUFFER_WIDTH  % 64 == 0 \
+    && BUFFER_HEIGHT %  9 == 0 \
+    && ((BUFFER_WIDTH / 64) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  64
+  #define AVG_NITS_HEIGHT  9
+
+//21:9 (~2.39 variant; it's really 21.5:9)
+//examples:
+// - 3440x1440
+#elif (BUFFER_HEIGHT % 9 == 0 \
+    && (((BUFFER_WIDTH * 100) / 2150) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  22
+  #define AVG_NITS_HEIGHT  9
+
+//9:21 (~2.39 variant; it's really 9:21.5)
+//examples:
+// - 1440x3440
+#elif (BUFFER_WIDTH % 9 == 0 \
+    && ((BUFFER_WIDTH / 9) == ((BUFFER_HEIGHT * 100) / 2150)))
+
+  #define AVG_NITS_WIDTH   9
+  #define AVG_NITS_HEIGHT 22
+
+//42:9 (~4.78 variant; it's really 43:9)
+//examples:
+// - 6880x1440 (2x 3440x1440)
+#elif (BUFFER_WIDTH  % 43 == 0 \
+    && BUFFER_HEIGHT %  9 == 0 \
+    && ((BUFFER_WIDTH / 43) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  43
+  #define AVG_NITS_HEIGHT  9
+
+//63:9 (~7.167 variant; it's really 64.5:9)
+//examples:
+// - 10320x1440 (3x 3440x1440)
+#elif (BUFFER_HEIGHT % 9 == 0 \
+    && (((BUFFER_WIDTH * 100) / 6450) == (BUFFER_HEIGHT / 9)))
+
+  #define AVG_NITS_WIDTH  65
+  #define AVG_NITS_HEIGHT  9
+
+//19:10 (DCI; it's really 18.962962962:10)
+//examples:
+// - 4096x2160
+// - 2048x1080
+#elif (BUFFER_HEIGHT % 10 == 0 \
+    && (((BUFFER_WIDTH * 100000) / 1896296) == (BUFFER_HEIGHT / 10)))
+
+  #define AVG_NITS_WIDTH  19
+  #define AVG_NITS_HEIGHT 10
+
+//10:19 (DCI; it's really 10:18.962962962)
+//examples:
+// - 2160x4096
+// - 1080x2048
+#elif (BUFFER_WIDTH % 10 == 0 \
+    && ((BUFFER_WIDTH / 10) == ((BUFFER_HEIGHT * 100000) / 1896296)))
+
+  #define AVG_NITS_WIDTH  19
+  #define AVG_NITS_HEIGHT 10
+
+//4:3
+#elif (BUFFER_WIDTH  % 4 == 0 \
+    && BUFFER_HEIGHT % 3 == 0 \
+    && ((BUFFER_WIDTH / 4) == (BUFFER_HEIGHT / 3)))
+
+  #define AVG_NITS_WIDTH  16
+  #define AVG_NITS_HEIGHT 12
+
+//3:4
+#elif (BUFFER_WIDTH  % 3 == 0 \
+    && BUFFER_HEIGHT % 4 == 0 \
+    && ((BUFFER_WIDTH / 3) == (BUFFER_HEIGHT / 4)))
+
+  #define AVG_NITS_WIDTH  12
+  #define AVG_NITS_HEIGHT 16
+
+//5:4
+#elif (BUFFER_WIDTH  % 5 == 0 \
+    && BUFFER_HEIGHT % 4 == 0 \
+    && ((BUFFER_WIDTH / 5) == (BUFFER_HEIGHT / 4)))
+
+  #define AVG_NITS_WIDTH  20
+  #define AVG_NITS_HEIGHT 16
+
+//4:5
+#elif (BUFFER_WIDTH  % 4 == 0 \
+    && BUFFER_HEIGHT % 5 == 0 \
+    && ((BUFFER_WIDTH / 4) == (BUFFER_HEIGHT / 5)))
+
+  #define AVG_NITS_WIDTH  16
+  #define AVG_NITS_HEIGHT 20
+
+//fallback
+#else
+
+  //width > height
+  #if (BUFFER_WIDTH > BUFFER_HEIGHT)
+
+    #define AVG_NITS_WIDTH  (((BUFFER_WIDTH * 10) / BUFFER_HEIGHT) + 1)
+    #define AVG_NITS_HEIGHT 10
+
+  //height > width
+  #else
+
+    #define AVG_NITS_WIDTH  10
+    #define AVG_NITS_HEIGHT (((BUFFER_HEIGHT * 10) / BUFFER_WIDTH) + 1)
+
+  #endif
+
+#endif
 
 
 #define NITS_NUMBERS_COLUMNS 4
 #define NITS_NUMBERS_ROWS    4
 
-#define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 1)
+
+#if defined(IS_FLOAT_HDR_CSP)
+  #define NEEDED_HEIGHT 13
+#elif defined(IS_HDR_CSP)
+  #define NEEDED_HEIGHT 11
+#else
+  #define NEEDED_HEIGHT  8
+#endif
+
+
+//lowest is 9 so only one check needed, since there are only a max of 13 values
+#if (AVG_NITS_HEIGHT >= NEEDED_HEIGHT)
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 1)
+  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
+#else
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 2)
+  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 2)
+#endif
+
 #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT AVG_NITS_HEIGHT
 
 
@@ -97,28 +436,25 @@ uniform float FRAMETIME
                           * NITS_NUMBERS_ROWS)
 
 
-#define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
-
-#define POS_MAX_NITS int2(POS_STORE_X, 0)
-#define POS_MAX_R    int2(POS_STORE_X, 1)
-#define POS_MAX_G    int2(POS_STORE_X, 2)
-#define POS_MAX_B    int2(POS_STORE_X, 3)
-#define POS_MIN_NITS int2(POS_STORE_X, 4)
-#define POS_MIN_R    int2(POS_STORE_X, 5)
-#define POS_MIN_G    int2(POS_STORE_X, 6)
-#define POS_MIN_B    int2(POS_STORE_X, 7)
-
+static const int2 POS_MAX_NITS = int2(POS_STORE_X + (0u / AVG_NITS_HEIGHT), (0u % AVG_NITS_HEIGHT));
+static const int2 POS_MAX_R    = int2(POS_STORE_X + (1u / AVG_NITS_HEIGHT), (1u % AVG_NITS_HEIGHT));
+static const int2 POS_MAX_G    = int2(POS_STORE_X + (2u / AVG_NITS_HEIGHT), (2u % AVG_NITS_HEIGHT));
+static const int2 POS_MAX_B    = int2(POS_STORE_X + (3u / AVG_NITS_HEIGHT), (3u % AVG_NITS_HEIGHT));
+static const int2 POS_MIN_NITS = int2(POS_STORE_X + (4u / AVG_NITS_HEIGHT), (4u % AVG_NITS_HEIGHT));
+static const int2 POS_MIN_R    = int2(POS_STORE_X + (5u / AVG_NITS_HEIGHT), (5u % AVG_NITS_HEIGHT));
+static const int2 POS_MIN_G    = int2(POS_STORE_X + (6u / AVG_NITS_HEIGHT), (6u % AVG_NITS_HEIGHT));
+static const int2 POS_MIN_B    = int2(POS_STORE_X + (7u / AVG_NITS_HEIGHT), (7u % AVG_NITS_HEIGHT));
 
 #if defined(IS_HDR_CSP)
 
-  #define POS_BT709_PERCENTAGE  int2(POS_STORE_X,  8)
-  #define POS_DCIP3_PERCENTAGE  int2(POS_STORE_X,  9)
-  #define POS_BT2020_PERCENTAGE int2(POS_STORE_X, 10)
+  static const int2 POS_BT709_PERCENTAGE  = int2(POS_STORE_X + ( 8u / AVG_NITS_HEIGHT), ( 8u % AVG_NITS_HEIGHT));
+  static const int2 POS_DCIP3_PERCENTAGE  = int2(POS_STORE_X + ( 9u / AVG_NITS_HEIGHT), ( 9u % AVG_NITS_HEIGHT));
+  static const int2 POS_BT2020_PERCENTAGE = int2(POS_STORE_X + (10u / AVG_NITS_HEIGHT), (10u % AVG_NITS_HEIGHT));
 
   #if defined(IS_FLOAT_HDR_CSP)
 
-    #define POS_AP0_PERCENTAGE     int2(POS_STORE_X, 11)
-    #define POS_INVALID_PERCENTAGE int2(POS_STORE_X, 12)
+    static const int2 POS_AP0_PERCENTAGE     = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
+    static const int2 POS_INVALID_PERCENTAGE = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
 
   #endif
 
