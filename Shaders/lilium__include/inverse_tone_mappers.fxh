@@ -72,34 +72,6 @@ float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
 #if (defined(IS_ANALYSIS_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
-
-//float3 gamut(
-//  float3 Input,
-//  uint   gamutExpansionType)
-//{
-//  float3 sdr = Input;
-//
-//  //BT.709->BT.2020 colourspace conversion
-//  switch (gamutExpansionType)
-//  {
-//    case 0:
-//      sdr = mul(Bt709ToBt2020, sdr);
-//      break;
-//    case 1:
-//      sdr = mul(myExp_BT709_To_BT2020, sdr);
-//      break;
-//    case 2:
-//      sdr = mul(expanded_BT709_To_BT2020_matrix, sdr);
-//      break;
-//    case 3:
-//      sdr = ExpandColourGamutBT2020(sdr, 1.f, 5.f);
-//      break;
-//  }
-//
-//  return sdr;
-//}
-
-
 namespace Itmos
 {
 
@@ -422,7 +394,7 @@ namespace Itmos
   //}
 
   // outputs normalised values
-  float3 Bt2446c(
+  float3 Bt2446C(
     const float3 Input,
     const float  SdrRelativeBrightness,
     const float  Alpha)

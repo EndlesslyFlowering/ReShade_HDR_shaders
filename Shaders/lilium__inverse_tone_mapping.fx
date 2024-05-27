@@ -444,7 +444,7 @@ void PS_InverseToneMapping(
 
     case ITM_METHOD_BT2446C:
     {
-      colour = Itmos::Bt2446c(colour,
+      colour = Itmos::Bt2446C(colour,
                               Ui::Itm::Bt2446C::Bt2446CInputBrightness > 153.9f
                             ? 1.539f
                             : Ui::Itm::Bt2446C::Bt2446CInputBrightness / 100.f,
