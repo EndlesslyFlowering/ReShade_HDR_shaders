@@ -294,6 +294,7 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
                          uint3 GTID : SV_GroupThreadID,
                          uint3 DTID : SV_DispatchThreadID)
 {
+  BRANCH(x)
   if (_SHOW_NITS_VALUES
    || (_SHOW_LUMINANCE_WAVEFORM
     && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))

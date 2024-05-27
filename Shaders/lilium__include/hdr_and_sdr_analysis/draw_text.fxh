@@ -702,16 +702,19 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       float2 pos = float2(_max.maxChars * CharSize.x,
                           _max.maxLines * CharSize.y);
 
-      [branch]
+      [flatten]
       if (VertexID == 1)
       {
         pos.x = -pos.x;
       }
-      else if (VertexID == 2)
+      else
+      [flatten]
+      if (VertexID == 2)
       {
         pos.y = -pos.y;
       }
 
+      [flatten]
       if (_TEXT_POSITION != 0)
       {
         pos.x = BUFFER_WIDTH_MINUS_1_FLOAT - pos.x;
@@ -825,20 +828,24 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       texCoordOffset.x = 0.f;
       texCoordOffset.y = CHAR_DIM_FLOAT.y * TEXT_BLOCK_FETCH_Y_OFFSET[currentTextBlockID];
 
-      BRANCH(x)
+      [flatten]
       if (localVertexID == 1)
       {
         vertexOffset.y += size.y * CharSize.y;
 
         texCoordOffset.y += size.y * CHAR_DIM_FLOAT.y;
       }
-      else if (localVertexID == 4)
+      else
+      [flatten]
+      if (localVertexID == 4)
       {
         vertexOffset.x += size.x * CharSize.x;
 
         texCoordOffset.x += size.x * CHAR_DIM_FLOAT.x;
       }
-      else if (localVertexID == 2 || localVertexID == 5)
+      else
+      [flatten]
+      if (localVertexID == 2 || localVertexID == 5)
       {
         vertexOffset += size * CharSize;
 
@@ -851,6 +858,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       vertexOffset   = max(vertexOffset,   0.f);
       texCoordOffset = max(texCoordOffset, 0.f);
 
+      [flatten]
       if (_TEXT_POSITION != 0)
       {
         vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * CharSize.x - 1.f));
@@ -1040,19 +1048,24 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     float2 texCoordOffset = float2(CHAR_DIM_FLOAT.x * curNumber, 0.f);
 
+    [flatten]
     if (currentVertexID == 1)
     {
       vertexOffset.y += CharSize.y;
 
       texCoordOffset.y += CHAR_DIM_FLOAT.y;
     }
-    else if (currentVertexID == 4)
+    else
+    [flatten]
+    if (currentVertexID == 4)
     {
       vertexOffset.x += CharSize.x;
 
       texCoordOffset.x += CHAR_DIM_FLOAT.x;
     }
-    else if (currentVertexID == 2 || currentVertexID == 5)
+    else
+    [flatten]
+    if (currentVertexID == 2 || currentVertexID == 5)
     {
       vertexOffset += CharSize;
 

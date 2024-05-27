@@ -393,7 +393,7 @@ void ExtendedReinhardTmo(
 #ifdef IS_HDR_CSP
   float maxWhite = 10000.f / WhitePoint;
 #else
-  float maxWhite = 100.f / WhitePoint;
+  float maxWhite =   100.f / WhitePoint;
 #endif
 
   Colour = (Colour * (1.f + (Colour / (maxWhite * maxWhite))))
@@ -479,8 +479,8 @@ float3 MergeOverlay(
   #include "csp.fxh"
 #endif
 #ifdef IS_COMPUTE_CAPABLE_API
-#include "cie.fxh"
-#include "waveform.fxh"
+  #include "cie.fxh"
+  #include "waveform.fxh"
 #endif
 #include "draw_text.fxh"
 #include "active_area.fxh"
@@ -523,6 +523,7 @@ float3 MapBt709IntoCurrentCsp(
 void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
 {
 
+  BRANCH(x)
   if (_SHOW_LUMINANCE_WAVEFORM || _SHOW_CIE)
   {
 

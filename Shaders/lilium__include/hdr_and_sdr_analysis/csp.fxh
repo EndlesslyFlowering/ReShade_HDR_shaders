@@ -279,6 +279,7 @@ groupshared uint GroupInvalid;
 void CS_CountGamuts(uint3 GTID : SV_GroupThreadID,
                     uint3 DTID : SV_DispatchThreadID)
 {
+  BRANCH(x)
   if (SHOW_GAMUTS)
   {
 
