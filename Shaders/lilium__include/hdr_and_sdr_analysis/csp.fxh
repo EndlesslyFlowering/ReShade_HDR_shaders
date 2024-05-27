@@ -236,9 +236,15 @@ void PS_CalcGamuts(
 #if (BUFFER_WIDTH  % WAVE_SIZE_6_X == 0  \
   && BUFFER_HEIGHT % WAVE_SIZE_6_Y == 0)
   #define GAMUT_COUNTER_THREAD 6
+#elif (BUFFER_WIDTH  % WAVE_SIZE_5_X == 0  \
+    && BUFFER_HEIGHT % WAVE_SIZE_5_Y == 0)
+  #define GAMUT_COUNTER_THREAD 5
 #elif (BUFFER_WIDTH  % WAVE_SIZE_4_X == 0  \
     && BUFFER_HEIGHT % WAVE_SIZE_4_Y == 0)
   #define GAMUT_COUNTER_THREAD 4
+#elif (BUFFER_WIDTH  % WAVE_SIZE_3_X == 0  \
+    && BUFFER_HEIGHT % WAVE_SIZE_3_Y == 0)
+  #define GAMUT_COUNTER_THREAD 3
 #else
   #define GAMUT_COUNTER_THREAD 2
 #endif

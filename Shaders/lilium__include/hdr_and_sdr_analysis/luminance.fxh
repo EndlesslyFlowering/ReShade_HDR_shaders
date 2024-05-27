@@ -241,12 +241,29 @@ void PS_CalcNitsPerPixel(
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
+
+void CS_ResetMinNits(uint3 DTID : SV_DispatchThreadID)
+{
+  const int2 storePos = int2(POS_MIN_NITS.x, POS_MIN_NITS.y + DTID.y);
+
+  tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, INT_MAX);
+
+  return;
+}
+
+
 #if (BUFFER_WIDTH  % WAVE_SIZE_6_X == 0  \
   && BUFFER_HEIGHT % WAVE_SIZE_6_Y == 0)
   #define GET_MAX_AVG_MIN_NITS_THREAD 6
+#elif (BUFFER_WIDTH  % WAVE_SIZE_5_X == 0  \
+    && BUFFER_HEIGHT % WAVE_SIZE_5_Y == 0)
+  #define GET_MAX_AVG_MIN_NITS_THREAD 5
 #elif (BUFFER_WIDTH  % WAVE_SIZE_4_X == 0  \
     && BUFFER_HEIGHT % WAVE_SIZE_4_Y == 0)
   #define GET_MAX_AVG_MIN_NITS_THREAD 4
+#elif (BUFFER_WIDTH  % WAVE_SIZE_3_X == 0  \
+    && BUFFER_HEIGHT % WAVE_SIZE_3_Y == 0)
+  #define GET_MAX_AVG_MIN_NITS_THREAD 3
 #else
   #define GET_MAX_AVG_MIN_NITS_THREAD 2
 #endif
