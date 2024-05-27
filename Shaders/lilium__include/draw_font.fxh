@@ -7,25 +7,32 @@
   #define CHAR_DIM_UINT  uint2(29, 49)
   #define CHAR_DIM_FLOAT float2(CHAR_DIM_UINT)
 
+  #define WAVEFORM_CHAR_DIM_UINT  uint2(21, 27)
+  #define WAVEFORM_CHAR_DIM_FLOAT float2(WAVEFORM_CHAR_DIM_UINT)
+
   #define RANGE 1.5f
+
+  #define WAVEFORM_RANGE 2.f
+
+  #define FONT_SIZE_MULTIPLIER 1.f
 
 #ifdef IS_HDR_CSP
 
   #define TEXTURE_FILENAME "lilium__font_atlas_1.333_hdr.png"
 
-  #define FONT_TEXTURE_WIDTH  580
-  #define FONT_TEXTURE_HEIGHT 881
+  #define FONT_TEXTURE_WIDTH  1508
+  #define FONT_TEXTURE_HEIGHT  930
 
-  #define WAVEFORM_ATLAS_OFFSET float2(328, 854)
+  #define WAVEFORM_ATLAS_OFFSET float2(1277, 0)
 
 #else //IS_HDR_CSP
 
   #define TEXTURE_FILENAME "lilium__font_atlas_1.333_sdr.png"
 
-  #define FONT_TEXTURE_WIDTH  696
-  #define FONT_TEXTURE_HEIGHT 391
+  #define FONT_TEXTURE_WIDTH  1566
+  #define FONT_TEXTURE_HEIGHT  440
 
-  #define WAVEFORM_ATLAS_OFFSET float2(444, 0)
+  #define WAVEFORM_ATLAS_OFFSET float2(1313, 0)
 
 #endif //IS_HDR_CSP
 
@@ -36,25 +43,32 @@
   #define CHAR_DIM_UINT  uint2(22, 38)
   #define CHAR_DIM_FLOAT float2(CHAR_DIM_UINT)
 
+  #define WAVEFORM_CHAR_DIM_UINT  uint2(15, 19)
+  #define WAVEFORM_CHAR_DIM_FLOAT float2(WAVEFORM_CHAR_DIM_UINT)
+
   #define RANGE 2.f
+
+  #define WAVEFORM_RANGE 1.5f
+
+  #define FONT_SIZE_MULTIPLIER 1.41f
 
 #ifdef IS_HDR_CSP
 
   #define TEXTURE_FILENAME "lilium__font_atlas_1.000_hdr.png"
 
-  #define FONT_TEXTURE_WIDTH  440
-  #define FONT_TEXTURE_HEIGHT 683
+  #define FONT_TEXTURE_WIDTH  1144
+  #define FONT_TEXTURE_HEIGHT  721
 
-  #define WAVEFORM_ATLAS_OFFSET float2(188, 656)
+  #define WAVEFORM_ATLAS_OFFSET float2(979, 0)
 
 #else //IS_HDR_CSP
 
   #define TEXTURE_FILENAME "lilium__font_atlas_1.000_sdr.png"
 
-  #define FONT_TEXTURE_WIDTH  528
-  #define FONT_TEXTURE_HEIGHT 303
+  #define FONT_TEXTURE_WIDTH  1188
+  #define FONT_TEXTURE_HEIGHT  341
 
-  #define WAVEFORM_ATLAS_OFFSET float2(276, 0)
+  #define WAVEFORM_ATLAS_OFFSET float2(1007, 0)
 
 #endif //IS_HDR_CSP
 
@@ -62,10 +76,6 @@
 
 
 #define FONT_TEXTURE_SIZE_FLOAT float2(FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT)
-
-#define WAVEFORM_CHAR_DIM_UINT  uint2(21, 27)
-
-#define WAVEFORM_CHAR_DIM_FLOAT float2(WAVEFORM_CHAR_DIM_UINT)
 
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -96,15 +106,15 @@
 
 
 #ifdef IS_HDR_CSP
-  #define TEXT_OFFSET_NITS_MAX_AVG_MIN     float2(15,  3)
-  #define TEXT_OFFSET_NITS_CURSOR          float2(18,  6)
+  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(49, 3)
+  #define TEXT_OFFSET_NITS_CURSOR      float2(52, 7)
 #else
-  #define TEXT_OFFSET_NITS_MAX_AVG_MIN     float2(20,  4)
-  #define TEXT_OFFSET_NITS_CURSOR          float2(23,  7)
+  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(51, 4)
+  #define TEXT_OFFSET_NITS_CURSOR      float2(54, 8)
 #endif
 
-#define TEXT_OFFSET_GAMUT_PERCENTAGES    float2(19,  7)
-#define TEXT_OFFSET_GAMUT_CURSOR         float2( 7, 12)
+#define TEXT_OFFSET_GAMUT_PERCENTAGES    float2(19,  8)
+#define TEXT_OFFSET_GAMUT_CURSOR         float2( 7, 18)
 #define TEXT_OFFSET_GAMUT_CURSOR_BT709   float2( 7, 13)
 #define TEXT_OFFSET_GAMUT_CURSOR_DCI_P3  float2( 7, 14)
 #define TEXT_OFFSET_GAMUT_CURSOR_BT2020  float2( 7, 15)
@@ -128,43 +138,48 @@
   #define TEXT_BLOCK_ARRAY_SIZE 3
 #endif
 
-static const float2 TEXT_BLOCK_SIZES[TEXT_BLOCK_ARRAY_SIZE] =
+static const float2 TEXT_BLOCK_SIZES[] =
 {
   float2(TEXT_OFFSET_ANALYIS_HEADER.x,    1),
-  float2(TEXT_OFFSET_NITS_MAX_AVG_MIN.x,  3),
-  float2(TEXT_OFFSET_NITS_CURSOR.x,       1),
+  float2(TEXT_OFFSET_NITS_MAX_AVG_MIN.x,  4),
+  float2(TEXT_OFFSET_NITS_CURSOR.x,       1)
 #ifdef IS_HDR_CSP
+                                            ,
   float2(TEXT_OFFSET_GAMUT_PERCENTAGES.x, GAMUT_PERCENTAGES_LINES),
   float2(TEXT_OFFSET_GAMUT_CURSOR.x,      1)
 #endif
 };
 
-static const float TEXT_BLOCK_DRAW_X_OFFSET[TEXT_BLOCK_ARRAY_SIZE] =
+static const float TEXT_BLOCK_DRAW_X_OFFSET[] =
 {
   0,
   3,
-  0,
+  0
 #ifdef IS_HDR_CSP
-  3,
-  4
+   ,
+  0,
+  1
 #endif
 };
 
-static const float TEXT_BLOCK_FETCH_Y_OFFSET[TEXT_BLOCK_ARRAY_SIZE] =
+static const float TEXT_BLOCK_FETCH_Y_OFFSET[] =
 {
   TEXT_OFFSET_ANALYIS_HEADER.y,
   TEXT_OFFSET_NITS_MAX_AVG_MIN.y,
-  TEXT_OFFSET_NITS_CURSOR.y,
+  TEXT_OFFSET_NITS_CURSOR.y
 #ifdef IS_HDR_CSP
+                           ,
   TEXT_OFFSET_GAMUT_PERCENTAGES.y,
   TEXT_OFFSET_GAMUT_CURSOR.y
 #endif
 };
 
 
-float GetScreenPixelRange(const float Factor)
+float GetScreenPixelRange(
+  const float Factor,
+  const float Range)
 {
-  float unitRange = Factor * RANGE;
+  float unitRange = Factor * Range;
 
 //  return max(unitRange, 1.f);
   return unitRange;
@@ -187,8 +202,9 @@ float GetMedian(
 #define _7         uint( 7)
 #define _8         uint( 8)
 #define _9         uint( 9)
-#define _dot       uint(10)
-#define _percent   uint(11)
+#define _minus     uint(10)
+#define _dot       uint(11)
+#define _percent   uint(12)
 
 #define _0_w       uint( 0)
 #define _1_w       uint( 1)

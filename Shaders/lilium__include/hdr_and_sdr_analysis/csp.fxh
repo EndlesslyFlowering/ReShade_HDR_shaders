@@ -36,14 +36,14 @@ void FinaliseGamutCounter()
 
 #if defined(IS_COMPUTE_CAPABLE_API)
 
-  uint counterBt709   = atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_BT709_PERCENTAGE,   0);
-  uint counterDciP3   = atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_DCIP3_PERCENTAGE,   0);
-  uint counterBt2020  = atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_BT2020_PERCENTAGE,  0);
+  uint counterBt709   = tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_BT709_PERCENTAGE);
+  uint counterDciP3   = tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_DCIP3_PERCENTAGE);
+  uint counterBt2020  = tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_BT2020_PERCENTAGE);
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-  uint counterAp0     = atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_AP0_PERCENTAGE,     0);
-  uint counterInvalid = atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_INVALID_PERCENTAGE, 0);
+  uint counterAp0     = tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_AP0_PERCENTAGE);
+  uint counterInvalid = tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_INVALID_PERCENTAGE);
 
 #endif //IS_FLOAT_HDR_CSP
 

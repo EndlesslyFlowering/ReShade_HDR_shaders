@@ -9,15 +9,15 @@ texture2D TextureNitsValues
   Width  = BUFFER_WIDTH;
   Height = BUFFER_HEIGHT;
 
-  Format = R32F;
+  Format = RGBA32F;
 };
 
-sampler2D<float> SamplerNitsValues
+sampler2D<float4> SamplerNitsValues
 {
   Texture = TextureNitsValues;
 };
 
-storage2D<float> StorageNitsValues
+storage2D<float4> StorageNitsValues
 {
   Texture = TextureNitsValues;
 };
@@ -170,8 +170,8 @@ float3 WaveformRgbValues(
   const float Y)
 {
 #ifdef IS_HDR_CSP
-  // LUMINANCE_WAVEFORM_CUTOFF_POINT values match heatmap modes 1:1
-  return HeatmapRgbValues(Y, LUMINANCE_WAVEFORM_CUTOFF_POINT, true);
+  // WAVEFORM_CUTOFF_POINT values match heatmap modes 1:1
+  return HeatmapRgbValues(Y, WAVEFORM_CUTOFF_POINT, true);
 #else
   return HeatmapRgbValues(Y, true);
 #endif
@@ -181,7 +181,7 @@ float3 WaveformRgbValues(
 
 void PS_CalcNitsPerPixel(
       float4 Position : SV_Position,
-  out float  CurNits  : SV_Target0)
+  out float4 CurNits  : SV_Target0)
 {
   CurNits = 0.f;
 
@@ -189,7 +189,7 @@ void PS_CalcNitsPerPixel(
    || _SHOW_NITS_FROM_CURSOR
    || _SHOW_HEATMAP
 #ifdef IS_COMPUTE_CAPABLE_API
-   || _SHOW_LUMINANCE_WAVEFORM
+   || _SHOW_WAVEFORM
 #endif
    || _HIGHLIGHT_NIT_RANGE
    || _DRAW_ABOVE_NITS_AS_BLACK
@@ -204,36 +204,48 @@ void PS_CalcNitsPerPixel(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], pixel) * 80.f;
+    float3 curRgb = pixel * 80.f;
+
+    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
+
+    curRgb = Csp::Mat::Bt709To::Bt2020(curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::PqTo::Nits(pixel));
+    float3 curRgb = Csp::Trc::PqTo::Nits(pixel);
+
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], Csp::Trc::HlgTo::Nits(pixel));
+    float3 curRgb = Csp::Trc::HlgTo::Nits(pixel);
+
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], pixel) * 100.f;
+    float3 curRgb = pixel * 100.f;
+
+    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], DECODE_SDR(pixel)) * 100.f;
+    float3 curRgb = DECODE_SDR(pixel) * 100.f;
+
+    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
 
 #else
+
+    float3 curRgb = 0.f;
 
     float curPixelNits = 0.f;
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-    if (curPixelNits > 0.f)
-    {
-      CurNits = curPixelNits;
-    }
-    return;
 
+    CurNits = float4(curRgb, curPixelNits);
+
+    return;
   }
   discard;
 }
@@ -287,30 +299,36 @@ void CS_ResetMinNits(uint3 DTID : SV_DispatchThreadID)
   #define GET_MAX_AVG_MIN_NITS_DISPATCH_Y (BUFFER_HEIGHT / GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y + 1)
 #endif
 
-groupshared uint GroupMax;
-groupshared uint GroupAvg;
-groupshared uint GroupMin;
+#ifdef IS_FLOAT_HDR_CSP
+  groupshared  int4 GroupMax;
+  groupshared  int4 GroupAvg;
+  groupshared  int4 GroupMin;
+#else
+  groupshared uint4 GroupMax;
+  groupshared uint4 GroupAvg;
+  groupshared uint4 GroupMin;
+#endif
 void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
                          uint3 GTID : SV_GroupThreadID,
                          uint3 DTID : SV_DispatchThreadID)
 {
   BRANCH(x)
   if (_SHOW_NITS_VALUES
-   || (_SHOW_LUMINANCE_WAVEFORM
-    && (_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE || _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE)))
+   || (_SHOW_WAVEFORM
+    && (_WAVEFORM_SHOW_MIN_NITS_LINE || _WAVEFORM_SHOW_MAX_NITS_LINE)))
   {
 
     if (all(GTID.xy == 0))
     {
       GroupMax = 0;
       GroupAvg = 0;
-      GroupMin = UINT_MAX;
+      GroupMin = INT_MAX;
     }
     barrier();
 
-    float threadMaxNits = 0.f;
-    float threadAvgNits = 0.f;
-    float threadMinNits = FP32_MAX;
+    float4 threadMaxNits = 0.f;
+    float4 threadAvgNits = 0.f;
+    float4 threadMinNits = FP32_MAX;
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
   || defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
@@ -333,7 +351,7 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
 
-        const float curNits = tex2Dfetch(SamplerNitsValues, curFetchPos);
+        const float4 curNits = tex2Dfetch(SamplerNitsValues, curFetchPos);
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
   && defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
@@ -376,23 +394,132 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
 
     threadAvgNits /= avgDiv;
 
-    atomicMax(GroupMax, asuint(threadMaxNits));
-    atomicAdd(GroupAvg, uint((threadAvgNits + 0.0005f) * 1000.f));
-    atomicMin(GroupMin, asuint(threadMinNits));
+#ifdef IS_FLOAT_HDR_CSP
+    int4 threadMaxNitsAsInt = asint(threadMaxNits);
+
+    static const bool4 threadMaxNitsIsNegative = threadMaxNits < 0.f;
+
+    [flatten]
+    if (threadMaxNitsIsNegative.r)
+    {
+      threadMaxNitsAsInt.r ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMaxNitsIsNegative.g)
+    {
+      threadMaxNitsAsInt.g ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMaxNitsIsNegative.b)
+    {
+      threadMaxNitsAsInt.b ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMaxNitsIsNegative.w)
+    {
+      threadMaxNitsAsInt.w ^= 0x7FFFFFFF;
+    }
+
+    const int4 threadAvgNitsAsInt = int4((threadAvgNits + (sign(threadAvgNits) * 0.0005f)) * 1000.f);
+
+    int4 threadMinNitsAsInt = asint(threadMinNits);
+
+    static const bool4 threadMinNitsIsNegative = threadMinNits < 0.f;
+
+    [flatten]
+    if (threadMinNitsIsNegative.r)
+    {
+      threadMinNitsAsInt.r ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMinNitsIsNegative.g)
+    {
+      threadMinNitsAsInt.g ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMinNitsIsNegative.b)
+    {
+      threadMinNitsAsInt.b ^= 0x7FFFFFFF;
+    }
+    [flatten]
+    if (threadMinNitsIsNegative.w)
+    {
+      threadMinNitsAsInt.w ^= 0x7FFFFFFF;
+    }
+#else
+    const uint4 threadMaxNitsAsUint = asuint(threadMaxNits);
+    const uint4 threadAvgNitsAsUint = uint4((threadAvgNits + 0.0005f) * 1000.f);
+    const uint4 threadMinNitsAsUint = asuint(threadMinNits);
+#endif
+
+#ifdef IS_FLOAT_HDR_CSP
+    atomicMax(GroupMax.w, threadMaxNitsAsInt.w);
+    atomicMax(GroupMax.r, threadMaxNitsAsInt.r);
+    atomicMax(GroupMax.g, threadMaxNitsAsInt.g);
+    atomicMax(GroupMax.b, threadMaxNitsAsInt.b);
+    atomicAdd(GroupAvg.w, threadAvgNitsAsInt.w);
+    atomicAdd(GroupAvg.r, threadAvgNitsAsInt.r);
+    atomicAdd(GroupAvg.g, threadAvgNitsAsInt.g);
+    atomicAdd(GroupAvg.b, threadAvgNitsAsInt.b);
+    atomicMin(GroupMin.w, threadMinNitsAsInt.w);
+    atomicMin(GroupMin.r, threadMinNitsAsInt.r);
+    atomicMin(GroupMin.g, threadMinNitsAsInt.g);
+    atomicMin(GroupMin.b, threadMinNitsAsInt.b);
+#else
+    atomicMax(GroupMax.w, threadMaxNitsAsUint.w);
+    atomicMax(GroupMax.r, threadMaxNitsAsUint.r);
+    atomicMax(GroupMax.g, threadMaxNitsAsUint.g);
+    atomicMax(GroupMax.b, threadMaxNitsAsUint.b);
+    atomicAdd(GroupAvg.w, threadAvgNitsAsUint.w);
+    atomicAdd(GroupAvg.r, threadAvgNitsAsUint.r);
+    atomicAdd(GroupAvg.g, threadAvgNitsAsUint.g);
+    atomicAdd(GroupAvg.b, threadAvgNitsAsUint.b);
+    atomicMin(GroupMin.w, threadMinNitsAsUint.w);
+    atomicMin(GroupMin.r, threadMinNitsAsUint.r);
+    atomicMin(GroupMin.g, threadMinNitsAsUint.g);
+    atomicMin(GroupMin.b, threadMinNitsAsUint.b);
+#endif
 
     barrier();
 
     if (all(GTID.xy == 0))
     {
-      const float groupAvgNits = float(GroupAvg)
-                               / 1000.f
-                               / float(WAVE64_THREAD_SIZE);
+      const float4 groupAvgNits = float4(GroupAvg)
+                                / 1000.f
+                                / float(WAVE64_THREAD_SIZE);
 
-      const uint groupAvgNitsUint = uint((groupAvgNits + 0.0005f) * 1000.f);
+#ifdef IS_FLOAT_HDR_CSP
+      const  int4 groupAvgNitsInt  =  int4((groupAvgNits + (sign(groupAvgNits) * 0.0005f)) * 1000.f);
+#else
+      const uint4 groupAvgNitsUint = uint4((groupAvgNits + 0.0005f) * 1000.f);
+#endif
 
-      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS,      GroupMax);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(GID.xy % 16), groupAvgNitsUint);
-      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS,      GroupMin);
+      const int2 averageStorePosW = int2(GID.xy % uint2(AVG_NITS_WIDTH, AVG_NITS_HEIGHT));
+      const int2 averageStorePosR = averageStorePosW + int2(AVG_NITS_WIDTH,     0);
+      const int2 averageStorePosG = averageStorePosW + int2(AVG_NITS_WIDTH * 2, 0);
+      const int2 averageStorePosB = averageStorePosW + int2(AVG_NITS_WIDTH * 3, 0);
+
+      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS, GroupMax.w);
+      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_R,    GroupMax.r);
+      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_G,    GroupMax.g);
+      atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_B,    GroupMax.b);
+
+#ifdef IS_FLOAT_HDR_CSP
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosW, groupAvgNitsInt.w);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosR, groupAvgNitsInt.r);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosG, groupAvgNitsInt.g);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosB, groupAvgNitsInt.b);
+#else
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosW, groupAvgNitsUint.w);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosR, groupAvgNitsUint.r);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosG, groupAvgNitsUint.g);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosB, groupAvgNitsUint.b);
+#endif
+
+      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS, GroupMin.w);
+      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_R,    GroupMin.r);
+      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_G,    GroupMin.g);
+      atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_B,    GroupMin.b);
     }
     return;
   }
@@ -402,17 +529,100 @@ void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
 
 void FinaliseMaxAvgMinNits()
 {
-  const float maxNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS, 0));
-  const float minNits = asfloat(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS, UINT_MAX));
 
-  float avgNits = 0;
+#ifdef IS_FLOAT_HDR_CSP
 
-  [unroll]
-  for (int x = 0; x < 16; x++)
+  //max
+  int4 maxRgbNitsInt = int4(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_R),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_G),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_B),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS));
+
+  const bool4 maxRgbNitsIsNegative = maxRgbNitsInt < 0;
+
+  [flatten]
+  if (maxRgbNitsIsNegative.r)
   {
-    for (int y = 0; y < 16; y++)
+    maxRgbNitsInt.r ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (maxRgbNitsIsNegative.g)
+  {
+    maxRgbNitsInt.g ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (maxRgbNitsIsNegative.b)
+  {
+    maxRgbNitsInt.b ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (maxRgbNitsIsNegative.w)
+  {
+    maxRgbNitsInt.w ^= 0x7FFFFFFF;
+  }
+
+  const float4 maxRgbNits = asfloat(maxRgbNitsInt);
+
+  //min
+  int4 minRgbNitsInt = int4(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_R),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_G),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_B),
+                            tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS));
+
+  const bool4 minRgbNitsIsNegative = minRgbNitsInt < 0;
+
+  [flatten]
+  if (minRgbNitsIsNegative.r)
+  {
+    minRgbNitsInt.r ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (minRgbNitsIsNegative.g)
+  {
+    minRgbNitsInt.g ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (minRgbNitsIsNegative.b)
+  {
+    minRgbNitsInt.b ^= 0x7FFFFFFF;
+  }
+  [flatten]
+  if (minRgbNitsIsNegative.w)
+  {
+    minRgbNitsInt.w ^= 0x7FFFFFFF;
+  }
+
+  const float4 minRgbNits = asfloat(minRgbNitsInt);
+
+#else
+
+  const float4 maxRgbNits = asfloat(uint4(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_R),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_G),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_B),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_NITS)));
+
+  const float4 minRgbNits = asfloat(uint4(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_R),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_G),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_B),
+                                          tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS)));
+
+#endif
+
+  float4 avgRgbNits = 0.f;
+
+  for (int x = 0; x < AVG_NITS_WIDTH; x++)
+  {
+    for (int y = 0; y < AVG_NITS_HEIGHT; y++)
     {
-      avgNits += float(atomicExchange(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(x, y), 0)) / 1000.f;
+      int2 fetchPosW = int2(x, y);
+      int2 fetchPosR = fetchPosW + int2(AVG_NITS_WIDTH,     0);
+      int2 fetchPosG = fetchPosW + int2(AVG_NITS_WIDTH * 2, 0);
+      int2 fetchPosB = fetchPosW + int2(AVG_NITS_WIDTH * 3, 0);
+
+      avgRgbNits.w += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosW)) / 1000.f;
+      avgRgbNits.r += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosR)) / 1000.f;
+      avgRgbNits.g += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosG)) / 1000.f;
+      avgRgbNits.b += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosB)) / 1000.f;
     }
   }
 
@@ -423,11 +633,20 @@ void FinaliseMaxAvgMinNits()
   static const float dispatchArea = dispatchWxH.x
                                   * dispatchWxH.y;
 
-  avgNits /= dispatchArea;
+  avgRgbNits /= dispatchArea;
 
-  tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxNits);
-  tex1Dstore(StorageConsolidated, COORDS_AVG_NITS_VALUE, avgNits);
-  tex1Dstore(StorageConsolidated, COORDS_MIN_NITS_VALUE, minNits);
+  tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxRgbNits.w);
+  tex1Dstore(StorageConsolidated, COORDS_MAX_R_VALUE,    maxRgbNits.r);
+  tex1Dstore(StorageConsolidated, COORDS_MAX_G_VALUE,    maxRgbNits.g);
+  tex1Dstore(StorageConsolidated, COORDS_MAX_B_VALUE,    maxRgbNits.b);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_NITS_VALUE, avgRgbNits.w);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_R_VALUE,    avgRgbNits.r);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_G_VALUE,    avgRgbNits.g);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_B_VALUE,    avgRgbNits.b);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_NITS_VALUE, minRgbNits.w);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_R_VALUE,    minRgbNits.r);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_G_VALUE,    minRgbNits.g);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_B_VALUE,    minRgbNits.b);
 
   return;
 }

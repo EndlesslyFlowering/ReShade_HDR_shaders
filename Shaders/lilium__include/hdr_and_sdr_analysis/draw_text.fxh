@@ -12,7 +12,7 @@ uint GetOuterSpacing(const uint CharXDimension)
 
 float2 GetTexCoordsFromRegularCoords(const float2 TexCoordOffset)
 {
-  return TexCoordOffset / float2(FONT_TEXTURE_WIDTH - 1, FONT_TEXTURE_HEIGHT - 1);
+  return TexCoordOffset / float2(FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT);
 }
 
 float2 GetPositonCoordsFromRegularCoords(
@@ -29,93 +29,93 @@ float2 GetPositonCoordsFromRegularCoords(
 //extract all digits without causing float issues
 uint _6th(precise const float Float)
 {
-  return uint(Float) / 100000;
+  return uint(Float) / 100000u;
 }
 
 uint _5th(precise const float Float)
 {
-  return uint(Float) /  10000;
+  return uint(Float) /  10000u;
 }
 
 uint _4th(precise const float Float)
 {
-  return uint(Float) /   1000;
+  return uint(Float) /   1000u;
 }
 
 uint _3rd(precise const float Float)
 {
-  return uint(Float) /    100;
+  return uint(Float) /    100u;
 }
 
 uint _2nd(precise const float Float)
 {
-  return uint(Float) /     10;
+  return uint(Float) /     10u;
 }
 
 uint _1st(precise const float Float)
 {
-  return uint(Float) %     10;
+  return uint(Float) %     10u;
 }
 
 
 uint d1st(precise const float Float)
 {
-  return uint(Float % 1.f *       10.f) % 10;
+  return uint((Float % 1.f) *       10.f) % 10u;
 }
 
 uint d2nd(precise const float Float)
 {
-  return uint(Float % 1.f *      100.f) % 10;
+  return uint((Float % 1.f) *      100.f) % 10u;
 }
 
 uint d3rd(precise const float Float)
 {
   if (Float < 10000.f)
   {
-    return uint(Float % 1.f *     1000.f) % 10;
+    return uint((Float % 1.f) *     1000.f) % 10u;
   }
-  return 10;
+  return 11u;
 }
 
 uint _d3rd(precise const float Float)
 {
-  return uint(Float % 1.f *     1000.f) % 10;
+  return uint((Float % 1.f) *     1000.f) % 10u;
 }
 
 uint d4th(precise const float Float)
 {
   if (Float < 1000.f)
   {
-    return uint(Float % 1.f *    10000.f) % 10;
+    return uint((Float % 1.f) *    10000.f) % 10u;
   }
-  return 10;
+  return 11u;
 }
 
 uint d5th(precise const float Float)
 {
   if (Float < 100.f)
   {
-    return uint(Float % 1.f *   100000.f) % 10;
+    return uint((Float % 1.f) *   100000.f) % 10u;
   }
-  return 10;
+  return 11u;
 }
 
 uint d6th(precise const float Float)
 {
   if (Float < 10.f)
   {
-    return uint(Float % 1.f *  1000000.f) % 10;
+    return uint((Float % 1.f) *  1000000.f) % 10u;
   }
-  return 10;
+  return 11u;
 }
 
 uint d7th(precise const float Float)
 {
   if (Float < 1.f)
   {
-    return uint(Float % 1.f * 10000000.f) % 10;
+    return uint((Float % 1.f) * 10000000.f) % 10u;
   }
-  return 10;
+  return 11u;
 }
 
 
@@ -123,118 +123,229 @@ uint GetNumberAboveZero(precise uint CurNumber)
 {
   if (CurNumber > 0)
   {
-    return CurNumber % 10;
+    return CurNumber % 10u;
   }
   else
   {
-    return 10;
+    return 11u;
   }
 }
 
-#ifdef IS_HDR_CSP
-  #define MAX_NUMBERS_NITS 11
-#else
-  #define MAX_NUMBERS_NITS  9
-#endif
-
 #ifdef IS_COMPUTE_CAPABLE_API
 
-groupshared float GroupNits;
 void CS_GetNitNumbers(uint3 GID  : SV_GroupID,
                       uint3 GTID : SV_GroupThreadID,
                       uint3 DTID : SV_DispatchThreadID)
 {
-  static const int storeYPos = GID.y + 16;
+  static const int2 storePos = int2(DTID.xy);
 
-  if (GID.y ==  0)
-  {
-    GroupNits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_MAX_NITS);
-  }
-  else if (GID.y ==  1)
-  {
-    GroupNits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_AVG_NITS);
-  }
-  else if (GID.y ==  2)
-  {
-    GroupNits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_MIN_NITS);
-  }
-  else //if (GID.y ==  3)
-  {
-    GroupNits = tex2Dfetch(SamplerNitsValues, MOUSE_POSITION);
-  }
+  float nits;
 
-  barrier();
+  BRANCH(x)
+  if (GID.y < 3
+   && _SHOW_NITS_VALUES)
+  {
+    nits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_MAX_NITS + (3 * GID.x) + GID.y);
+  }
+  else
+  BRANCH(x)
+  if (_SHOW_NITS_FROM_CURSOR)
+  {
+    const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
+    nits = tex2Dfetch(SamplerNitsValues, mousePosition)[(GID.x + 3) % 4];
+  }
+  else
+  {
+    nits = 0.f;
+  }
 
 #ifdef IS_HDR_CSP
-  switch(DTID.x)
-#else
-  switch(DTID.x + 2)
+  static const uint negSignPos = nits <= -1000.f ? 5
+                               : nits <=  -100.f ? 4
+                               : nits <=   -10.f ? 3
+                               : nits <      0.f ? 2
+                               :                   9;
+
+  // avoid max nits above or below these values looking cut off in the overlay
+  nits = clamp(nits, -9999.999f, 99999.99f);
+  nits = abs(nits);
 #endif
+
+//  bool4 RgbNitsAbove100000 = RgbNits >= 100000.f;
+//
+//  if (RgbNitsAbove100000.w)
+//  {
+//    tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosNits, 9u);
+//  }
+//  if (RgbNitsAbove100000.r)
+//  {
+//    tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosR, 9u);
+//  }
+//  if (RgbNitsAbove100000.g)
+//  {
+//    tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosG, 9u);
+//  }
+//  if (RgbNitsAbove100000.b)
+//  {
+//    tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosB, 9u);
+//  }
+//
+//  [branch]
+//  if (all(RgbNitsAbove100000))
+//  {
+//    return;
+//  }
+
+#ifdef IS_HDR_CSP
+
+  #define CASE2 2
+  #define CASE3 3
+  #define CASE4 4
+  #define CASE5 5
+  #define CASE6 6
+  #define CASE7 7
+  #define CASE8 8
+  #define CASE9 9
+
+#else
+
+  #define CASE2 0
+  #define CASE3 1
+  #define CASE4 2
+  #define CASE5 3
+  #define CASE6 4
+  #define CASE7 5
+  #define CASE8 6
+  #define CASE9 7
+
+#endif
+
+  switch(GTID.x)
   {
+#ifdef IS_HDR_CSP
     case 0:
     {
-      precise const uint _00 = GetNumberAboveZero(_5th(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _00);
+      precise uint _00;
+
+      if (negSignPos == 5)
+      {
+        _00 = _minus;
+      }
+      else
+      {
+        _00 = GetNumberAboveZero(_5th(nits));
+      }
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _00);
     }
     break;
     case 1:
     {
-      precise const uint _01 = GetNumberAboveZero(_4th(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _01);
+      precise uint _01;
+
+      if (negSignPos == 4)
+      {
+        _01 = _minus;
+      }
+      else
+      {
+        _01 = GetNumberAboveZero(_4th(nits));
+      }
+
+      if (GID.y == 3 && _01 == 9u)
+        _01 = 1u;
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _01);
     }
     break;
-    case 2:
+#endif
+    case CASE2:
     {
-      precise const uint _02 = GetNumberAboveZero(_3rd(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _02);
+      precise uint _02;
+
+#ifdef IS_HDR_CSP
+      if (negSignPos == 3)
+      {
+        _02 = _minus;
+      }
+      else
+      {
+#endif
+        _02 = GetNumberAboveZero(_3rd(nits));
+#ifdef IS_HDR_CSP
+      }
+#endif
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _02);
     }
     break;
-    case 3:
+    case CASE3:
     {
-      precise const uint _03 = GetNumberAboveZero(_2nd(GroupNits));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _03);
+      precise uint _03;
+
+#ifdef IS_HDR_CSP
+      if (negSignPos == 2)
+      {
+        _03 = _minus;
+      }
+      else
+      {
+#endif
+        _03 = GetNumberAboveZero(_2nd(nits));
+#ifdef IS_HDR_CSP
+      }
+#endif
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _03);
     }
     break;
-    case 4:
+    case CASE4:
     {
-      precise const uint _04 = _1st(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _04);
+      precise const uint _04 = _1st(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _04);
     }
     break;
-    case 5:
+    case CASE5:
     {
-      precise const uint _05 = d1st(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _05);
+      precise const uint _05 = d1st(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _05);
     }
     break;
-    case 6:
+    case CASE6:
     {
-      precise const uint _06 = d2nd(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _06);
+      precise const uint _06 = d2nd(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _06);
     }
     break;
-    case 7:
+    case CASE7:
     {
-      precise const uint _07 = d3rd(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _07);
+      precise const uint _07 = d3rd(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _07);
     }
     break;
-    case 8:
+    case CASE8:
     {
-      precise const uint _08 = d4th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _08);
+      precise const uint _08 = d4th(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _08);
     }
     break;
-    case 9:
+    case CASE9:
     {
-      precise const uint _09 = d5th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _09);
+      precise const uint _09 = d5th(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _09);
     }
     break;
     default:
     {
-      precise const uint _10 = d6th(GroupNits);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, int2(DTID.x, storeYPos), _10);
+      precise const uint _10 = d6th(nits);
+
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _10);
     }
     break;
   }
@@ -242,78 +353,50 @@ void CS_GetNitNumbers(uint3 GID  : SV_GroupID,
 }
 
 #ifdef IS_HDR_CSP
-groupshared float GroupGamut;
 void CS_GetGamutNumbers(uint3 GID  : SV_GroupID,
                         uint3 GTID : SV_GroupThreadID,
                         uint3 DTID : SV_DispatchThreadID)
 {
-  static const int2 storePosOffset = int2(11, GID.y + 16);
+  static const int2 storePos = int2(DTID.x + NITS_NUMBERS_PER_ROW, GID.y);
 
-  if (GID.y == 0)
-  {
-    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT709);
-  }
-  else if (GID.y == 1)
-  {
-    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_DCI_P3);
-  }
-#ifdef IS_HDR10_LIKE_CSP
-  else
-#else
-  else if (GID.y == 2)
-#endif
-  {
-    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT2020);
-  }
-#ifdef IS_FLOAT_HDR_CSP
-  else if (GID.y == 3)
-  {
-    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_AP0);
-  }
-  else // if (GID.y == 4)
-  {
-    GroupGamut = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_INVALID);
-  }
-#endif
-
-  barrier();
+  const float curGamutCounter = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT709 + GID.y);
 
   switch(DTID.x)
   {
     case 0:
     {
-      precise const uint _00 = GetNumberAboveZero(_3rd(GroupGamut));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _00);
+      precise const uint _00 = GetNumberAboveZero(_3rd(curGamutCounter));
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _00);
     }
     break;
     case 1:
     {
-      precise const uint _01 = GetNumberAboveZero(_2nd(GroupGamut));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _01);
+      precise const uint _01 = GetNumberAboveZero(_2nd(curGamutCounter));
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _01);
     }
     break;
     case 2:
     {
-      precise const uint _02 = _1st(GroupGamut);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _02);
+      precise const uint _02 = _1st(curGamutCounter);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _02);
     }
     break;
     case 3:
     {
-      precise const uint _03 = d1st(GroupGamut);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _03);
+      precise const uint _03 = d1st(curGamutCounter);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _03);
     }
     break;
     case 4:
     {
-      precise const uint _04 = d2nd(GroupGamut);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _04);
+      precise const uint _04 = d2nd(curGamutCounter);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _04);
     }
     break;
     default:
     {
-      precise const uint _05 = _d3rd(GroupGamut);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePosOffset + int2(DTID.x, 0), _05);
+      precise const uint _05 = _d3rd(curGamutCounter);
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _05);
     }
     break;
   }
@@ -332,9 +415,9 @@ void VS_PrepareGetNumbersNits(
 {
   static const float2 positions[3] =
   {
-    GetPositonCoordsFromRegularCoords(float2( NITS_WIDTH,  NITS_HEIGHT), ShowNumbersTextureSize),
-    GetPositonCoordsFromRegularCoords(float2(-NITS_WIDTH,  NITS_HEIGHT), ShowNumbersTextureSize),
-    GetPositonCoordsFromRegularCoords(float2( NITS_WIDTH, -NITS_HEIGHT), ShowNumbersTextureSize)
+    GetPositonCoordsFromRegularCoords(float2( NITS_NUMBERS_COUNT,  NITS_NUMBERS_ROWS), ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2(-NITS_NUMBERS_COUNT,  NITS_NUMBERS_ROWS), ShowNumbersTextureSize),
+    GetPositonCoordsFromRegularCoords(float2( NITS_NUMBERS_COUNT, -NITS_NUMBERS_ROWS), ShowNumbersTextureSize)
   };
 
   Position = float4(positions[VertexID], 0.f, 1.f);
@@ -599,11 +682,11 @@ VertexCoordsAndTexCoords ReturnOffScreen()
 }
 
 #if defined(IS_FLOAT_HDR_CSP)
-  #define MAX_LINES 11
+  #define MAX_LINES 12
 #elif defined(IS_HDR10_LIKE_CSP)
-  #define MAX_LINES  9
+  #define MAX_LINES 10
 #else
-  #define MAX_LINES  5
+  #define MAX_LINES  6
 #endif
 
 #define MAX_CHARS TEXT_OFFSET_ANALYIS_HEADER.x
@@ -722,7 +805,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 
       VertexCoordsAndTexCoords ret;
 
-      ret.vertexCoords = GetPositonCoordsFromRegularCoords(pos, BUFFER_SIZE_MINUS_1_FLOAT);
+      ret.vertexCoords = GetPositonCoordsFromRegularCoords(pos, BUFFER_SIZE_FLOAT);
 //      ret.vertexCoords = float2(-2.f, -2.f);
       ret.texCoords    = float2(-1.f, -1.f);
 
@@ -740,88 +823,72 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 
       float2 texCoordOffset;
 
+      static const bool specificallyNeedNitsRgbHeader = currentTextBlockID == 1
+                                                     && !_SHOW_NITS_VALUES
+                                                     && _SHOW_NITS_FROM_CURSOR;
+
       //Analysis Header
-      BRANCH(x)
       if (currentTextBlockID == 0)
       {
         vertexOffset.y = 0.f;
       }
-      //maxNits:
-      //avgNits:
-      //minNits:
-      else if (currentTextBlockID == 1)
+      //max:
+      //avg:
+      //min:
+      else if (currentTextBlockID == 1
+            && (_SHOW_NITS_VALUES
+             || specificallyNeedNitsRgbHeader))
       {
-        BRANCH(x)
-        if (_SHOW_NITS_VALUES)
-        {
-          vertexOffset.y = 1.f;
-        }
-        else
-        {
-          return ReturnOffScreen();
-        }
+        vertexOffset.y = 1.f;
       }
-      //cursorNits:
-#ifdef IS_HDR_CSP
-      else if (currentTextBlockID == 2)
-#else
-      else
-#endif
+      //cursor:
+      else if (currentTextBlockID == 2
+            && _SHOW_NITS_FROM_CURSOR)
       {
-        BRANCH(x)
-        if (_SHOW_NITS_FROM_CURSOR)
-        {
-          vertexOffset.y = _SHOW_NITS_VALUES ? 4.f
-                                             : 1.f;
-        }
-        else
-        {
-          return ReturnOffScreen();
-        }
+        vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
+                                           : 2.f;
       }
 #ifdef IS_HDR_CSP
       //gamut percentages
-      else if (currentTextBlockID == 3)
-      {
-        BRANCH(x)
-        if (SHOW_GAMUTS)
-        {
-          vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
-                         : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
-                         : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
-                                                                           : 1.f;
-        }
-        else
-        {
-          return ReturnOffScreen();
-        }
-      }
       //cursor gamut
-      else //if (currentTextBlockID == 4)
+      else
       {
-        BRANCH(x)
-        if (SHOW_GAMUT_FROM_CURSOR)
-        {
-          vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
-                         : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
-                         : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
-                                                                           : 1.f;
+        const bool isShowGamuts          = currentTextBlockID == 3 && SHOW_GAMUTS;
+        const bool isShowGamutFromCursor = currentTextBlockID == 4 && SHOW_GAMUT_FROM_CURSOR;
 
-          if (SHOW_GAMUTS)
+        if (isShowGamuts
+         || isShowGamutFromCursor)
+        {
+          vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
+                         : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
+                         : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
+                                                                           : 2.f;
+
+          [flatten]
+          if (isShowGamutFromCursor
+           && SHOW_GAMUTS)
           {
             vertexOffset.y += GAMUT_PERCENTAGES_LINES;
           }
         }
+#endif
         else
         {
           return ReturnOffScreen();
         }
+#ifdef IS_HDR_CSP
       }
 #endif
 
       vertexOffset.x = TEXT_BLOCK_DRAW_X_OFFSET[currentTextBlockID];
 
       float2 size = TEXT_BLOCK_SIZES[currentTextBlockID];
+
+      [flatten]
+      if (specificallyNeedNitsRgbHeader)
+      {
+        size.y -= 3.f;
+      }
 
       vertexOffset *= CharSize;
 
@@ -866,7 +933,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 
       VertexCoordsAndTexCoords ret;
 
-      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
+      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
       ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
 
       return ret;
@@ -889,7 +956,7 @@ void VS_RenderText(
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE);
+  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE, RANGE);
 
   return;
 }
@@ -920,30 +987,27 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
   int2 fetchPos;
 
 #ifdef IS_HDR_CSP
-  [branch]
-  if (currentNumberID < NITS_NUMBERS)
+  if (currentNumberID < NITS_NUMBERS_TOTAL)
   {
-    fetchPos = int2(currentNumberID % 11, currentNumberID / 11);
+#endif
+    fetchPos = int2(currentNumberID % NITS_NUMBERS_PER_ROW,
+                    currentNumberID / NITS_NUMBERS_PER_ROW);
+#ifdef IS_HDR_CSP
   }
   else
   {
-    uint currentGamutNumberID = currentNumberID - NITS_NUMBERS;
+    uint currentGamutNumberID = currentNumberID - NITS_NUMBERS_TOTAL;
 
-    fetchPos = int2(currentGamutNumberID % 6, currentGamutNumberID / 6);
+    fetchPos = int2(currentGamutNumberID % GAMUTS_NUMBERS_COUNT,
+                    currentGamutNumberID / GAMUTS_NUMBERS_COUNT);
 
 #ifdef IS_COMPUTE_CAPABLE_API
-    fetchPos.x += 11;
+    fetchPos.x += NITS_NUMBERS_PER_ROW;
 #else
     fetchPos.y += 4;
 #endif
   }
-#else
-  fetchPos = int2(currentNumberID % 9, currentNumberID / 9);
-#endif
-
-#ifdef IS_COMPUTE_CAPABLE_API
-  fetchPos.y += 16;
-#endif
+#endif //IS_HDR_CSP
 
   static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPos)
 #ifndef IS_COMPUTE_CAPABLE_API
@@ -952,97 +1016,107 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
                                      ;
 
   BRANCH(x)
-  if (curNumber < 10)
+  if (curNumber < 11u)
   {
     const uint currentVertexID = VertexID % 6;
 
     float2 vertexOffset;
 
-    //max/avg/min nits
-    BRANCH(x)
-    if (currentNumberID < (MAX_NUMBERS_NITS * 3))
-    {
-      if (_SHOW_NITS_VALUES)
-      {
-
-        vertexOffset.x = currentNumberID % MAX_NUMBERS_NITS + 12;
-
-        vertexOffset.y = currentNumberID / MAX_NUMBERS_NITS +  1;
-
 #ifdef IS_HDR_CSP
-        if (vertexOffset.x > 16)
+
+  #define DOT_OFFSET_DIV 6
+
 #else
-        if (vertexOffset.x > 14)
+
+  #define DOT_OFFSET_DIV 4
+
 #endif
-        {
-          vertexOffset.x++;
-        }
-      }
-      else
-      {
-        return ReturnOffScreen();
-      }
+
+    //max/avg/min nits
+    [flatten]
+    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3)
+     && _SHOW_NITS_VALUES)
+    {
+      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
+
+      uint b = a / NITS_NUMBERS_COUNT;
+
+      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+
+      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+
+#ifndef IS_HDR_CSP
+
+      spacerOffset *= 2;
+
+      dotOffset = min(dotOffset, 1);
+
+#endif
+
+      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+
+      vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
     }
     //cursor nits
-    else if (currentNumberID < (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1))
+    else
+    [flatten]
+    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 4)
+          && _SHOW_NITS_FROM_CURSOR)
     {
-      if (_SHOW_NITS_FROM_CURSOR)
-      {
-        currentNumberID -= (MAX_NUMBERS_NITS * 3);
+      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
-        vertexOffset.x = currentNumberID % MAX_NUMBERS_NITS + 12;
+      uint b = a / NITS_NUMBERS_COUNT;
 
-        vertexOffset.y = _SHOW_NITS_VALUES ? 4
-                                           : 1;
+      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
 
-#ifdef IS_HDR_CSP
-        if (vertexOffset.x > 16)
-#else
-        if (vertexOffset.x > 14)
+      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+
+#ifndef IS_HDR_CSP
+
+      spacerOffset *= 2;
+
+      dotOffset = min(dotOffset, 1);
+
 #endif
-        {
-          vertexOffset.x++;
-        }
-      }
-      else
-      {
-        return ReturnOffScreen();
-      }
+
+      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+
+      vertexOffset.y = _SHOW_NITS_VALUES ? 5
+                                         : 2;
     }
 
 #ifdef IS_HDR_CSP
-
+    else
+    [flatten]
+    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3 + NITS_NUMBERS_PER_ROW * 1 + 6 *
 #ifdef IS_FLOAT_HDR_CSP
-    else //if (currentNumberID < (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1 + 6 * 5))
+                                                                                          5
 #else
-    else //if (currentNumberID < (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1 + 6 * 3))
+                                                                                          3
 #endif
+                               ) && SHOW_GAMUTS)
     //gamut percentages
     {
-      if (SHOW_GAMUTS)
-      {
-        currentNumberID -= (MAX_NUMBERS_NITS * 3 + MAX_NUMBERS_NITS * 1);
+      currentNumberID -= (NITS_NUMBERS_PER_ROW * 3 + NITS_NUMBERS_PER_ROW * 1);
 
-        vertexOffset.x = currentNumberID % 6 + 14;
+      uint a = (currentNumberID % 6);
 
-        vertexOffset.y = currentNumberID / 6;
+      vertexOffset.x = a + 9;
 
-        vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
-                        : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
-                        : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
-                                                                          : 1.f;
+      vertexOffset.x += a / 3;
 
-        if (vertexOffset.x > 16)
-        {
-          vertexOffset.x++;
-        }
-      }
-      else
-      {
-        return ReturnOffScreen();
-      }
+      vertexOffset.y = currentNumberID / 6;
+
+      vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
+                      : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
+                      : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
+                                                                        : 2.f;
     }
 #endif //IS_HDR_CSP
+    else
+    {
+      return ReturnOffScreen();
+    }
 
     vertexOffset *= CharSize;
 
@@ -1085,7 +1159,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     VertexCoordsAndTexCoords ret;
 
-    ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
+    ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
     ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
 
     return ret;
@@ -1095,14 +1169,6 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
     return ReturnOffScreen();
   }
 }
-
-#ifdef IS_FLOAT_HDR_CSP
-  #define NUMBERS_COUNT (4 * 11 + 5 * 6 + 1)
-#elif defined(IS_HDR10_LIKE_CSP)
-  #define NUMBERS_COUNT (4 * 11 + 3 * 6 + 1)
-#else
-  #define NUMBERS_COUNT (4 * 9)
-#endif
 
 void VS_RenderNumbers(
   in                  uint   VertexID         : SV_VertexID,
@@ -1124,71 +1190,69 @@ void VS_RenderNumbers(
   }
   //cursor gamut
   else
+  BRANCH(x)
+  if (SHOW_GAMUT_FROM_CURSOR)
   {
-    BRANCH(x)
-    if (SHOW_GAMUT_FROM_CURSOR)
+    const float gamut = floor(tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 256.f); // *256 for safety
+
+    const uint currentVertexID = VertexID % 6;
+
+    float2 vertexOffset;
+
+    vertexOffset.x = 10;
+
+    vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
+                   : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
+                   : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
+                                                                     : 2.f;
+
+    if (SHOW_GAMUTS)
     {
-      const float gamut = floor(tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 256.f); // *256 for safety
-
-      const uint currentVertexID = VertexID % 6;
-
-      float2 vertexOffset;
-
-      vertexOffset.x = 15;
-
-      vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 5.f
-                     : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 2.f
-                     : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 4.f
-                                                                       : 1.f;
-
-      if (SHOW_GAMUTS)
-      {
-        vertexOffset.y += GAMUT_PERCENTAGES_LINES;
-      }
-
-      vertexOffset *= charSize;
-
-      float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + gamut);
-
-      texCoordOffset.y *= CHAR_DIM_FLOAT.y;
-
-      if (currentVertexID == 1)
-      {
-        vertexOffset.y += charSize.y;
-
-        texCoordOffset.y += CHAR_DIM_FLOAT.y;
-      }
-      else if (currentVertexID == 4)
-      {
-        vertexOffset.x += charSize.x * 7.f;
-
-        texCoordOffset.x += CHAR_DIM_FLOAT.x * 7.f;
-      }
-      else if (currentVertexID == 2 || currentVertexID == 5)
-      {
-        vertexOffset += float2(charSize.x * 7.f, charSize.y);
-
-        texCoordOffset += float2(CHAR_DIM_FLOAT.x * 7.f, CHAR_DIM_FLOAT.y);
-      }
-
-      vertexOffset   -= 1.f;
-      texCoordOffset -= 1.f;
-
-      vertexOffset   = max(vertexOffset,   0.f);
-      texCoordOffset = max(texCoordOffset, 0.f);
-
-      if (_TEXT_POSITION != 0)
-      {
-        vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * charSize.x - 1.f));
-      }
-
-      vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_MINUS_1_FLOAT);
-      vertexCoordsAndTexCoords.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
+      vertexOffset.y += GAMUT_PERCENTAGES_LINES;
     }
-    else
+
+    vertexOffset *= charSize;
+
+    float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + gamut);
+
+    texCoordOffset.y *= CHAR_DIM_FLOAT.y;
+
+    if (currentVertexID == 1)
     {
-      vertexCoordsAndTexCoords = ReturnOffScreen();
+      vertexOffset.y += charSize.y;
+
+      texCoordOffset.y += CHAR_DIM_FLOAT.y;
     }
+    else if (currentVertexID == 4)
+    {
+      vertexOffset.x += charSize.x * 7.f;
+
+      texCoordOffset.x += CHAR_DIM_FLOAT.x * 7.f;
+    }
+    else if (currentVertexID == 2 || currentVertexID == 5)
+    {
+      vertexOffset += float2(charSize.x * 7.f, charSize.y);
+
+      texCoordOffset += float2(CHAR_DIM_FLOAT.x * 7.f, CHAR_DIM_FLOAT.y);
+    }
+
+    vertexOffset   -= 1.f;
+    texCoordOffset -= 1.f;
+
+    vertexOffset   = max(vertexOffset,   0.f);
+    texCoordOffset = max(texCoordOffset, 0.f);
+
+    if (_TEXT_POSITION != 0)
+    {
+      vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * charSize.x - 1.f));
+    }
+
+    vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
+    vertexCoordsAndTexCoords.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
+  }
+  else
+  {
+    vertexCoordsAndTexCoords = ReturnOffScreen();
   }
 #endif
 
@@ -1196,7 +1260,7 @@ void VS_RenderNumbers(
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE);
+  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE, RANGE);
 
   return;
 }

@@ -57,81 +57,80 @@ uniform float FRAMETIME
 >;
 
 
-#if defined(IS_HDR_CSP)
+#define AVG_NITS_WIDTH  16
+#define AVG_NITS_HEIGHT 16
 
-  #define NITS_NUMBERS (4 * 11)
 
-#else
+#define NITS_NUMBERS_COLUMNS 4
+#define NITS_NUMBERS_ROWS    4
 
-  #define NITS_NUMBERS (4 * 9)
+#define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 1)
+#define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT AVG_NITS_HEIGHT
 
-#endif
-
-#ifdef IS_COMPUTE_CAPABLE_API
-
-#if defined(IS_HDR_CSP)
-
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH  17
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 5)
-
-  #define POS_MAX_NITS int2(0, 20)
-  #define POS_MIN_NITS int2(1, 20)
-
-#else
-
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH  16
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT (16 + 4)
-
-  #define POS_MAX_NITS int2(0, 19)
-  #define POS_MIN_NITS int2(1, 19)
-
-#endif
-
-#else //IS_COMPUTE_CAPABLE_API
-
-#define NITS_HEIGHT 4
 
 #if defined(IS_HDR_CSP)
 
-  #define NITS_WIDTH 11
+  #define NITS_NUMBERS_COUNT 11
 
-  #define CSPS_Y_OFFSET NITS_HEIGHT
+  #define GAMUTS_Y_OFFSET NITS_NUMBERS_ROWS
 
-  #define CSPS_WIDTH 6
+  #define GAMUTS_NUMBERS_COUNT 6
 
 #ifdef IS_FLOAT_HDR_CSP
-  #define CSPS_NUMBERS 5
+  #define GAMUTS_NUMBERS_ROWS 5
 #else
-  #define CSPS_NUMBERS 3
+  #define GAMUTS_NUMBERS_ROWS 3
 #endif
-
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  NITS_WIDTH
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT (NITS_HEIGHT + CSPS_NUMBERS)
 
 #else
 
-  #define NITS_WIDTH 9
-
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_WIDTH  NITS_WIDTH
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_CSP_COUNTER_AND_SHOW_NUMBERS_HEIGHT NITS_HEIGHT
+  #define NITS_NUMBERS_COUNT 9
 
 #endif
 
-#endif //IS_COMPUTE_CAPABLE_API
 
-#if defined(IS_FLOAT_HDR_CSP)
+#define NITS_NUMBERS_PER_ROW (NITS_NUMBERS_COUNT \
+                            * NITS_NUMBERS_COLUMNS)
 
-  #define POS_BT709_PERCENTAGE   int2(2, 20)
-  #define POS_DCIP3_PERCENTAGE   int2(3, 20)
-  #define POS_BT2020_PERCENTAGE  int2(4, 20)
-  #define POS_AP0_PERCENTAGE     int2(5, 20)
-  #define POS_INVALID_PERCENTAGE int2(6, 20)
+#define NITS_NUMBERS_TOTAL (NITS_NUMBERS_COUNT   \
+                          * NITS_NUMBERS_COLUMNS \
+                          * NITS_NUMBERS_ROWS)
 
-#elif defined(IS_HDR10_LIKE_CSP)
 
-  #define POS_BT709_PERCENTAGE  int2(2, 20)
-  #define POS_DCIP3_PERCENTAGE  int2(3, 20)
-  #define POS_BT2020_PERCENTAGE int2(4, 20)
+#define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
+
+#define POS_MAX_NITS int2(POS_STORE_X, 0)
+#define POS_MAX_R    int2(POS_STORE_X, 1)
+#define POS_MAX_G    int2(POS_STORE_X, 2)
+#define POS_MAX_B    int2(POS_STORE_X, 3)
+#define POS_MIN_NITS int2(POS_STORE_X, 4)
+#define POS_MIN_R    int2(POS_STORE_X, 5)
+#define POS_MIN_G    int2(POS_STORE_X, 6)
+#define POS_MIN_B    int2(POS_STORE_X, 7)
+
+
+#if defined(IS_HDR_CSP)
+
+  #define POS_BT709_PERCENTAGE  int2(POS_STORE_X,  8)
+  #define POS_DCIP3_PERCENTAGE  int2(POS_STORE_X,  9)
+  #define POS_BT2020_PERCENTAGE int2(POS_STORE_X, 10)
+
+  #if defined(IS_FLOAT_HDR_CSP)
+
+    #define POS_AP0_PERCENTAGE     int2(POS_STORE_X, 11)
+    #define POS_INVALID_PERCENTAGE int2(POS_STORE_X, 12)
+
+  #endif
+
+#endif
+
+#if defined(IS_HDR_CSP)
+
+  #define NUMBERS_COUNT (NITS_NUMBERS_TOTAL + GAMUTS_NUMBERS_ROWS * GAMUTS_NUMBERS_COUNT + 1)
+
+#else
+
+  #define NUMBERS_COUNT NITS_NUMBERS_TOTAL
 
 #endif
 
@@ -141,16 +140,24 @@ texture2D TextureMaxAvgMinNitsAndGamutCounterAndShowNumbers
   Width  = TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH;
   Height = TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT;
 #ifdef IS_COMPUTE_CAPABLE_API
-  Format = R32U;
+#ifdef IS_FLOAT_HDR_CSP
+  Format = R32I;
 #else
+  Format = R32U;
+#endif //IS_FLOAT_HDR_CSP
+#else  //IS_COMPUTE_CAPABLE_API
   Format = R8;
 #endif
 };
 
 sampler2D
 #ifdef IS_COMPUTE_CAPABLE_API
-         <uint>
+#ifdef IS_FLOAT_HDR_CSP
+         <int>
 #else
+         <uint>
+#endif //IS_FLOAT_HDR_CSP
+#else  //IS_COMPUTE_CAPABLE_API
          <float>
 #endif
                  SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers
@@ -159,35 +166,17 @@ sampler2D
 };
 
 #ifdef IS_COMPUTE_CAPABLE_API
-storage2D<uint> StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers
+storage2D
+#ifdef IS_FLOAT_HDR_CSP
+         <int>
+#else
+         <uint>
+#endif
+                StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers
 {
   Texture = TextureMaxAvgMinNitsAndGamutCounterAndShowNumbers;
 };
 #endif //IS_COMPUTE_CAPABLE_API
-
-
-#define SHOW_NITS_VALUES_LINE_COUNT      3
-#define SHOW_NITS_FROM_CURSOR_LINE_COUNT 1
-
-#if defined(IS_HDR_CSP)
-  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 1
-#else
-  #define SHOW_CSP_FROM_CURSOR_LINE_COUNT 0
-#endif
-
-#if defined(IS_HDR10_LIKE_CSP)
-
-  #define SHOW_CSPS_LINE_COUNT 3
-
-#elif defined(IS_HDR_CSP)
-
-  #define SHOW_CSPS_LINE_COUNT 5
-
-#else
-
-  #define SHOW_CSPS_LINE_COUNT 0
-
-#endif //IS_HDR10_LIKE_CSP
 
 
 // consolidated texture start
@@ -197,16 +186,29 @@ storage2D<uint> StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers
 #define UPDATE_OVERLAY_PERCENTAGES_COUNT 1
 #define UPDATE_OVERLAY_PERCENTAGES_X_OFFSET 0
 #define UPDATE_OVERLAY_PERCENTAGES_Y_OFFSET 0
-static const int COORDS_UPDATE_OVERLAY_PERCENTAGES = int(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET);
+#define COORDS_UPDATE_OVERLAY_PERCENTAGES int(UPDATE_OVERLAY_PERCENTAGES_X_OFFSET)
 
 
 // max, avg and min Nits
-#define MAX_AVG_MIN_NITS_VALUES_COUNT 3
+#ifdef IS_COMPUTE_CAPABLE_API
+  #define MAX_AVG_MIN_NITS_VALUES_COUNT 12
+#else
+  #define MAX_AVG_MIN_NITS_VALUES_COUNT 3
+#endif
 #define MAX_AVG_MIN_NITS_VALUES_X_OFFSET (UPDATE_OVERLAY_PERCENTAGES_COUNT + UPDATE_OVERLAY_PERCENTAGES_X_OFFSET)
 #define MAX_AVG_MIN_NITS_VALUES_Y_OFFSET 0
-static const int COORDS_MAX_NITS_VALUE = int(    MAX_AVG_MIN_NITS_VALUES_X_OFFSET);
-static const int COORDS_AVG_NITS_VALUE = int(1 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET);
-static const int COORDS_MIN_NITS_VALUE = int(2 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET);
+#define COORDS_MAX_NITS_VALUE int(     MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MIN_NITS_VALUE int( 1 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_AVG_NITS_VALUE int( 2 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MAX_R_VALUE    int( 3 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MAX_G_VALUE    int( 4 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MAX_B_VALUE    int( 5 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_AVG_R_VALUE    int( 6 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_AVG_G_VALUE    int( 7 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_AVG_B_VALUE    int( 8 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MIN_R_VALUE    int( 9 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MIN_G_VALUE    int(10 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MIN_B_VALUE    int(11 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
 
 
 // gamut percentages
@@ -219,20 +221,20 @@ static const int COORDS_MIN_NITS_VALUE = int(2 + MAX_AVG_MIN_NITS_VALUES_X_OFFSE
 #endif
 #define GAMUT_PERCENTAGES_X_OFFSET (MAX_AVG_MIN_NITS_VALUES_COUNT + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
 #define GAMUT_PERCENTAGES_Y_OFFSET 0
-static const int COORDS_PERCENTAGE_BT709   = int(    GAMUT_PERCENTAGES_X_OFFSET);
-static const int COORDS_PERCENTAGE_DCI_P3  = int(1 + GAMUT_PERCENTAGES_X_OFFSET);
-static const int COORDS_PERCENTAGE_BT2020  = int(2 + GAMUT_PERCENTAGES_X_OFFSET);
-static const int COORDS_PERCENTAGE_AP0     = int(3 + GAMUT_PERCENTAGES_X_OFFSET);
-static const int COORDS_PERCENTAGE_INVALID = int(4 + GAMUT_PERCENTAGES_X_OFFSET);
+#define COORDS_PERCENTAGE_BT709   int(    GAMUT_PERCENTAGES_X_OFFSET)
+#define COORDS_PERCENTAGE_DCI_P3  int(1 + GAMUT_PERCENTAGES_X_OFFSET)
+#define COORDS_PERCENTAGE_BT2020  int(2 + GAMUT_PERCENTAGES_X_OFFSET)
+#define COORDS_PERCENTAGE_AP0     int(3 + GAMUT_PERCENTAGES_X_OFFSET)
+#define COORDS_PERCENTAGE_INVALID int(4 + GAMUT_PERCENTAGES_X_OFFSET)
 
 
 // show values for max, avg and min Nits plus gamut % for BT.709, DCI-P3, BT.2020, AP0 and invalid
 #if defined(IS_FLOAT_HDR_CSP)
-  #define SHOW_VALUES_COUNT 8
+  #define SHOW_VALUES_COUNT 17
 #elif defined(IS_HDR10_LIKE_CSP)
-  #define SHOW_VALUES_COUNT 6
+  #define SHOW_VALUES_COUNT 15
 #else
-  #define SHOW_VALUES_COUNT 3
+  #define SHOW_VALUES_COUNT 12
 #endif
 #if defined(IS_COMPUTE_CAPABLE_API)
   #define SHOW_VALUES_X_OFFSET (GAMUT_PERCENTAGES_COUNT + GAMUT_PERCENTAGES_X_OFFSET)
@@ -240,14 +242,23 @@ static const int COORDS_PERCENTAGE_INVALID = int(4 + GAMUT_PERCENTAGES_X_OFFSET)
   #define SHOW_VALUES_X_OFFSET 1
 #endif
 #define SHOW_VALUES_Y_OFFSET 0
-static const int COORDS_SHOW_MAX_NITS           = int(    SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_AVG_NITS           = int(1 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_MIN_NITS           = int(2 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_PERCENTAGE_BT709   = int(3 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_PERCENTAGE_DCI_P3  = int(4 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_PERCENTAGE_BT2020  = int(5 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_PERCENTAGE_AP0     = int(6 + SHOW_VALUES_X_OFFSET);
-static const int COORDS_SHOW_PERCENTAGE_INVALID = int(7 + SHOW_VALUES_X_OFFSET);
+#define COORDS_SHOW_MAX_NITS           int(     SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_AVG_NITS           int( 1 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MIN_NITS           int( 2 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MAX_R_VALUE        int( 3 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_AVG_R_VALUE        int( 4 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MIN_R_VALUE        int( 5 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MAX_G_VALUE        int( 6 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_AVG_G_VALUE        int( 7 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MIN_G_VALUE        int( 8 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MAX_B_VALUE        int( 9 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_AVG_B_VALUE        int(10 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MIN_B_VALUE        int(11 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_BT709   int(12 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_DCI_P3  int(13 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_BT2020  int(14 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_AP0     int(15 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_INVALID int(16 + SHOW_VALUES_X_OFFSET)
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
@@ -255,9 +266,9 @@ static const int COORDS_SHOW_PERCENTAGE_INVALID = int(7 + SHOW_VALUES_X_OFFSET);
 #define LUMINANCE_WAVEFORM_VARIABLES_COUNT 3
 #define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
 #define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 0
-static const int COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X       = int(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
-static const int COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_Y       = int(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
-static const int COORDS_LUMINANCE_WAVEFORM_LAST_CUTOFF_POINT = int(2 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET);
+#define COORDS_WAVEFORM_LAST_SIZE_X       int(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
+#define COORDS_WAVEFORM_LAST_SIZE_Y       int(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
+#define COORDS_WAVEFORM_LAST_CUTOFF_POINT int(2 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
 #endif
 
 
@@ -520,11 +531,11 @@ float3 MapBt709IntoCurrentCsp(
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
-void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
+void CS_RenderWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
 {
 
   BRANCH(x)
-  if (_SHOW_LUMINANCE_WAVEFORM || _SHOW_CIE)
+  if (_SHOW_WAVEFORM || _SHOW_CIE)
   {
 
 #ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
@@ -560,9 +571,9 @@ void CS_RenderLuminanceWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThr
     }
 
     BRANCH(x)
-    if (_SHOW_LUMINANCE_WAVEFORM)
+    if (_SHOW_WAVEFORM)
     {
-      RenderLuminanceWaveform(fetchPos);
+      RenderWaveform(fetchPos);
     }
   }
 }
@@ -579,14 +590,25 @@ void CopyShowValues()
     tex1Dstore(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES, 0.f);
 
     float maxNits = tex1Dfetch(StorageConsolidated, COORDS_MAX_NITS_VALUE);
+    float maxR    = tex1Dfetch(StorageConsolidated, COORDS_MAX_R_VALUE);
+    float maxG    = tex1Dfetch(StorageConsolidated, COORDS_MAX_G_VALUE);
+    float maxB    = tex1Dfetch(StorageConsolidated, COORDS_MAX_B_VALUE);
     float avgNits = tex1Dfetch(StorageConsolidated, COORDS_AVG_NITS_VALUE);
+    float avgR    = tex1Dfetch(StorageConsolidated, COORDS_AVG_R_VALUE);
+    float avgG    = tex1Dfetch(StorageConsolidated, COORDS_AVG_G_VALUE);
+    float avgB    = tex1Dfetch(StorageConsolidated, COORDS_AVG_B_VALUE);
     float minNits = tex1Dfetch(StorageConsolidated, COORDS_MIN_NITS_VALUE);
+    float minR    = tex1Dfetch(StorageConsolidated, COORDS_MIN_R_VALUE);
+    float minG    = tex1Dfetch(StorageConsolidated, COORDS_MIN_G_VALUE);
+    float minB    = tex1Dfetch(StorageConsolidated, COORDS_MIN_B_VALUE);
 
-    // avoid average nits being higher than max nits in and lower than min extreme edge cases
+    // avoid average nits being higher than max nits and lower than min in extreme edge cases
     avgNits = clamp(avgNits, minNits, maxNits);
+    avgR    = clamp(avgR,    minR,    maxR);
+    avgG    = clamp(avgG,    minG,    maxG);
+    avgB    = clamp(avgB,    minB,    maxB);
 
 #ifdef IS_HDR_CSP
-
     float percentageBt709   = tex1Dfetch(StorageConsolidated, COORDS_PERCENTAGE_BT709);
     float percentageDciP3   = tex1Dfetch(StorageConsolidated, COORDS_PERCENTAGE_DCI_P3);
     float percentageBt2020  = tex1Dfetch(StorageConsolidated, COORDS_PERCENTAGE_BT2020);
@@ -596,9 +618,18 @@ void CopyShowValues()
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
 
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_NITS, maxNits);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_NITS, avgNits);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_NITS, minNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_NITS,    maxNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_R_VALUE, maxR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_G_VALUE, maxG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_B_VALUE, maxB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_NITS,    avgNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_R_VALUE, avgR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_G_VALUE, avgG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_B_VALUE, avgB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_NITS,    minNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_R_VALUE, minR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_G_VALUE, minG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_B_VALUE, minB);
 
 #ifdef IS_HDR_CSP
 
@@ -633,7 +664,7 @@ void CS_Finalise()
   FinaliseGamutCounter();
 #endif
 
-  RenderLuminanceWaveformScale();
+  RenderWaveformScale();
 
   groupMemoryBarrier();
 

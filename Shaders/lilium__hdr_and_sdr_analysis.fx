@@ -87,12 +87,13 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
   #define _SHOW_HEATMAP                           SDR_SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
-  #define _SHOW_LUMINANCE_WAVEFORM                SDR_SHOW_LUMINANCE_WAVEFORM
-  #define _LUMINANCE_WAVEFORM_BRIGHTNESS          SDR_LUMINANCE_WAVEFORM_BRIGHTNESS
-  #define _LUMINANCE_WAVEFORM_ALPHA               SDR_LUMINANCE_WAVEFORM_ALPHA
-  #define _LUMINANCE_WAVEFORM_SIZE                SDR_LUMINANCE_WAVEFORM_SIZE
-  #define _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE  SDR_LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE  SDR_LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _SHOW_WAVEFORM                          SDR_SHOW_WAVEFORM
+  #define _WAVEFORM_MODE                          SDR_WAVEFORM_MODE
+  #define _WAVEFORM_BRIGHTNESS                    SDR_WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_ALPHA                         SDR_WAVEFORM_ALPHA
+  #define _WAVEFORM_SIZE                          SDR_WAVEFORM_SIZE
+  #define _WAVEFORM_SHOW_MIN_NITS_LINE            SDR_WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_NITS_LINE            SDR_WAVEFORM_SHOW_MAX_NITS_LINE
   #define _HIGHLIGHT_NIT_RANGE                    SDR_HIGHLIGHT_NIT_RANGE
   #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   #define _HIGHLIGHT_NIT_RANGE_START_POINT        SDR_HIGHLIGHT_NIT_RANGE_START_POINT
@@ -123,12 +124,13 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SHOW_CIE_CSP_BT709_OUTLINE
   #define _SHOW_HEATMAP                           SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
-  #define _SHOW_LUMINANCE_WAVEFORM                SHOW_LUMINANCE_WAVEFORM
-  #define _LUMINANCE_WAVEFORM_BRIGHTNESS          LUMINANCE_WAVEFORM_BRIGHTNESS
-  #define _LUMINANCE_WAVEFORM_ALPHA               LUMINANCE_WAVEFORM_ALPHA
-  #define _LUMINANCE_WAVEFORM_SIZE                LUMINANCE_WAVEFORM_SIZE
-  #define _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE  LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE  LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _SHOW_WAVEFORM                          SHOW_WAVEFORM
+  #define _WAVEFORM_MODE                          WAVEFORM_MODE
+  #define _WAVEFORM_BRIGHTNESS                    WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_ALPHA                         WAVEFORM_ALPHA
+  #define _WAVEFORM_SIZE                          WAVEFORM_SIZE
+  #define _WAVEFORM_SHOW_MIN_NITS_LINE            WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_NITS_LINE            WAVEFORM_SHOW_MAX_NITS_LINE
   #define _HIGHLIGHT_NIT_RANGE                    HIGHLIGHT_NIT_RANGE
   #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   #define _HIGHLIGHT_NIT_RANGE_START_POINT        HIGHLIGHT_NIT_RANGE_START_POINT
@@ -531,18 +533,30 @@ uniform uint HEATMAP_CUTOFF_POINT
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
-uniform bool _SHOW_LUMINANCE_WAVEFORM
+uniform bool _SHOW_WAVEFORM
 <
-  ui_category = "Luminance waveform";
-  ui_label    = "show luminance waveform";
+  ui_category = "Waveform";
+  ui_label    = "show waveform";
   ui_tooltip  = "Luminance waveform paid for by Aemony.";
 > = true;
 
-#ifdef IS_HDR_CSP
-uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
+uniform uint _WAVEFORM_MODE
 <
-  ui_category = "Luminance waveform";
-  ui_label    = "luminance waveform cutoff point";
+  ui_category = "Waveform";
+  ui_label    = "waveform mode";
+  ui_type     = "combo";
+  ui_items    = "luminance\0"
+                "RGB individiually\0";
+> = 0;
+
+#define WAVEFORM_MODE_LUMINANCE        0
+#define WAVEFORM_MODE_RGB_INDIVIDUALLY 1
+
+#ifdef IS_HDR_CSP
+uniform uint WAVEFORM_CUTOFF_POINT
+<
+  ui_category = "Waveform";
+  ui_label    = "waveform cutoff point";
   ui_type     = "combo";
   ui_items    = "10000 nits\0"
                 " 4000 nits\0"
@@ -551,10 +565,10 @@ uniform uint LUMINANCE_WAVEFORM_CUTOFF_POINT
 > = 0;
 #endif //IS_HDR_CSP
 
-uniform float _LUMINANCE_WAVEFORM_BRIGHTNESS
+uniform float _WAVEFORM_BRIGHTNESS
 <
-  ui_category = "Luminance waveform";
-  ui_label    = "luminance waveform brightness";
+  ui_category = "Waveform";
+  ui_label    = "waveform brightness";
   ui_type     = "slider";
 #ifdef IS_HDR_CSP
   ui_units    = " nits";
@@ -573,10 +587,10 @@ uniform float _LUMINANCE_WAVEFORM_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float _LUMINANCE_WAVEFORM_ALPHA
+uniform float _WAVEFORM_ALPHA
 <
-  ui_category = "Luminance waveform";
-  ui_label    = "luminance waveform transparency";
+  ui_category = "Waveform";
+  ui_label    = "waveform transparency";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      = 0.f;
@@ -584,54 +598,51 @@ uniform float _LUMINANCE_WAVEFORM_ALPHA
   ui_step     = 0.5f;
 > = DEFAULT_ALPHA_LEVEL;
 
-static const uint TEXTURE_LUMINANCE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 4.f) * 2;
+static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3;
 
 #ifdef IS_HDR_CSP
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 512;
   #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 768;
-  #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
-  #elif (BUFFER_HEIGHT <= (1536 * 5 / 2) \
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 768;
+  #elif (BUFFER_HEIGHT <= (1024 * 5 / 2) \
       || defined(IS_HDR10_LIKE_CSP))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1536;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 1024;
+  #elif (BUFFER_HEIGHT <= (1536 * 5 / 2))
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 1536;
   #elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 2048;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 2048;
   #elif (BUFFER_HEIGHT <= (3072 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 3072;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 3072;
   #else //(BUFFER_HEIGHT <= (4096 * 5 / 2))
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 4096;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 4096;
   #endif
 #else
   #if (BUFFER_COLOR_BIT_DEPTH == 10)
     #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 512;
+      static const uint TEXTURE_WAVEFORM_HEIGHT = 512;
     #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
-      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 768;
-    #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
-      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1024;
-    #elif (BUFFER_HEIGHT <= (1280 * 5 / 2))
-      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1280;
-    #else //(BUFFER_HEIGHT <= (1536 * 5 / 2))
-      static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 1536;
+      static const uint TEXTURE_WAVEFORM_HEIGHT = 768;
+    #else //(BUFFER_HEIGHT <= (1024 * 5 / 2))
+      static const uint TEXTURE_WAVEFORM_HEIGHT = 1024;
     #endif
   #else
-    static const uint TEXTURE_LUMINANCE_WAVEFORM_HEIGHT = 384;
+    static const uint TEXTURE_WAVEFORM_HEIGHT = 256;
   #endif
 #endif
 
-static const uint TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT = TEXTURE_LUMINANCE_WAVEFORM_HEIGHT - 1;
+static const uint TEXTURE_WAVEFORM_USED_HEIGHT = TEXTURE_WAVEFORM_HEIGHT - 1;
 
 static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
-                          / float(TEXTURE_LUMINANCE_WAVEFORM_USED_HEIGHT)
+                          / float(TEXTURE_WAVEFORM_HEIGHT)
                           * 10000.f);
 // "minimum of 2 variables" without using functions...
 // https://guru.multimedia.cx/category/optimization/
-#ifdef IS_HDR_CSP
-  static const int UGH2 = uint(int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31)));
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
+  static const int UGH2 = uint(int(40000) + ((UGH - int(40000)) & ((UGH - int(40000)) >> 31)));
 #else
-  static const int UGH2 = uint(int(20000) + ((UGH - int(20000)) & ((UGH - int(20000)) >> 31)));
+  static const int UGH2 = uint(int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31)));
 #endif
 
 static const uint UGH3 = UGH2 - ((UGH2 - int(5000)) & ((UGH2 - int(5000)) >> 31));
@@ -641,15 +652,15 @@ static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH3
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 + 100.f) / 3.f;
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 + 300.f) / 7.f;
 #else
   static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0;
 #endif
 
-uniform float2 _LUMINANCE_WAVEFORM_SIZE
+uniform float2 _WAVEFORM_SIZE
 <
-  ui_category = "Luminance waveform";
-  ui_label    = "luminance waveform size";
+  ui_category = "Waveform";
+  ui_label    = "waveform size";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      =  50.f;
@@ -657,17 +668,17 @@ uniform float2 _LUMINANCE_WAVEFORM_SIZE
   ui_step     =   0.1f;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
-uniform bool _LUMINANCE_WAVEFORM_SHOW_MIN_NITS_LINE
+uniform bool _WAVEFORM_SHOW_MIN_NITS_LINE
 <
-  ui_category = "Luminance waveform";
+  ui_category = "Waveform";
   ui_label    = "show the minimum nits line";
   ui_tooltip  = "Show a horizontal line where the minimum nits is on the waveform."
            "\n" "The line is invisible when the minimum nits hits 0 nits.";
 > = true;
 
-uniform bool _LUMINANCE_WAVEFORM_SHOW_MAX_NITS_LINE
+uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
 <
-  ui_category = "Luminance waveform";
+  ui_category = "Waveform";
   ui_label    = "show the maximum nits line";
   ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
            "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
@@ -851,6 +862,9 @@ precise uniform float2 TEST_THINGY_xy
 <
   ui_category = "TESTY";
   ui_label    = "xy";
+  ui_tooltip  = "D65 white is:"
+           "\n" "x: 0.3127"
+           "\n" "y: 0.3290";
   ui_type     = "drag";
   ui_min      = 0.f;
   ui_max      = 1.f;
@@ -897,96 +911,143 @@ void PS_Testy(
 {
   const float2 pureCoord = floor(Position.xy);
 
-  if(ENABLE_TEST_THINGY
-  && pureCoord.x > TestyStuff.x
-  && pureCoord.x < TestyStuff.z
-  && pureCoord.y > TestyStuff.y
-  && pureCoord.y < TestyStuff.w)
+  Output.a = 1.f;
+
+  if (ENABLE_TEST_THINGY
+   && pureCoord.x > TestyStuff.x
+   && pureCoord.x < TestyStuff.z
+   && pureCoord.y > TestyStuff.y
+   && pureCoord.y < TestyStuff.w)
   {
+
 #if (ACTUAL_COLOUR_SPACE != CSP_SCRGB) \
  && (ACTUAL_COLOUR_SPACE != CSP_HDR10)
-  Output = float4(0.f, 0.f, 0.f, 1.f);
+
+  Output.rgb = 0.f;
   return;
-#endif
+
+#else
+
+    BRANCH(x)
     if (TEST_MODE == TESTY_MODE_RGB_BT709)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      Output = float4(TEST_THINGY_RGB / 80.f, 1.f);
+
+      Output.rgb = TEST_THINGY_RGB / 80.f;
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::Bt709To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+
+      Output.rgb = Csp::Trc::LinearTo::Pq(Csp::Mat::Bt709To::Bt2020(TEST_THINGY_RGB / 10000.f));
+
 #endif
       return;
     }
     else if (TEST_MODE == TESTY_MODE_RGB_DCI_P3)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      Output = float4(Csp::Mat::DciP3To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+
+      Output.rgb = Csp::Mat::DciP3To::Bt709(TEST_THINGY_RGB / 80.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::DciP3To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+
+      Output.rgb = Csp::Trc::LinearTo::Pq(Csp::Mat::DciP3To::Bt2020(TEST_THINGY_RGB / 10000.f));
+
 #endif
       return;
     }
     else if (TEST_MODE == TESTY_MODE_RGB_BT2020)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      Output = float4(Csp::Mat::Bt2020To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+
+      Output.rgb = Csp::Mat::Bt2020To::Bt709(TEST_THINGY_RGB / 80.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      Output = float4(Csp::Trc::LinearTo::Pq(TEST_THINGY_RGB / 10000.f), 1.f);
+
+      Output.rgb = Csp::Trc::LinearTo::Pq(TEST_THINGY_RGB / 10000.f);
+
 #endif
       return;
     }
     else if (TEST_MODE == TESTY_MODE_RGB_AP0D65)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      Output = float4(Csp::Mat::Ap0D65To::Bt709(TEST_THINGY_RGB / 80.f), 1.f);
+
+      Output.rgb = Csp::Mat::Ap0D65To::Bt709(TEST_THINGY_RGB / 80.f);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::Ap0D65To::Bt2020(TEST_THINGY_RGB / 10000.f)), 1.f);
+
+      Output.rgb = Csp::Trc::LinearTo::Pq(Csp::Mat::Ap0D65To::Bt2020(TEST_THINGY_RGB / 10000.f));
+
 #endif
       return;
     }
     else if (TEST_MODE == TESTY_MODE_xyY)
     {
+      s_xyY xyY;
+
+      xyY.xy = TEST_THINGY_xy;
+      xyY.Y  = TEST_THINGY_Y;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 80.f);
-      Output = float4(Csp::Mat::XYZTo::Bt709(XYZ), 1.f);
+
+      xyY.Y /= 80.f;
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      precise float3 XYZ = GetXYZfromxyY(TEST_THINGY_xy, TEST_THINGY_Y / 10000.f);
-      Output = float4(Csp::Trc::LinearTo::Pq(Csp::Mat::XYZTo::Bt2020(XYZ)), 1.f);
+
+      xyY.Y /= 10000.f;
+
+#endif
+
+      precise float3 XYZ = Csp::CieXYZ::xyYTo::XYZ(xyY);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+      Output.rgb = Csp::Mat::XYZTo::Bt709(XYZ);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+      Output.rgb = Csp::Trc::LinearTo::Pq(Csp::Mat::XYZTo::Bt2020(XYZ));
+
 #endif
       return;
     }
     else if (TEST_MODE == TESTY_MODE_POS_INF_ON_R)
     {
-      static const precise float asFloat = asfloat(0x7F800000);
-      Output = float4(asFloat, 0.f, 0.f, 1.f);
+      static const precise float PositiveInfinity = asfloat(0x7F800000);
+
+      Output.rgb = float3(PositiveInfinity, 0.f, 0.f);
+
       return;
     }
     else if (TEST_MODE == TESTY_MODE_NEG_INF_ON_G)
     {
-      static const precise float asFloat = asfloat(0xFF800000);
-      Output = float4(0.f, asFloat, 0.f, 1.f);
+      static const precise float NegativeInfinity = asfloat(0xFF800000);
+
+      Output.rgb = float3(0.f, NegativeInfinity, 0.f);
+
       return;
     }
     else if (TEST_MODE == TESTY_MODE_NAN_ON_B)
     {
-      static const precise float asFloat = asfloat(0xFFFFFFFF);
-      Output = float4(0.f, 0.f, asFloat, 1.f);
+      static const precise float Nan = asfloat(0xFFFFFFFF);
+
+      Output.rgb = float3(0.f, 0.f, Nan);
+
       return;
     }
     else
     {
-      Output = float4(0.f, 0.f, 0.f, 1.f);
+      Output.rgb = 0.f;
       return;
     }
   }
-  Output = float4(0.f, 0.f, 0.f, 1.f);
+  Output.rgb = 0.f;
   return;
+
+#endif
 }
 #endif //_TESTY
 
-
-#define ANALYSIS_ENABLE
 
 #include "lilium__include/hdr_and_sdr_analysis/main.fxh"
 
@@ -995,14 +1056,14 @@ void PS_Testy(
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
 void VS_PrepareHdrAnalysis(
-  in                  uint   VertexID                                 : SV_VertexID,
-  out                 float4 Position                                 : SV_Position,
-  out nointerpolation bool2  PingPongChecks                           : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange                        : HighlightNitRange
+  in                  uint   VertexID                        : SV_VertexID,
+  out                 float4 Position                        : SV_Position,
+  out nointerpolation bool2  PingPongChecks                  : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange               : HighlightNitRange
 #ifdef IS_COMPUTE_CAPABLE_API
-                                                                                         ,
-  out nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-  out nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0
+                                                                                ,
+  out nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
+  out nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0
 #endif
   )
 {
@@ -1019,12 +1080,12 @@ void VS_PrepareHdrAnalysis(
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-  pingpong0Above1                          = false;
-  breathingIsActive                        = false;
-  HighlightNitRange                        = 0.f;
+  pingpong0Above1                 = false;
+  breathingIsActive               = false;
+  HighlightNitRange               = 0.f;
 #ifdef IS_COMPUTE_CAPABLE_API
-  LuminanceWaveformTextureDisplayAreaBegin = 0;
-  CieDiagramSizes0                         = 0.f;
+  WaveformTextureDisplayAreaBegin = 0;
+  CieDiagramSizes0                = 0.f;
 
 #define CieDiagramTextureActiveSize  CieDiagramSizes0.xy
 #define CieDiagramTextureDisplaySize CieDiagramSizes0.zw
@@ -1080,9 +1141,9 @@ void VS_PrepareHdrAnalysis(
 
 #ifdef IS_COMPUTE_CAPABLE_API
   BRANCH(x)
-  if (_SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_WAVEFORM)
   {
-    LuminanceWaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
+    WaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
   }
 
   BRANCH(x)
@@ -1103,14 +1164,14 @@ void VS_PrepareHdrAnalysis(
 
 
 void PS_HdrAnalysis(
-  in                  float4 Position                                 : SV_Position,
-  in  nointerpolation bool2  PingPongChecks                           : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange                        : HighlightNitRange,
+  in                  float4 Position                        : SV_Position,
+  in  nointerpolation bool2  PingPongChecks                  : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange               : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
-  in  nointerpolation int2   LuminanceWaveformTextureDisplayAreaBegin : LuminanceWaveformTextureDisplayAreaBegin,
-  in  nointerpolation float4 CieDiagramSizes0                         : CieDiagramSizes0,
+  in  nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
+  in  nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0,
 #endif
-  out                 float4 Output                                   : SV_Target0)
+  out                 float4 Output                          : SV_Target0)
 {
   const int2 pureCoordAsInt = int2(Position.xy);
 
@@ -1125,7 +1186,7 @@ void PS_HdrAnalysis(
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK)
   {
-    static const float pixelNits = tex2Dfetch(SamplerNitsValues, pureCoordAsInt);
+    static const float pixelNits = max(tex2Dfetch(SamplerNitsValues, pureCoordAsInt).w, 0.f);
 
     BRANCH(x)
     if (_SHOW_HEATMAP)
@@ -1207,25 +1268,25 @@ void PS_HdrAnalysis(
   }
 
   BRANCH(x)
-  if (_SHOW_LUMINANCE_WAVEFORM)
+  if (_SHOW_WAVEFORM)
   {
     // draw the waveform in the bottom right corner
-    if (all(pureCoordAsInt.xy >= LuminanceWaveformTextureDisplayAreaBegin))
+    if (all(pureCoordAsInt.xy >= WaveformTextureDisplayAreaBegin))
     {
       // get fetch coords
-      int2 currentFetchCoords = pureCoordAsInt.xy - LuminanceWaveformTextureDisplayAreaBegin;
+      int2 currentFetchCoords = pureCoordAsInt.xy - WaveformTextureDisplayAreaBegin;
 
       float4 currentPixelToDisplay =
-        tex2Dfetch(SamplerLuminanceWaveformFinal, currentFetchCoords);
+        tex2Dfetch(SamplerWaveformFinal, currentFetchCoords);
 
       // using gamma 2 as intermediate gamma space
       currentPixelToDisplay.rgb *= currentPixelToDisplay.rgb;
 
-      float alpha = min(_LUMINANCE_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
+      float alpha = min(_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
 
       Output.rgb = MergeOverlay(Output.rgb,
                                 currentPixelToDisplay.rgb,
-                                _LUMINANCE_WAVEFORM_BRIGHTNESS,
+                                _WAVEFORM_BRIGHTNESS,
                                 alpha);
     }
   }
@@ -1252,7 +1313,7 @@ technique lilium__hdr_and_sdr_analysis_TESTY
 #ifdef IS_COMPUTE_CAPABLE_API
 void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
-  tex1Dstore(StorageConsolidated, COORDS_LUMINANCE_WAVEFORM_LAST_SIZE_X, 0.f);
+  tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X, 0.f);
   return;
 }
 
@@ -1290,6 +1351,45 @@ technique lilium__hdr_and_sdr_analysis
     RenderTarget      = TextureTransfer;
     PrimitiveTopology = POINTLIST;
     VertexCount       = 1;
+  }
+#endif
+
+#ifdef IS_COMPUTE_CAPABLE_API
+//Waveform
+  pass PS_ClearWaveformTexture
+  {
+    VertexShader       = VS_Clear;
+     PixelShader       = PS_Clear;
+    RenderTarget       = TextureWaveform;
+    ClearRenderTargets = true;
+    VertexCount        = 1;
+  }
+
+//Luminance Values
+  pass PS_ClearMaxAvgMinNitsAndCspCounterAndShowNumbersTexture
+  {
+    VertexShader       = VS_Clear;
+     PixelShader       = PS_Clear;
+    RenderTarget       = TextureMaxAvgMinNitsAndGamutCounterAndShowNumbers;
+    ClearRenderTargets = true;
+    VertexCount        = 1;
+  }
+
+  pass CS_ResetMinNits
+  {
+    ComputeShader = CS_ResetMinNits<1, 4>;
+    DispatchSizeX = 1;
+    DispatchSizeY = 1;
+  }
+
+//CIE
+  pass PS_ClearCieCurrentTexture
+  {
+    VertexShader       = VS_Clear;
+     PixelShader       = PS_Clear;
+    RenderTarget       = TextureCieIntermediate;
+    ClearRenderTargets = true;
+    VertexCount        = 1;
   }
 #endif
 
@@ -1396,32 +1496,10 @@ technique lilium__hdr_and_sdr_analysis
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
-//Waveform
-  pass PS_ClearLuminanceWaveformTexture
-  {
-    VertexShader       = VS_Clear;
-     PixelShader       = PS_Clear;
-    RenderTarget       = TextureLuminanceWaveform;
-    ClearRenderTargets = true;
-    VertexCount        = 1;
-  }
-
-
-//CIE
-  pass PS_ClearCieCurrentTexture
-  {
-    VertexShader       = VS_Clear;
-     PixelShader       = PS_Clear;
-    RenderTarget       = TextureCieIntermediate;
-    ClearRenderTargets = true;
-    VertexCount        = 1;
-  }
-
-
 //Waveform and CIE
-  pass CS_RenderLuminanceWaveformAndGenerateCieDiagram
+  pass CS_RenderWaveformAndGenerateCieDiagram
   {
-    ComputeShader = CS_RenderLuminanceWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    ComputeShader = CS_RenderWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
     DispatchSizeX = WAVE64_DISPATCH_X;
     DispatchSizeY = WAVE64_DISPATCH_Y;
   }
@@ -1442,11 +1520,11 @@ technique lilium__hdr_and_sdr_analysis
 
 
 //Waveform
-  pass PS_RenderLuminanceWaveformToScale
+  pass PS_RenderWaveformToScale
   {
-    VertexShader = VS_PrepareRenderLuminanceWaveformToScale;
-     PixelShader = PS_RenderLuminanceWaveformToScale;
-    RenderTarget = TextureLuminanceWaveformFinal;
+    VertexShader = VS_PrepareRenderWaveformToScale;
+     PixelShader = PS_RenderWaveformToScale;
+    RenderTarget = TextureWaveformFinal;
   }
 
 #endif //IS_COMPUTE_CAPABLE_API
@@ -1456,21 +1534,17 @@ technique lilium__hdr_and_sdr_analysis
 #ifdef IS_COMPUTE_CAPABLE_API
   pass CS_GetNitNumbers
   {
-    ComputeShader = CS_GetNitNumbers<1, 1>;
-    DispatchSizeX = MAX_NUMBERS_NITS;
-    DispatchSizeY = 4;
+    ComputeShader = CS_GetNitNumbers<NITS_NUMBERS_COUNT, 1>;
+    DispatchSizeX = NITS_NUMBERS_COLUMNS;
+    DispatchSizeY = NITS_NUMBERS_ROWS;
   }
 
 #ifdef IS_HDR_CSP
   pass CS_GetGamutNumbers
   {
     ComputeShader = CS_GetGamutNumbers<1, 1>;
-    DispatchSizeX = 6;
-#ifdef IS_FLOAT_HDR_CSP
-    DispatchSizeY = 5;
-#else
-    DispatchSizeY = 3;
-#endif
+    DispatchSizeX = GAMUTS_NUMBERS_COUNT;
+    DispatchSizeY = GAMUTS_NUMBERS_ROWS;
   }
 #endif
 
