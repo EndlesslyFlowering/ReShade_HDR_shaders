@@ -104,152 +104,61 @@ float GetLuminance(float3 Colour)
 
 namespace Tmos
 {
-
-#define BT2446A_PRO_MODE_YRGB  0
-#define BT2446A_PRO_MODE_YCBCR 1
-
   // Rep. ITU-R BT.2446-1 Table 2 & 3
   void Bt2446A(
     inout       float3 Colour,
-          const uint   PorcessingMode,
           const float  MaxNits,
           const float  TargetNits)
   {
-    switch (PorcessingMode)
-    {
-      case BT2446A_PRO_MODE_YRGB:
-      {
-        //scRGB
-        Colour = ConditionallyNormaliseScRgb(Colour);
-        //HDR10
-        Colour = ConditionallyLineariseHdr10(Colour);
+    //pSDR and pHDR
+    static const float2 pSdrHdr = 1.f + 32.f * pow(float2(TargetNits, MaxNits) / 10000.f, 1.f / 2.4f);
+#define pSdr pSdrHdr[0]
+#define pHdr pSdrHdr[1]
 
-        // adjust the max of 1 according to maxCLL
-        Colour *= (10000.f / MaxNits);
+    //scRGB
+    Colour = ConditionallyNormaliseScRgb(Colour);
+    //HDR10
+    Colour = ConditionallyLineariseHdr10(Colour);
 
-        // non-linear transfer function RGB->R'G'B'
-        Colour = pow(Colour, 1.f / 2.4f);
+    // adjust the max of 1 according to max nits
+    Colour *= (10000.f / MaxNits);
 
-        // get luminance
-        float y = max(GetLuminance(Colour), 1e-20);
+    // get luminance
+    float yHdr = GetLuminance(Colour);
+    //clamp to avoid invalid numbers
+    yHdr = max(yHdr, 1e-20);
+    //Y'HDR
+    yHdr = pow(yHdr, 1.f / 2.4f);
 
-        // tone mapping step 1
-        //pHDR
-        static const float pHdr = 1.f
-                                + 32.f * pow(MaxNits
-                                           / 10000.f
-                                         , 1.f / 2.4f);
+    //Y'p
+    const float yP = log(1.f + (pHdr - 1.f) * yHdr)
+                   / log(pHdr);
 
-        //Y'p
-        float yP = log(1.f + (pHdr - 1.f) * y)
-                 / log(pHdr);
+    // tone mapping step 2
+    //Y'c
+    const float yC = yP <= 0.7399f ? 1.0770f * yP
+                   : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
+                                   : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
 
-        // tone mapping step 2
-        //Y'c
-        float yC = yP <= 0.7399f ? 1.0770f * yP
-                 : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
-                                 : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
+    //Y'SDR
+    const float ySdr = (pow(pSdr, yC) - 1.f)
+                     / (pSdr - 1.f);
 
-        // tone mapping step 3
-        //pSDR
-        static const float pSdr = 1.f
-                                + 32.f * pow(TargetNits
-                                           / 10000.f
-                                         , 1.f / 2.4f);
+    const float2 ySdrYHdr = pow(float2(ySdr, yHdr), 2.4f);
 
-        //Y'SDR
-        float ySdr = (pow(pSdr, yC) - 1.f)
-                   / (pSdr - 1.f);
+    Colour *= (ySdrYHdr[0] / ySdrYHdr[1]);
 
-        //clamp to avoid invalid numbers
-        y = max(y, 1e-20);
+    // adjust to TargetNits
+    Colour *= (TargetNits / 10000.f);
 
-        Colour *= ySdr / y;
+    //scRGB
+    Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
+    //HDR10
+    Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
 
-        // gamma decompression and adjust to TargetNits
-        Colour = pow(Colour, 2.4f) * (TargetNits / 10000.f);
-
-        //scRGB
-        Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
-        //HDR10
-        Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
-
-        return;
-      }
-      case BT2446A_PRO_MODE_YCBCR:
-      {
-        //scRGB
-        Colour = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
-        //HDR10
-        Colour = ConditionallyLineariseHdr10(Colour);
-
-        // adjust the max of 1 according to maxCLL
-        Colour *= (10000.f / MaxNits);
-
-        // non-linear transfer function RGB->R'G'B'
-        Colour = pow(Colour, 1.f / 2.4f);
-
-        //to Y'C'bC'r
-        float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Colour);
-
-        // tone mapping step 1
-        //pHDR
-        static const float pHdr = 1.f
-                                + 32.f * pow(MaxNits
-                                           / 10000.f
-                                         , 1.f / 2.4f);
-
-        //Y'p
-        float yP = log(1.f + (pHdr - 1.f) * ycbcr[0])
-                 / log(pHdr);
-
-        // tone mapping step 2
-        //Y'c
-        float yC = yP <= 0.7399f ? 1.0770f * yP
-                 : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
-                                 : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
-
-        // tone mapping step 3
-        //pSDR
-        static const float pSdr = 1.f
-                                + 32.f * pow(TargetNits
-                                           / 10000.f
-                                         , 1.f / 2.4f);
-
-        //Y'SDR
-        float ySdr = (pow(pSdr, yC) - 1.f)
-                   / (pSdr - 1.f);
-
-        //clamp to avoid invalid numbers
-        ycbcr[0] = max(ycbcr[0], 1e-20);
-        //f(Y'SDR)
-        float colourScaling = ySdr
-                            / (ycbcr[0]);
-
-        //C'bC'r,tmo
-        float2 cbcrTmo = colourScaling * ycbcr.yz;
-
-        //Y'tmo
-        float yTmo = ySdr;
-
-        Colour = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo, cbcrTmo));
-
-        // avoid invalid colours
-        //Colour = max(Colour, 0.f);
-
-        // gamma decompression and adjust to TargetNits
-        Colour = pow(Colour, 2.4f) * (TargetNits / 10000.f);
-
-        //scRGB
-        Colour = ConditionallyConvertNormalisedBt2020ToScRgb(Colour);
-        //HDR10
-        Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
-
-        return;
-      }
-      default:
-        return;
-    }
+    return;
+#undef pSdr
+#undef pHdr
   }
 
   float3 Bt2446A_MOD1(

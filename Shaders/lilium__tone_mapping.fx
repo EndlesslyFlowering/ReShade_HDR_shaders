@@ -113,21 +113,6 @@ namespace Ui
       > = 10000.f;
     } //StaticMode
 
-    namespace Bt2446A
-    {
-      uniform uint ProcessingModeBt2446A
-      <
-        ui_category = "BT.2446 Method A";
-        ui_label    = "processing mode";
-        ui_tooltip  = "YRGB:  process RGB according to brightness"
-                 "\n" "YCbCr: processes in YCbCr colour space (this is the original mode from the ITU Report)";
-        ui_type     = "combo";
-        ui_items    = "YRGB\0"
-                      "YCbCr\0";
-      > = 0;
-
-    } //Bt2446A
-
     namespace Bt2390
     {
       uniform uint ProcessingModeBt2390
@@ -450,7 +435,6 @@ void PS_ToneMapping(
     case TM_METHOD_BT2446A:
     {
       Tmos::Bt2446A(hdr,
-                    Ui::Tm::Bt2446A::ProcessingModeBt2446A,
                     usedMaxNits,
                     Ui::Tm::Global::TargetBrightness);
     }
