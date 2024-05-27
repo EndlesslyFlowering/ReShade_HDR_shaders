@@ -67,13 +67,6 @@ static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOA
 #endif
 
 
-#if (defined(API_IS_VULKAN) \
-  && BUFFER_WIDTH <= 1280   \
-  && BUFFER_HEIGHT <= 800)
-  #define POSSIBLE_DECK_VULKAN_USAGE
-#endif
-
-
 #if (BUFFER_WIDTH  >= 2560) \
  && (BUFFER_HEIGHT >= 1440)
   #define IS_QHD_OR_HIGHER_RES

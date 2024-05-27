@@ -5,13 +5,6 @@
 
 #undef TEXT_BRIGHTNESS
 
-#if (defined(API_IS_VULKAN) \
-  && (BUFFER_WIDTH > 1280   \
-   || BUFFER_HEIGHT > 800))
-  #warning "If you are on the Steam Deck and want to use this shader, you need to switch to a resolution that is 1280x800 or lower!"
-  #warning "The Steam Deck also has my HDR analysis shaders built in. They are available throught developer options."
-#endif
-
 #ifndef GAMESCOPE
   //#define _DEBUG
   //#define _TESTY
