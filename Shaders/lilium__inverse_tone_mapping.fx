@@ -96,6 +96,17 @@ namespace Ui
 
     namespace Bt2446A
     {
+      uniform uint Bt2446AProcessingMode
+      <
+        ui_category = "BT.2446 Method A";
+        ui_label    = "processing mode";
+        ui_tooltip  = "YCbCr-like: imitates the look of the original YCbCr processing perfectly"
+                 "\n" "luminance:  scale RGB according to brightness";
+        ui_type     = "combo";
+        ui_items    = "luminance (looks more natural)\0"
+                      "YCbCr-like (looks like the original)\0";
+      > = 0;
+
       uniform float Bt2446AInputBrightness
       <
         ui_category = "BT.2446 Method A";
@@ -120,9 +131,11 @@ namespace Ui
       <
         ui_category = "BT.2446 Method A";
         ui_label    = "max input brightness";
-        ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed."
+        ui_tooltip  = "Controls how much of the \"overbright\" brightness will be processed"
+                 "\n" "in the valid range of the inverse tone mapping process."
+                 "\n" "If overbright values are above this value they will grow exponentially fast!"
                  "\n" "Analyse a good value with the \"map SDR into HDR\" and \"HDR analysis\" shader"
-                 "\n" "before applying the inverse tone mapping shader!"
+                 "\n" "before applying the inverse tone mapping shader."
                  "\n"
                  "\n" "If you want to change just the average brightness,"
                  "\n" "adjust both \"input white point\" and \"max input brightness\""
@@ -142,32 +155,6 @@ namespace Ui
       //  ui_category = "BT.2446 Method A";
       //  ui_label    = "automatically calculate \"reference white luminance\"";
       //> = false;
-
-      uniform float Bt2446ALumaPreAdjust
-      <
-        ui_category = "BT.2446 Method A";
-        ui_label    = "luma pre adjust";
-        ui_tooltip  = "0.1 is the default of the BT.2446 specification."
-            "\n" "\n" "Set this to 0 and \"gamut expansion\" to 1 to not adjust the gamut.";
-        ui_type     = "drag";
-        ui_min      = 0.f;
-        ui_max      = 0.2f;
-        ui_step     = 0.001f;
-      > = 0.1f;
-
-      uniform float Bt2446AGamutExpansion
-      <
-        ui_category = "BT.2446 Method A";
-        ui_label    = "gamut expansion";
-        ui_tooltip  = "1.100 is the default of the BT.2446 specification."
-                 "\n" "1.025 about matches the input colour space"
-                 "\n" "1.000 slightly reduces the colour space"
-            "\n" "\n" "Set this to 1 and \"luma pre adjust\" to 0 to not adjust the gamut.";
-        ui_type     = "drag";
-        ui_min      = 1.f;
-        ui_max      = 1.2f;
-        ui_step     = 0.001f;
-      > = 1.025f;
 
       uniform float GammaIn
       <
@@ -447,11 +434,10 @@ void PS_InverseToneMapping(
                                : Ui::Itm::Global::TargetBrightness;
 
       colour = Itmos::Bt2446A(colour,
+                              Ui::Itm::Bt2446A::Bt2446AProcessingMode,
                               Ui::Itm::Global::TargetBrightness,
                               referenceWhiteNits,
                               inputNitsFactor,
-                              Ui::Itm::Bt2446A::Bt2446ALumaPreAdjust,
-                              Ui::Itm::Bt2446A::Bt2446AGamutExpansion,
                               Ui::Itm::Bt2446A::GammaIn,
                               Ui::Itm::Bt2446A::GammaOut);
     } break;

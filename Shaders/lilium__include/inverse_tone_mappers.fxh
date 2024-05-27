@@ -12,6 +12,33 @@ float3 ConditionallyConvertBt2020ToBt709(float3 Colour)
   return Colour;
 }
 
+// convert BT.709 to BT.2020
+float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
+#endif
+  return Colour;
+}
+
+// convert DCI-P3 to BT.709
+float3 ConditionallyConvertDciP3ToBt709(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  Colour = Csp::Mat::DciP3To::Bt709(Colour);
+#endif
+  return Colour;
+}
+
+// convert DCI-P3 to BT.2020
+float3 ConditionallyConvertDciP3ToBt2020(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour = Csp::Mat::DciP3To::Bt2020(Colour);
+#endif
+  return Colour;
+}
+
 // convert normalised BT.709 to scRGB
 float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
 {
@@ -26,6 +53,17 @@ float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
   Colour = Csp::Trc::LinearTo::Pq(Colour);
+#endif
+  return Colour;
+}
+
+// convert scRGB to HDR10
+float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour /= 125.f;
+  Colour  = Csp::Mat::Bt709To::Bt2020(Colour);
+  Colour  = Csp::Trc::LinearTo::Pq(Colour);
 #endif
   return Colour;
 }
@@ -64,107 +102,87 @@ float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
 
 namespace Itmos
 {
+
+#define BT2446A_PRO_MODE_LUMINANCE  0
+#define BT2446A_PRO_MODE_YCBCR_LIKE 1
+
   // outputs normalised values
-  float3 Bt2446A(
+  float3 Bt2446A
+  (
     const float3 Input,
-    const float  Lhdr,
-    const float  Lsdr,
+    const uint   ProcessingMode,
+    const float  LHdr,
+    const float  LSdr,
     const float  InputNitsFactor,
-    const float  LumaPreAdjust,
-    const float  GamutExpansion,
     const float  GammaIn,
-    const float  GammaOut)
+    const float  GammaOut
+  )
   {
+    //pSDR and pHDR
+    static const float2 pSdrHdr = 1.f + 32.f * pow(float2(LSdr, LHdr) / 10000.f, 1.f / 2.4f);
+#define pSdr pSdrHdr[0]
+#define pHdr pSdrHdr[1]
+
     float3 sdr = Input / InputNitsFactor;
 
-    sdr = Csp::Mat::Bt709To::Bt2020(sdr);
-
-    //RGB->R'G'B' gamma compression
-    sdr = pow(sdr, 1.f / (2.4f + GammaIn));
-
-    // Rec. ITU-R BT.2020-2 Table 4
-    //Y'C'bC'r,tmo
-    float3 ycbcrTmo = Csp::Ycbcr::RgbTo::YcbcrBt2020(sdr);
-
-    // adjusted luma component (inverse)
-    // get Y'sdr
-    float ySdr = ycbcrTmo.x
-               + max(LumaPreAdjust * ycbcrTmo.z, 0.f);
-
-    // Tone mapping step 3 (inverse)
-    // get Y'c
-    static const float pSdr = 1.f + 32.f * pow(Lsdr
-                                             / 10000.f
-                                           , 1.f / 2.4f);
+    //YSDR
+    float ySdr = dot(sdr, Csp::Mat::Bt709ToXYZ[1]);
+    //clamp to avoid invalid numbers
+    ySdr = max(ySdr, 1e-20);
+    //Y'SDR
+    ySdr = pow(ySdr, 1.f / (2.4f + GammaIn));
 
     //Y'c
     //if pSdr == 1 there is a division by zero
-    //this happens when Lsdr == 0
-    float yC = log((ySdr * (pSdr - 1.f)) + 1.f)
-             / log(pSdr); //log = ln
+    //this happens when LSdr == 0
+    const float yC = log((ySdr * (pSdr - 1.f)) + 1.f)
+                   / log(pSdr); //log = ln
 
     // Tone mapping step 2 (inverse)
     // get Y'p
-    float yP0 = yC
-              / 1.0770f;
-    float yP2 = (yC - 0.5000f)
-              / 0.5000f;
+    const float yP0 = yC
+                    / 1.0770f;
+    const float yP2 = (yC - 0.5000f)
+                    / 0.5000f;
 
     //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
-
-    float yP = yP0 <= 0.7399f ? yP0
-             : yP2 >= 0.9909f ? yP2
-                              : (-2.7811f + sqrt(4.83307641f - 4.604f * yC))
-                              / -2.302f;
-
-    // Tone mapping step 1 (inverse)
-    // get Y'
-    static const float pHdr = 1.f + 32.f * pow(Lhdr
-                                             / 10000.f
-                                           , 1.f / 2.4f);
-    //Y'hdr
+    const float yP = yP0 <= 0.7399f ? yP0
+                   : yP2 >= 0.9909f ? yP2
+                                    : (-2.7811f + sqrt(4.83307641f - 4.604f * yC))
+                                    / -2.302f;
+    //Y'HDR
     //if pHdr == 1 there is a division by zero
-    //this happens when Lhdr == 0
-    float yHdr = (pow(pHdr, yP) - 1.f)
-               / (pHdr - 1.f);
+    //this happens when LHdr == 0
+    const float yHdr = (pow(pHdr, yP) - 1.f)
+                     / (pHdr - 1.f);
 
-    // Colour scaling function
-    // TODO: analyse behaviour of colourScale being 1 or 0.00000001
-    //float colourScale = 0.0000001f;
-    //if (yHdr > 0.f && ySdr > 0.f) // avoid division by zero
-    // this is actually fine to be infinite because it will create 0 as a result in the next step
-    float colourScale = ySdr
-                      / (GamutExpansion * yHdr);
+    float3 hdr;
 
-    // Colour difference signals (inverse) and Luma (inverse)
-    // get R'G'B'
-
-  //  hdr.b = ((ycbcrTmo.y * Csp::KHelpers::Bt2020::Kb) /
-  //           colourScale) + yHdr;
-  //  hdr.r = ((ycbcrTmo.z * Csp::KHelpers::Bt2020::Kr) /
-  //           colourScale) + yHdr;
-  //  hdr.g = (yHdr - (Csp::KHelpers::Bt2020::K.r * hdr.r + Csp::KHelpers::Bt2020::K.b * hdr.b)) /
-  //          Csp::KHelpers::Bt2020::K.g;
-
-    // produces the same results
-    float2 cbcrHdr = ycbcrTmo.yz / colourScale;
-
-    float3 hdr = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yHdr, cbcrHdr));
-
-    hdr = max(hdr, 0.f); //on edge cases the YCbCr->RGB conversion isn't accurate enough
-
-    // Non-linear transfer function (inverse)
     // get RGB
-    hdr = pow(hdr, 2.4f + GammaIn + GammaOut);
+    switch(ProcessingMode)
+    {
+      case BT2446A_PRO_MODE_LUMINANCE:
+      {
+        hdr = sdr * (yHdr / ySdr);
+      }
+      break;
+      case BT2446A_PRO_MODE_YCBCR_LIKE:
+      {
+        const float2 yHdrYSdr = pow(float2(yHdr, ySdr), 2.4f);
+
+        hdr = sdr * (yHdrYSdr[0] / yHdrYSdr[1]);
+      }
+      break;
+    }
 
     //expand to target luminance
-    hdr *= (Lhdr / 10000.f);
+    hdr *= (LHdr / 10000.f);
 
     //scRGB
-    hdr = ConditionallyConvertBt2020ToBt709(hdr);
     hdr = ConditionallyConvertNormalisedBt709ToScRgb(hdr);
 
     //HDR10
+    hdr = ConditionallyConvertBt709ToBt2020(hdr);
     hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
 
     return hdr;
