@@ -352,6 +352,9 @@ void VS_PrepareToneMapping(
                                : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
+  TmParms0 = 0.f;
+  TmParms1 = 0.f;
+
 #define usedMaxNits TmParms0.x
 
 //  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
