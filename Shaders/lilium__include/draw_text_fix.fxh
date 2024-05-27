@@ -229,10 +229,7 @@ sampler Sampler_HDR_Text
   if(uv.x <= arrSize && uv.x >= 0.f) \
     text    = tex2D(Sampler_HDR_Text, (frac(uv) + float2(id % 14.f, trunc(id / 14.f))) / \
               float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x; \
-  if(text > 0.f) \
-    output = text * bright; \
-  else \
-    output += text; \
+  output = lerp(output, text * bright, ceil(text)); \
 }
 
 float2 DrawTextShift(
@@ -286,8 +283,5 @@ void DrawTextDigit(
   index = digits[(uint)index];
   float numbers = tex2D(Sampler_HDR_Text, (frac(uv) + float2(index % 14.f, trunc(index / 14.f))) /
                   float2(_DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y)).x;
-  if (numbers > 0.f)
-    res = numbers * bright;
-  else
-    res += numbers;
+  res = lerp(res, numbers * bright, ceil(numbers));
 }
