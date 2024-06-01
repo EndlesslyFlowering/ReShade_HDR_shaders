@@ -256,17 +256,49 @@ uniform float _ACTIVE_AREA_CROP_BOTTOM
 > = 0.f;
 
 
-// Nit Values
+// Nit and RGB Values
 uniform bool _SHOW_NITS_VALUES
 <
   ui_category = "Luminance analysis";
-  ui_label    = "show max/avg/min luminance values";
+  ui_label    = "show max/avg/min luminance and RGB values";
+  ui_tooltip  = "The the individual R, G and B values are not connected to the luminance value."
+           "\n" "But are all individually calculated with no connection to the other values."
+           "\n" "As in they are with high certainty not from the same pixel!"
+           "\n"
+           "\n"
+#ifdef IS_HDR_CSP
+                "In HDR the RGB values represent \"optical\" RGB values with BT.2020 primaries."
+#else
+                "In SDR the RGB values represent relative \"optical\" RGB values in % with BT.709 primaries."
+#endif
+           "\n" "If you do not understand what that is:"
+           "\n" "if a pixel has R, G and B set to the same value, let's say 50,"
+#ifdef IS_HDR_CSP
+           "\n" "the nits of that pixel will be 50."
+#else
+           "\n" "the relative output value of that pixel will be 50%."
+#endif
+           "\n" "But do not forget that the max and min values are not from the same pixel!"
+           "\n"
+           "\n" "But what are those RGB values for then?"
+#ifdef IS_HDR_CSP
+           "\n" "In HDR this easily tells you if your display clips those values."
+           "\n" "Let's say your display can display up to 800 nits."
+           "\n" "If any R, G or B value is above 800 it will be clipped to 800."
+           "\n" "Because your display is not able to process and display that value."
+           "\n" "This always leads to hue shifts."
+#else
+           "\n" "In SDR it is purely more data points."
+#endif
+           "\n"
+           "\n" "This description is different depending on if you are in HDR or SDR!";
 > = true;
 
 uniform bool _SHOW_NITS_FROM_CURSOR
 <
   ui_category = "Luminance analysis";
-  ui_label    = "show luminance value from cursor position";
+  ui_label    = "show luminance value and RGB values from cursor position";
+  ui_tooltip  = "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
 > = true;
 
 
@@ -537,6 +569,8 @@ uniform uint _WAVEFORM_MODE
 <
   ui_category = "Waveform";
   ui_label    = "waveform mode";
+  ui_tooltip  = "In the RGB mode the values follow the same encoding as for the shown RGB values."
+           "\n" "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
   ui_type     = "combo";
   ui_items    = "luminance\0"
                 "RGB individiually\0";
@@ -551,10 +585,10 @@ uniform uint WAVEFORM_CUTOFF_POINT
   ui_category = "Waveform";
   ui_label    = "waveform cutoff point";
   ui_type     = "combo";
-  ui_items    = "10000 nits\0"
-                " 4000 nits\0"
-                " 2000 nits\0"
-                " 1000 nits\0";
+  ui_items    = "10000\0"
+                " 4000\0"
+                " 2000\0"
+                " 1000\0";
 > = 0;
 #endif //IS_HDR_CSP
 
