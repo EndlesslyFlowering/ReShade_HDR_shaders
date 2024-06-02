@@ -136,8 +136,8 @@ void VS_PostProcessWithoutTexCoord(
   #define IS_POSSIBLE_PS5_BIT_DEPTH
 #endif
 
-#if (defined(IS_POSSIBLE_HDR10_BIT_DEPTH) \
-  && BUFFER_COLOR_SPACE != CSP_HDR10)
+#if ((defined(IS_POSSIBLE_HDR10_BIT_DEPTH) && BUFFER_COLOR_SPACE != CSP_HDR10)  \
+  || (defined(IS_POSSIBLE_SCRGB_BIT_DEPTH) && BUFFER_COLOR_SPACE != CSP_SCRGB))
   #ifndef CSP_OVERRIDE
     #define CSP_OVERRIDE CSP_UNSET
   #endif
@@ -147,7 +147,6 @@ void VS_PostProcessWithoutTexCoord(
 #endif
 
 #if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
-  || (BUFFER_COLOR_SPACE != CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
   || (                                   CSP_OVERRIDE == CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
 
   #define ACTUAL_COLOUR_SPACE CSP_SCRGB
