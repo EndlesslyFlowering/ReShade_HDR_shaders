@@ -1,7 +1,10 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if defined(IS_ANALYSIS_CAPABLE_API)
+#if (defined(IS_ANALYSIS_CAPABLE_API) \
+  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+   || ACTUAL_COLOUR_SPACE == CSP_SRGB))
 
 #undef TEXT_BRIGHTNESS
 
@@ -1644,7 +1647,8 @@ ERROR_STUFF
 
 technique lilium__hdr_and_sdr_analysis
 <
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))
   ui_label = "Lilium's HDR analysis (ERROR)";
 #else
   ui_label = "Lilium's SDR analysis (ERROR)";
