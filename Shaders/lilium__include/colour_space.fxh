@@ -136,14 +136,29 @@ void VS_PostProcessWithoutTexCoord(
   #define IS_POSSIBLE_PS5_BIT_DEPTH
 #endif
 
-#if ((defined(IS_POSSIBLE_HDR10_BIT_DEPTH) && BUFFER_COLOR_SPACE != CSP_HDR10)  \
-  || (defined(IS_POSSIBLE_SCRGB_BIT_DEPTH) && BUFFER_COLOR_SPACE != CSP_SCRGB))
-  #ifndef CSP_OVERRIDE
-    #define CSP_OVERRIDE CSP_UNSET
+#if ((BUFFER_COLOR_SPACE == CSP_UNKNOWN) \
+  || (BUFFER_COLOR_SPACE != CSP_SCRGB && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH)))
+  #undef BUFFER_COLOR_SPACE
+#endif
+
+#ifndef BUFFER_COLOR_SPACE
+  #ifdef IS_POSSIBLE_SCRGB_BIT_DEPTH
+    #ifndef CSP_OVERRIDE
+      #define CSP_OVERRIDE CSP_UNSET
+    #endif
+  #endif
+  #ifdef IS_POSSIBLE_HDR10_BIT_DEPTH
+    #ifndef CSP_OVERRIDE
+      #define CSP_OVERRIDE CSP_UNSET
+    #endif
   #endif
 #else
   #undef CSP_OVERRIDE //for some reason this workaround is needed in DS1PTDE...
   #define CSP_OVERRIDE CSP_UNSET
+#endif
+
+#if !defined(BUFFER_COLOR_SPACE)
+  #define BUFFER_COLOR_SPACE CSP_UNKNOWN
 #endif
 
 #if ((BUFFER_COLOR_SPACE == CSP_SCRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SCRGB_BIT_DEPTH))  \
@@ -214,8 +229,10 @@ void VS_PostProcessWithoutTexCoord(
 #define GAMMA_24    3
 
 #ifndef IS_HDR_CSP
-  #ifndef OVERWRITE_SDR_GAMMA
-    #define OVERWRITE_SDR_GAMMA GAMMA_UNSET
+  #ifndef IS_POSSIBLE_SCRGB_BIT_DEPTH
+    #ifndef OVERWRITE_SDR_GAMMA
+      #define OVERWRITE_SDR_GAMMA GAMMA_UNSET
+    #endif
   #endif
 #endif
 
