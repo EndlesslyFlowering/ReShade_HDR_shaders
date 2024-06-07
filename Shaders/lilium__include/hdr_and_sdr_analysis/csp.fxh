@@ -110,40 +110,47 @@ bool IsGamut(float3 Rgb)
 
 float GetGamut(float3 Rgb)
 {
+  [branch]
   if (IsGamut(_IS_GAMUT_BT709(Rgb)))
   {
     return IS_GAMUT_BT709;
   }
-  else if (IsGamut(_IS_GAMUT_DCI_P3(Rgb)))
+  else
+  [branch]
+  if (IsGamut(_IS_GAMUT_DCI_P3(Rgb)))
   {
-    return IS_GAMUT_DCI_P3 / 256.f; // /256 for safety
+    return IS_GAMUT_DCI_P3 / 254.f; // /254 for safety
   }
 
 #if defined(IS_HDR10_LIKE_CSP)
 
   else
   {
-    return IS_GAMUT_BT2020 / 256.f; // /256 for safety
+    return IS_GAMUT_BT2020 / 254.f; // /254 for safety
   }
 
 #else
 
-  else if (IsGamut(_IS_GAMUT_BT2020(Rgb)))
+  else
+  [branch]
+  if (IsGamut(_IS_GAMUT_BT2020(Rgb)))
   {
-    return IS_GAMUT_BT2020 / 256.f; // /256 for safety
+    return IS_GAMUT_BT2020 / 254.f; // /254 for safety
   }
-  else if (IsGamut(_IS_GAMUT_AP0(Rgb)))
+  else
+  [branch]
+  if (IsGamut(_IS_GAMUT_AP0(Rgb)))
   {
-    return IS_GAMUT_AP0 / 256.f; // /256 for safety
+    return IS_GAMUT_AP0 / 254.f; // /254 for safety
   }
   else
   {
-    return IS_GAMUT_INVALID / 256.f; // /256 for safety
+    return IS_GAMUT_INVALID / 254.f; // /254 for safety
   }
 
 #endif //IS_HDR10_LIKE_CSP
 
-  return IS_GAMUT_INVALID / 256.f; // /256 for safety
+  return IS_GAMUT_INVALID / 254.f; // /254 for safety
 }
 
 
@@ -221,7 +228,7 @@ void PS_CalcGamuts(
 
 #else
 
-    CurGamut = IS_GAMUT_INVALID / 256.f; // /256 for safety
+    CurGamut = IS_GAMUT_INVALID / 254.f; // /254 for safety
 
     return;
 

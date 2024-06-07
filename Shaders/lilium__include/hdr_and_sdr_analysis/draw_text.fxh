@@ -507,7 +507,7 @@ void PS_GetNumbersNits(
     break;
   }
 
-  Number = float(number) / 256.f; // /256 for safety
+  Number = float(number) / 254.f; // /254 for safety
 }
 
 
@@ -574,7 +574,7 @@ void PS_GetGamutNumbers(
     break;
   }
 
-  Number = float(number) / 256.f; // /256 for safety
+  Number = float(number) / 254.f; // /254 for safety
 }
 #endif //IS_HDR_CSP
 
@@ -1011,7 +1011,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
   static const uint curNumber = tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPos)
 #ifndef IS_COMPUTE_CAPABLE_API
-                              * 256.f
+                              * 256.f /* *256 for safety */
 #endif
                                      ;
 
