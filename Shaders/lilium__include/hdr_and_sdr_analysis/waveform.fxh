@@ -132,6 +132,9 @@ void RenderWaveform(
     float3 encodedPixel;
     float3 waveformColour;
 
+    float waveformColourRG;
+    float waveformColourBG;
+
 #ifdef IS_HDR_CSP
 
     float3 curPixelRgb;
@@ -156,25 +159,27 @@ void RenderWaveform(
     waveformColour += 600.f;
     waveformColour /= 10500.f;
 
-    waveformColour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
-    waveformColour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
-
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
     //this is more performant to do
     encodedPixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
 
-    waveformColour  = DECODE_SDR(encodedPixel) - 10.f;
+    waveformColour  = DECODE_SDR(encodedPixel) - 0.1f;
     waveformColour  = max(waveformColour, 0.f);
-    waveformColour += 60.f;
-    waveformColour /= 150.f;
+    waveformColour += 0.1f;
+
+#endif
 
     waveformColour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
     waveformColour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
 
-#endif
+    waveformColourRG = (waveformColour.r - 1.f) * Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1];
+    waveformColourBG = (waveformColour.b - 1.f) * Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1];
 
     waveformColour = sqrt(waveformColour);
+
+    waveformColourRG = sqrt(waveformColourRG);
+    waveformColourBG = sqrt(waveformColourBG);
 
     int xCoord0 = float(FetchPos.x)
                 / float(TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR)
@@ -189,7 +194,7 @@ void RenderWaveform(
 
     tex2Dstore(StorageWaveform,
                int2(xCoord0, yCoords[0]),
-               float4(waveformColour.r, 0.f, 0.f, 1.f));
+               float4(waveformColour.r, waveformColourRG, 0.f, 1.f));
 
     tex2Dstore(StorageWaveform,
                int2(xCoord1, yCoords[1]),
@@ -197,7 +202,7 @@ void RenderWaveform(
 
     tex2Dstore(StorageWaveform,
                int2(xCoord2, yCoords[2]),
-               float4(0.f, 0.f, waveformColour.b, 1.f));
+               float4(0.f, waveformColourBG, waveformColour.b, 1.f));
 
     return;
   }
