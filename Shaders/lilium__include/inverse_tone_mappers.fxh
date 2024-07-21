@@ -3,72 +3,6 @@
 #include "colour_space.fxh"
 
 
-// convert BT.2020 to BT.709
-float3 ConditionallyConvertBt2020ToBt709(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
-#endif
-  return Colour;
-}
-
-// convert BT.709 to BT.2020
-float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
-#endif
-  return Colour;
-}
-
-// convert DCI-P3 to BT.709
-float3 ConditionallyConvertDciP3ToBt709(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::DciP3To::Bt709(Colour);
-#endif
-  return Colour;
-}
-
-// convert DCI-P3 to BT.2020
-float3 ConditionallyConvertDciP3ToBt2020(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Mat::DciP3To::Bt2020(Colour);
-#endif
-  return Colour;
-}
-
-// convert normalised BT.709 to scRGB
-float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour *= 125.f;
-#endif
-  return Colour;
-}
-
-// convert linear BT.2020 to HDR10
-float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
-#endif
-  return Colour;
-}
-
-// convert scRGB to HDR10
-float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour /= 125.f;
-  Colour  = Csp::Mat::Bt709To::Bt2020(Colour);
-  Colour  = Csp::Trc::LinearTo::Pq(Colour);
-#endif
-  return Colour;
-}
-
-
 #if (defined(IS_ANALYSIS_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
@@ -155,7 +89,7 @@ namespace Itmos
 
     //HDR10
     hdr = ConditionallyConvertBt709ToBt2020(hdr);
-    hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
+    hdr = ConditionallyConvertNormalisedBt2020ToHdr10(hdr);
 
     return hdr;
   } //Bt2446a
@@ -627,7 +561,7 @@ namespace Itmos
     hdr = ConditionallyConvertNormalisedBt709ToScRgb(hdr);
 
     //HDR10
-    hdr = ConditionallyConvertLinearBt2020ToHdr10(hdr);
+    hdr = ConditionallyConvertNormalisedBt2020ToHdr10(hdr);
 
     return hdr;
   } //Bt2446c

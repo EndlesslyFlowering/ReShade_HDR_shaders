@@ -98,44 +98,6 @@ uniform float CLAMP_POSITIVE_TO
 > = 125.f;
 
 
-// convert BT.709 to BT.2020
-float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
-  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
-#endif
-  return Colour;
-}
-
-// convert HDR10 to linear BT.2020
-float3 ConditionallyLineariseHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
-  Colour = Csp::Trc::PqTo::Linear(Colour);
-#endif
-  return Colour;
-}
-
-// convert linear BT.2020 to HDR10
-float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
-#endif
-  return Colour;
-}
-
-// convert BT.2020 to BT.709
-float3 ConditionallyConvertBt2020To709(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
-#endif
-  return Colour;
-}
-
-
 void PS_MapSdrIntoHdr(
       float4 Position : SV_Position,
   out float4 Output   : SV_Target0)
@@ -265,7 +227,7 @@ void PS_MapSdrIntoHdr(
     {
       //scRGB
       colour = ConditionallyLineariseHdr10(colour);
-      colour = ConditionallyConvertBt2020To709(colour);
+      colour = ConditionallyConvertBt2020ToBt709(colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
       colour *= 125.f;
@@ -311,7 +273,7 @@ void PS_MapSdrIntoHdr(
 
     //HDR10
     colour = ConditionallyConvertBt709ToBt2020(colour);
-    colour = ConditionallyConvertLinearBt2020ToHdr10(colour);
+    colour = ConditionallyConvertNormalisedBt2020ToHdr10(colour);
   }
 
   //colour = fixNAN(colour);

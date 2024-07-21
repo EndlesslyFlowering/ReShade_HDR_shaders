@@ -6,100 +6,6 @@
 #if (defined(IS_COMPUTE_CAPABLE_API) \
   && defined(IS_HDR_CSP))
 
-// normalise so that 10000 = 1
-float3 ConditionallyNormaliseScRgb(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour /= 125.f;
-#endif
-  return Colour;
-}
-
-// - normalise so that 10000 = 1
-// - convert BT.709 to BT.2020
-float3 ConditionallyConvertScRgbToNormalisedBt2020(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = ConditionallyNormaliseScRgb(Colour);
-  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
-#endif
-  return Colour;
-}
-
-// - normalise so that 10000 = 1
-// - convert BT.709 to BT.2020
-// - convert linear to PQ
-float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
-#endif
-  return Colour;
-}
-
-// convert HDR10 to linear BT.2020
-float3 ConditionallyLineariseHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::PqTo::Linear(Colour);
-#endif
-  return Colour;
-}
-
-// convert linear BT.2020 to HDR10
-float3 ConditionallyConvertLinearBt2020ToHdr10(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
-#endif
-  return Colour;
-}
-
-// convert normalised BT.709 to scRGB
-float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour *= 125.f;
-#endif
-  return Colour;
-}
-
-// - convert BT.2020 to BT.709
-// - convert normalised BT.709 to scRGB
-float3 ConditionallyConvertNormalisedBt2020ToScRgb(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
-  Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
-#endif
-  return Colour;
-}
-
-// - convert HDR10 to linear BT.2020
-// - convert BT.2020 to BT.709
-// - convert normalised BT.709 to scRGB
-float3 ConditionallyConvertHdr10ToScRgb(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Trc::PqTo::Linear(Colour);
-  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
-  Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
-#endif
-  return Colour;
-}
-
-// get luminance for the current colour space
-float GetLuminance(float3 Colour)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  return dot(Colour, Csp::Mat::Bt709ToXYZ[1]);
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  return dot(Colour, Csp::Mat::Bt2020ToXYZ[1]);
-#else
-  return 0;
-#endif
-}
 
 
 namespace Tmos
@@ -154,7 +60,7 @@ namespace Tmos
     //scRGB
     Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
     //HDR10
-    Colour = ConditionallyConvertLinearBt2020ToHdr10(Colour);
+    Colour = ConditionallyConvertNormalisedBt2020ToHdr10(Colour);
 
     return;
 #undef pSdr
@@ -172,8 +78,10 @@ namespace Tmos
   {
     float3 Rgb = Colour;
 
-    Rgb = ConditionallyLineariseHdr10(Rgb);
+    //scRGB
     Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Rgb);
+    //HDR10
+    Rgb = ConditionallyLineariseHdr10(Rgb);
 
     // adjust the max of 1 according to maxCLL
     Rgb *= (10000.f / MaxNits);
@@ -235,8 +143,10 @@ namespace Tmos
     // gamma decompression and adjust to TargetNits
     Rgb = pow(Rgb, 2.4f) * (TargetNits / 10000.f);
 
+    //scRGB
     Rgb = ConditionallyConvertNormalisedBt2020ToScRgb(Rgb);
-    Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+    //HDR10
+    Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
     Colour = Rgb;
   }
@@ -284,7 +194,9 @@ namespace Tmos
       {
         float3 Rgb = Colour;
 
+        //scRGB
         Rgb = ConditionallyNormaliseScRgb(Rgb);
+        //HDR10
         Rgb = ConditionallyLineariseHdr10(Rgb);
 
         //to L'M'S'
@@ -340,14 +252,17 @@ namespace Tmos
         Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
 #endif
 
-        Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+        //scRGB
         Rgb = ConditionallyConvertNormalisedBt709ToScRgb(Rgb);
+        //HDR10
+        Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
         Colour = Rgb;
 
       }
       else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
+        //HDR10
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -386,7 +301,8 @@ namespace Tmos
 
         Rgb = y2 / y1 * Rgb;
 
-        Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+        //HDR10
+        Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
         Colour = Rgb;
 
@@ -521,7 +437,9 @@ namespace Tmos
       {
         float3 Rgb = Colour;
 
+        //scRGB
         Rgb = ConditionallyNormaliseScRgb(Rgb);
+        //HDR10
         Rgb = ConditionallyLineariseHdr10(Rgb);
 
         //to L'M'S'
@@ -562,17 +480,18 @@ namespace Tmos
           Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
 #endif
 
-          Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+          //scRGB
           Rgb = ConditionallyConvertNormalisedBt709ToScRgb(Rgb);
+          //HDR10
+          Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
           Colour = Rgb;
         }
       }
       else // if (ProcessingMode == DICE_PRO_MODE_YRGB)
       {
-        float3 Rgb = Colour;
-
-        Rgb = ConditionallyLineariseHdr10(Rgb);
+        //HDR10
+        float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float y1 = dot(Rgb / 125.f, Csp::Mat::Bt709ToXYZ[1].rgb);
@@ -596,7 +515,7 @@ namespace Tmos
 
           Rgb = y2 / y1 * Rgb;
 
-          Rgb = ConditionallyConvertLinearBt2020ToHdr10(Rgb);
+          Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
           Colour = Rgb;
         }
