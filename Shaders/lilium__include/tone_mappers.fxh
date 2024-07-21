@@ -79,7 +79,7 @@ namespace Tmos
     float3 Rgb = Colour;
 
     //scRGB
-    Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Rgb);
+    Rgb = ConditionallyNormaliseScRgb(Rgb);
     //HDR10
     Rgb = ConditionallyLineariseHdr10(Rgb);
 
@@ -192,16 +192,11 @@ namespace Tmos
       BRANCH(x)
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
-        float3 Rgb = Colour;
-
-        //scRGB
-        Rgb = ConditionallyNormaliseScRgb(Rgb);
-        //HDR10
-        Rgb = ConditionallyLineariseHdr10(Rgb);
+        float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
         //to L'M'S'
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float3 pqLms = Csp::Ictcp::Bt709To::PqLms(Rgb);
+        float3 pqLms = Csp::Ictcp::ScRgbTo::PqLms(Rgb);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
 #endif
@@ -247,13 +242,11 @@ namespace Tmos
 
         //to RGB
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        Rgb = Csp::Ictcp::IctcpTo::Bt709(ictcp);
+        Rgb = Csp::Ictcp::IctcpTo::ScRgb(ictcp);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
 #endif
 
-        //scRGB
-        Rgb = ConditionallyConvertNormalisedBt709ToScRgb(Rgb);
         //HDR10
         Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
@@ -266,9 +259,9 @@ namespace Tmos
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb / 125.f, Csp::Mat::Bt709ToXYZ[1].rgb);
+        float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]);
 #endif
         //E1
         float y2 = (Csp::Trc::LinearTo::Pq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
@@ -435,16 +428,12 @@ namespace Tmos
       BRANCH(x)
       if (ProcessingMode == DICE_PRO_MODE_ICTCP)
       {
-        float3 Rgb = Colour;
-
-        //scRGB
-        Rgb = ConditionallyNormaliseScRgb(Rgb);
         //HDR10
-        Rgb = ConditionallyLineariseHdr10(Rgb);
+        float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
         //to L'M'S'
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float3 pqLms = Csp::Ictcp::Bt709To::PqLms(Rgb);
+        float3 pqLms = Csp::Ictcp::ScRgbTo::PqLms(Rgb);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
 #endif
@@ -475,13 +464,11 @@ namespace Tmos
 
           //to RGB
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-          Rgb = Csp::Ictcp::IctcpTo::Bt709(ictcp);
+          Rgb = Csp::Ictcp::IctcpTo::ScRgb(ictcp);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
           Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
 #endif
 
-          //scRGB
-          Rgb = ConditionallyConvertNormalisedBt709ToScRgb(Rgb);
           //HDR10
           Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
@@ -494,9 +481,9 @@ namespace Tmos
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb / 125.f, Csp::Mat::Bt709ToXYZ[1].rgb);
+        float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1].rgb);
+        float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]);
 #endif
 
         float y2 = Csp::Trc::LinearTo::Pq(y1);

@@ -557,8 +557,7 @@ namespace Itmos
     hdr = max(hdr, 0.f);
 
     //scRGB
-    hdr = ConditionallyConvertBt2020ToBt709(hdr);
-    hdr = ConditionallyConvertNormalisedBt709ToScRgb(hdr);
+    hdr = ConditionallyConvertNormalisedBt2020ToScRgb(hdr);
 
     //HDR10
     hdr = ConditionallyConvertNormalisedBt2020ToHdr10(hdr);
