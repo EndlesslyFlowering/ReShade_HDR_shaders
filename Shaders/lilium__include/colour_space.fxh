@@ -462,6 +462,13 @@ uniform int GLOBAL_INFO
 #define MINRGB(Rgb) min(Rgb.r, min(Rgb.g, Rgb.b))
 
 
+struct s_xyY
+{
+  float2 xy;
+  float  Y;
+};
+
+
 namespace Csp
 {
 
@@ -1162,6 +1169,45 @@ namespace Csp
 
 
   } //Trc
+
+
+  namespace CieXYZ
+  {
+
+    namespace XYZTo
+    {
+      s_xyY xyY(const float3 XYZ)
+      {
+        const float xyz = XYZ.x + XYZ.y + XYZ.z;
+
+        s_xyY xyY;
+
+        // max because for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
+        xyY.xy = max(XYZ.xy / xyz, 0.f);
+
+        xyY.Y = XYZ.y;
+
+        return xyY;
+      }
+    } //XYZTo
+
+    namespace xyYTo
+    {
+      float3 XYZ(const s_xyY xyY)
+      {
+        float3 XYZ;
+
+        XYZ.xz = float2(xyY.xy.x, (1.f - xyY.xy.x - xyY.xy.y))
+               / xyY.xy.y
+               * xyY.Y;
+
+        XYZ.y = xyY.Y;
+
+        return XYZ;
+      }
+    } //xyYTo
+
+  }
 
 
   namespace Ycbcr
@@ -3280,57 +3326,6 @@ namespace Csp
 
   } //Map
 
-}
-
-
-struct Sxy
-{
-  float x;
-  float y;
-};
-
-
-Sxy GetxyFromXYZ(float3 XYZ)
-{
-  const float xyz = XYZ.x + XYZ.y + XYZ.z;
-
-  Sxy xy;
-
-  xy.x = XYZ.x / xyz;
-
-  xy.y = XYZ.y / xyz;
-
-  return xy;
-}
-
-float3 GetXYZfromxyY(Sxy xy, float Y)
-{
-  float3 XYZ;
-
-  XYZ.x = (xy.x / xy.y)
-        * Y;
-
-  XYZ.y = Y;
-
-  XYZ.z = ((1.f - xy.x - xy.y) / xy.y)
-        * Y;
-
-  return XYZ;
-}
-
-float3 GetXYZfromxyY(float2 xy, float Y)
-{
-  float3 XYZ;
-
-  XYZ.x = (xy.x / xy.y)
-        * Y;
-
-  XYZ.y = Y;
-
-  XYZ.z = ((1.f - xy.x - xy.y) / xy.y)
-        * Y;
-
-  return XYZ;
 }
 
 
