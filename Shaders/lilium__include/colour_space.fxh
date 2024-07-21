@@ -439,7 +439,10 @@ uniform int GLOBAL_INFO
 #endif
 
 
-#define PI 3.1415927410125732421875f
+#define PI   3.1415927410125732421875f
+#define PI_2 6.283185482025146484375f
+
+#define _1_DIV_PI 0.3183098733425140380859375f
 
 #define FP32_MIN asfloat(0x00800000)
 #define FP32_MAX asfloat(0x7F7FFFFF)
@@ -456,6 +459,7 @@ uniform int GLOBAL_INFO
 #define MAX5(A, B, C, D, E) max(A, max(B, max(C, max(D, E))))
 
 #define MAXRGB(Rgb) max(Rgb.r, max(Rgb.g, Rgb.b))
+#define MINRGB(Rgb) min(Rgb.r, min(Rgb.g, Rgb.b))
 
 
 namespace Csp
@@ -1771,6 +1775,9 @@ namespace Csp
   namespace Ictcp
   {
 
+    // The matrices use higher precision rather than being rounded to 12 bit values like the Dolby spec describes.
+    // This is because I only use these for internal processing.
+
     //L'M'S'->ICtCp
     static const float3x3 PqLmsToIctcp =
       float3x3
@@ -2928,7 +2935,7 @@ namespace Csp
 
         float3 hsv;
 
-        hsv.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) / PI;
+        hsv.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) * _1_DIV_PI;
 
         float2 cusp = Csp::OkLab::FindCusp(ab);
 
@@ -2980,7 +2987,7 @@ namespace Csp
 
         float3 hsl;
 
-        hsl.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) / PI;
+        hsl.x = 0.5f + 0.5f * atan2(-Lab.z, -Lab.y) * _1_DIV_PI;
 
         float3 cs = GetCs(float3(Lab.x, ab));
 
@@ -3075,7 +3082,7 @@ namespace Csp
       //OKHSV->OKLab
       float3 OkLab(float3 Hsv)
       {
-        float i_ab = 2.f * PI * Hsv.x;
+        float i_ab = PI_2 * Hsv.x;
 
         float2 ab = float2(cos(i_ab),
                            sin(i_ab));
@@ -3154,7 +3161,7 @@ namespace Csp
         float  L;
         float2 ab;
 
-        float i_ab = 2.f * PI * Hsl.x;
+        float i_ab = PI_2 * Hsl.x;
 
         L = Csp::OkLab::ToeInv(Hsl.z);
         ab = float2(cos(i_ab),
@@ -3271,7 +3278,7 @@ namespace Csp
 
     } //Bt709Into
 
-  }
+  } //Map
 
 }
 
