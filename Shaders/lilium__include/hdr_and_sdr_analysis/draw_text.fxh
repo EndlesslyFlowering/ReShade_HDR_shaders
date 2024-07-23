@@ -800,7 +800,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       [flatten]
       if (_TEXT_POSITION != 0)
       {
-        pos.x = BUFFER_WIDTH_MINUS_1_FLOAT - pos.x;
+        pos.x = BUFFER_WIDTH_FLOAT - pos.x;
       }
 
       VertexCoordsAndTexCoords ret;
@@ -895,40 +895,35 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
       texCoordOffset.x = 0.f;
       texCoordOffset.y = CHAR_DIM_FLOAT.y * TEXT_BLOCK_FETCH_Y_OFFSET[currentTextBlockID];
 
+      const float2   vertexOffset2 = size * CharSize       +   vertexOffset;
+      const float2 texCoordOffset2 = size * CHAR_DIM_FLOAT + texCoordOffset;
+
       [flatten]
       if (localVertexID == 1)
       {
-        vertexOffset.y += size.y * CharSize.y;
-
-        texCoordOffset.y += size.y * CHAR_DIM_FLOAT.y;
+          vertexOffset.y =   vertexOffset2.y;
+        texCoordOffset.y = texCoordOffset2.y;
       }
       else
       [flatten]
       if (localVertexID == 4)
       {
-        vertexOffset.x += size.x * CharSize.x;
-
-        texCoordOffset.x += size.x * CHAR_DIM_FLOAT.x;
+          vertexOffset.x =   vertexOffset2.x;
+        texCoordOffset.x = texCoordOffset2.x;
       }
       else
       [flatten]
-      if (localVertexID == 2 || localVertexID == 5)
+      if (localVertexID == 2
+       || localVertexID == 5)
       {
-        vertexOffset += size * CharSize;
-
-        texCoordOffset += size * CHAR_DIM_FLOAT;
+          vertexOffset =   vertexOffset2;
+        texCoordOffset = texCoordOffset2;
       }
-
-      vertexOffset   -= 1.f;
-      texCoordOffset -= 1.f;
-
-      vertexOffset   = max(vertexOffset,   0.f);
-      texCoordOffset = max(texCoordOffset, 0.f);
 
       [flatten]
       if (_TEXT_POSITION != 0)
       {
-        vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * CharSize.x - 1.f));
+        vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
       }
 
       VertexCoordsAndTexCoords ret;
@@ -1122,39 +1117,35 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 
     float2 texCoordOffset = float2(CHAR_DIM_FLOAT.x * curNumber, 0.f);
 
+    const float2   vertexOffset2 =   vertexOffset + CharSize;
+    const float2 texCoordOffset2 = texCoordOffset + CHAR_DIM_FLOAT;
+
     [flatten]
     if (currentVertexID == 1)
     {
-      vertexOffset.y += CharSize.y;
-
-      texCoordOffset.y += CHAR_DIM_FLOAT.y;
+        vertexOffset.y =   vertexOffset2.y;
+      texCoordOffset.y = texCoordOffset2.y;
     }
     else
     [flatten]
     if (currentVertexID == 4)
     {
-      vertexOffset.x += CharSize.x;
-
-      texCoordOffset.x += CHAR_DIM_FLOAT.x;
+        vertexOffset.x =   vertexOffset2.x;
+      texCoordOffset.x = texCoordOffset2.x;
     }
     else
     [flatten]
-    if (currentVertexID == 2 || currentVertexID == 5)
+    if (currentVertexID == 2
+     || currentVertexID == 5)
     {
-      vertexOffset += CharSize;
-
-      texCoordOffset += CHAR_DIM_FLOAT;
+        vertexOffset =   vertexOffset2;
+      texCoordOffset = texCoordOffset2;
     }
 
-    vertexOffset   -= 1.f;
-    texCoordOffset -= 1.f;
-
-    vertexOffset   = max(vertexOffset,   0.f);
-    texCoordOffset = max(texCoordOffset, 0.f);
-
+    [flatten]
     if (_TEXT_POSITION != 0)
     {
-      vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * CharSize.x - 1.f));
+      vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
     }
 
     VertexCoordsAndTexCoords ret;
@@ -1206,6 +1197,7 @@ void VS_RenderNumbers(
                    : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
                                                                      : 2.f;
 
+    [flatten]
     if (SHOW_GAMUTS)
     {
       vertexOffset.y += GAMUT_PERCENTAGES_LINES;
@@ -1217,34 +1209,42 @@ void VS_RenderNumbers(
 
     texCoordOffset.y *= CHAR_DIM_FLOAT.y;
 
+    const float2 x2 = float2(charSize.x, CHAR_DIM_FLOAT.x)
+                    * 7.f
+                    + float2(vertexOffset.x, texCoordOffset.x);
+
+    const float2 y2 = float2(charSize.y,     CHAR_DIM_FLOAT.y)
+                    + float2(vertexOffset.y, texCoordOffset.y);
+
+    const float2   vertexOffset2 = float2(x2[0], y2[0]);
+    const float2 texCoordOffset2 = float2(x2[1], y2[1]);
+
+    [flatten]
     if (currentVertexID == 1)
     {
-      vertexOffset.y += charSize.y;
-
-      texCoordOffset.y += CHAR_DIM_FLOAT.y;
+        vertexOffset.y =   vertexOffset2.y;
+      texCoordOffset.y = texCoordOffset2.y;
     }
-    else if (currentVertexID == 4)
+    else
+    [flatten]
+    if (currentVertexID == 4)
     {
-      vertexOffset.x += charSize.x * 7.f;
-
-      texCoordOffset.x += CHAR_DIM_FLOAT.x * 7.f;
+        vertexOffset.x =   vertexOffset2.x;
+      texCoordOffset.x = texCoordOffset2.x;
     }
-    else if (currentVertexID == 2 || currentVertexID == 5)
+    else
+    [flatten]
+    if (currentVertexID == 2
+     || currentVertexID == 5)
     {
-      vertexOffset += float2(charSize.x * 7.f, charSize.y);
-
-      texCoordOffset += float2(CHAR_DIM_FLOAT.x * 7.f, CHAR_DIM_FLOAT.y);
+        vertexOffset =   vertexOffset2;
+      texCoordOffset = texCoordOffset2;
     }
 
-    vertexOffset   -= 1.f;
-    texCoordOffset -= 1.f;
-
-    vertexOffset   = max(vertexOffset,   0.f);
-    texCoordOffset = max(texCoordOffset, 0.f);
-
+    [flatten]
     if (_TEXT_POSITION != 0)
     {
-      vertexOffset.x += (BUFFER_WIDTH_MINUS_1_FLOAT - (GetMaxChars() * charSize.x - 1.f));
+      vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxChars() * charSize.x));
     }
 
     vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
