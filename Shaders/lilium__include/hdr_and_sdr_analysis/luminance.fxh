@@ -50,25 +50,41 @@ storage2D<float4> StorageNitsValues
 //#endif
 
 
-static const float4x3 HeatmapSteps0 = float4x3(
-  100.f, 203.f, 400.f,
-  100.f, 203.f, 400.f,
-  100.f, 203.f, 400.f,
-  100.f, 203.f, 400.f);
+static const float4x3 HeatmapSteps0 =
+  float4x3
+  (
+    100.f, 203.f, 400.f,
+    100.f, 203.f, 400.f,
+    100.f, 203.f, 400.f,
+    100.f, 203.f, 400.f
+  );
 
-static const float4x3 HeatmapSteps1 = float4x3(
-  1000.f, 4000.f, 10000.f,
-  1000.f, 2000.f,  4000.f,
-  1000.f, 1500.f,  2000.f,
-   600.f,  800.f,  1000.f);
+static const float4x3 HeatmapSteps1 =
+  float4x3
+  (
+    1000.f, 4000.f, 10000.f,
+    1000.f, 2000.f,  4000.f,
+    1000.f, 1500.f,  2000.f,
+     600.f,  800.f,  1000.f
+  );
 
-float HeatmapFadeIn(float Y, float CurrentStep, float NormaliseTo)
+float HeatmapFadeIn
+(
+  float Y,
+  float CurrentStep,
+  float NormaliseTo
+)
 {
   return (Y - CurrentStep)
        / (NormaliseTo - CurrentStep);
 }
 
-float HeatmapFadeOut(float Y, float CurrentStep, float NormaliseTo)
+float HeatmapFadeOut
+(
+  float Y,
+  float CurrentStep,
+  float NormaliseTo
+)
 {
   return 1.f - HeatmapFadeIn(Y, CurrentStep, NormaliseTo);
 }
@@ -78,12 +94,14 @@ float HeatmapFadeOut(float Y, float CurrentStep, float NormaliseTo)
 #define HEATMAP_MODE_2000  2
 #define HEATMAP_MODE_1000  3
 
-float3 HeatmapRgbValues(
+float3 HeatmapRgbValues
+(
   float Y,
 #ifdef IS_HDR_CSP
   uint  Mode,
 #endif
-  bool  WaveformOutput)
+  bool  WaveformOutput
+)
 {
   float3 output;
 
@@ -166,8 +184,10 @@ float3 HeatmapRgbValues(
 
 #ifdef IS_COMPUTE_CAPABLE_API
 // calls HeatmapRgbValues with predefined parameters
-float3 WaveformRgbValues(
-  const float Y)
+float3 WaveformRgbValues
+(
+  const float Y
+)
 {
 #ifdef IS_HDR_CSP
   // WAVEFORM_CUTOFF_POINT values match heatmap modes 1:1
@@ -179,12 +199,15 @@ float3 WaveformRgbValues(
 #endif
 
 
-void PS_CalcNitsPerPixel(
+void PS_CalcNitsPerPixel
+(
       float4 Position : SV_Position,
-  out float4 CurNits  : SV_Target0)
+  out float4 CurNits  : SV_Target0
+)
 {
   CurNits = 0.f;
 
+  BRANCH(x)
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR
    || _SHOW_HEATMAP
@@ -247,14 +270,20 @@ void PS_CalcNitsPerPixel(
 
     return;
   }
-  discard;
+  else
+  {
+    discard;
+  }
 }
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
 
-void CS_ResetMinNits(uint3 DTID : SV_DispatchThreadID)
+void CS_ResetMinNits
+(
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   const int2 storePos = int2(POS_MIN_NITS.x, POS_MIN_NITS.y + DTID.y);
 
@@ -308,9 +337,12 @@ void CS_ResetMinNits(uint3 DTID : SV_DispatchThreadID)
   groupshared uint4 GroupAvg;
   groupshared uint4 GroupMin;
 #endif
-void CS_GetMaxAvgMinNits(uint3 GID  : SV_GroupID,
-                         uint3 GTID : SV_GroupThreadID,
-                         uint3 DTID : SV_DispatchThreadID)
+void CS_GetMaxAvgMinNits
+(
+  uint3 GID  : SV_GroupID,
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   BRANCH(x)
   if (_SHOW_NITS_VALUES
@@ -653,9 +685,11 @@ void FinaliseMaxAvgMinNits()
 
 #else //IS_COMPUTE_CAPABLE_API
 
-void PS_GetMaxAvgMinNits(
+void PS_GetMaxAvgMinNits
+(
   in  float4 Position : SV_Position,
-  out float4 Output   : SV_Target0)
+  out float4 Output   : SV_Target0
+)
 {
   const uint2 id = uint2(Position.xy);
 
@@ -694,9 +728,11 @@ void PS_GetMaxAvgMinNits(
 }
 
 
-void VS_PrepareFinaliseGetMaxAvgMinNits(
+void VS_PrepareFinaliseGetMaxAvgMinNits
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   static const float positions[2] =
   {
@@ -709,9 +745,11 @@ void VS_PrepareFinaliseGetMaxAvgMinNits(
   return;
 }
 
-void PS_FinaliseGetMaxAvgMinNits(
+void PS_FinaliseGetMaxAvgMinNits
+(
   in  float4 Position : SV_Position,
-  out float  Output   : SV_Target0)
+  out float  Output   : SV_Target0
+)
 {
   const uint id = uint(Position.x - COORDS_MAX_NITS_VALUE);
 

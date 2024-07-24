@@ -72,11 +72,13 @@ storage2D<float4> StorageCieFinal
 };
 
 
-float4 FetchGamutOutline(
+float4 FetchGamutOutline
+(
   const int OutlineTextureOffset,
   const int CieBgWidth,
   const int PositionXAsInt,
-  const int FetchPosY)
+  const int FetchPosY
+)
 {
   int2 fetchPos =
     int2(PositionXAsInt.x + (CieBgWidth * OutlineTextureOffset),
@@ -91,9 +93,11 @@ float4 FetchGamutOutline(
 }
 
 // draw the gamut outlines on the CIE diagram
-void PS_DrawCieGamutOutlines(
+void PS_DrawCieGamutOutlines
+(
   in  float4 Position : SV_Position,
-  out float4 Out      : SV_Target0)
+  out float4 Out      : SV_Target0
+)
 {
   const int2 positionAsInt2 = int2(Position.xy);
 
@@ -165,7 +169,10 @@ void PS_DrawCieGamutOutlines(
 }
 
 
-float3 GetXYZFromRgb(const float3 Rgb)
+float3 GetXYZFromRgb
+(
+  const float3 Rgb
+)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
@@ -196,7 +203,10 @@ float3 GetXYZFromRgb(const float3 Rgb)
   return XYZ;
 }
 
-int2 GetxyFromXYZForDiagram(const float3 XYZ)
+int2 GetxyFromXYZForDiagram
+(
+  const float3 XYZ
+)
 {
   const float xyz = XYZ.x + XYZ.y + XYZ.z;
 
@@ -212,7 +222,10 @@ int2 GetxyFromXYZForDiagram(const float3 XYZ)
   return xy;
 }
 
-int2 GetuvFromXYZForDiagram(const float3 XYZ)
+int2 GetuvFromXYZForDiagram
+(
+  const float3 XYZ
+)
 {
   const float X15Y3Z = XYZ.x
                      + 15.f * XYZ.y
@@ -231,8 +244,10 @@ int2 GetuvFromXYZForDiagram(const float3 XYZ)
 }
 
 
-void GenerateCieDiagram(
-  const float3 XYZ)
+void GenerateCieDiagram
+(
+  const float3 XYZ
+)
 {
   BRANCH(x)
   if (_CIE_DIAGRAM_TYPE == CIE_1931)
@@ -272,7 +287,10 @@ void GenerateCieDiagram(
 }
 
 groupshared int2 StorePos;
-void CS_RenderCrosshairToCieDiagram(uint3 DTID : SV_DispatchThreadID)
+void CS_RenderCrosshairToCieDiagram
+(
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   static const float4 storeColourBlack = float4(0.f, 0.f, 0.f, 1.f);
   static const float4 storeColourWhite = float4(1.f, 1.f, 1.f, 1.f);

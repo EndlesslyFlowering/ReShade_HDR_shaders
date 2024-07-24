@@ -2,7 +2,10 @@
 
 
 // outer spacing is half the size of a character rounded up
-uint GetOuterSpacing(const uint CharXDimension)
+uint GetOuterSpacing
+(
+  const uint CharXDimension
+)
 {
   float charXDimAsFloat = float(CharXDimension);
 
@@ -15,9 +18,11 @@ float2 GetTexCoordsFromRegularCoords(const float2 TexCoordOffset)
   return TexCoordOffset / float2(FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT);
 }
 
-float2 GetPositonCoordsFromRegularCoords(
+float2 GetPositonCoordsFromRegularCoords
+(
   const float2 RegularCoords,
-  const float2 TextureSize)
+  const float2 TextureSize
+)
 {
   float2 positionCoords = RegularCoords / TextureSize * 2;
 
@@ -27,48 +32,75 @@ float2 GetPositonCoordsFromRegularCoords(
 
 
 //extract all digits without causing float issues
-uint _6th(precise const float Float)
+uint _6th
+(
+  precise const float Float
+)
 {
   return uint(Float) / 100000u;
 }
 
-uint _5th(precise const float Float)
+uint _5th
+(
+  precise const float Float
+)
 {
   return uint(Float) /  10000u;
 }
 
-uint _4th(precise const float Float)
+uint _4th
+(
+  precise const float Float
+)
 {
   return uint(Float) /   1000u;
 }
 
-uint _3rd(precise const float Float)
+uint _3rd
+(
+  precise const float Float
+)
 {
   return uint(Float) /    100u;
 }
 
-uint _2nd(precise const float Float)
+uint _2nd
+(
+  precise const float Float
+)
 {
   return uint(Float) /     10u;
 }
 
-uint _1st(precise const float Float)
+uint _1st
+(
+  precise const float Float
+)
 {
   return uint(Float) %     10u;
 }
 
 
-uint d1st(precise const float Float)
+uint d1st
+(
+  precise const float Float
+)
 {
   return uint((Float % 1.f) *       10.f) % 10u;
 }
 
-uint d2nd(precise const float Float)
+uint d2nd
+(
+  precise const float Float
+)
 {
   return uint((Float % 1.f) *      100.f) % 10u;
 }
 
-uint d3rd(precise const float Float)
+uint d3rd
+(
+  precise const float Float
+)
 {
   if (Float < 10000.f)
   {
@@ -77,12 +109,18 @@ uint d3rd(precise const float Float)
   return 11u;
 }
 
-uint _d3rd(precise const float Float)
+uint _d3rd
+(
+  precise const float Float
+)
 {
   return uint((Float % 1.f) *     1000.f) % 10u;
 }
 
-uint d4th(precise const float Float)
+uint d4th
+(
+  precise const float Float
+)
 {
   if (Float < 1000.f)
   {
@@ -91,7 +129,10 @@ uint d4th(precise const float Float)
   return 11u;
 }
 
-uint d5th(precise const float Float)
+uint d5th
+(
+  precise const float Float
+)
 {
   if (Float < 100.f)
   {
@@ -100,7 +141,10 @@ uint d5th(precise const float Float)
   return 11u;
 }
 
-uint d6th(precise const float Float)
+uint d6th
+(
+  precise const float Float
+)
 {
   if (Float < 10.f)
   {
@@ -109,7 +153,10 @@ uint d6th(precise const float Float)
   return 11u;
 }
 
-uint d7th(precise const float Float)
+uint d7th
+(
+  precise const float Float
+)
 {
   if (Float < 1.f)
   {
@@ -119,7 +166,10 @@ uint d7th(precise const float Float)
 }
 
 
-uint GetNumberAboveZero(precise uint CurNumber)
+uint GetNumberAboveZero
+(
+  precise uint CurNumber
+)
 {
   if (CurNumber > 0)
   {
@@ -133,22 +183,25 @@ uint GetNumberAboveZero(precise uint CurNumber)
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
-void CS_GetNitNumbers(uint3 GID  : SV_GroupID,
-                      uint3 GTID : SV_GroupThreadID,
-                      uint3 DTID : SV_DispatchThreadID)
+void CS_GetNitNumbers
+(
+  uint3 GID  : SV_GroupID,
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   static const int2 storePos = int2(DTID.xy);
 
   float nits;
 
-  BRANCH(x)
+  [branch]
   if (GID.y < 3
    && _SHOW_NITS_VALUES)
   {
     nits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_MAX_NITS + (3 * GID.x) + GID.y);
   }
   else
-  BRANCH(x)
+  [branch]
   if (_SHOW_NITS_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
@@ -353,9 +406,12 @@ void CS_GetNitNumbers(uint3 GID  : SV_GroupID,
 }
 
 #ifdef IS_HDR_CSP
-void CS_GetGamutNumbers(uint3 GID  : SV_GroupID,
-                        uint3 GTID : SV_GroupThreadID,
-                        uint3 DTID : SV_DispatchThreadID)
+void CS_GetGamutNumbers
+(
+  uint3 GID  : SV_GroupID,
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   static const int2 storePos = int2(DTID.x + NITS_NUMBERS_PER_ROW, GID.y);
 
@@ -409,9 +465,11 @@ static const float2 ShowNumbersTextureSize =
  float2(TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH,
         TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT);
 
-void VS_PrepareGetNumbersNits(
+void VS_PrepareGetNumbersNits
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   static const float2 positions[3] =
   {
@@ -425,9 +483,11 @@ void VS_PrepareGetNumbersNits(
   return;
 }
 
-void PS_GetNumbersNits(
+void PS_GetNumbersNits
+(
   in  float4 Position : SV_Position,
-  out float  Number   : SV_Target0)
+  out float  Number   : SV_Target0
+)
 {
   const int2 positionAsInt2 = int2(Position.xy);
 
@@ -512,9 +572,11 @@ void PS_GetNumbersNits(
 
 
 #ifdef IS_HDR_CSP
-void VS_PrepareGetGamutNumbers(
+void VS_PrepareGetGamutNumbers
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   static const float2 positions[3] =
   {
@@ -529,9 +591,11 @@ void VS_PrepareGetGamutNumbers(
 }
 
 
-void PS_GetGamutNumbers(
+void PS_GetGamutNumbers
+(
   in  float4 Position : SV_Position,
-  out float  Number   : SV_Target0)
+  out float  Number   : SV_Target0
+)
 {
   const int2 positionAsInt2 = int2(Position.xy);
 
@@ -581,10 +645,12 @@ void PS_GetGamutNumbers(
 #endif //IS_COMPUTE_CAPABLE_API
 
 
-float3 MergeText(
+float3 MergeText
+(
   float3 Output,
   float4 Mtsdf,
-  float  ScreenPixelRange)
+  float  ScreenPixelRange
+)
 {
   const float sd = GetMedian(Mtsdf.rgb);
 
@@ -707,6 +773,7 @@ float GetMaxChars()
 {
   float maxChars = MAX_CHARS;
 
+  [flatten]
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
@@ -714,6 +781,7 @@ float GetMaxChars()
   }
 
 #ifdef IS_HDR_CSP
+  [flatten]
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
@@ -731,17 +799,20 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   ret.maxChars = MAX_CHARS;
   ret.maxLines = MAX_LINES;
 
+  [flatten]
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
     ret.maxChars = max(ret.maxChars, uint(TEXT_OFFSET_NITS_CURSOR.x) + NITS_EXTRA_CHARS);
   }
 
+  [flatten]
   if (!_SHOW_NITS_VALUES)
   {
     ret.maxLines -= 3;
   }
 
+  [flatten]
   if (!_SHOW_NITS_FROM_CURSOR)
   {
     ret.maxLines -= 1;
@@ -749,17 +820,20 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
 
 #ifdef IS_HDR_CSP
 
+  [flatten]
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxChars = max(ret.maxChars, uint(TEXT_OFFSET_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
   }
 
+  [flatten]
   if (!SHOW_GAMUTS)
   {
     ret.maxLines -= GAMUT_PERCENTAGES_LINES;
   }
 
+  [flatten]
   if (!SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxLines -= 1;
@@ -770,9 +844,11 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   return ret;
 }
 
-VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
+VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
+(
   const uint   VertexID,
-  const float2 CharSize)
+  const float2 CharSize
+)
 {
   switch(VertexID)
   {
@@ -937,11 +1013,13 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks(
 }
 
 
-void VS_RenderText(
+void VS_RenderText
+(
   in                  uint   VertexID         : SV_VertexID,
   out                 float4 Position         : SV_Position,
   out                 float2 TexCoord         : TEXCOORD0,
-  out nointerpolation float  ScreenPixelRange : ScreenPixelRange)
+  out nointerpolation float  ScreenPixelRange : ScreenPixelRange
+)
 {
   static const float2 charSize = CHAR_DIM_FLOAT * _TEXT_SIZE;
 
@@ -956,11 +1034,13 @@ void VS_RenderText(
   return;
 }
 
-void PS_RenderText(
+void PS_RenderText
+(
   in                  float4 Position         : SV_Position,
   in                  float2 TexCoord         : TEXCOORD0,
   in  nointerpolation float  ScreenPixelRange : ScreenPixelRange,
-  out                 float4 Output           : SV_Target0)
+  out                 float4 Output           : SV_Target0
+)
 {
   float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
@@ -973,9 +1053,11 @@ void PS_RenderText(
                          ScreenPixelRange);
 }
 
-VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
+VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
+(
   const uint   VertexID,
-  const float2 CharSize)
+  const float2 CharSize
+)
 {
   uint currentNumberID = VertexID / 6;
 
@@ -1010,7 +1092,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 #endif
                                      ;
 
-  BRANCH(x)
+  //[branch] can't branch here iirc?
   if (curNumber < 11u)
   {
     const uint currentVertexID = VertexID % 6;
@@ -1056,7 +1138,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
     else
     [flatten]
     if (currentNumberID < (NITS_NUMBERS_PER_ROW * 4)
-          && _SHOW_NITS_FROM_CURSOR)
+     && _SHOW_NITS_FROM_CURSOR)
     {
       uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
@@ -1083,16 +1165,19 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
 #ifdef IS_HDR_CSP
     else
     [flatten]
-    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3 + NITS_NUMBERS_PER_ROW * 1 + 6 *
+    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3
+                         + NITS_NUMBERS_PER_ROW * 1
+                         + 6 *
 #ifdef IS_FLOAT_HDR_CSP
-                                                                                          5
+                               5
 #else
-                                                                                          3
+                               3
 #endif
-                               ) && SHOW_GAMUTS)
+                          ) && SHOW_GAMUTS)
     //gamut percentages
     {
-      currentNumberID -= (NITS_NUMBERS_PER_ROW * 3 + NITS_NUMBERS_PER_ROW * 1);
+      currentNumberID -= (NITS_NUMBERS_PER_ROW * 3
+                        + NITS_NUMBERS_PER_ROW * 1);
 
       uint a = (currentNumberID % 6);
 
@@ -1161,18 +1246,20 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers(
   }
 }
 
-void VS_RenderNumbers(
+void VS_RenderNumbers
+(
   in                  uint   VertexID         : SV_VertexID,
   out                 float4 Position         : SV_Position,
   out                 float2 TexCoord         : TEXCOORD0,
-  out nointerpolation float  ScreenPixelRange : ScreenPixelRange)
+  out nointerpolation float  ScreenPixelRange : ScreenPixelRange
+)
 {
   static const float2 charSize = CHAR_DIM_FLOAT * _TEXT_SIZE;
 
   VertexCoordsAndTexCoords vertexCoordsAndTexCoords;
 
 #ifdef IS_HDR_CSP
-  BRANCH(x)
+  //[branch] can't branch here iirc?
   if (VertexID < (NUMBERS_COUNT - 1) * 6)
   {
 #endif
@@ -1266,11 +1353,13 @@ void VS_RenderNumbers(
 }
 
 
-void PS_RenderNumbers(
+void PS_RenderNumbers
+(
   in                  float4 Position         : SV_Position,
   in                  float2 TexCoord         : TEXCOORD0,
   in  nointerpolation float  ScreenPixelRange : ScreenPixelRange,
-  out                 float4 Output           : SV_Target0)
+  out                 float4 Output           : SV_Target0
+)
 {
   float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 

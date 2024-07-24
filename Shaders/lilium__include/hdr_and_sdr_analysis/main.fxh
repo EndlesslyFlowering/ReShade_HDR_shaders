@@ -691,7 +691,10 @@ sampler2D<float4> SamplerIntermediate
 };
 
 
-float GetPositonXCoordFromRegularXCoord(const float RegularXCoord)
+float GetPositonXCoordFromRegularXCoord
+(
+  const float RegularXCoord
+)
 {
   float positionXCoord = RegularXCoord / CONSOLIDATED_TEXTURE_WIDTH * 2;
 
@@ -733,9 +736,11 @@ void PS_Clear()
 }
 
 
-void ExtendedReinhardTmo(
+void ExtendedReinhardTmo
+(
   inout float3 Colour,
-  in    float  WhitePoint)
+  in    float  WhitePoint
+)
 {
 #ifdef IS_HDR_CSP
   float maxWhite = 10000.f / WhitePoint;
@@ -747,11 +752,13 @@ void ExtendedReinhardTmo(
          / (1.f + Colour);
 }
 
-float3 MergeOverlay(
+float3 MergeOverlay
+(
   float3 Output,
   float3 Overlay,
   float  OverlayBrightness,
-  float  Alpha)
+  float  Alpha
+)
 {
   // tone map pixels below the overlay area
   //
@@ -833,9 +840,11 @@ float3 MergeOverlay(
 #include "active_area.fxh"
 
 
-float3 MapBt709IntoCurrentCsp(
+float3 MapBt709IntoCurrentCsp
+(
   float3 Colour,
-  float  Brightness)
+  float  Brightness
+)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
@@ -867,11 +876,15 @@ float3 MapBt709IntoCurrentCsp(
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
-void CS_RenderWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
+void CS_RenderWaveformAndGenerateCieDiagram
+(
+  uint3 DTID : SV_DispatchThreadID
+)
 {
 
   BRANCH(x)
-  if (_SHOW_WAVEFORM || _SHOW_CIE)
+  if (_SHOW_WAVEFORM
+   || _SHOW_CIE)
   {
 
 #ifndef WAVE64_FETCH_X_NEEDS_CLAMPING
@@ -899,17 +912,19 @@ void CS_RenderWaveformAndGenerateCieDiagram(uint3 DTID : SV_DispatchThreadID)
     {
       return;
     }
-
-    BRANCH(x)
-    if (_SHOW_CIE)
+    else
     {
-      GenerateCieDiagram(XYZ);
-    }
+      BRANCH(x)
+      if (_SHOW_CIE)
+      {
+        GenerateCieDiagram(XYZ);
+      }
 
-    BRANCH(x)
-    if (_SHOW_WAVEFORM)
-    {
-      RenderWaveform(fetchPos);
+      BRANCH(x)
+      if (_SHOW_WAVEFORM)
+      {
+        RenderWaveform(fetchPos);
+      }
     }
   }
 }
@@ -1011,23 +1026,29 @@ void CS_Finalise()
 
 #else //IS_COMPUTE_CAPABLE_API
 
-void VS_Transfer(
+void VS_Transfer
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   Position = float4(-0.99f, 0.f, 0.f, 1.f);
 }
 
-void PS_Transfer(
+void PS_Transfer
+(
   in  float4 Position : SV_Position,
-  out float  Transfer : SV_Target0)
+  out float  Transfer : SV_Target0
+)
 {
   Transfer = tex2Dfetch(SamplerConsolidated, int2(COORDS_UPDATE_OVERLAY_PERCENTAGES, 0));
 }
 
-void VS_PrepareFinalise(
+void VS_PrepareFinalise
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   static const float positions[2] =
   {
@@ -1046,9 +1067,11 @@ void VS_PrepareFinalise(
   return;
 }
 
-void PS_Finalise(
+void PS_Finalise
+(
   in  float4 Position : SV_Position,
-  out float4 Output   : SV_Target0)
+  out float4 Output   : SV_Target0
+)
 {
   float frametimeCounter = tex2Dfetch(SamplerConsolidated, int2(COORDS_UPDATE_OVERLAY_PERCENTAGES, 0));
 
@@ -1090,16 +1113,20 @@ void PS_Finalise(
   }
 }
 
-void VS_Transfer2(
+void VS_Transfer2
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   Position = float4(-0.99f, 0.f, 0.f, 1.f);
 }
 
-void PS_Transfer2(
+void PS_Transfer2
+(
   in  float4 Position : SV_Position,
-  out float  Transfer : SV_Target0)
+  out float  Transfer : SV_Target0
+)
 {
   float frametimeCounter = tex2Dfetch(SamplerTransfer, int2(0, 0));
 

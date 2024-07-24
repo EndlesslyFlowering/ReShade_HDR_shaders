@@ -358,11 +358,13 @@ namespace Waveform
          + waveDat.borderSize;
   }
 
-  int2 GetNitsOffset(
+  int2 GetNitsOffset
+  (
     const int ActiveBorderSize,
     const int ActiveFrameSize,
     const int ActiveFontSpacer,
-    const int YOffset)
+    const int YOffset
+  )
   {
     return int2(ActiveBorderSize,
                 ActiveBorderSize + ActiveFontSpacer + ActiveFrameSize + YOffset);
@@ -377,11 +379,13 @@ namespace Waveform
 
 #endif
 
-  void DrawCharToScale(
+  void DrawCharToScale
+  (
     const uint   Char,
     const float2 CharDim,
     const int2   Pos,
-    const int    CharCount)
+    const int    CharCount
+  )
   {
     const float2 charFetchPos = float2(WAVEFORM_ATLAS_OFFSET.x + (Char * WAVEFORM_CHAR_DIM_UINT.x),
                                        WAVEFORM_ATLAS_OFFSET.y);
@@ -453,8 +457,10 @@ namespace Waveform
 }
 
 
-void RenderWaveform(
-  const int2 FetchPos)
+void RenderWaveform
+(
+  const int2 FetchPos
+)
 {
 #ifdef IS_HDR_CSP
   static const float2 waveformSizeFactor = _WAVEFORM_SIZE / 100.f;
@@ -1123,10 +1129,10 @@ int GetNitsLine
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void VS_PrepareRenderWaveformToScale(
+void VS_PrepareRenderWaveformToScale
+(
   in                  uint   VertexID : SV_VertexID,
   out                 float4 Position : SV_Position,
-  out                 float2 TexCoord : TEXCOORD0,
   out nointerpolation int4   WaveDat0 : WaveDat0,
   out nointerpolation int4   WaveDat1 : WaveDat1,
   out nointerpolation int4   WaveDat2 : WaveDat2
@@ -1139,13 +1145,14 @@ void VS_PrepareRenderWaveformToScale(
                                                 ,
   out nointerpolation float  WaveDat4 : WaveDat4
 #endif
-  )
+)
 {
-  TexCoord.x = (VertexID == 2) ? 2.f
+  float2 texCoord;
+  texCoord.x = (VertexID == 2) ? 2.f
                                : 0.f;
-  TexCoord.y = (VertexID == 1) ? 2.f
+  texCoord.y = (VertexID == 1) ? 2.f
                                : 0.f;
-  Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
 #define WaveformActiveArea   WaveDat0.xy
 #define OffsetToWaveformArea WaveDat0.zw
@@ -1285,9 +1292,10 @@ void VS_PrepareRenderWaveformToScale(
         if (maxNits > 0.f
          && maxNits < MAX_NITS_LINE_CUTOFF)
         {
-          MaxNitsLineY = GetNitsLine(maxNits, waveformScaleFactorY
+          MaxNitsLineY = GetNitsLine(maxNits,
+                                     waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                  , waveDat.cutoffOffset
+                                   , waveDat.cutoffOffset
 #endif
                                     );
         }
@@ -1349,9 +1357,9 @@ void VS_PrepareRenderWaveformToScale(
   }
 }
 
-void PS_RenderWaveformToScale(
+void PS_RenderWaveformToScale
+(
   in                  float4 Position : SV_Position,
-  in                  float2 TexCoord : TEXCOORD0,
   in  nointerpolation int4   WaveDat0 : WaveDat0,
   in  nointerpolation int4   WaveDat1 : WaveDat1,
   in  nointerpolation int4   WaveDat2 : WaveDat2,
@@ -1362,7 +1370,8 @@ void PS_RenderWaveformToScale(
   && BUFFER_COLOR_BIT_DEPTH != 10)
   in  nointerpolation float  WaveDat4 : WaveDat4,
 #endif
-  out                 float4 Out      : SV_Target0)
+  out                 float4 Out      : SV_Target0
+)
 {
   Out = 0.f;
 
@@ -1375,6 +1384,9 @@ void PS_RenderWaveformToScale(
 
     const int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
 
+    float2 scaleColour = tex2Dfetch(SamplerWaveformScale, scaleCoords).rg;
+
+    [branch]
     if (all(waveformCoords >= 0)
      && all(waveformCoords < WaveformActiveArea))
     {
@@ -1385,7 +1397,7 @@ void PS_RenderWaveformToScale(
       int minLineY;
       int maxLineY;
 
-      BRANCH(x)
+      [flatten]
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
       {
         minLineY = MinNitsLineY;
@@ -1399,7 +1411,9 @@ void PS_RenderWaveformToScale(
           minLineY = MinRLineY;
           maxLineY = MaxRLineY;
         }
-        else [flatten] if (isGPart)
+        else
+        [flatten]
+        if (isGPart)
         {
           minLineY = MinGLineY;
           maxLineY = MaxGLineY;
@@ -1411,6 +1425,7 @@ void PS_RenderWaveformToScale(
         }
       }
 
+      [branch]
 #ifdef IS_QHD_OR_HIGHER_RES
       if (waveformCoords.y == minLineY
        || waveformCoords.y == minLineY - 1)
@@ -1421,7 +1436,8 @@ void PS_RenderWaveformToScale(
         Out = float4(1.f, 1.f, 1.f, 1.f);
         return;
       }
-
+      else
+      [branch]
 #ifdef IS_QHD_OR_HIGHER_RES
       if (waveformCoords.y == maxLineY
        || waveformCoords.y == maxLineY + 1)
@@ -1432,75 +1448,91 @@ void PS_RenderWaveformToScale(
         Out = float4(1.f, 1.f, 0.f, 1.f);
         return;
       }
-
-      bool waveformCoordsGTEMaxLine;
-      bool waveformCoordsSTEMinLine;
-
-      BRANCH(x)
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
+      else
       {
-        waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;
-        waveformCoordsSTEMinLine = waveformCoords.y <= MinNitsLineY;
-      }
-      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-      {
-        if (isRPart)
-        {
-          waveformCoordsGTEMaxLine = waveformCoords.y >= MaxRLineY;
-          waveformCoordsSTEMinLine = waveformCoords.y <= MinRLineY;
-        }
-        else if (isGPart)
-        {
-          waveformCoordsGTEMaxLine = waveformCoords.y >= MaxGLineY;
-          waveformCoordsSTEMinLine = waveformCoords.y <= MinGLineY;
-        }
-        else
-        {
-          waveformCoordsGTEMaxLine = waveformCoords.y >= MaxBLineY;
-          waveformCoordsSTEMinLine = waveformCoords.y <= MinBLineY;
-        }
-      }
+        bool waveformCoordsGTEMaxLine;
+        bool waveformCoordsSTEMinLine;
 
-      const bool showMaxLineActive = waveformCoordsGTEMaxLine && _WAVEFORM_SHOW_MAX_NITS_LINE;
-      const bool showMinLineActive = waveformCoordsSTEMinLine && _WAVEFORM_SHOW_MIN_NITS_LINE;
+        [flatten]
+        if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
+        {
+          waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;
+          waveformCoordsSTEMinLine = waveformCoords.y <= MinNitsLineY;
+        }
+        else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+        {
+          [flatten]
+          if (isRPart)
+          {
+            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxRLineY;
+            waveformCoordsSTEMinLine = waveformCoords.y <= MinRLineY;
+          }
+          else
+          [flatten]
+          if (isGPart)
+          {
+            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxGLineY;
+            waveformCoordsSTEMinLine = waveformCoords.y <= MinGLineY;
+          }
+          else
+          {
+            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxBLineY;
+            waveformCoordsSTEMinLine = waveformCoords.y <= MinBLineY;
+          }
+        }
 
-      BRANCH(x)
-      if (( showMaxLineActive            &&  showMinLineActive)
-       || (!_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinLineActive)
-       || ( showMaxLineActive            && !_WAVEFORM_SHOW_MIN_NITS_LINE)
-       || (!_WAVEFORM_SHOW_MAX_NITS_LINE && !_WAVEFORM_SHOW_MIN_NITS_LINE))
-      {
-        int2 waveformFetchCoords;
+        const bool showMaxLineActive = waveformCoordsGTEMaxLine && _WAVEFORM_SHOW_MAX_NITS_LINE;
+        const bool showMinLineActive = waveformCoordsSTEMinLine && _WAVEFORM_SHOW_MIN_NITS_LINE;
 
-        waveformFetchCoords.x = waveformCoords.x;
+        [branch]
+        if (( showMaxLineActive            &&  showMinLineActive)
+         || (!_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinLineActive)
+         || ( showMaxLineActive            && !_WAVEFORM_SHOW_MIN_NITS_LINE)
+         || (!_WAVEFORM_SHOW_MAX_NITS_LINE && !_WAVEFORM_SHOW_MIN_NITS_LINE))
+        {
+          int2 waveformFetchCoords;
+
+          waveformFetchCoords.x = waveformCoords.x;
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
 
-        waveformFetchCoords.y = int(float(waveformCoords.y + WaveformCutoffOffset)
-                                        * WaveformSizeYFactor);
+          waveformFetchCoords.y = int(float(waveformCoords.y + WaveformCutoffOffset)
+                                          * WaveformSizeYFactor);
 #else
-        waveformFetchCoords.y = waveformCoords.y + WaveformCutoffOffset;
+          waveformFetchCoords.y = waveformCoords.y + WaveformCutoffOffset;
 #endif
 
-        float2 scaleColour = tex2Dfetch(SamplerWaveformScale, scaleCoords).rg;
-        // using gamma 2 as intermediate gamma space
-        scaleColour.r *= scaleColour.r;
+          // using gamma 2 as intermediate gamma space
+          scaleColour.r *= scaleColour.r;
 
-        float4 waveformColour = tex2Dfetch(SamplerWaveform, waveformFetchCoords);
-        // using gamma 2 as intermediate gamma space
-        waveformColour.rgb *= waveformColour.rgb;
+          float4 waveformColour = tex2Dfetch(SamplerWaveform, waveformFetchCoords);
+          // using gamma 2 as intermediate gamma space
+          waveformColour.rgb *= waveformColour.rgb;
 
-        Out = scaleColour.rrrg
-            + waveformColour;
+          float4 colourOut = scaleColour.rrrg
+                           + waveformColour;
 
-        // using gamma 2 as intermediate gamma space
-        Out.rgb = sqrt(Out.rgb);
-        return;
+          // using gamma 2 as intermediate gamma space
+          colourOut.rgb = sqrt(colourOut.rgb);
+
+          Out = colourOut;
+          return;
+        }
+        else
+        {
+          Out = scaleColour.rrrg;
+          return;
+        }
       }
     }
-    //else
-    Out = tex2Dfetch(SamplerWaveformScale, scaleCoords).rrrg;
-    return;
+    else
+    {
+      Out = scaleColour.rrrg;
+      return;
+    }
   }
-  discard;
+  else
+  {
+    discard;
+  }
 }

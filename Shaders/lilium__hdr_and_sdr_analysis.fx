@@ -628,7 +628,7 @@ uniform float _WAVEFORM_ALPHA
   ui_step     = 0.5f;
 > = DEFAULT_ALPHA_LEVEL;
 
-static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3;
+static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3u;
 
 #ifdef IS_HDR_CSP
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
@@ -1085,7 +1085,8 @@ void PS_Testy(
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void VS_PrepareHdrAnalysis(
+void VS_PrepareHdrAnalysis
+(
   in                  uint   VertexID                        : SV_VertexID,
   out                 float4 Position                        : SV_Position,
   out nointerpolation bool2  PingPongChecks                  : PingPongChecks,
@@ -1095,7 +1096,7 @@ void VS_PrepareHdrAnalysis(
   out nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
   out nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0
 #endif
-  )
+)
 {
   float2 texCoord;
   texCoord.x = (VertexID == 2) ? 2.f
@@ -1138,23 +1139,32 @@ void VS_PrepareHdrAnalysis(
       float pingpong1 = NIT_PINGPONG1.y == 1 ?       NIT_PINGPONG1.x
                                              : 6.f - NIT_PINGPONG1.x;
 
+      [flatten]
       if (pingpong1 <= 1.f)
       {
         highlightNitRangeOut = float3(1.f, NIT_PINGPONG2.x, 0.f);
       }
-      else if (pingpong1 <= 2.f)
+      else
+      [flatten]
+      if (pingpong1 <= 2.f)
       {
         highlightNitRangeOut = float3(NIT_PINGPONG2.x, 1.f, 0.f);
       }
-      else if (pingpong1 <= 3.f)
+      else
+      [flatten]
+      if (pingpong1 <= 3.f)
       {
         highlightNitRangeOut = float3(0.f, 1.f, NIT_PINGPONG2.x);
       }
-      else if (pingpong1 <= 4.f)
+      else
+      [flatten]
+      if (pingpong1 <= 4.f)
       {
         highlightNitRangeOut = float3(0.f, NIT_PINGPONG2.x, 1.f);
       }
-      else if (pingpong1 <= 5.f)
+      else
+      [flatten]
+      if (pingpong1 <= 5.f)
       {
         highlightNitRangeOut = float3(NIT_PINGPONG2.x, 0.f, 1.f);
       }
@@ -1193,7 +1203,8 @@ void VS_PrepareHdrAnalysis(
 }
 
 
-void PS_HdrAnalysis(
+void PS_HdrAnalysis
+(
   in                  float4 Position                        : SV_Position,
   in  nointerpolation bool2  PingPongChecks                  : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange               : HighlightNitRange,
@@ -1201,7 +1212,8 @@ void PS_HdrAnalysis(
   in  nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
   in  nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0,
 #endif
-  out                 float4 Output                          : SV_Target0)
+  out                 float4 Output                          : SV_Target0
+)
 {
   const int2 pureCoordAsInt = int2(Position.xy);
 

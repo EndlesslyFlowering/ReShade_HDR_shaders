@@ -4,10 +4,12 @@
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void VS_PrepareSetActiveArea(
+void VS_PrepareSetActiveArea
+(
   in                  uint   VertexID          : SV_VertexID,
   out                 float4 Position          : SV_Position,
-  out nointerpolation float4 PercentagesToCrop : PercentagesToCrop)
+  out nointerpolation float4 PercentagesToCrop : PercentagesToCrop
+)
 {
   float2 TexCoord;
   TexCoord.x = (VertexID == 2) ? 2.f
@@ -34,10 +36,12 @@ void VS_PrepareSetActiveArea(
 
 }
 
-void PS_SetActiveArea(
+void PS_SetActiveArea
+(
   in                  float4 Position          : SV_Position,
   in  nointerpolation float4 PercentagesToCrop : PercentagesToCrop,
-  out                 float4 Output            : SV_Target0)
+  out                 float4 Output            : SV_Target0
+)
 {
   Output = 0.f;
 

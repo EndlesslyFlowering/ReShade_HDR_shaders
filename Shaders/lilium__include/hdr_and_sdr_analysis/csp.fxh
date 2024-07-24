@@ -74,7 +74,10 @@ void FinaliseGamutCounter()
 }
 
 
-bool IsGamut(float3 Rgb)
+bool IsGamut
+(
+  const float3 Rgb
+)
 {
   if (all(Rgb >= 0.f))
   {
@@ -108,7 +111,10 @@ bool IsGamut(float3 Rgb)
 #endif
 
 
-float GetGamut(float3 Rgb)
+float GetGamut
+(
+  const float3 Rgb
+)
 {
   [branch]
   if (IsGamut(_IS_GAMUT_BT709(Rgb)))
@@ -154,9 +160,11 @@ float GetGamut(float3 Rgb)
 }
 
 
-void PS_CalcGamuts(
+void PS_CalcGamuts
+(
       float4 Position : SV_Position,
-  out float  CurGamut : SV_Target0)
+  out float  CurGamut : SV_Target0
+)
 {
   CurGamut = 0.f;
 
@@ -283,8 +291,11 @@ groupshared uint GroupBt2020;
 groupshared uint GroupAp0;
 groupshared uint GroupInvalid;
 #endif
-void CS_CountGamuts(uint3 GTID : SV_GroupThreadID,
-                    uint3 DTID : SV_DispatchThreadID)
+void CS_CountGamuts
+(
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
 {
   BRANCH(x)
   if (SHOW_GAMUTS)
@@ -375,9 +386,11 @@ void CS_CountGamuts(uint3 GTID : SV_GroupThreadID,
 
 #else //IS_COMPUTE_CAPABLE_API
 
-void PS_CountGamuts(
+void PS_CountGamuts
+(
   in  float4 Position : SV_Position,
-  out float4 Output   : SV_Target0)
+  out float4 Output   : SV_Target0
+)
 {
   const uint2 id = uint2(Position.xy);
 
@@ -422,9 +435,11 @@ void PS_CountGamuts(
 }
 
 
-void VS_PrepareFinaliseCountGamuts(
+void VS_PrepareFinaliseCountGamuts
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   static const float positions[2] =
   {
@@ -441,9 +456,11 @@ void VS_PrepareFinaliseCountGamuts(
   return;
 }
 
-void PS_FinaliseCountGamuts(
+void PS_FinaliseCountGamuts
+(
   in  float4 Position : SV_Position,
-  out float  Output   : SV_Target0)
+  out float  Output   : SV_Target0
+)
 {
   const uint id = uint(Position.x - COORDS_PERCENTAGE_BT709);
 
@@ -466,9 +483,11 @@ void PS_FinaliseCountGamuts(
 
 #endif //IS_COMPUTE_CAPABLE_API
 
-float3 CreateGamutMap(
+float3 CreateGamutMap
+(
   const uint  Gamut,
-        float Y)
+        float Y
+)
 //  float WhitePoint)
 {
   if (SHOW_GAMUT_MAP)
