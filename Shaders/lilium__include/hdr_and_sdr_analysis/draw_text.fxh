@@ -212,12 +212,16 @@ void CS_GetNitNumbers
     nits = 0.f;
   }
 
-#ifdef IS_HDR_CSP
-  static const uint negSignPos = nits <= -1000.f ? 5
-                               : nits <=  -100.f ? 4
-                               : nits <=   -10.f ? 3
-                               : nits <      0.f ? 2
-                               :                   9;
+#ifdef IS_FLOAT_HDR_CSP
+  static const bool isMinus0 = asuint(nits) == uint(0x80000000);
+
+  static const uint negSignPos =  nits <= -1000.f  ? 5
+                               :  nits <=  -100.f  ? 4
+                               :  nits <=   -10.f  ? 3
+                               : (isMinus0
+                               || nits <      0.f) ? 2
+                               :                     9;
+
 
   // avoid max nits above or below these values looking cut off in the overlay
   nits = clamp(nits, -9999.999f, 99999.99f);
@@ -280,14 +284,18 @@ void CS_GetNitNumbers
     {
       precise uint _00;
 
+#ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 5)
       {
         _00 = _minus;
       }
       else
       {
+#endif
         _00 = GetNumberAboveZero(_5th(nits));
+#ifdef IS_FLOAT_HDR_CSP
       }
+#endif
 
       tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _00);
     }
@@ -296,14 +304,18 @@ void CS_GetNitNumbers
     {
       precise uint _01;
 
+#ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 4)
       {
         _01 = _minus;
       }
       else
       {
+#endif
         _01 = GetNumberAboveZero(_4th(nits));
+#ifdef IS_FLOAT_HDR_CSP
       }
+#endif
 
       if (GID.y == 3 && _01 == 9u)
         _01 = 1u;
@@ -316,7 +328,7 @@ void CS_GetNitNumbers
     {
       precise uint _02;
 
-#ifdef IS_HDR_CSP
+#ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 3)
       {
         _02 = _minus;
@@ -325,7 +337,7 @@ void CS_GetNitNumbers
       {
 #endif
         _02 = GetNumberAboveZero(_3rd(nits));
-#ifdef IS_HDR_CSP
+#ifdef IS_FLOAT_HDR_CSP
       }
 #endif
 
@@ -336,7 +348,7 @@ void CS_GetNitNumbers
     {
       precise uint _03;
 
-#ifdef IS_HDR_CSP
+#ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 2)
       {
         _03 = _minus;
@@ -345,7 +357,7 @@ void CS_GetNitNumbers
       {
 #endif
         _03 = GetNumberAboveZero(_2nd(nits));
-#ifdef IS_HDR_CSP
+#ifdef IS_FLOAT_HDR_CSP
       }
 #endif
 

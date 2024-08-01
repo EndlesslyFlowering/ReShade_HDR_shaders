@@ -429,7 +429,7 @@ void CS_GetMaxAvgMinNits
 #ifdef IS_FLOAT_HDR_CSP
     int4 threadMaxNitsAsInt = asint(threadMaxNits);
 
-    static const bool4 threadMaxNitsIsNegative = threadMaxNits < 0.f;
+    static const bool4 threadMaxNitsIsNegative = threadMaxNitsAsInt & int(0x80000000);
 
     [flatten]
     if (threadMaxNitsIsNegative.r)
@@ -456,7 +456,7 @@ void CS_GetMaxAvgMinNits
 
     int4 threadMinNitsAsInt = asint(threadMinNits);
 
-    static const bool4 threadMinNitsIsNegative = threadMinNits < 0.f;
+    static const bool4 threadMinNitsIsNegative = threadMinNitsAsInt & int(0x80000000);
 
     [flatten]
     if (threadMinNitsIsNegative.r)
