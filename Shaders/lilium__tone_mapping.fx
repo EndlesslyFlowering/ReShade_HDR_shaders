@@ -128,10 +128,21 @@ static const uint Mode = 0;
       <
         ui_category = "BT.2390 EETF";
         ui_label    = "processing mode";
-        ui_tooltip  = "YRGB:  process RGB according to brightness"
-                 "\n" "RGB:   process each channel individually";
+        ui_tooltip  = "YRGB:"
+                 "\n" "        + produces consistent luminance levels (the ideal)"
+                 "\n" "        - can overshoot the maximum signal your display can process"
+                 "\n" "          which will cause hue shifts"
+                 "\n" "maxCLL:"
+                 "\n" "        + does not overshoot the maximum signal your display can process"
+                 "\n" "        - inconsistent luminance levels of colours that are being tone mapped"
+                 "\n" "          which can look weird"
+                 "\n" "RGB:"
+                 "\n" "        + does not overshoot the maximum signal your display can process"
+                 "\n" "        - inconsistent luminance"
+                 "\n" "        - hue shifts";
         ui_type     = "combo";
         ui_items    = "YRGB\0"
+                      "maxCLL\0"
                       "RGB\0";
       > = 0;
 
@@ -177,9 +188,22 @@ static const uint Mode = 0;
       <
         ui_category = "Dice";
         ui_label    = "processing mode";
-        ui_tooltip  = "YRGB:  process RGB according to brightness";
+        ui_tooltip  = "YRGB:"
+                 "\n" "        + produces consistent luminance levels (the ideal)"
+                 "\n" "        - can overshoot the maximum signal your display can process"
+                 "\n" "          which will cause hue shifts"
+                 "\n" "maxCLL:"
+                 "\n" "        + does not overshoot the maximum signal your display can process"
+                 "\n" "        - inconsistent luminance levels of colours that are being tone mapped"
+                 "\n" "          which can look weird"
+                 "\n" "RGB:"
+                 "\n" "        + does not overshoot the maximum signal your display can process"
+                 "\n" "        - inconsistent luminance"
+                 "\n" "        - hue shifts";
         ui_type     = "combo";
-        ui_items    = "YRGB\0";
+        ui_items    = "YRGB\0"
+                      "maxCLL\0"
+                      "RGB\0";
       > = 0;
 
       uniform float ShoulderStart

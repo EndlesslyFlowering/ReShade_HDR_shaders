@@ -240,7 +240,8 @@ namespace Tmos
     BT2390_EETF_E3_E4(float3)
 
 #define BT2390_PRO_MODE_YRGB   0
-#define BT2390_PRO_MODE_RGB    1
+#define BT2390_PRO_MODE_MAXCLL 1
+#define BT2390_PRO_MODE_RGB    2
 
     // works in PQ
     void Eetf
@@ -309,6 +310,76 @@ namespace Tmos
 
         Rgb *= y2 / y1;
 
+        //HDR10
+        Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
+
+        Colour = Rgb;
+        return;
+      }
+      else
+      BRANCH(x)
+      if (ProcessingMode == BT2390_PRO_MODE_MAXCLL)
+      {
+        //scRGB
+        float3 Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
+
+        float m1;
+        float m1Pq;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        m1   = MAXRGB(Rgb);
+        m1Pq = Csp::Trc::LinearTo::Pq(m1);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+        m1Pq = MAXRGB(Rgb);
+#endif
+
+        //E1
+        float m2 = EetfE1(m1Pq,
+                          SrcMaxPq,
+                          SrcMinPq,
+                          SrcMaxPqMinusSrcMinPq,
+                          DisableBlackFloorAdaption);
+
+        //E2
+        [branch]
+        if (m2 >= KneeStart)
+        {
+          m2 = HermiteSpline(m2,
+                             KneeStart,
+                             OneMinusKneeStart,
+                             OneDivOneMinusKneeStart,
+                             KneeStartDivOneMinusKneeStart,
+                             MaxLum);
+        }
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
+        else
+        [branch]
+        if (MinLum == 0.f)
+        {
+          discard;
+        }
+#endif
+        //E3+E4
+        m2 = EetfE3E4(m2,
+                      SrcMaxPq,
+                      SrcMinPq,
+                      SrcMaxPqMinusSrcMinPq,
+                      MinLum,
+                      DisableBlackFloorAdaption);
+
+        m2 = Csp::Trc::PqTo::Linear(m2);
+
+        //HDR10
+        Rgb = ConditionallyLineariseHdr10(Rgb);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+        //more performant than to linearise maxCll1Pq
+        m1 = MAXRGB(Rgb);
+#endif
+
+        Rgb *= m2 / m1;
+
+        //scRGB
+        Rgb = ConditionallyConvertNormalisedBt2020ToScRgb(Rgb);
         //HDR10
         Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
@@ -393,6 +464,8 @@ namespace Tmos
   namespace Dice
   {
 #define DICE_PRO_MODE_YRGB   0
+#define DICE_PRO_MODE_MAXCLL 1
+#define DICE_PRO_MODE_RGB    2
 
 #define DICE_WORKING_COLOUR_SPACE_BT2020  0
 #define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
@@ -508,6 +581,98 @@ namespace Tmos
 
           Colour = Rgb;
         }
+      }
+      else
+      BRANCH(x)
+      if (ProcessingMode == DICE_PRO_MODE_MAXCLL)
+      {
+        //scRGB
+        float3 Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
+
+        float m1;
+        float m2;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        m1 = MAXRGB(Rgb);
+        m2 = Csp::Trc::LinearTo::Pq(m1);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+        m2 = MAXRGB(Rgb);
+#endif
+
+        [branch]
+        if (m2 < ShoulderStartInPq)
+        {
+          discard;
+        }
+        else
+        {
+          //E3+E4
+          m2 = LuminanceCompress(m2,
+                                 ShoulderStartInPq,
+                                 TargetLuminanceInPqMinusShoulderStartInPq);
+
+          m2 = Csp::Trc::PqTo::Linear(m2);
+
+          //HDR10
+          Rgb = ConditionallyLineariseHdr10(Rgb);
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+          //more performant than to linearise maxCll1Pq
+          m1 = MAXRGB(Rgb);
+#endif
+
+          Rgb *= m2 / m1;
+
+          //scRGB
+          Rgb = ConditionallyConvertNormalisedBt2020ToScRgb(Rgb);
+          //HDR10
+          Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
+
+          Colour = Rgb;
+          return;
+        }
+      }
+      else //if (ProcessingMode == DICE_PRO_MODE_RGB)
+      {
+        //scRGB
+        float3 Rgb = ConditionallyConvertScRgbToHdr10(Colour);
+
+        const bool3 NeedsProcessing = Rgb >= ShoulderStartInPq;
+
+        [branch]
+        if (!any(NeedsProcessing))
+        {
+          discard;
+        }
+        else
+        {
+          [branch]
+          if (NeedsProcessing.r)
+          {
+            Rgb.r = LuminanceCompress(Rgb.r,
+                                      ShoulderStartInPq,
+                                      TargetLuminanceInPqMinusShoulderStartInPq);
+          }
+          [branch]
+          if (NeedsProcessing.g)
+          {
+            Rgb.g = LuminanceCompress(Rgb.g,
+                                      ShoulderStartInPq,
+                                      TargetLuminanceInPqMinusShoulderStartInPq);
+          }
+          [branch]
+          if (NeedsProcessing.b)
+          {
+            Rgb.b = LuminanceCompress(Rgb.b,
+                                      ShoulderStartInPq,
+                                      TargetLuminanceInPqMinusShoulderStartInPq);
+          }
+        }
+
+        //scRGB
+        Rgb = ConditionallyConvertHdr10ToScRgb(Rgb);
+
+        Colour = Rgb;
+        return;
       }
 
 //      return float3(LuminanceCompress(Colour.r, TargetCllInPq, ShoulderStartInPq),
