@@ -1,8 +1,8 @@
 #include "lilium__include/colour_space.fxh"
 
-#ifndef SHOW_ADAPTIVE_MAX_NITS
+//#ifndef SHOW_ADAPTIVE_MAX_NITS
   #define SHOW_ADAPTIVE_MAX_NITS NO
-#endif
+//#endif
 
 
 #if (SHOW_ADAPTIVE_MAX_NITS == YES)
@@ -71,6 +71,9 @@ namespace Ui
 #define TM_METHOD_DICE         2
 #define TM_METHOD_BT2446A_MOD1 3
 
+//#ifdef IS_COMPUTE_CAPABLE_API
+#if 0
+
       uniform uint Mode
       <
         ui_category = "global";
@@ -82,6 +85,12 @@ namespace Ui
         ui_items    = "static\0"
                       "adaptive\0";
       > = 0;
+
+#else
+
+static const uint Mode = 0;
+
+#endif
 
 #define TM_MODE_STATIC   0
 #define TM_MODE_ADAPTIVE 1
@@ -221,6 +230,7 @@ namespace Ui
 //      > = 0;
     } //Dice
 
+#if 0
     namespace AdaptiveMode
     {
       uniform float MaxNitsCap
@@ -284,6 +294,7 @@ namespace Ui
         ui_step     = 0.05f;
       > = 7.5f;
     } //AdaptiveMode
+#endif
   }
 }
 
@@ -678,6 +689,7 @@ void PS_ToneMapping(
 //  }
 //}
 
+#if 0
 technique lilium__tone_mapping_adaptive_maximum_brightness
 <
   ui_label   = "Lilium's tone mapping adaptive mode";
@@ -720,6 +732,7 @@ technique lilium__tone_mapping_adaptive_maximum_brightness
 //    DispatchSizeY = 1;
 //  }
 }
+#endif
 
 technique lilium__tone_mapping
 <
