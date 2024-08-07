@@ -392,37 +392,52 @@ namespace Tmos
                      SrcMaxPqMinusSrcMinPq,
                      DisableBlackFloorAdaption);
 
+        const bool3 NeedsProcessing = Rgb >= KneeStart;
+
         //E2
+
         [branch]
-        if (Rgb.r >= KneeStart)
+        if (any(NeedsProcessing))
         {
-          Rgb.r = HermiteSpline(Rgb.r,
-                                KneeStart,
-                                OneMinusKneeStart,
-                                OneDivOneMinusKneeStart,
-                                KneeStartDivOneMinusKneeStart,
-                                MaxLum);
+          [branch]
+          if (NeedsProcessing.r)
+          {
+            Rgb.r = HermiteSpline(Rgb.r,
+                                  KneeStart,
+                                  OneMinusKneeStart,
+                                  OneDivOneMinusKneeStart,
+                                  KneeStartDivOneMinusKneeStart,
+                                  MaxLum);
+          }
+          [branch]
+          if (NeedsProcessing.g)
+          {
+            Rgb.g = HermiteSpline(Rgb.g,
+                                  KneeStart,
+                                  OneMinusKneeStart,
+                                  OneDivOneMinusKneeStart,
+                                  KneeStartDivOneMinusKneeStart,
+                                  MaxLum);
+          }
+          [branch]
+          if (NeedsProcessing.b)
+          {
+            Rgb.b = HermiteSpline(Rgb.b,
+                                  KneeStart,
+                                  OneMinusKneeStart,
+                                  OneDivOneMinusKneeStart,
+                                  KneeStartDivOneMinusKneeStart,
+                                  MaxLum);
+          }
         }
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
+        else
         [branch]
-        if (Rgb.g >= KneeStart)
+        if (MinLum == 0.f)
         {
-          Rgb.g = HermiteSpline(Rgb.g,
-                                KneeStart,
-                                OneMinusKneeStart,
-                                OneDivOneMinusKneeStart,
-                                KneeStartDivOneMinusKneeStart,
-                                MaxLum);
+          discard;
         }
-        [branch]
-        if (Rgb.b >= KneeStart)
-        {
-          Rgb.b = HermiteSpline(Rgb.b,
-                                KneeStart,
-                                OneMinusKneeStart,
-                                OneDivOneMinusKneeStart,
-                                KneeStartDivOneMinusKneeStart,
-                                MaxLum);
-        }
+#endif
 
         //E3+E4
         Rgb = EetfE3E4(Rgb,
