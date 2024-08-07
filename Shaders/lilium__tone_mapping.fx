@@ -95,10 +95,10 @@ static const uint Mode = 0;
 #define TM_MODE_STATIC   0
 #define TM_MODE_ADAPTIVE 1
 
-      uniform float TargetBrightness
+      uniform float TargetLuminance
       <
         ui_category = "global";
-        ui_label    = "target brightness";
+        ui_label    = "target luminance";
         ui_type     = "drag";
         ui_units    = " nits";
         ui_min      = 0.f;
@@ -109,10 +109,10 @@ static const uint Mode = 0;
 
     namespace StaticMode
     {
-      uniform float MaxNits
+      uniform float InputLuminanceMax
       <
         ui_category = "static tone mapping";
-        ui_label    = "maximum tone mapping brightness";
+        ui_label    = "maximum input luminance";
         ui_tooltip  = "Everything above this will be clipped!";
         ui_type     = "drag";
         ui_units    = " nits";
@@ -374,14 +374,14 @@ void VS_PrepareToneMapping(
 
 //  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
 //  {
-    usedMaxNits = Ui::Tm::StaticMode::MaxNits;
+    usedMaxNits = Ui::Tm::StaticMode::InputLuminanceMax;
 //  }
 //  else
 //  {
 //    usedMaxNits = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_NITS);
 //  }
 
-  usedMaxNits = max(usedMaxNits, Ui::Tm::Global::TargetBrightness);
+  usedMaxNits = max(usedMaxNits, Ui::Tm::Global::TargetLuminance);
 
   if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
   {
@@ -403,7 +403,7 @@ void VS_PrepareToneMapping(
     // target min brightness (Lmin) in PQ
     // target max brightness (Lmax) in PQ
     float2 tgtMinMaxPQ = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::NewBlackPoint,
-                                                     Ui::Tm::Global::TargetBrightness));
+                                                     Ui::Tm::Global::TargetLuminance));
 
     // this is needed often so precalculate it
     bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
@@ -424,11 +424,11 @@ void VS_PrepareToneMapping(
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
-    diceTargetNitsInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetBrightness);
+    diceTargetNitsInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance);
     diceShoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
                          / 100.f
-                         * Ui::Tm::Global::TargetBrightness);
+                         * Ui::Tm::Global::TargetLuminance);
 
     diceUnused0 = 0.f;
     diceUnused1 = float3(0.f, 0.f, 0.f);
@@ -454,7 +454,7 @@ void PS_ToneMapping(
     {
       Tmos::Bt2446A(hdr,
                     usedMaxNits,
-                    Ui::Tm::Global::TargetBrightness);
+                    Ui::Tm::Global::TargetLuminance);
     }
     break;
     case TM_METHOD_BT2390:
@@ -486,11 +486,11 @@ void PS_ToneMapping(
     {
       //move test parameters to vertex shader if this ever gets released
       float testH = clamp(TEST_H + usedMaxNits,                      0.f, 10000.f);
-      float testS = clamp(TEST_S + Ui::Tm::Global::TargetBrightness, 0.f, 10000.f);
+      float testS = clamp(TEST_S + Ui::Tm::Global::TargetLuminance, 0.f, 10000.f);
 
       Tmos::Bt2446A_MOD1(hdr,
                          usedMaxNits,
-                         Ui::Tm::Global::TargetBrightness,
+                         Ui::Tm::Global::TargetLuminance,
                          Ui::Tm::Bt2446A::LumaPostAdjust,
                          Ui::Tm::Bt2446A::GamutCompression,
                          testH,
