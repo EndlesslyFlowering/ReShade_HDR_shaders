@@ -1,9 +1,9 @@
+#include "lilium__include/colour_space.fxh"
 
 #ifndef SHOW_ADAPTIVE_MAX_NITS
   #define SHOW_ADAPTIVE_MAX_NITS NO
 #endif
 
-#include "lilium__include/tone_mappers.fxh"
 
 #if (SHOW_ADAPTIVE_MAX_NITS == YES)
   #include "lilium__include/draw_text_fix.fxh"
@@ -286,6 +286,10 @@ namespace Ui
     } //AdaptiveMode
   }
 }
+
+
+#include "lilium__include/tone_mappers.fxh"
+
 
 #ifdef BT2446A_MOD1_ENABLE
 uniform float TEST_H
