@@ -128,12 +128,10 @@ static const uint Mode = 0;
       <
         ui_category = "BT.2390 EETF";
         ui_label    = "processing mode";
-        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YRGB:  process RGB according to brightness"
+        ui_tooltip  = "YRGB:  process RGB according to brightness"
                  "\n" "RGB:   process each channel individually";
         ui_type     = "combo";
-        ui_items    = "ICtCp\0"
-                      "YRGB\0"
+        ui_items    = "YRGB\0"
                       "RGB\0";
       > = 0;
 
@@ -179,11 +177,9 @@ static const uint Mode = 0;
       <
         ui_category = "Dice";
         ui_label    = "processing mode";
-        ui_tooltip  = "ICtCp: process in ICtCp space (best quality)"
-                 "\n" "YRGB:  process RGB according to brightness";
+        ui_tooltip  = "YRGB:  process RGB according to brightness";
         ui_type     = "combo";
-        ui_items    = "ICtCp\0"
-                      "YRGB\0";
+        ui_items    = "YRGB\0";
       > = 0;
 
       uniform float ShoulderStart

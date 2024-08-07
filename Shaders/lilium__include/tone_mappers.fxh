@@ -239,9 +239,8 @@ namespace Tmos
     BT2390_EETF_E3_E4(float)
     BT2390_EETF_E3_E4(float3)
 
-#define BT2390_PRO_MODE_ICTCP  0
-#define BT2390_PRO_MODE_YRGB   1
-#define BT2390_PRO_MODE_RGB    2
+#define BT2390_PRO_MODE_YRGB   0
+#define BT2390_PRO_MODE_RGB    1
 
     // works in PQ
     void Eetf
@@ -261,71 +260,6 @@ namespace Tmos
       float OneDivOneMinusKneeStart = 1.f / OneMinusKneeStart;
       float KneeStartDivOneMinusKneeStart = KneeStart / OneMinusKneeStart;
 
-      BRANCH(x)
-      if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
-      {
-        float3 Rgb = ConditionallyLineariseHdr10(Colour);
-
-        //to L'M'S'
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float3 pqLms = Csp::Ictcp::ScRgbTo::PqLms(Rgb);
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
-#endif
-
-        float i1 = dot(pqLms.xy, float2(0.5f, 0.5f));
-        //E1
-        float i2 = EetfE1(i1,
-                          SrcMaxPq,
-                          SrcMinPq,
-                          SrcMaxPqMinusSrcMinPq,
-                          DisableBlackFloorAdaption);
-
-        //E2
-        [branch]
-        if (i2 >= KneeStart)
-        {
-          i2 = HermiteSpline(i2,
-                             KneeStart,
-                             OneMinusKneeStart,
-                             OneDivOneMinusKneeStart,
-                             KneeStartDivOneMinusKneeStart,
-                             MaxLum);
-        }
-#if (SHOW_ADAPTIVE_MAX_NITS == NO)
-        else
-        [branch]
-        if (MinLum == 0.f)
-        {
-          discard;
-        }
-#endif
-        //E3+E4
-        i2 = EetfE3E4(i2,
-                      SrcMaxPq,
-                      SrcMinPq,
-                      SrcMaxPqMinusSrcMinPq,
-                      MinLum,
-                      DisableBlackFloorAdaption);
-
-        float3 ictcp = float3(i2,
-                              dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
-                              dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
-
-        //to RGB
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        Rgb = Csp::Ictcp::IctcpTo::ScRgb(ictcp);
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
-#endif
-
-        //HDR10
-        Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
-
-        Colour = Rgb;
-        return;
-      }
-      else
       BRANCH(x)
       if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
@@ -458,8 +392,7 @@ namespace Tmos
 
   namespace Dice
   {
-#define DICE_PRO_MODE_ICTCP 0
-#define DICE_PRO_MODE_YRGB  1
+#define DICE_PRO_MODE_YRGB   0
 
 #define DICE_WORKING_COLOUR_SPACE_BT2020  0
 #define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
@@ -537,51 +470,9 @@ namespace Tmos
 //        KgHelper = Csp::KHelpers::Ap0D65::Kg;
 //      }
 
-      // ICtCp and YRGB method copied from BT.2390
+      // YRGB method copied from BT.2390
       BRANCH(x)
-      if (ProcessingMode == DICE_PRO_MODE_ICTCP)
-      {
-        //HDR10
-        float3 Rgb = ConditionallyLineariseHdr10(Colour);
-
-        //to L'M'S'
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float3 pqLms = Csp::Ictcp::ScRgbTo::PqLms(Rgb);
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
-#endif
-
-        //Intensity
-        float i1 = 0.5f * pqLms.x + 0.5f * pqLms.y;
-
-        if (i1 < ShoulderStartInPq)
-        {
-#if (SHOW_ADAPTIVE_MAX_NITS == NO)
-          discard;
-#endif
-        }
-        else
-        {
-          float i2 = LuminanceCompress(i1, ShoulderStartInPq, TargetLuminanceInPqMinusShoulderStartInPq);
-
-          float3 ictcp = float3(i2,
-                                dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
-                                dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
-
-          //to RGB
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-          Rgb = Csp::Ictcp::IctcpTo::ScRgb(ictcp);
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-          Rgb = Csp::Ictcp::IctcpTo::Bt2020(ictcp);
-#endif
-
-          //HDR10
-          Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
-
-          Colour = Rgb;
-        }
-      }
-      else // if (ProcessingMode == DICE_PRO_MODE_YRGB)
+      if (ProcessingMode == DICE_PRO_MODE_YRGB)
       {
         //HDR10
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
@@ -594,6 +485,7 @@ namespace Tmos
 
         float y2 = Csp::Trc::LinearTo::Pq(y1);
 
+        [branch]
         if (y2 < ShoulderStartInPq)
         {
 #if (SHOW_ADAPTIVE_MAX_NITS == NO)
@@ -608,8 +500,10 @@ namespace Tmos
 
           y2 = Csp::Trc::PqTo::Linear(y2);
 
-          Rgb = y2 / y1 * Rgb;
+          Rgb *= y2 / y1;
 
+
+          //HDR10
           Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
           Colour = Rgb;
