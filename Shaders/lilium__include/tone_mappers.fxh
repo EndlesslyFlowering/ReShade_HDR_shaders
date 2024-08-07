@@ -348,14 +348,12 @@ namespace Tmos
 
     float LuminanceCompress(
       const float Channel,
-      const float TargetCllInPq,
-      const float ShoulderStartInPq)
+      const float ShoulderStartInPq,
+      const float TargetCllInPqMinusShoulderStartInPq)
     {
-      static const float targetCllInPqMinusShoulderStartInPq = TargetCllInPq - ShoulderStartInPq;
-
       return RangeCompress((Channel - ShoulderStartInPq)
-                         / targetCllInPqMinusShoulderStartInPq)
-           * targetCllInPqMinusShoulderStartInPq
+                         / TargetCllInPqMinusShoulderStartInPq)
+           * TargetCllInPqMinusShoulderStartInPq
            + ShoulderStartInPq;
 
 //      return Channel < ShoulderStartInPq
@@ -371,8 +369,8 @@ namespace Tmos
     void ToneMapper(
       inout       float3 Colour,
             const uint   ProcessingMode,
-            const float  TargetCllInPq,
-            const float  ShoulderStartInPq)
+            const float  ShoulderStartInPq,
+            const float  TargetCllInPqMinusShoulderStartInPq)
     {
 
     // why does this not work?!
@@ -440,7 +438,7 @@ namespace Tmos
         }
         else
         {
-          float i2 = LuminanceCompress(i1, TargetCllInPq, ShoulderStartInPq);
+          float i2 = LuminanceCompress(i1, ShoulderStartInPq, TargetCllInPqMinusShoulderStartInPq);
 
           float3 ictcp = float3(i2,
                                 dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
@@ -480,7 +478,9 @@ namespace Tmos
         }
         else
         {
-          y2 = LuminanceCompress(y2, TargetCllInPq, ShoulderStartInPq);
+          y2 = LuminanceCompress(y2,
+                                 ShoulderStartInPq,
+                                 TargetCllInPqMinusShoulderStartInPq);
 
           y2 = Csp::Trc::PqTo::Linear(y2);
 

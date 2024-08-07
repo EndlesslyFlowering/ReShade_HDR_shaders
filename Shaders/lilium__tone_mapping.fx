@@ -405,21 +405,25 @@ void VS_PrepareToneMapping(
   else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
   {
 
-#define diceTargetNitsInPq    TmParms0.y
-#define diceShoulderStartInPq TmParms0.z
+#define diceShoulderStartInPq                   TmParms0.y
+#define diceTargetCllInPqMinusShoulderStartInPq TmParms0.z
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
-    diceTargetNitsInPq = Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance);
-    diceShoulderStartInPq =
+    const float shoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
                          / 100.f
                          * Ui::Tm::Global::TargetLuminance);
 
+    diceTargetCllInPqMinusShoulderStartInPq =
+      Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
+    - shoulderStartInPq;
+
+    diceShoulderStartInPq = shoulderStartInPq;
+
     diceUnused0 = 0.f;
     diceUnused1 = float3(0.f, 0.f, 0.f);
   }
-
 }
 
 
@@ -459,8 +463,8 @@ void PS_ToneMapping(
     {
       Tmos::Dice::ToneMapper(hdr,
                              Ui::Tm::Dice::ProcessingModeDice,
-                             diceTargetNitsInPq,
-                             diceShoulderStartInPq);
+                             diceShoulderStartInPq,
+                             diceTargetCllInPqMinusShoulderStartInPq);
     }
     break;
 
