@@ -186,8 +186,7 @@ namespace Tmos
             const float  SrcMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
             const float  MinLum,    // minLum
             const float  MaxLum,    // maxLum
-            const float  KneeStart, // KS
-            const bool   EnableBlowingOutHighlights)
+            const float  KneeStart) // KS
     {
       BRANCH(x)
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
@@ -232,13 +231,6 @@ namespace Tmos
         float3 ictcp = float3(i2,
                               dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
                               dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
-
-        if (EnableBlowingOutHighlights)
-        {
-          float minI = max(min((i1 / i2), (i2 / i1)), 0.f); // max to avoid invalid colours
-
-          ictcp.yz *= minI;
-        }
 
         //to RGB
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -380,8 +372,7 @@ namespace Tmos
       inout       float3 Colour,
             const uint   ProcessingMode,
             const float  TargetCllInPq,
-            const float  ShoulderStartInPq,
-            const bool   EnableBlowingOutHighlights)
+            const float  ShoulderStartInPq)
     {
 
     // why does this not work?!
@@ -454,13 +445,6 @@ namespace Tmos
           float3 ictcp = float3(i2,
                                 dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
                                 dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2]));
-
-          if (EnableBlowingOutHighlights)
-          {
-            float minI = clamp(min((i1 / i2), (i2 / i1)) * 1.1f, 0.f, 1.f); // max to avoid invalid colours
-
-            ictcp.yz *= minI;
-          }
 
           //to RGB
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
