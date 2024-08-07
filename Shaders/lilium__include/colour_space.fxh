@@ -85,10 +85,12 @@ static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOA
 
 // Vertex shader generating a triangle covering the entire screen
 // See also https://www.reddit.com/r/gamedev/comments/2j17wk/a_slightly_faster_bufferless_vertex_shader_trick/
-void VS_PostProcess(
+void VS_PostProcess
+(
   in  uint   VertexID : SV_VertexID,
   out float4 Position : SV_Position,
-  out float2 TexCoord : TEXCOORD0)
+  out float2 TexCoord : TEXCOORD0
+)
 {
 	TexCoord.x = (VertexID == 2) ? 2.f : 0.f;
 	TexCoord.y = (VertexID == 1) ? 2.f : 0.f;
@@ -96,9 +98,11 @@ void VS_PostProcess(
 	Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 }
 
-void VS_PostProcessWithoutTexCoord(
+void VS_PostProcessWithoutTexCoord
+(
   in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position)
+  out float4 Position : SV_Position
+)
 {
   float2 texCoord;
   texCoord.x = (VertexID == 2) ? 2.f : 0.f;
@@ -333,9 +337,9 @@ void VS_PostProcessWithoutTexCoord(
 
 
 #define INFO_TEXT_BACK_BUFFER \
-       "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT           \
-  "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT     \
-  "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT                 \
+       "detected back buffer format:       " BACK_BUFFER_FORMAT_TEXT       \
+  "\n" "detected back buffer color space:  " BACK_BUFFER_COLOUR_SPACE_TEXT \
+  "\n" "colour space overwritten to:       " CSP_OVERRIDE_TEXT             \
   "\n" "colour space in use by the shader: " ACTUAL_CSP_TEXT
 
 #define INFO_TEXT_CSP_OVERRIDE \
@@ -400,24 +404,26 @@ uniform int GLOBAL_INFO
 #define ERROR_TEXT_2 "Only DirectX 10, 11, 12, OpenGL and Vulkan are supported!"
 
 
-#define ERROR_STUFF                                \
-  uniform int ERROR_MESSAGE                        \
-  <                                                \
-    ui_category = "ERROR";                         \
-    ui_label    = " ";                             \
-    ui_type     = "radio";                         \
-    ui_text     = ERROR_TEXT;                      \
-  >;                                               \
-                                                   \
-  void VS_Error(out float4 Position : SV_Position) \
-  {                                                \
-    Position = -2.f;                               \
-    return;                                        \
-  }                                                \
-  void PS_Error(out float4 Output : SV_Target0)    \
-  {                                                \
-    Output = 0.f;                                  \
-    discard;                                       \
+#define ERROR_STUFF                   \
+  uniform int ERROR_MESSAGE           \
+  <                                   \
+    ui_category = "ERROR";            \
+    ui_label    = " ";                \
+    ui_type     = "radio";            \
+    ui_text     = ERROR_TEXT;         \
+  >;                                  \
+                                      \
+  void VS_Error                       \
+  (                                   \
+    out float4 Position : SV_Position \
+  )                                   \
+  {                                   \
+    Position = -2.f;                  \
+    return;                           \
+  }                                   \
+  void PS_Error()                     \
+  {                                   \
+    discard;                          \
   }
 
 #define VS_ERROR                     \
@@ -447,7 +453,7 @@ uniform int GLOBAL_INFO
 #define FP32_MIN asfloat(0x00800000)
 #define FP32_MAX asfloat(0x7F7FFFFF)
 
-#define UINT_MAX 4294967295
+#define UINT_MAX 4294967295u
 #define  INT_MAX 2147483647
 
 #define MIN3(A, B, C) min(A, min(B, C))
@@ -982,18 +988,21 @@ namespace Csp
     namespace PqTo
     {
 
-      #define PQ_TO_LINEAR(T)                           \
-        T Linear(T E_)                                  \
-        {                                               \
-          E_ = max(E_, 0.f);                            \
-                                                        \
-          T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2);     \
-                                                        \
-          /* Y */                                       \
-          return pow(                                   \
-                     (max(E_pow_1_div_m2 - PQ_c1, 0.f)) \
-                   / (PQ_c2 - PQ_c3 * E_pow_1_div_m2)   \
-                 , _1_div_PQ_m1);                       \
+      #define PQ_TO_LINEAR(T)                       \
+        T Linear(T E_)                              \
+        {                                           \
+          E_ = max(E_, 0.f);                        \
+                                                    \
+          T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2); \
+                                                    \
+          T num = max(E_pow_1_div_m2 - PQ_c1, 0.f); \
+                                                    \
+          T den = PQ_c2 - PQ_c3 * E_pow_1_div_m2;   \
+                                                    \
+          /* Y */                                   \
+          return pow(num                            \
+                   / den                            \
+                 , _1_div_PQ_m1);                   \
         }
 
       // (EOTF) takes PQ values as input
@@ -1010,10 +1019,11 @@ namespace Csp
 
       // (EOTF) takes PQ values as input
       // outputs nits
-      #define PQ_TO_NITS(T)                            \
-        T Nits(T E_)                                   \
-        {                                              \
-          return Csp::Trc::PqTo::Linear(E_) * 10000.f; \
+      #define PQ_TO_NITS(T)                 \
+        T Nits(T E_)                        \
+        {                                   \
+          return Csp::Trc::PqTo::Linear(E_) \
+               * 10000.f;                   \
         }
 
       // (EOTF) takes PQ values as input
@@ -1034,18 +1044,21 @@ namespace Csp
     // Rec. ITU-R BT.2100-2 Table 4 (end)
     namespace LinearTo
     {
-      #define LINEAR_TO_PQ(T)                   \
-        T Pq(T Y)                               \
-        {                                       \
-          Y = max(Y, 0.f);                      \
-                                                \
-          T Y_pow_m1 = pow(Y, PQ_m1);           \
-                                                \
-          /* E' */                              \
-          return pow(                           \
-                     (PQ_c1 + PQ_c2 * Y_pow_m1) \
-                   / (  1.f + PQ_c3 * Y_pow_m1) \
-                 , PQ_m2);                      \
+      #define LINEAR_TO_PQ(T)               \
+        T Pq(T Y)                           \
+        {                                   \
+          Y = max(Y, 0.f);                  \
+                                            \
+          T Y_pow_m1 = pow(Y, PQ_m1);       \
+                                            \
+          T num = PQ_c1 + PQ_c2 * Y_pow_m1; \
+                                            \
+          T den =   1.f + PQ_c3 * Y_pow_m1; \
+                                            \
+          /* E' */                          \
+          return pow(num                    \
+                   / den                    \
+                 , PQ_m2);                  \
         }
 
       // (inverse EOTF) takes normalised to 10000 nits values as input
