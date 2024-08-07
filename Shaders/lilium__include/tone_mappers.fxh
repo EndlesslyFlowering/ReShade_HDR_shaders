@@ -349,11 +349,11 @@ namespace Tmos
     float LuminanceCompress(
       const float Channel,
       const float ShoulderStartInPq,
-      const float TargetCllInPqMinusShoulderStartInPq)
+      const float TargetLuminanceInPqMinusShoulderStartInPq)
     {
       return RangeCompress((Channel - ShoulderStartInPq)
-                         / TargetCllInPqMinusShoulderStartInPq)
-           * TargetCllInPqMinusShoulderStartInPq
+                         / TargetLuminanceInPqMinusShoulderStartInPq)
+           * TargetLuminanceInPqMinusShoulderStartInPq
            + ShoulderStartInPq;
 
 //      return Channel < ShoulderStartInPq
@@ -370,7 +370,7 @@ namespace Tmos
       inout       float3 Colour,
             const uint   ProcessingMode,
             const float  ShoulderStartInPq,
-            const float  TargetCllInPqMinusShoulderStartInPq)
+            const float  TargetLuminanceInPqMinusShoulderStartInPq)
     {
 
     // why does this not work?!
@@ -438,7 +438,7 @@ namespace Tmos
         }
         else
         {
-          float i2 = LuminanceCompress(i1, ShoulderStartInPq, TargetCllInPqMinusShoulderStartInPq);
+          float i2 = LuminanceCompress(i1, ShoulderStartInPq, TargetLuminanceInPqMinusShoulderStartInPq);
 
           float3 ictcp = float3(i2,
                                 dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
@@ -480,7 +480,7 @@ namespace Tmos
         {
           y2 = LuminanceCompress(y2,
                                  ShoulderStartInPq,
-                                 TargetCllInPqMinusShoulderStartInPq);
+                                 TargetLuminanceInPqMinusShoulderStartInPq);
 
           y2 = Csp::Trc::PqTo::Linear(y2);
 

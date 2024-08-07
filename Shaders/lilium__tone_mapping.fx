@@ -405,8 +405,8 @@ void VS_PrepareToneMapping(
   else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
   {
 
-#define diceShoulderStartInPq                   TmParms0.y
-#define diceTargetCllInPqMinusShoulderStartInPq TmParms0.z
+#define diceShoulderStartInPq                         TmParms0.y
+#define diceTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
 #define diceUnused0           TmParms0.w
 #define diceUnused1           TmParms1 //.xyz
 
@@ -415,7 +415,7 @@ void VS_PrepareToneMapping(
                          / 100.f
                          * Ui::Tm::Global::TargetLuminance);
 
-    diceTargetCllInPqMinusShoulderStartInPq =
+    diceTargetLuminanceInPqMinusShoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
     - shoulderStartInPq;
 
@@ -464,7 +464,7 @@ void PS_ToneMapping(
       Tmos::Dice::ToneMapper(hdr,
                              Ui::Tm::Dice::ProcessingModeDice,
                              diceShoulderStartInPq,
-                             diceTargetCllInPqMinusShoulderStartInPq);
+                             diceTargetLuminanceInPqMinusShoulderStartInPq);
     }
     break;
 
