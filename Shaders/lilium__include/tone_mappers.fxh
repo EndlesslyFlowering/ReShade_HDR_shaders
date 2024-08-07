@@ -154,13 +154,17 @@ namespace Tmos
   namespace Bt2390
   {
 
-    float HermiteSpline(
+    float HermiteSpline
+    (
       const float E1,
       const float KneeStart,
-      const float MaxLum)
+      const float OneMinusKneeStart,
+      const float OneDivOneMinusKneeStart,
+      const float KneeStartDivOneMinusKneeStart,
+      const float MaxLum
+    )
     {
-      float oneMinusKneeStart = 1.f - KneeStart;
-      float t = (E1 - KneeStart) / oneMinusKneeStart;
+      float t = E1 * OneDivOneMinusKneeStart - KneeStartDivOneMinusKneeStart;
       float tPow2 = t * t;
       float tPow3 = tPow2 * t;
       //float tPow2 = t >= 0.f ?  pow( t, 2.f)
@@ -169,16 +173,79 @@ namespace Tmos
       //                       : -pow(-t, 3.f);
 
       return ( 2.f * tPow3 - 3.f * tPow2 + 1.f) * KneeStart
-           + (       tPow3 - 2.f * tPow2 + t)   * oneMinusKneeStart
+           + (       tPow3 - 2.f * tPow2 + t)   * OneMinusKneeStart
            + (-2.f * tPow3 + 3.f * tPow2)       * MaxLum;
     }
 
-#define BT2390_PRO_MODE_ICTCP 0
-#define BT2390_PRO_MODE_YRGB  1
-#define BT2390_PRO_MODE_RGB   2
+    #define BT2390_EETF_E1(T)                 \
+      T EetfE1                                \
+      (                                       \
+        const T     Input,                    \
+        const float SrcMaxPq,                 \
+        const float SrcMinPq,                 \
+        const float SrcMaxPqMinusSrcMinPq,    \
+        const bool  DisableBlackFloorAdaption \
+      )                                       \
+      {                                       \
+        /* E1 */                              \
+        BRANCH(x)                             \
+        if (DisableBlackFloorAdaption)        \
+        {                                     \
+          return Input / SrcMaxPq;            \
+        }                                     \
+        else                                  \
+        {                                     \
+          return (Input - SrcMinPq)           \
+               / SrcMaxPqMinusSrcMinPq;       \
+        }                                     \
+      }
+
+    BT2390_EETF_E1(float)
+    BT2390_EETF_E1(float3)
+
+    #define BT2390_EETF_E3_E4(T)              \
+      T EetfE3E4                              \
+      (                                       \
+        const T     Input,                    \
+        const float SrcMaxPq,                 \
+        const float SrcMinPq,                 \
+        const float SrcMaxPqMinusSrcMinPq,    \
+        const float MinLum,                   \
+        const bool  DisableBlackFloorAdaption \
+      )                                       \
+      {                                       \
+        BRANCH(x)                             \
+        if (DisableBlackFloorAdaption)        \
+        {                                     \
+          /* E4 */                            \
+          return Input * SrcMaxPq;            \
+        }                                     \
+        else                                  \
+        {                                     \
+          /* E3 */                            \
+          T e3;                               \
+          e3 = 1.f - Input;                   \
+          e3 = e3*e3;                         \
+          e3 = e3*e3;                         \
+          e3 = MinLum * e3 + Input;           \
+                                              \
+          /* E4 */                            \
+          return e3                           \
+               * SrcMaxPqMinusSrcMinPq        \
+               + SrcMinPq;                    \
+        }                                     \
+      }
+
+    BT2390_EETF_E3_E4(float)
+    BT2390_EETF_E3_E4(float3)
+
+#define BT2390_PRO_MODE_ICTCP  0
+#define BT2390_PRO_MODE_YRGB   1
+#define BT2390_PRO_MODE_RGB    2
 
     // works in PQ
-    void Eetf(
+    void Eetf
+    (
       inout       float3 Colour,
             const uint   ProcessingMode,
             const float  SrcMinPq,  // Lb in PQ
@@ -186,8 +253,14 @@ namespace Tmos
             const float  SrcMaxPqMinusSrcMinPq, // (Lw in PQ) minus (Lb in PQ)
             const float  MinLum,    // minLum
             const float  MaxLum,    // maxLum
-            const float  KneeStart) // KS
+            const float  KneeStart  // KS
+    )
     {
+      bool DisableBlackFloorAdaption = MinLum == 0.f;
+      float OneMinusKneeStart = 1.f - KneeStart;
+      float OneDivOneMinusKneeStart = 1.f / OneMinusKneeStart;
+      float KneeStartDivOneMinusKneeStart = KneeStart / OneMinusKneeStart;
+
       BRANCH(x)
       if (ProcessingMode == BT2390_PRO_MODE_ICTCP)
       {
@@ -200,33 +273,40 @@ namespace Tmos
         float3 pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
 #endif
 
-        float i1 = 0.5f * pqLms.x + 0.5f * pqLms.y;
+        float i1 = dot(pqLms.xy, float2(0.5f, 0.5f));
         //E1
-        float i2 = (i1 - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
-        //float i2 = i1 / SrcMaxPq;
+        float i2 = EetfE1(i1,
+                          SrcMaxPq,
+                          SrcMinPq,
+                          SrcMaxPqMinusSrcMinPq,
+                          DisableBlackFloorAdaption);
 
         //E2
         [branch]
         if (i2 >= KneeStart)
         {
-          i2 = HermiteSpline(i2, KneeStart, MaxLum);
+          i2 = HermiteSpline(i2,
+                             KneeStart,
+                             OneMinusKneeStart,
+                             OneDivOneMinusKneeStart,
+                             KneeStartDivOneMinusKneeStart,
+                             MaxLum);
         }
 #if (SHOW_ADAPTIVE_MAX_NITS == NO)
-        else if (MinLum == 0.f)
+        else
+        [branch]
+        if (MinLum == 0.f)
         {
           discard;
         }
 #endif
-
-        //E3
-        float e3;
-        e3 = 1.f - i2;
-        e3 = e3*e3*e3*e3;
-        i2 += MinLum * e3;
-
-        //E4
-        i2 = i2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
-        //i2 *= SrcMaxPq;
+        //E3+E4
+        i2 = EetfE3E4(i2,
+                      SrcMaxPq,
+                      SrcMinPq,
+                      SrcMaxPqMinusSrcMinPq,
+                      MinLum,
+                      DisableBlackFloorAdaption);
 
         float3 ictcp = float3(i2,
                               dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
@@ -243,9 +323,11 @@ namespace Tmos
         Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
         Colour = Rgb;
-
+        return;
       }
-      else if (ProcessingMode == BT2390_PRO_MODE_YRGB)
+      else
+      BRANCH(x)
+      if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
         //HDR10
         float3 Rgb = ConditionallyLineariseHdr10(Colour);
@@ -256,77 +338,104 @@ namespace Tmos
         float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]);
 #endif
         //E1
-        float y2 = (Csp::Trc::LinearTo::Pq(y1) - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
-        //float y2 = Csp::Trc::LinearTo::Pq(y1) / SrcMaxPq;
+        float y2 = EetfE1(Csp::Trc::LinearTo::Pq(y1),
+                          SrcMaxPq,
+                          SrcMinPq,
+                          SrcMaxPqMinusSrcMinPq,
+                          DisableBlackFloorAdaption);
 
         //E2
         [branch]
         if (y2 >= KneeStart)
         {
-          y2 = HermiteSpline(y2, KneeStart, MaxLum);
+          y2 = HermiteSpline(y2,
+                             KneeStart,
+                             OneMinusKneeStart,
+                             OneDivOneMinusKneeStart,
+                             KneeStartDivOneMinusKneeStart,
+                             MaxLum);
         }
 #if (SHOW_ADAPTIVE_MAX_NITS == NO)
-        else if (MinLum == 0.f)
+        else
+        [branch]
+        if (MinLum == 0.f)
         {
           discard;
         }
 #endif
-
-        //E3
-        float e3;
-        e3 = 1.f - y2;
-        e3 = e3*e3*e3*e3;
-        y2 += MinLum * e3;
-
-        //E4
-        y2 = y2 * SrcMaxPqMinusSrcMinPq + SrcMinPq;
-        //y2 *= SrcMaxPq;
+        //E3+E4
+        y2 = EetfE3E4(y2,
+                      SrcMaxPq,
+                      SrcMinPq,
+                      SrcMaxPqMinusSrcMinPq,
+                      MinLum,
+                      DisableBlackFloorAdaption);
 
         y2 = Csp::Trc::PqTo::Linear(y2);
 
-        Rgb = y2 / y1 * Rgb;
+        Rgb *= y2 / y1;
 
         //HDR10
         Rgb = ConditionallyConvertNormalisedBt2020ToHdr10(Rgb);
 
         Colour = Rgb;
-
+        return;
       }
       else // if (ProcessingMode == BT2390_PRO_MODE_RGB)
       {
         float3 Rgb = ConditionallyConvertScRgbToHdr10(Colour);
 
         //E1
-        Rgb = (Rgb - SrcMinPq) / SrcMaxPqMinusSrcMinPq;
-        //Rgb /= SrcMaxPq;
+        Rgb = EetfE1(Rgb,
+                     SrcMaxPq,
+                     SrcMinPq,
+                     SrcMaxPqMinusSrcMinPq,
+                     DisableBlackFloorAdaption);
 
         //E2
         [branch]
         if (Rgb.r >= KneeStart)
         {
-          Rgb.r = HermiteSpline(Rgb.r, KneeStart, MaxLum);
+          Rgb.r = HermiteSpline(Rgb.r,
+                                KneeStart,
+                                OneMinusKneeStart,
+                                OneDivOneMinusKneeStart,
+                                KneeStartDivOneMinusKneeStart,
+                                MaxLum);
         }
         [branch]
         if (Rgb.g >= KneeStart)
         {
-          Rgb.g = HermiteSpline(Rgb.g, KneeStart, MaxLum);
+          Rgb.g = HermiteSpline(Rgb.g,
+                                KneeStart,
+                                OneMinusKneeStart,
+                                OneDivOneMinusKneeStart,
+                                KneeStartDivOneMinusKneeStart,
+                                MaxLum);
         }
         [branch]
         if (Rgb.b >= KneeStart)
         {
-          Rgb.b = HermiteSpline(Rgb.b, KneeStart, MaxLum);
+          Rgb.b = HermiteSpline(Rgb.b,
+                                KneeStart,
+                                OneMinusKneeStart,
+                                OneDivOneMinusKneeStart,
+                                KneeStartDivOneMinusKneeStart,
+                                MaxLum);
         }
 
-        //E3
-        Rgb += MinLum * pow((1.f - Rgb), 4.f);
-
-        //E4
-        Rgb = Rgb * SrcMaxPqMinusSrcMinPq + SrcMinPq;
-        //Rgb *= SrcMaxPq;
+        //E3+E4
+        Rgb = EetfE3E4(Rgb,
+                       SrcMaxPq,
+                       SrcMinPq,
+                       SrcMaxPqMinusSrcMinPq,
+                       MinLum,
+                       DisableBlackFloorAdaption);
 
         Rgb = ConditionallyConvertHdr10ToScRgb(Rgb);
 
         Colour = Rgb;
+        return;
       }
     }
   }
