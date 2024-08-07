@@ -1,7 +1,5 @@
 #pragma once
 
-#include "colour_space.fxh"
-
 
 #if (defined(IS_COMPUTE_CAPABLE_API) \
   && defined(IS_HDR_CSP))
@@ -11,10 +9,12 @@
 namespace Tmos
 {
   // Rep. ITU-R BT.2446-1 Table 2 & 3
-  void Bt2446A(
+  void Bt2446A
+  (
     inout       float3 Colour,
           const float  MaxNits,
-          const float  TargetNits)
+          const float  TargetNits
+  )
   {
     //pSDR and pHDR
     static const float2 pSdrHdr = 1.f + 32.f * pow(float2(TargetNits, MaxNits) / 10000.f, 1.f / 2.4f);
@@ -467,19 +467,21 @@ namespace Tmos
 #define DICE_PRO_MODE_MAXCLL 1
 #define DICE_PRO_MODE_RGB    2
 
-#define DICE_WORKING_COLOUR_SPACE_BT2020  0
-#define DICE_WORKING_COLOUR_SPACE_AP0_D65 1
-
     // Applies exponential "Photographic" luminance compression
-    float RangeCompress(float x)
+    float RangeCompress
+    (
+      const float X
+    )
     {
-      return 1.f - exp(-x);
+      return 1.f - exp(-X);
     }
 
-    float LuminanceCompress(
+    float LuminanceCompress
+    (
       const float Channel,
       const float ShoulderStartInPq,
-      const float TargetLuminanceInPqMinusShoulderStartInPq)
+      const float TargetLuminanceInPqMinusShoulderStartInPq
+    )
     {
       return RangeCompress((Channel - ShoulderStartInPq)
                          / TargetLuminanceInPqMinusShoulderStartInPq)
@@ -496,53 +498,14 @@ namespace Tmos
 
     // remap from infinite
     // ShoulderStart denotes the point where we change from linear to shoulder
-    void ToneMapper(
+    void ToneMapper
+    (
       inout       float3 Colour,
             const uint   ProcessingMode,
             const float  ShoulderStartInPq,
-            const float  TargetLuminanceInPqMinusShoulderStartInPq)
+            const float  TargetLuminanceInPqMinusShoulderStartInPq
+    )
     {
-
-    // why does this not work?!
-    //  float3x3 RgbToLms = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                    ? RGB_AP0_D65_To_LMS
-    //                    : RGB_BT2020_To_LMS;
-    //
-    //  float3x3 LmsToRgb = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                    ? LmsToRgb_AP0_D65
-    //                    : LmsToRgb_BT2020;
-    //
-    //  float3 KFactors = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                  ? K_AP0_D65
-    //                  : K_BT2020;
-    //
-    //  float  KbHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                  ? KB_AP0_D65_HELPER
-    //                  : KB_BT2020_HELPER;
-    //  float  KrHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                  ? KR_AP0_D65_HELPER
-    //                  : KR_BT2020_HELPER;
-    //  float2 KgHelper = WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65
-    //                  ? KG_AP0_D65_HELPER
-    //                  : KG_BT2020_HELPER;
-
-//      float3x3 RgbToLms = Csp::Ictcp::Bt2020ToLms;
-//      float3x3 LmsToRgb = Csp::Ictcp::LmsToBt2020;
-//      float3   KFactors = Csp::KHelpers::Bt2020::K;
-//      float    KbHelper = Csp::KHelpers::Bt2020::Kb;
-//      float    KrHelper = Csp::KHelpers::Bt2020::Kr;
-//      float2   KgHelper = Csp::KHelpers::Bt2020::Kg;
-//
-//      if (WorkingColourSpace == DICE_WORKING_COLOUR_SPACE_AP0_D65)
-//      {
-//        RgbToLms = Csp::Ictcp::Ap0D65ToLms;
-//        LmsToRgb = Csp::Ictcp::LmsToAp0D65;
-//        KFactors = Csp::KHelpers::Ap0D65::K;
-//        KbHelper = Csp::KHelpers::Ap0D65::Kb;
-//        KrHelper = Csp::KHelpers::Ap0D65::Kr;
-//        KgHelper = Csp::KHelpers::Ap0D65::Kg;
-//      }
-
       // YRGB method copied from BT.2390
       BRANCH(x)
       if (ProcessingMode == DICE_PRO_MODE_YRGB)

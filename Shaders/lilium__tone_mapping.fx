@@ -389,21 +389,22 @@ void VS_PrepareToneMapping(
 
   usedMaxNits = max(usedMaxNits, Ui::Tm::Global::TargetLuminance);
 
+  [branch]
   if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
   {
 
-#define bt2390SrcMinPq              TmParms0.y
-#define bt2390SrcMaxPq              TmParms0.z
-#define bt2390SrcMinMaxPq           TmParms0.yz
-#define bt2390SrcMaxPqMinusSrcMinPq TmParms0.w
-#define bt2390MinLum                TmParms1.x
-#define bt2390MaxLum                TmParms1.y
-#define bt2390MinMaxLum             TmParms1.xy
-#define bt2390KneeStart             TmParms1.z
+#define Bt2390SrcMinPq              TmParms0.y
+#define Bt2390SrcMaxPq              TmParms0.z
+#define Bt2390SrcMinMaxPq           TmParms0.yz
+#define Bt2390SrcMaxPqMinusSrcMinPq TmParms0.w
+#define Bt2390MinLum                TmParms1.x
+#define Bt2390MaxLum                TmParms1.y
+#define Bt2390MinMaxLum             TmParms1.xy
+#define Bt2390KneeStart             TmParms1.z
 
     // source min brightness (Lb) in PQ
     // source max brightness (Lw) in PQ
-    bt2390SrcMinMaxPq = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::OldBlackPoint,
+    Bt2390SrcMinMaxPq = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::OldBlackPoint,
                                                     usedMaxNits));
 
     // target min brightness (Lmin) in PQ
@@ -412,37 +413,34 @@ void VS_PrepareToneMapping(
                                                      Ui::Tm::Global::TargetLuminance));
 
     // this is needed often so precalculate it
-    bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPq - bt2390SrcMinPq;
+    Bt2390SrcMaxPqMinusSrcMinPq = Bt2390SrcMaxPq - Bt2390SrcMinPq;
 
-    bt2390MinMaxLum = (tgtMinMaxPQ - bt2390SrcMinPq) / bt2390SrcMaxPqMinusSrcMinPq;
+    Bt2390MinMaxLum = (tgtMinMaxPQ - Bt2390SrcMinPq) / Bt2390SrcMaxPqMinusSrcMinPq;
 
     // knee start (KS)
-    bt2390KneeStart = 1.5f
-                    * bt2390MaxLum
+    Bt2390KneeStart = 1.5f
+                    * Bt2390MaxLum
                     - Ui::Tm::Bt2390::KneeOffset;
 
   }
-  else if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+  else
+  [branch]
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
   {
 
-#define diceShoulderStartInPq                         TmParms0.y
-#define diceTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
-#define diceUnused0           TmParms0.w
-#define diceUnused1           TmParms1 //.xyz
+#define DiceShoulderStartInPq                         TmParms0.y
+#define DiceTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
 
     const float shoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
                          / 100.f
                          * Ui::Tm::Global::TargetLuminance);
 
-    diceTargetLuminanceInPqMinusShoulderStartInPq =
+    DiceTargetLuminanceInPqMinusShoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
     - shoulderStartInPq;
 
-    diceShoulderStartInPq = shoulderStartInPq;
-
-    diceUnused0 = 0.f;
-    diceUnused1 = float3(0.f, 0.f, 0.f);
+    DiceShoulderStartInPq = shoulderStartInPq;
   }
 }
 
@@ -471,20 +469,20 @@ void PS_ToneMapping(
     {
       Tmos::Bt2390::Eetf(hdr,
                          Ui::Tm::Bt2390::ProcessingModeBt2390,
-                         bt2390SrcMinPq,
-                         bt2390SrcMaxPq,
-                         bt2390SrcMaxPqMinusSrcMinPq,
-                         bt2390MinLum,
-                         bt2390MaxLum,
-                         bt2390KneeStart);
+                         Bt2390SrcMinPq,
+                         Bt2390SrcMaxPq,
+                         Bt2390SrcMaxPqMinusSrcMinPq,
+                         Bt2390MinLum,
+                         Bt2390MaxLum,
+                         Bt2390KneeStart);
     }
     break;
     case TM_METHOD_DICE:
     {
       Tmos::Dice::ToneMapper(hdr,
                              Ui::Tm::Dice::ProcessingModeDice,
-                             diceShoulderStartInPq,
-                             diceTargetLuminanceInPqMinusShoulderStartInPq);
+                             DiceShoulderStartInPq,
+                             DiceTargetLuminanceInPqMinusShoulderStartInPq);
     }
     break;
 
