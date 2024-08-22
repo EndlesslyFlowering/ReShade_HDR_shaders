@@ -474,7 +474,7 @@ void RenderWaveform
   BRANCH(x)
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
-    float curPixelNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb).w;
+    float curPixelNits = CalcNits(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
 
 #ifdef IS_HDR_CSP
     float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
@@ -499,6 +499,7 @@ void RenderWaveform
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
   {
     float3 encodedPixel;
+    float3 curPixelRgb;
     float3 waveformColour;
 
     float waveformColourRG;
@@ -506,11 +507,9 @@ void RenderWaveform
 
 #ifdef IS_HDR_CSP
 
-    float3 curPixelRgb;
-
     #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      curPixelRgb = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, FetchPos)).rgb;
+      curPixelRgb = CalcCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
 
       encodedPixel = Csp::Trc::NitsTo::Pq(curPixelRgb);
 
@@ -519,7 +518,7 @@ void RenderWaveform
 
       encodedPixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
 
-      curPixelRgb = Csp::Trc::PqTo::Nits(encodedPixel);
+      curPixelRgb = CalcCll(encodedPixel);
 
     #endif
 
@@ -533,7 +532,9 @@ void RenderWaveform
     //this is more performant to do
     encodedPixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
 
-    waveformColour  = DECODE_SDR(encodedPixel) - 0.1f;
+    curPixelRgb = DECODE_SDR(encodedPixel);
+
+    waveformColour  = curPixelRgb - 0.1f;
     waveformColour  = max(waveformColour, 0.f);
     waveformColour += 0.1f;
 

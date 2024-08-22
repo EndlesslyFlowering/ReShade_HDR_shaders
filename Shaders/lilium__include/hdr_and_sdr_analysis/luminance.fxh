@@ -177,6 +177,93 @@ float3 WaveformRgbValues
 #endif
 
 
+float CalcNits
+(
+  const float3 Pixel
+)
+{
+  float3 curRgb;
+  float  curPixelNits;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  curRgb = Pixel * 80.f;
+
+  curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  curRgb = Csp::Trc::PqTo::Nits(Pixel);
+
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
+
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  curRgb = Pixel * 100.f;
+
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  curRgb = DECODE_SDR(Pixel) * 100.f;
+
+  curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
+
+#else
+
+  curRgb = 0.f;
+
+  curPixelNits = 0.f;
+
+#endif //ACTUAL_COLOUR_SPACE ==
+
+  return curPixelNits;
+}
+
+float3 CalcCll
+(
+  const float3 Pixel
+)
+{
+  float3 curRgb;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  curRgb = Pixel * 80.f;
+
+  curRgb = Csp::Mat::Bt709To::Bt2020(curRgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  curRgb = Csp::Trc::PqTo::Nits(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+
+  curRgb = Pixel * 100.f;
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  curRgb = DECODE_SDR(Pixel) * 100.f;
+
+#else
+
+  curRgb = 0.f;
+
+#endif //ACTUAL_COLOUR_SPACE ==
+
+  return curRgb;
+}
+
 float4 CalcNitsAndCll
 (
   const float3 Pixel
