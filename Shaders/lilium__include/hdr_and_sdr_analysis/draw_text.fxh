@@ -205,7 +205,9 @@ void CS_GetNitNumbers
   if (_SHOW_NITS_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
-    nits = tex2Dfetch(SamplerNitsValues, mousePosition)[(GID.x + 3) % 4];
+    //load into groupshared?
+    const float4 RgbNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
+    nits = RgbNits[(GID.x + 3) % 4];
   }
   else
   {
@@ -511,7 +513,8 @@ void PS_GetNumbersNits
   }
   else
   {
-    nitsValue = tex2Dfetch(SamplerNitsValues, MOUSE_POSITION);
+    const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
+    nitsValue = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb).w;
   }
 
   precise uint number;

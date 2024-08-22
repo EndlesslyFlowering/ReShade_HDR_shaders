@@ -1,28 +1,6 @@
 #pragma once
 
 
-texture2D TextureNitsValues
-<
-  pooled = true;
->
-{
-  Width  = BUFFER_WIDTH;
-  Height = BUFFER_HEIGHT;
-
-  Format = RGBA32F;
-};
-
-sampler2D<float4> SamplerNitsValues
-{
-  Texture = TextureNitsValues;
-};
-
-storage2D<float4> StorageNitsValues
-{
-  Texture = TextureNitsValues;
-};
-
-
 //#if 0
 //static const uint _0_Dot_01_Percent_Pixels = BUFFER_WIDTH * BUFFER_HEIGHT * 0.01f;
 //static const uint _0_Dot_01_Percent_Texture_Width = _0_Dot_01_Percent_Pixels / 16;
@@ -199,81 +177,55 @@ float3 WaveformRgbValues
 #endif
 
 
-void PS_CalcNitsPerPixel
+float4 CalcNitsAndCll
 (
-      float4 Position : SV_Position,
-  out float4 CurNits  : SV_Target0
+  const float3 Pixel
 )
 {
-  CurNits = 0.f;
-
-  BRANCH(x)
-  if (_SHOW_NITS_VALUES
-   || _SHOW_NITS_FROM_CURSOR
-   || _SHOW_HEATMAP
-#ifdef IS_COMPUTE_CAPABLE_API
-   || _SHOW_WAVEFORM
-#endif
-   || _HIGHLIGHT_NIT_RANGE
-   || _DRAW_ABOVE_NITS_AS_BLACK
-   || _DRAW_BELOW_NITS_AS_BLACK
-#ifdef IS_HDR_CSP
-   || SHOW_GAMUT_MAP
-#endif //IS_HDR_CSP
-  )
-  {
-
-    const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
+  float3 curRgb;
+  float  curPixelNits;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 curRgb = pixel * 80.f;
+  curRgb = Pixel * 80.f;
 
-    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
+  curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
 
-    curRgb = Csp::Mat::Bt709To::Bt2020(curRgb);
+  curRgb = Csp::Mat::Bt709To::Bt2020(curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    float3 curRgb = Csp::Trc::PqTo::Nits(pixel);
+  curRgb = Csp::Trc::PqTo::Nits(Pixel);
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-    float3 curRgb = Csp::Trc::HlgTo::Nits(pixel);
+  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-    float3 curRgb = pixel * 100.f;
+  curRgb = Pixel * 100.f;
 
-    float curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
+  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-    float3 curRgb = DECODE_SDR(pixel) * 100.f;
+  curRgb = DECODE_SDR(Pixel) * 100.f;
 
-    float curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
+  curPixelNits = dot(Csp::Mat::Bt709ToXYZ[1], curRgb);
 
 #else
 
-    float3 curRgb = 0.f;
+  curRgb = 0.f;
 
-    float curPixelNits = 0.f;
+  curPixelNits = 0.f;
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
-
-    CurNits = float4(curRgb, curPixelNits);
-
-    return;
-  }
-  else
-  {
-    discard;
-  }
+  return float4(curRgb, curPixelNits);
 }
 
 
@@ -383,7 +335,7 @@ void CS_GetMaxAvgMinNits
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
 
-        const float4 curNits = tex2Dfetch(SamplerNitsValues, curFetchPos);
+        const float4 curNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, curFetchPos).rgb);
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
   && defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))

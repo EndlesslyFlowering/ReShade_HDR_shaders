@@ -474,7 +474,7 @@ void RenderWaveform
   BRANCH(x)
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
-    float curPixelNits = tex2Dfetch(SamplerNitsValues, FetchPos).w;
+    float curPixelNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb).w;
 
 #ifdef IS_HDR_CSP
     float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
@@ -510,7 +510,7 @@ void RenderWaveform
 
     #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      curPixelRgb = tex2Dfetch(SamplerNitsValues, FetchPos).rgb;
+      curPixelRgb = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, FetchPos)).rgb;
 
       encodedPixel = Csp::Trc::NitsTo::Pq(curPixelRgb);
 
