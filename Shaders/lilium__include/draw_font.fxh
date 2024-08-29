@@ -106,11 +106,11 @@
 
 
 #ifdef IS_HDR_CSP
-  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(49, 3)
-  #define TEXT_OFFSET_NITS_CURSOR      float2(52, 7)
+  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(49, 3) //    "max|     .      |     .      |     .      |     ."
+  #define TEXT_OFFSET_NITS_CURSOR      float2(52, 7) // "cursor|     .      |     .      |     .      |     ."
 #else
-  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(51, 4)
-  #define TEXT_OFFSET_NITS_CURSOR      float2(54, 8)
+  #define TEXT_OFFSET_NITS_MAX_AVG_MIN float2(51, 4) //    "max|   .      %|   .      %|   .      %|   .      %"
+  #define TEXT_OFFSET_NITS_CURSOR      float2(54, 8) // "cursor|   .      %|   .      %|   .      %|   .      %"
 #endif
 
 #define TEXT_OFFSET_GAMUT_PERCENTAGES    float2(19,  8)

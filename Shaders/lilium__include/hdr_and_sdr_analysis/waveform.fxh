@@ -1235,9 +1235,10 @@ void VS_PrepareRenderWaveformToScale
         if (minNits > 0.f
          && minNits < MAX_NITS_LINE_CUTOFF)
         {
-          MinNitsLineY = GetNitsLine(minNits, waveformScaleFactorY
+          MinNitsLineY = GetNitsLine(minNits,
+                                     waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                  , waveDat.cutoffOffset
+                                   , waveDat.cutoffOffset
 #endif
                                     );
         }
@@ -1254,27 +1255,30 @@ void VS_PrepareRenderWaveformToScale
         [branch]
         if (drawMinRgbLine.r)
         {
-          MinRLineY = GetNitsLine(minRgb.r, waveformScaleFactorY
+          MinRLineY = GetNitsLine(minRgb.r,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
         [branch]
         if (drawMinRgbLine.g)
         {
-          MinGLineY = GetNitsLine(minRgb.g, waveformScaleFactorY
+          MinGLineY = GetNitsLine(minRgb.g,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
         [branch]
         if (drawMinRgbLine.b)
         {
-          MinBLineY = GetNitsLine(minRgb.b, waveformScaleFactorY
+          MinBLineY = GetNitsLine(minRgb.b,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
@@ -1313,27 +1317,30 @@ void VS_PrepareRenderWaveformToScale
         [branch]
         if (drawMaxRgbLine.r)
         {
-          MaxRLineY = GetNitsLine(maxRgb.r, waveformScaleFactorY
+          MaxRLineY = GetNitsLine(maxRgb.r,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
         [branch]
         if (drawMaxRgbLine.g)
         {
-          MaxGLineY = GetNitsLine(maxRgb.g, waveformScaleFactorY
+          MaxGLineY = GetNitsLine(maxRgb.g,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
         [branch]
         if (drawMaxRgbLine.b)
         {
-          MaxBLineY = GetNitsLine(maxRgb.b, waveformScaleFactorY
+          MaxBLineY = GetNitsLine(maxRgb.b,
+                                  waveformScaleFactorY
 #ifdef IS_HDR_CSP
-                                                                , waveDat.cutoffOffset
+                                , waveDat.cutoffOffset
 #endif
                                  );
         }
