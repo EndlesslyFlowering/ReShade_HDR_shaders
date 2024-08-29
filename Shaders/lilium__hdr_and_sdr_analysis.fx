@@ -77,6 +77,7 @@ uniform float2 NIT_PINGPONG2
   #define _ACTIVE_AREA_CROP_RIGHT                 SDR_ACTIVE_AREA_CROP_RIGHT
   #define _ACTIVE_AREA_CROP_BOTTOM                SDR_ACTIVE_AREA_CROP_BOTTOM
   #define _SHOW_NITS_VALUES                       SDR_SHOW_NITS_VALUES
+  #define _SHOW_RGB_OR_CLL                        SDR_SHOW_RGB_OR_CLL
   #define _SHOW_NITS_FROM_CURSOR                  SDR_SHOW_NITS_FROM_CURSOR
   #define _SHOW_CIE                               SDR_SHOW_CIE
   #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
@@ -115,6 +116,7 @@ uniform float2 NIT_PINGPONG2
   #define _ACTIVE_AREA_CROP_RIGHT                 ACTIVE_AREA_CROP_RIGHT
   #define _ACTIVE_AREA_CROP_BOTTOM                ACTIVE_AREA_CROP_BOTTOM
   #define _SHOW_NITS_VALUES                       SHOW_NITS_VALUES
+  #define _SHOW_RGB_OR_CLL                        SHOW_RGB_OR_CLL
   #define _SHOW_NITS_FROM_CURSOR                  SHOW_NITS_FROM_CURSOR
   #define _SHOW_CIE                               SHOW_CIE
   #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SHOW_CROSSHAIR_ON_CIE_DIAGRAM
@@ -268,17 +270,17 @@ uniform float _ACTIVE_AREA_CROP_BOTTOM
 // Nit and RGB Values
 uniform bool _SHOW_NITS_VALUES
 <
-  ui_category = "Luminance analysis";
-  ui_label    = "show max/avg/min luminance and RGB values";
-  ui_tooltip  = "The the individual R, G and B values are not connected to the luminance value."
+  ui_category = "Luminance and Content Light Level analysis";
+  ui_label    = "show max/avg/min luminance and RGB or CLL values";
+  ui_tooltip  = "The individual R, G and B values are not connected to the luminance value."
            "\n" "But are all individually calculated with no connection to the other values."
            "\n" "As in they are with high certainty not from the same pixel!"
            "\n"
            "\n"
 #ifdef IS_HDR_CSP
-                "In HDR the RGB values represent \"optical\" RGB values with BT.2020 primaries."
+                "In HDR the RGB/CLL values represent \"optical\" RGB values with BT.2020 primaries."
 #else
-                "In SDR the RGB values represent relative \"optical\" RGB values in % with BT.709 primaries."
+                "In SDR the RGB/CLL values represent relative \"optical\" RGB values in % with BT.709 primaries."
 #endif
            "\n" "If you do not understand what that is:"
            "\n" "if a pixel has R, G and B set to the same value, let's say 50,"
@@ -289,7 +291,7 @@ uniform bool _SHOW_NITS_VALUES
 #endif
            "\n" "But do not forget that the max and min values are not from the same pixel!"
            "\n"
-           "\n" "But what are those RGB values for then?"
+           "\n" "But what are those RGB/CLL values for then?"
 #ifdef IS_HDR_CSP
            "\n" "In HDR this easily tells you if your display clips those values."
            "\n" "Let's say your display can display up to 800 nits."
@@ -305,10 +307,22 @@ uniform bool _SHOW_NITS_VALUES
 
 uniform bool _SHOW_NITS_FROM_CURSOR
 <
-  ui_category = "Luminance analysis";
-  ui_label    = "show luminance value and RGB values from cursor position";
+  ui_category = "Luminance and Content Light Level analysis";
+  ui_label    = "show luminance value and RGB or CLL values from cursor position";
   ui_tooltip  = "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
 > = true;
+
+#define SHOW_RGB_VALUES 0
+#define SHOW_CLL_VALUES 1
+
+uniform uint _SHOW_RGB_OR_CLL
+<
+  ui_category = "Luminance and Content Light Level analysis";
+  ui_label    = "show RGB or CLL values";
+  ui_type     = "combo";
+  ui_items    = "RGB values\0"
+                "CLL values\0";
+> = 0;
 
 
 // gamuts
@@ -602,11 +616,13 @@ uniform uint _WAVEFORM_MODE
            "\n" "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
   ui_type     = "combo";
   ui_items    = "luminance\0"
+                "maxCLL\0"
                 "RGB individiually\0";
 > = 0;
 
 #define WAVEFORM_MODE_LUMINANCE        0
-#define WAVEFORM_MODE_RGB_INDIVIDUALLY 1
+#define WAVEFORM_MODE_MAX_CLL          1
+#define WAVEFORM_MODE_RGB_INDIVIDUALLY 2
 
 #ifdef IS_HDR_CSP
 uniform uint WAVEFORM_CUTOFF_POINT
@@ -1130,6 +1146,8 @@ void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
   tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X, 0.f);
   tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,    0.f);
+
+  DrawText();
   return;
 }
 

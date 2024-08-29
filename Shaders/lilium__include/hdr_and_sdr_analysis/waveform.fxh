@@ -496,6 +496,51 @@ void RenderWaveform
 
     return;
   }
+  else
+  [branch]
+  if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+  {
+    float pixelCll;
+    float pixelEncoded;
+
+    float3 pixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+    float3 pixelOpticalBt2020 = CalcCll(pixel);
+
+    pixelCll = MAXRGB(pixelOpticalBt2020);
+
+    pixelEncoded = Csp::Trc::NitsTo::Pq(pixelCll);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    pixelEncoded = MAXRGB(pixel);
+
+    pixelCll = Csp::Trc::PqTo::Nits(pixelEncoded);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+    pixelEncoded = MAXRGB(pixel);
+
+    pixelCll = DECODE_SDR(pixelEncoded) * 100.f;
+
+#endif
+
+    int2 coord = float2(float(FetchPos.x)
+                      * coordFactors.x,
+                        coordFactors.y
+                      - (pixelEncoded * coordFactors.y));
+
+    float3 waveformColour = WaveformRgbValues(pixelCll);
+    waveformColour = sqrt(waveformColour);
+
+    tex2Dstore(StorageWaveform,
+               coord,
+               float4(waveformColour, 1.f));
+
+    return;
+  }
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
   {
     float3 encodedPixel;
@@ -1243,6 +1288,24 @@ void VS_PrepareRenderWaveformToScale
                                     );
         }
       }
+      else
+      BRANCH(x)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      {
+        const float minCll = tex1Dfetch(SamplerConsolidated, COORDS_MIN_CLL_VALUE);
+
+        [branch]
+        if (minCll > 0.f
+         && minCll < MAX_NITS_LINE_CUTOFF)
+        {
+          MinNitsLineY = GetNitsLine(minCll,
+                                     waveformScaleFactorY
+#ifdef IS_HDR_CSP
+                                   , waveDat.cutoffOffset
+#endif
+                                    );
+        }
+      }
       else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
       {
         const float3 minRgb = float3(tex1Dfetch(SamplerConsolidated, COORDS_MIN_R_VALUE),
@@ -1298,6 +1361,24 @@ void VS_PrepareRenderWaveformToScale
          && maxNits < MAX_NITS_LINE_CUTOFF)
         {
           MaxNitsLineY = GetNitsLine(maxNits,
+                                     waveformScaleFactorY
+#ifdef IS_HDR_CSP
+                                   , waveDat.cutoffOffset
+#endif
+                                    );
+        }
+      }
+      else
+      BRANCH(x)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      {
+        const float maxCll = tex1Dfetch(SamplerConsolidated, COORDS_MAX_CLL_VALUE);
+
+        [branch]
+        if (maxCll > 0.f
+         && maxCll < MAX_NITS_LINE_CUTOFF)
+        {
+          MaxNitsLineY = GetNitsLine(maxCll,
                                      waveformScaleFactorY
 #ifdef IS_HDR_CSP
                                    , waveDat.cutoffOffset
@@ -1406,7 +1487,7 @@ void PS_RenderWaveformToScale
       int maxLineY;
 
       [flatten]
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
+      if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
       {
         minLineY = MinNitsLineY;
         maxLineY = MaxNitsLineY;
@@ -1462,7 +1543,7 @@ void PS_RenderWaveformToScale
         bool waveformCoordsSTEMinLine;
 
         [flatten]
-        if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
+        if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
         {
           waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;
           waveformCoordsSTEMinLine = waveformCoords.y <= MinNitsLineY;

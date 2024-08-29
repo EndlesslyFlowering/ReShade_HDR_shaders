@@ -706,6 +706,10 @@ void FinaliseMaxAvgMinNits()
 
   avgRgbNits /= dispatchArea;
 
+  float maxCll = MAX3(maxRgbNits.r, maxRgbNits.g, maxRgbNits.b);
+  float minCll = MIN3(minRgbNits.r, minRgbNits.g, minRgbNits.b);
+  float avgCll = (avgRgbNits.r + avgRgbNits.g + avgRgbNits.b) / 3.f;
+
   tex1Dstore(StorageConsolidated, COORDS_MAX_NITS_VALUE, maxRgbNits.w);
   tex1Dstore(StorageConsolidated, COORDS_MAX_R_VALUE,    maxRgbNits.r);
   tex1Dstore(StorageConsolidated, COORDS_MAX_G_VALUE,    maxRgbNits.g);
@@ -718,6 +722,9 @@ void FinaliseMaxAvgMinNits()
   tex1Dstore(StorageConsolidated, COORDS_MIN_R_VALUE,    minRgbNits.r);
   tex1Dstore(StorageConsolidated, COORDS_MIN_G_VALUE,    minRgbNits.g);
   tex1Dstore(StorageConsolidated, COORDS_MIN_B_VALUE,    minRgbNits.b);
+  tex1Dstore(StorageConsolidated, COORDS_MAX_CLL_VALUE,  maxCll);
+  tex1Dstore(StorageConsolidated, COORDS_AVG_CLL_VALUE,  avgCll);
+  tex1Dstore(StorageConsolidated, COORDS_MIN_CLL_VALUE,  minCll);
 
   return;
 }

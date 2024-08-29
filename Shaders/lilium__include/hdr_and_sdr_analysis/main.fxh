@@ -1,7 +1,4 @@
 
-#include "../draw_font.fxh"
-
-
 #define WAVE64_THREAD_SIZE_X 8
 #define WAVE64_THREAD_SIZE_Y 8
 
@@ -535,7 +532,7 @@ storage2D
 
 // max, avg and min Nits
 #ifdef IS_COMPUTE_CAPABLE_API
-  #define MAX_AVG_MIN_NITS_VALUES_COUNT 12
+  #define MAX_AVG_MIN_NITS_VALUES_COUNT 15
 #else
   #define MAX_AVG_MIN_NITS_VALUES_COUNT 3
 #endif
@@ -553,6 +550,9 @@ storage2D
 #define COORDS_MIN_R_VALUE    int( 9 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
 #define COORDS_MIN_G_VALUE    int(10 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
 #define COORDS_MIN_B_VALUE    int(11 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MAX_CLL_VALUE  int(12 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_AVG_CLL_VALUE  int(13 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
+#define COORDS_MIN_CLL_VALUE  int(14 + MAX_AVG_MIN_NITS_VALUES_X_OFFSET)
 
 
 // gamut percentages
@@ -574,11 +574,11 @@ storage2D
 
 // show values for max, avg and min Nits plus gamut % for BT.709, DCI-P3, BT.2020, AP0 and invalid
 #if defined(IS_FLOAT_HDR_CSP)
-  #define SHOW_VALUES_COUNT 17
+  #define SHOW_VALUES_COUNT 20
 #elif defined(IS_HDR10_LIKE_CSP)
-  #define SHOW_VALUES_COUNT 15
+  #define SHOW_VALUES_COUNT 18
 #else
-  #define SHOW_VALUES_COUNT 12
+  #define SHOW_VALUES_COUNT 15
 #endif
 #if defined(IS_COMPUTE_CAPABLE_API)
   #define SHOW_VALUES_X_OFFSET (GAMUT_PERCENTAGES_COUNT + GAMUT_PERCENTAGES_X_OFFSET)
@@ -598,11 +598,14 @@ storage2D
 #define COORDS_SHOW_MAX_B_VALUE        int( 9 + SHOW_VALUES_X_OFFSET)
 #define COORDS_SHOW_AVG_B_VALUE        int(10 + SHOW_VALUES_X_OFFSET)
 #define COORDS_SHOW_MIN_B_VALUE        int(11 + SHOW_VALUES_X_OFFSET)
-#define COORDS_SHOW_PERCENTAGE_BT709   int(12 + SHOW_VALUES_X_OFFSET)
-#define COORDS_SHOW_PERCENTAGE_DCI_P3  int(13 + SHOW_VALUES_X_OFFSET)
-#define COORDS_SHOW_PERCENTAGE_BT2020  int(14 + SHOW_VALUES_X_OFFSET)
-#define COORDS_SHOW_PERCENTAGE_AP0     int(15 + SHOW_VALUES_X_OFFSET)
-#define COORDS_SHOW_PERCENTAGE_INVALID int(16 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MAX_CLL_VALUE      int(12 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_AVG_CLL_VALUE      int(13 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_MIN_CLL_VALUE      int(14 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_BT709   int(15 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_DCI_P3  int(16 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_BT2020  int(17 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_AP0     int(18 + SHOW_VALUES_X_OFFSET)
+#define COORDS_SHOW_PERCENTAGE_INVALID int(19 + SHOW_VALUES_X_OFFSET)
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
@@ -986,12 +989,16 @@ void CopyShowValues()
     float minR    = tex1Dfetch(StorageConsolidated, COORDS_MIN_R_VALUE);
     float minG    = tex1Dfetch(StorageConsolidated, COORDS_MIN_G_VALUE);
     float minB    = tex1Dfetch(StorageConsolidated, COORDS_MIN_B_VALUE);
+    float maxCll  = tex1Dfetch(StorageConsolidated, COORDS_MAX_CLL_VALUE);
+    float avgCll  = tex1Dfetch(StorageConsolidated, COORDS_AVG_CLL_VALUE);
+    float minCll  = tex1Dfetch(StorageConsolidated, COORDS_MIN_CLL_VALUE);
 
     // avoid average nits being higher than max nits and lower than min in extreme edge cases
     avgNits = clamp(avgNits, minNits, maxNits);
     avgR    = clamp(avgR,    minR,    maxR);
     avgG    = clamp(avgG,    minG,    maxG);
     avgB    = clamp(avgB,    minB,    maxB);
+    avgCll  = clamp(avgCll,  minCll,  maxCll);
 
 #ifdef IS_HDR_CSP
     float percentageBt709   = tex1Dfetch(StorageConsolidated, COORDS_PERCENTAGE_BT709);
@@ -1003,18 +1010,21 @@ void CopyShowValues()
 #endif //IS_FLOAT_HDR_CSP
 #endif //IS_HDR_CSP
 
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_NITS,    maxNits);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_R_VALUE, maxR);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_G_VALUE, maxG);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_B_VALUE, maxB);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_NITS,    avgNits);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_R_VALUE, avgR);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_G_VALUE, avgG);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_B_VALUE, avgB);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_NITS,    minNits);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_R_VALUE, minR);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_G_VALUE, minG);
-    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_B_VALUE, minB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_NITS,      maxNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_R_VALUE,   maxR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_G_VALUE,   maxG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_B_VALUE,   maxB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_NITS,      avgNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_R_VALUE,   avgR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_G_VALUE,   avgG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_B_VALUE,   avgB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_NITS,      minNits);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_R_VALUE,   minR);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_G_VALUE,   minG);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_B_VALUE,   minB);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MAX_CLL_VALUE, maxCll);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_AVG_CLL_VALUE, avgCll);
+    tex1Dstore(StorageConsolidated, COORDS_SHOW_MIN_CLL_VALUE, minCll);
 
 #ifdef IS_HDR_CSP
 

@@ -183,6 +183,666 @@ uint GetNumberAboveZero
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
+void DrawText()
+{
+#ifdef IS_HDR_CSP
+
+  #define ARRAY_SIZE_CHAR_LIST_HEADER 20
+
+  #define CHAR_ANALYSIS _H
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+    #define TEXT_CSP _s, _c, _R, _G, _B
+
+  #else //CSP_HDR10
+
+    #define TEXT_CSP _H, _D, _R, _1, _0
+
+  #endif
+
+#else //IS_HDR_CSP
+
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
+
+    #define ARRAY_SIZE_CHAR_LIST_HEADER 19
+
+  #else
+
+    #define ARRAY_SIZE_CHAR_LIST_HEADER 23
+
+  #endif
+
+  #define CHAR_ANALYSIS _S
+
+  #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
+
+    #define TEXT_CSP _g, _a, _m, _m, _a, _2, _dot, _4
+
+  #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
+
+    #define TEXT_CSP _s, _R, _G, _B
+
+  #else
+
+    #define TEXT_CSP _g, _a, _m, _m, _a, _2, _dot, _2
+
+  #endif
+
+#endif //IS_HDR_CSP
+
+  static const uint2 charListHeaderOffset = uint2(0, 2);
+
+  static const uint2 charListHeader[ARRAY_SIZE_CHAR_LIST_HEADER] =
+  {
+    CHAR_ANALYSIS, _D, _R, _space,
+
+    _A, _n, _a, _l, _y, _s, _i, _s, _space,
+
+    _roundBracketOpen, TEXT_CSP, _roundBracketClose
+  };
+
+
+#ifdef IS_HDR_CSP
+
+  //8
+  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space, _space
+  //9
+  #define SPACES_RED   _space, _space, _space, _space, _space, _space, _space, _space, _space
+  //7
+  #define SPACES_GREEN _space, _space, _space, _space, _space, _space, _space
+
+  #define SPACES_NITS_COUNT  8
+  #define SPACES_RED_COUNT   9
+  #define SPACES_GREEN_COUNT 7
+
+#else
+
+  //7
+  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space
+  //8
+  #define SPACES_RED   _space, _space, _space, _space, _space, _space, _space, _space
+  //6
+  #define SPACES_GREEN _space, _space, _space, _space, _space, _space
+
+  #define SPACES_NITS_COUNT  7
+  #define SPACES_RED_COUNT   8
+  #define SPACES_GREEN_COUNT 6
+
+#endif
+
+#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB (1 + 4 + SPACES_NITS_COUNT  \
+                                          + 1 + 3 + SPACES_RED_COUNT   \
+                                          + 1 + 5 + SPACES_GREEN_COUNT \
+                                          + 1 + 4)
+
+  static const uint2 charListTextNitsRGBOffset = uint2(3, 3);
+
+  static const uint2 charListTextNitsRGB[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB] =
+  {
+    _verticalLine, _n, _i, _t, _s,     SPACES_NITS,
+    _verticalLine, _r, _e, _d,         SPACES_RED,
+    _verticalLine, _g, _r, _e, _e, _n, SPACES_GREEN,
+    _verticalLine, _b, _l, _u, _e
+  };
+
+
+#ifdef IS_HDR_CSP
+
+  //5
+  #define SPACES_PRE_DOT   _space, _space, _space, _space, _space
+  //6
+  #define SPACES_AFTER_DOT _space, _space, _space, _space, _space, _space
+
+  #define SPACES_PRE_DOT_COUNT   5
+  #define SPACES_AFTER_DOT_COUNT 6
+
+#else
+
+  //3
+  #define SPACES_PRE_DOT   _space, _space, _space
+  //6
+  #define SPACES_AFTER_DOT _space, _space, _space, _space, _space, _space
+
+  #define SPACES_PRE_DOT_COUNT   3
+  #define SPACES_AFTER_DOT_COUNT 6
+
+#endif
+
+#ifdef IS_HDR_CSP
+
+  #define SDR_PERCENT(x)
+
+  #define SDR_PERCENT_COUNT 0
+
+  #define SDR_SPACES_FOR_LAST_PERCENT(x)
+
+  #define SDR_SPACES_FOR_LAST_PERCENT_COUNT 0
+
+#else //IS_HDR_CSP
+
+  #define SDR_PERCENT(x) _percent,
+
+  #define SDR_PERCENT_COUNT 1
+
+  #define SDR_SPACES_FOR_LAST_PERCENT(x) SPACES_AFTER_DOT ## ,
+
+  #define SDR_SPACES_FOR_LAST_PERCENT_COUNT SPACES_AFTER_DOT_COUNT
+
+#endif //IS_HDR_CSP
+
+#define ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB                                        \
+  (3                                                                                     \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SDR_SPACES_FOR_LAST_PERCENT_COUNT + SDR_PERCENT_COUNT)
+
+  static const uint2 charListMaxNitsRGBOffset = uint2(0, 4);
+
+  static const uint2 charListMaxNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
+  {
+    _m, _a, _x,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //red
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //green
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //blue
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+  static const uint2 charListAvgNitsRGBOffset = uint2(0, 5);
+
+  static const uint2 charListAvgNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
+  {
+    _a, _v, _g,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //red
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //green
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //blue
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+  static const uint2 charListMinNitsRGBOffset = uint2(0, 6);
+
+  static const uint2 charListMinNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
+  {
+    _m, _i, _n,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //red
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //green
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //blue
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+#define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB                                       \
+  (6                                                                               \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SDR_SPACES_FOR_LAST_PERCENT_COUNT + SDR_PERCENT_COUNT)
+
+  static const uint2 charListCursorNitsRGBOffset = uint2(0, 7);
+
+  static const uint2 charListCursorNitsRGB[ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB] =
+  {
+    _c, _u, _r, _s, _o, _r,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //red
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //green
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //blue
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+
+#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_CLL (1 + 4 + SPACES_NITS_COUNT \
+                                          + 1 + 3)
+
+#ifdef IS_HDR_CSP
+  static const uint2 charListTextNitsCllBaseOffset = uint2(24, 8);
+#else
+  static const uint2 charListTextNitsCllBaseOffset = uint2(0, 8);
+#endif
+
+  static const uint2 charListTextNitsCllOffset = charListTextNitsCllBaseOffset + uint2(3, 0);
+
+  static const uint2 charListTextNitsCll[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_CLL] =
+  {
+    _verticalLine, _n, _i, _t, _s, SPACES_NITS,
+    _verticalLine, _C, _L, _L
+  };
+
+#define ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL                                        \
+  (3                                                                                     \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SDR_SPACES_FOR_LAST_PERCENT_COUNT + SDR_PERCENT_COUNT)
+
+  static const uint2 charListMaxNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 1);
+
+  static const uint2 charListMaxNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
+  {
+    _m, _a, _x,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //CLL
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+  static const uint2 charListAvgNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 2);
+
+  static const uint2 charListAvgNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
+  {
+    _a, _v, _g,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //CLL
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+  static const uint2 charListMinNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 3);
+
+  static const uint2 charListMinNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
+  {
+    _m, _i, _n,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //CLL
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+#define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL                                             \
+  (6                                                                                     \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
+ + 1 + SPACES_PRE_DOT_COUNT + 1 + SDR_SPACES_FOR_LAST_PERCENT_COUNT + SDR_PERCENT_COUNT)
+
+  static const uint2 charListCursorNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 4);
+
+  static const uint2 charListCursorNitsCll[ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL] =
+  {
+    _c, _u, _r, _s, _o, _r,
+
+    //nits
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    //CLL
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+  };
+
+
+#ifdef IS_HDR_CSP
+
+  #define SPACES_GAMUTS _space, _space, _space, _space, _dot, _space, _space, _space
+
+  static const uint2 charListGamutsBaseOffset = uint2(0, charListTextNitsCllOffset.y);
+
+  static const uint2 charListGamutBt709Offset = charListGamutsBaseOffset + uint2(1, 0);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_BT709 16
+
+  static const uint2 charListGamutBt709[ARRAY_SIZE_CHAR_LIST_GAMUT_BT709] =
+  {
+    _B, _T, _dot, _7, _0, _9, _colon, SPACES_GAMUTS, _percent
+  };
+
+  static const uint2 charListGamutDciP3Offset = charListGamutsBaseOffset + uint2(1, 1);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_DCI_P3 16
+
+  static const uint2 charListGamutDciP3[ARRAY_SIZE_CHAR_LIST_GAMUT_DCI_P3] =
+  {
+    _D, _C, _I, _minus, _P, _3, _colon, SPACES_GAMUTS, _percent
+  };
+
+  static const uint2 charListGamutBt2020Offset = charListGamutsBaseOffset + uint2(0, 2);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_BT2020 17
+
+  static const uint2 charListGamutBt2020[ARRAY_SIZE_CHAR_LIST_GAMUT_BT2020] =
+  {
+    _B, _T, _dot, _2, _0, _2, _0, _colon, SPACES_GAMUTS, _percent
+  };
+
+  static const uint2 charListGamutAp0Offset = charListGamutsBaseOffset + uint2(4, 3);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_AP0 13
+
+  static const uint2 charListGamutAp0[ARRAY_SIZE_CHAR_LIST_GAMUT_AP0] =
+  {
+    _A, _P, _0, _colon, SPACES_GAMUTS, _percent
+  };
+
+  static const uint2 charListGamutInvalidOffset = charListGamutsBaseOffset + uint2(0, 4);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_INVALID 17
+
+  static const uint2 charListGamutInvalid[ARRAY_SIZE_CHAR_LIST_GAMUT_INVALID] =
+  {
+    _i, _n, _v, _a, _l, _i, _d, _colon, SPACES_GAMUTS, _percent
+  };
+
+  static const uint2 charListGamutCursorOffset = uint2(ARRAY_SIZE_CHAR_LIST_HEADER + 1,
+                                                       charListHeaderOffset.y);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR 7
+
+  static const uint2 charListGamutCursor[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR] =
+  {
+    _c, _u, _r, _s, _o, _r, _colon
+  };
+
+
+  static const uint2 charListGamutCursorTextBt709Offset = uint2(17, charListGamutsBaseOffset.y);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT709 6
+
+  static const uint2 charListGamutCursorTextBt709[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT709] =
+  {
+    _B, _T, _dot, _7, _0, _9
+  };
+
+  static const uint2 charListGamutCursorTextDciP3Offset = charListGamutCursorTextBt709Offset + uint2(0, 1);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_DCI_P3 6
+
+  static const uint2 charListGamutCursorTextDciP3[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_DCI_P3] =
+  {
+    _D, _C, _I, _minus, _P, _3
+  };
+
+  static const uint2 charListGamutCursorTextBt2020Offset = charListGamutCursorTextBt709Offset + uint2(0, 2);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT2020 7
+
+  static const uint2 charListGamutCursorTextBt2020[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT2020] =
+  {
+    _B, _T, _dot, _2, _0, _2, _0
+  };
+
+  static const uint2 charListGamutCursorTextAp0Offset = charListGamutCursorTextBt709Offset + uint2(0, 3);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_AP0 3
+
+  static const uint2 charListGamutCursorTextAp0[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_AP0] =
+  {
+    _A, _P, _0
+  };
+
+  static const uint2 charListGamutCursorTextInvalidOffset = charListGamutCursorTextBt709Offset + uint2(0, 4);
+
+#define ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_INVALID 7
+
+  static const uint2 charListGamutCursorTextInvalid[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_INVALID] =
+  {
+    _i, _n, _v, _a, _l, _i, _d
+  };
+
+#endif //IS_HDR_CSP
+
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  #define COUNT_CHAR_LISTS 22
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  #define COUNT_CHAR_LISTS 18
+
+#else
+
+  #define COUNT_CHAR_LISTS 11
+
+#endif
+
+
+  static const int2 offsets[COUNT_CHAR_LISTS] =
+  {
+    charListHeaderOffset,
+    charListTextNitsRGBOffset,
+    charListMaxNitsRGBOffset,
+    charListAvgNitsRGBOffset,
+    charListMinNitsRGBOffset,
+    charListCursorNitsRGBOffset,
+    charListTextNitsCllOffset,
+    charListMaxNitsCllOffset,
+    charListAvgNitsCllOffset,
+    charListMinNitsCllOffset,
+    charListCursorNitsCllOffset,
+#ifdef IS_HDR_CSP
+    charListGamutBt709Offset,
+    charListGamutDciP3Offset,
+    charListGamutBt2020Offset,
+    charListGamutCursorOffset,
+    charListGamutCursorTextBt709Offset,
+    charListGamutCursorTextDciP3Offset,
+    charListGamutCursorTextBt2020Offset,
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    charListGamutAp0Offset,
+    charListGamutInvalidOffset,
+    charListGamutCursorTextAp0Offset,
+    charListGamutCursorTextInvalidOffset,
+#endif
+#endif
+  };
+
+
+  static const uint arraySizes[COUNT_CHAR_LISTS] =
+  {
+    ARRAY_SIZE_CHAR_LIST_HEADER,
+    ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB,
+    ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB,
+    ARRAY_SIZE_CHAR_LIST_TEXT_NITS_CLL,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL,
+    ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL,
+    ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL,
+#ifdef IS_HDR_CSP
+    ARRAY_SIZE_CHAR_LIST_GAMUT_BT709,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_DCI_P3,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_BT2020,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT709,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_DCI_P3,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT2020,
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    ARRAY_SIZE_CHAR_LIST_GAMUT_AP0,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_INVALID,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_AP0,
+    ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_INVALID
+#endif
+#endif
+  };
+
+
+  [loop]
+  for (uint i = 0; i < COUNT_CHAR_LISTS; i++)
+  {
+
+    [loop]
+    for (uint j = 0; j < arraySizes[i]; j++)
+    {
+
+      uint2 currentChar;
+
+      [forcecase]
+      switch(i)
+      {
+        case 0:
+        {
+          currentChar = charListHeader[j];
+        }
+        break;
+        case 1:
+        {
+          currentChar = charListTextNitsRGB[j];
+        }
+        break;
+        case 2:
+        {
+          currentChar = charListMaxNitsRGB[j];
+        }
+        break;
+        case 3:
+        {
+          currentChar = charListAvgNitsRGB[j];
+        }
+        break;
+        case 4:
+        {
+          currentChar = charListMinNitsRGB[j];
+        }
+        break;
+        case 5:
+        {
+          currentChar = charListCursorNitsRGB[j];
+        }
+        break;
+        case 6:
+        {
+          currentChar = charListTextNitsCll[j];
+        }
+        break;
+        case 7:
+        {
+          currentChar = charListMaxNitsCll[j];
+        }
+        break;
+        case 8:
+        {
+          currentChar = charListAvgNitsCll[j];
+        }
+        break;
+        case 9:
+        {
+          currentChar = charListMinNitsCll[j];
+        }
+        break;
+#ifdef IS_HDR_CSP
+        case 10:
+#else
+        default:
+#endif
+        {
+          currentChar = charListCursorNitsCll[j];
+        }
+        break;
+#ifdef IS_HDR_CSP
+        case 11:
+        {
+          currentChar = charListGamutBt709[j];
+        }
+        break;
+        case 12:
+        {
+          currentChar = charListGamutDciP3[j];
+        }
+        break;
+        case 13:
+        {
+          currentChar = charListGamutBt2020[j];
+        }
+        break;
+        case 14:
+        {
+          currentChar = charListGamutCursor[j];
+        }
+        break;
+        case 15:
+        {
+          currentChar = charListGamutCursorTextBt709[j];
+        }
+        break;
+        case 16:
+        {
+          currentChar = charListGamutCursorTextDciP3[j];
+        }
+        break;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        case 17:
+#else
+        default:
+#endif
+        {
+          currentChar = charListGamutCursorTextBt2020[j];
+        }
+        break;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+        case 18:
+        {
+          currentChar = charListGamutAp0[j];
+        }
+        break;
+        case 19:
+        {
+          currentChar = charListGamutInvalid[j];
+        }
+        break;
+        case 20:
+        {
+          currentChar = charListGamutCursorTextAp0[j];
+        }
+        break;
+        default:
+        {
+          currentChar = charListGamutCursorTextInvalid[j];
+        }
+        break;
+#endif
+#endif
+      }
+
+      [branch]
+      if (any(currentChar != _space))
+      {
+        const uint2 storeOffset = (offsets[i] + uint2(j, 0))
+                                * CHAR_DIM_UINT;
+
+        const uint2 currentCharOffset = currentChar
+                                      * CHAR_DIM_UINT;
+        [loop]
+        for (int x = 0; x < CHAR_DIM_UINT.x; x++)
+        {
+          [loop]
+          for (int y = 0; y < CHAR_DIM_UINT.y; y++)
+          {
+            const int2 xy = int2(x, y);
+
+            const int2 currentFetchOffset = int2(currentCharOffset)
+                                          + xy;
+
+            const int2 currentStoreOffset = int2(storeOffset)
+                                          + xy;
+
+            const float4 currentPixel = tex2Dfetch(StorageFontAtlasConsolidated, currentFetchOffset);
+
+            tex2Dstore(StorageFontAtlasConsolidated, currentStoreOffset, currentPixel);
+          }
+        }
+      }
+    }
+  }
+}
+
+
 void CS_GetNitNumbers
 (
   uint3 GID  : SV_GroupID,
@@ -190,6 +850,15 @@ void CS_GetNitNumbers
   uint3 DTID : SV_DispatchThreadID
 )
 {
+  static const bool showCllValues = _SHOW_RGB_OR_CLL == SHOW_CLL_VALUES;
+
+  [branch]
+  if (showCllValues
+   && GID.x > 1)
+  {
+    return;
+  }
+
   static const int2 storePos = int2(DTID.xy);
 
   float nits;
@@ -198,16 +867,24 @@ void CS_GetNitNumbers
   if (GID.y < 3
    && _SHOW_NITS_VALUES)
   {
-    nits = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_MAX_NITS + (3 * GID.x) + GID.y);
+    int fetchPos = COORDS_SHOW_MAX_NITS + GID.y;
+
+    fetchPos += showCllValues ? (12 * GID.x)
+                              :  (3 * GID.x);
+
+    nits = tex1Dfetch(SamplerConsolidated, fetchPos);
   }
   else
   [branch]
   if (_SHOW_NITS_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
-    //load into groupshared?
+    //loading into groupshared memory is not worth it
     const float4 RgbNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
-    nits = RgbNits[(GID.x + 3) % 4];
+    const float  Cll     = MAXRGB(RgbNits.rgb);
+
+    nits = showCllValues ? GID.x == 0u ? RgbNits.w : Cll
+                         : RgbNits[(GID.x + 3) % 4];
   }
   else
   {
@@ -289,7 +966,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 5)
       {
-        _00 = _minus;
+        _00 = _minus.x;
       }
       else
       {
@@ -309,7 +986,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 4)
       {
-        _01 = _minus;
+        _01 = _minus.x;
       }
       else
       {
@@ -333,7 +1010,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 3)
       {
-        _02 = _minus;
+        _02 = _minus.x;
       }
       else
       {
@@ -353,7 +1030,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 2)
       {
-        _03 = _minus;
+        _03 = _minus.x;
       }
       else
       {
@@ -772,7 +1449,7 @@ VertexCoordsAndTexCoords ReturnOffScreen()
   #define MAX_LINES  6
 #endif
 
-#define MAX_CHARS TEXT_OFFSET_ANALYIS_HEADER.x
+#define MAX_CHARS TEXT_BLOCK_SIZE_ANALYIS_HEADER.x
 
 #ifdef IS_HDR_CSP
   #define NITS_EXTRA_CHARS 6
@@ -794,7 +1471,19 @@ float GetMaxChars()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
-    maxChars = max(TEXT_OFFSET_ANALYIS_HEADER.x, TEXT_OFFSET_NITS_CURSOR.x + NITS_EXTRA_CHARS);
+    float textBlockSizeNitsRgbCursor = TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x;
+
+    FLATTEN(x)
+    if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
+    {
+#ifdef IS_HDR_CSP
+      textBlockSizeNitsRgbCursor -= 26.f;
+#else
+      textBlockSizeNitsRgbCursor -= 24.f;
+#endif
+    }
+
+    maxChars = max(TEXT_BLOCK_SIZE_ANALYIS_HEADER.x, textBlockSizeNitsRgbCursor + NITS_EXTRA_CHARS);
   }
 
 #ifdef IS_HDR_CSP
@@ -802,7 +1491,7 @@ float GetMaxChars()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
-    maxChars = max(maxChars, TEXT_OFFSET_GAMUT_PERCENTAGES.x + TEXT_BLOCK_DRAW_X_OFFSET[3]);
+    maxChars = max(maxChars, TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x + TEXT_BLOCK_DRAW_X_OFFSET[3]);
   }
 #endif
 
@@ -820,7 +1509,19 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
-    ret.maxChars = max(ret.maxChars, uint(TEXT_OFFSET_NITS_CURSOR.x) + NITS_EXTRA_CHARS);
+    uint textOffsetNitsCursor = uint(TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x);
+
+    [flatten]
+    if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
+    {
+#ifdef IS_HDR_CSP
+      textOffsetNitsCursor -= 26u;
+#else
+      textOffsetNitsCursor -= 24u;
+#endif
+    }
+
+    ret.maxChars = max(ret.maxChars, textOffsetNitsCursor + NITS_EXTRA_CHARS);
   }
 
   [flatten]
@@ -841,7 +1542,7 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
-    ret.maxChars = max(ret.maxChars, uint(TEXT_OFFSET_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
+    ret.maxChars = max(ret.maxChars, uint(TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
   }
 
   [flatten]
@@ -983,10 +1684,25 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         size.y -= 3.f;
       }
 
+      texCoordOffset = TEXT_BLOCK_FETCH_OFFSETS[currentTextBlockID];
+
+      [flatten]
+      if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES
+       && (currentTextBlockID == 1 || currentTextBlockID == 2))
+      {
+#ifdef IS_HDR_CSP
+        size.x -= 26.f;
+
+        texCoordOffset.x += 24.f;
+#else
+        size.x -= 24.f;
+#endif
+        texCoordOffset.y += 5.f;
+      }
+
       vertexOffset *= CharSize;
 
-      texCoordOffset.x = 0.f;
-      texCoordOffset.y = CHAR_DIM_FLOAT.y * TEXT_BLOCK_FETCH_Y_OFFSET[currentTextBlockID];
+      texCoordOffset *= CHAR_DIM_FLOAT;
 
       const float2   vertexOffset2 = size * CharSize       +   vertexOffset;
       const float2 texCoordOffset2 = size * CHAR_DIM_FLOAT + texCoordOffset;
@@ -1131,52 +1847,71 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3)
      && _SHOW_NITS_VALUES)
     {
-      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
+      [branch]
+      if ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
+       || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES)
+      {
+        uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
-      uint b = a / NITS_NUMBERS_COUNT;
+        uint b = a / NITS_NUMBERS_COUNT;
 
-      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+        uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
 
-      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+        uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
 
 #ifndef IS_HDR_CSP
 
-      spacerOffset *= 2;
+        spacerOffset *= 2;
 
-      dotOffset = min(dotOffset, 1);
+        dotOffset = min(dotOffset, 1);
 
 #endif
 
-      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+        vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
 
-      vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
+        vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
+      }
+      else
+      {
+        return ReturnOffScreen();
+      }
     }
+
     //cursor nits
     else
     [flatten]
     if (currentNumberID < (NITS_NUMBERS_PER_ROW * 4)
      && _SHOW_NITS_FROM_CURSOR)
     {
-      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
+      [branch]
+      if ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
+       || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES)
+      {
+        uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
-      uint b = a / NITS_NUMBERS_COUNT;
+        uint b = a / NITS_NUMBERS_COUNT;
 
-      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+        uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
 
-      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+        uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
 
 #ifndef IS_HDR_CSP
 
-      spacerOffset *= 2;
+        spacerOffset *= 2;
 
-      dotOffset = min(dotOffset, 1);
+        dotOffset = min(dotOffset, 1);
 
 #endif
 
-      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+        vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
 
-      vertexOffset.y = _SHOW_NITS_VALUES ? 5
-                                         : 2;
+        vertexOffset.y = _SHOW_NITS_VALUES ? 5
+                                           : 2;
+      }
+      else
+      {
+        return ReturnOffScreen();
+      }
     }
 
 #ifdef IS_HDR_CSP
@@ -1310,7 +2045,7 @@ void VS_RenderNumbers
 
     vertexOffset *= charSize;
 
-    float2 texCoordOffset = float2(0.f, TEXT_OFFSET_GAMUT_CURSOR_BT709.y + gamut);
+    float2 texCoordOffset = float2(0.f, TEXT_BLOCK_FETCH_OFFSET_GAMUT_CURSOR_BT709.y + gamut);
 
     texCoordOffset.y *= CHAR_DIM_FLOAT.y;
 
