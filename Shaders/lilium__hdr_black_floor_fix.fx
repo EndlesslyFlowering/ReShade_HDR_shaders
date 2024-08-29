@@ -80,6 +80,7 @@ void PS_HdrBlackFloorFix(
   in  nointerpolation float4 FuncParms0 : FuncParms0,
   in  nointerpolation float  FuncParms1 : FuncParms1)
 {
+  BRANCH(x)
   if (!Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
    && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
@@ -109,11 +110,13 @@ void PS_HdrBlackFloorFix(
 #endif //ACTUAL_COLOUR_SPACE ==
 
 
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
     colour = Gamma22Emulation(colour,
                               whitePointNormalised);
 
+    BRANCH(x)
     if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
     {
       colour = LowerBlackFloor(colour,
@@ -126,11 +129,14 @@ void PS_HdrBlackFloorFix(
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
+      BRANCH(x)
       if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
       {
         colour = Csp::Mat::DciP3To::Bt709(colour);
       }
-      else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+      else
+      BRANCH(x)
+      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
       {
         colour = Csp::Mat::Bt2020To::Bt709(colour);
       }
@@ -139,11 +145,14 @@ void PS_HdrBlackFloorFix(
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
+      BRANCH(x)
       if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
       {
         colour = Csp::Mat::Bt709To::Bt2020(colour);
       }
-      else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+      else
+      BRANCH(x)
+      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
       {
         colour = Csp::Mat::DciP3To::Bt2020(colour);
       }

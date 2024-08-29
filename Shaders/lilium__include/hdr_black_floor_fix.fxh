@@ -128,30 +128,38 @@ namespace Ui
 }
 
 
-float3 Gamma22Emulation(
+float3 Gamma22Emulation
+(
   const float3 Colour,
-  const float  WhitePointNormalised)
+  const float  WhitePointNormalised
+)
 {
   float3 correctCspColour;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
   {
     correctCspColour = Csp::Mat::Bt709To::DciP3(Colour);
   }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+  else
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
   {
     correctCspColour = Csp::Mat::Bt709To::Bt2020(Colour);
   }
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
   {
     correctCspColour = Csp::Mat::Bt2020To::Bt709(Colour);
   }
-  else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  else
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
   {
     correctCspColour = Csp::Mat::Bt2020To::DciP3(Colour);
   }
@@ -164,36 +172,42 @@ float3 Gamma22Emulation(
   }
 
   const bool3 isInProcessingRange = correctCspColour < WhitePointNormalised;
-  const bool3 isAbove0            = correctCspColour >  0.f;
+  const bool3 isAbove0            = correctCspColour > 0.f;
 
   const bool3 needsProcessing = isInProcessingRange && isAbove0;
 
   float3 processedColour = correctCspColour;
 
+  [branch]
   if (needsProcessing.r)
   {
     processedColour.r = pow(Csp::Trc::LinearTo::Srgb(correctCspColour.r / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 
+    [flatten]
     if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
      && processedColour.r > correctCspColour.r)
     {
       processedColour.r = correctCspColour.r;
     }
   }
+  [branch]
   if (needsProcessing.g)
   {
     processedColour.g = pow(Csp::Trc::LinearTo::Srgb(correctCspColour.g / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 
+    [flatten]
     if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
      && processedColour.g > correctCspColour.g)
     {
       processedColour.g = correctCspColour.g;
     }
   }
+  [branch]
   if (needsProcessing.b)
   {
     processedColour.b = pow(Csp::Trc::LinearTo::Srgb(correctCspColour.b / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 
+    [flatten]
     if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
      && processedColour.b > correctCspColour.b)
     {
@@ -236,58 +250,83 @@ BLACK_POINT_ADAPTION(float)
 BLACK_POINT_ADAPTION(float3)
 
 
-float GetNits(const float3 Colour)
+float GetNits
+(
+  const float3 Colour
+)
 {
+  float outputNits;
+
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
+    BRANCH(x)
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
     {
-      return dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
+      outputNits = dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
     }
-    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    else
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
-      return dot(Colour, Csp::Mat::DciP3ToXYZ[1].rgb);
+      outputNits = dot(Colour, Csp::Mat::DciP3ToXYZ[1].rgb);
     }
     else //if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
     {
-      return dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
+      outputNits = dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
     }
   }
-
+  else
+  {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
+    outputNits = dot(Colour, Csp::Mat::Bt709ToXYZ[1].rgb);
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-  return dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
+    outputNits = dot(Colour, Csp::Mat::Bt2020ToXYZ[1].rgb);
 
 #endif
+  }
+
+  return outputNits;
 }
 
 
-void ConvertToWorkingCsp(inout float3 Colour)
+void ConvertToWorkingCsp
+(
+  inout float3 Colour
+)
 {
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
+    BRANCH(x)
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
     {
       Colour = Csp::Mat::Bt709To::Bt2020(Colour);
     }
-    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    else
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
       Colour = Csp::Mat::DciP3To::Bt2020(Colour);
     }
   }
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
-
+  else
+  {
+    Colour = Csp::Mat::Bt709To::Bt2020(Colour);
+  }
 #endif
+  return;
 }
 
 
-float3 ConvertToOutputCspAfterProcessing(const float3 Colour)
+float3 ConvertToOutputCspAfterProcessing
+(
+  const float3 Colour
+)
 {
   float3 outputColour;
 
@@ -310,20 +349,27 @@ float3 ConvertToOutputCspAfterProcessing(const float3 Colour)
 }
 
 
-float3 ConvertToOutputCspWithoutProcessing(const float3 Colour)
+float3 ConvertToOutputCspWithoutProcessing
+(
+  const float3 Colour
+)
 {
+  float3 outputColour;
 
+  BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    float3 outputColour;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
+    BRANCH(x)
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
       outputColour = Csp::Mat::DciP3To::Bt709(Colour);
     }
-    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+    else
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
     {
       outputColour = Csp::Mat::Bt2020To::Bt709(Colour);
     }
@@ -332,11 +378,14 @@ float3 ConvertToOutputCspWithoutProcessing(const float3 Colour)
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
+    BRANCH(x)
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
     {
       outputColour = Csp::Mat::Bt709To::Bt2020(Colour);
     }
-    else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+    else
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
       outputColour = Csp::Mat::DciP3To::Bt2020(Colour);
     }
@@ -350,112 +399,127 @@ float3 ConvertToOutputCspWithoutProcessing(const float3 Colour)
     outputColour = Csp::Trc::LinearTo::Hlg(outputColour);
 
 #endif
-    return outputColour;
 
 #endif
-
   }
-
+  else
+  {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Colour * 125.f;
+    outputColour = Colour * 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::LinearTo::Pq(Colour);
+    outputColour = Csp::Trc::LinearTo::Pq(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  return Csp::Trc::LinearTo::Hlg(Colour);
+    outputColour = Csp::Trc::LinearTo::Hlg(Colour);
 
 #endif
+  }
+
+  return outputColour;
 }
 
 
-float3 LowerBlackFloor(
+float3 LowerBlackFloor
+(
         float3 Rgb,
   const float  RollOffStoppingPoint,
   const float  OldBlackPoint,
   const float  RollOffMinusOldBlackPoint,
-  const float  MinLum)
+  const float  MinLum
+)
 {
-  // YRGB mode
-  if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
+  switch(Ui::HdrBlackFloorFix::Lowering::ProcessingMode)
   {
-    float y1 = GetNits(Rgb);
-
-    float y1InPq = Csp::Trc::LinearTo::Pq(y1);
-
-    if (y1InPq <= RollOffStoppingPoint)
+    // YRGB mode
+    case PRO_MODE_YRGB:
     {
-      float y2 = BlackPointAdaption(y1InPq,
-                                    OldBlackPoint,
-                                    RollOffMinusOldBlackPoint,
-                                    MinLum);
+      float y1 = GetNits(Rgb);
 
-      y2 = Csp::Trc::PqTo::Linear(y2);
+      float y1InPq = Csp::Trc::LinearTo::Pq(y1);
 
-      float3 outputRgb = y2 / y1 * Rgb;
+      [branch]
+      if (y1InPq <= RollOffStoppingPoint)
+      {
+        float y2 = BlackPointAdaption(y1InPq,
+                                      OldBlackPoint,
+                                      RollOffMinusOldBlackPoint,
+                                      MinLum);
 
-      return ConvertToOutputCspWithoutProcessing(outputRgb);
+        y2 = Csp::Trc::PqTo::Linear(y2);
+
+        float3 outputRgb = y2 / y1 * Rgb;
+
+        return ConvertToOutputCspWithoutProcessing(outputRgb);
+      }
+      else
+      {
+        return ConvertToOutputCspWithoutProcessing(Rgb);
+      }
     }
-    else
+    break;
+    // RGB in PQ mode
+    case PRO_MODE_RGB_IN_PQ:
     {
-      return ConvertToOutputCspWithoutProcessing(Rgb);
-    }
-  }
-  // RGB in PQ mode
-  else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB_IN_PQ)
-  {
-    float nits = GetNits(Rgb);
+      float nits = GetNits(Rgb);
 
-    if (nits <= RollOffStoppingPoint)
-    {
-      ConvertToWorkingCsp(Rgb);
-      float3 rgbInPq1 = Csp::Trc::LinearTo::Pq(Rgb);
+      [branch]
+      if (nits <= RollOffStoppingPoint)
+      {
+        ConvertToWorkingCsp(Rgb);
 
-      float3 rgbInPq2 = BlackPointAdaption(rgbInPq1,
-                                           OldBlackPoint,
-                                           RollOffMinusOldBlackPoint,
-                                           MinLum);
+        float3 rgbInPq1 = Csp::Trc::LinearTo::Pq(Rgb);
 
-      float3 outputRgb = max(rgbInPq2, 0.f);
+        float3 rgbInPq2 = BlackPointAdaption(rgbInPq1,
+                                             OldBlackPoint,
+                                             RollOffMinusOldBlackPoint,
+                                             MinLum);
+
+        float3 outputRgb = max(rgbInPq2, 0.f);
 
 #if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
 
-      outputRgb = Csp::Trc::PqTo::Linear(outputRgb);
-      outputRgb = ConvertToOutputCspAfterProcessing(outputRgb);
+        outputRgb = Csp::Trc::PqTo::Linear(outputRgb);
+        outputRgb = ConvertToOutputCspAfterProcessing(outputRgb);
 
 #endif
-      return outputRgb;
+        return outputRgb;
+      }
+      else
+      {
+        return ConvertToOutputCspWithoutProcessing(Rgb);
+      }
     }
-    else
+    break;
+    // RBG mode
+    case PRO_MODE_RGB:
     {
-      return ConvertToOutputCspWithoutProcessing(Rgb);
+      [branch]
+      if (GetNits(Rgb) <= RollOffStoppingPoint)
+      {
+        ConvertToWorkingCsp(Rgb);
+
+        float3 rgb2 = BlackPointAdaption(Rgb,
+                                         OldBlackPoint,
+                                         RollOffMinusOldBlackPoint,
+                                         MinLum);
+
+        float3 outputRgb = max(rgb2, 0.f);
+
+        return ConvertToOutputCspAfterProcessing(outputRgb);
+      }
+      else
+      {
+        return ConvertToOutputCspWithoutProcessing(Rgb);
+      }
     }
+    break;
+    default:
+      return 0.f;
   }
-  // RBG mode
-  else // if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB)
-  {
-    if (GetNits(Rgb) <= RollOffStoppingPoint)
-    {
-      ConvertToWorkingCsp(Rgb);
-
-      float3 rgb2 = BlackPointAdaption(Rgb,
-                                       OldBlackPoint,
-                                       RollOffMinusOldBlackPoint,
-                                       MinLum);
-
-      float3 outputRgb = max(rgb2, 0.f);
-
-      return ConvertToOutputCspAfterProcessing(outputRgb);
-    }
-    else
-    {
-      return ConvertToOutputCspWithoutProcessing(Rgb);
-    }
-  }
-
 }
 
 #endif //is hdr API and hdr colour space
