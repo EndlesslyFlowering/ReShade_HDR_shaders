@@ -21,6 +21,11 @@ void VS_PrepareHdrBlackFloorFix(
                                : 0.f;
   Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
+
+  FuncParms0 = 0.f;
+  FuncParms1 = 0.f;
+
+
 // black flower lowering
 #define rollOffStoppingPoint      FuncParms0.x
 #define oldBlackPoint             FuncParms0.y
@@ -30,37 +35,38 @@ void VS_PrepareHdrBlackFloorFix(
 // gamma 2.2 emulation
 #define whitePointNormalised FuncParms1
 
+  float rollOffStoppingPoint0;
+  float oldBlackPoint0;
+  float newBlackPoint0;
+  float rollOffMinusOldBlackPoint0;
 
-  rollOffStoppingPoint = Ui::HdrBlackFloorFix::Lowering::RollOffStoppingPoint / 10000.f;
-  oldBlackPoint        = Ui::HdrBlackFloorFix::Lowering::OldBlackPoint        / 10000.f;
-
-  float newBlackPoint = Ui::HdrBlackFloorFix::Lowering::NewBlackPoint / 10000.f;
-
-  if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB)
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode != PRO_MODE_RGB)
   {
-    rollOffMinusOldBlackPoint = rollOffStoppingPoint - oldBlackPoint;
-  }
-  else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_RGB_IN_PQ)
-  {
-    oldBlackPoint = Csp::Trc::LinearTo::Pq(oldBlackPoint);
+    rollOffStoppingPoint0 = Csp::Trc::NitsTo::Pq(Ui::HdrBlackFloorFix::Lowering::RollOffStoppingPoint);
 
-    newBlackPoint = sign(newBlackPoint)
-                  * Csp::Trc::NitsTo::Pq(abs(newBlackPoint));
+    oldBlackPoint0 = Csp::Trc::NitsTo::Pq(Ui::HdrBlackFloorFix::Lowering::OldBlackPoint);
 
-    rollOffMinusOldBlackPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint) - oldBlackPoint;
+    newBlackPoint0 = sign(newBlackPoint0)
+                   * Csp::Trc::NitsTo::Pq(abs(newBlackPoint0));
+
+    newBlackPoint0 = Csp::Trc::NitsTo::Pq(Ui::HdrBlackFloorFix::Lowering::NewBlackPoint);
+
+    rollOffMinusOldBlackPoint0 = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint0) - oldBlackPoint0;
   }
   else
   {
-    rollOffStoppingPoint = Csp::Trc::LinearTo::Pq(rollOffStoppingPoint);
-    oldBlackPoint        = Csp::Trc::LinearTo::Pq(oldBlackPoint);
-
-    newBlackPoint = sign(newBlackPoint)
-                  * Csp::Trc::NitsTo::Pq(abs(newBlackPoint));
-
-    rollOffMinusOldBlackPoint = rollOffStoppingPoint - oldBlackPoint;
+    rollOffStoppingPoint0      = Ui::HdrBlackFloorFix::Lowering::RollOffStoppingPoint / 10000.f;
+    oldBlackPoint0             = Ui::HdrBlackFloorFix::Lowering::OldBlackPoint        / 10000.f;
+    newBlackPoint0             = Ui::HdrBlackFloorFix::Lowering::NewBlackPoint        / 10000.f;
+    rollOffMinusOldBlackPoint0 = rollOffStoppingPoint0 - oldBlackPoint0;
   }
 
-  minLum = (newBlackPoint - oldBlackPoint) / rollOffMinusOldBlackPoint;
+  minLum = (newBlackPoint0 - oldBlackPoint0) / rollOffMinusOldBlackPoint0;
+
+  rollOffStoppingPoint      = rollOffStoppingPoint0;
+  oldBlackPoint             = oldBlackPoint0;
+  rollOffMinusOldBlackPoint = rollOffMinusOldBlackPoint0;
 
 
   // gamma 2.2 emulation

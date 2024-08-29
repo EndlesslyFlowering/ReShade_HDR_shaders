@@ -75,23 +75,17 @@ namespace Ui
         ui_category = "black floor lowering";
         ui_label    = "black floor lowering processing mode";
         ui_type     = "combo";
-        ui_tooltip  = "ICtCp:     process in ICtCp space (best quality)"
-                 "\n" "YCbCr:     process in YCbCr space"
-                 "\n" "YRGB:      process RGB according to brightness"
+        ui_tooltip  = "YRGB:      process RGB according to brightness"
                  "\n" "RGB in PQ: process RGB encoded in PQ according to brightness"
                  "\n" "RGB:       process RGB according to brightness (different approach)";
-        ui_items    = "ICtCp\0"
-                      "YCbCr\0"
-                      "YRGB\0"
+        ui_items    = "YRGB\0"
                       "RGB in PQ\0"
                       "RGB\0";
       > = 0;
 
-#define PRO_MODE_ICTCP     0
-#define PRO_MODE_YCBCR     1
-#define PRO_MODE_YRGB      2
-#define PRO_MODE_RGB_IN_PQ 3
-#define PRO_MODE_RGB       4
+#define PRO_MODE_YRGB      0
+#define PRO_MODE_RGB_IN_PQ 1
+#define PRO_MODE_RGB       2
 
       uniform float OldBlackPoint
       <
@@ -376,101 +370,8 @@ float3 LowerBlackFloor(
   const float  RollOffMinusOldBlackPoint,
   const float  MinLum)
 {
-  // ICtCp mode
-  if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_ICTCP)
-  {
-    //to L'M'S'
-    float3 pqLms;
-
-    if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
-    {
-      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
-      {
-        pqLms = Csp::Ictcp::Bt709To::PqLms(Rgb);
-      }
-      else if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-      {
-        pqLms = Csp::Ictcp::DciP3To::PqLms(Rgb);
-      }
-      else //if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
-      {
-        pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
-      }
-    }
-    else
-    {
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-      pqLms = Csp::Ictcp::Bt709To::PqLms(Rgb);
-
-#elif defined(IS_HDR10_LIKE_CSP)
-
-      pqLms = Csp::Ictcp::Bt2020To::PqLms(Rgb);
-
-#endif
-    }
-
-    //Intensity
-    float i1 = 0.5f * pqLms.x + 0.5f * pqLms.y;
-
-    if (i1 <= RollOffStoppingPoint)
-    {
-      float i2 = BlackPointAdaption(i1,
-                                    OldBlackPoint,
-                                    RollOffMinusOldBlackPoint,
-                                    MinLum);
-
-      //to RGB
-      float3 outputRgb = Csp::Ictcp::IctcpTo::Bt2020(float3(i2,
-                                                            dot(pqLms, Csp::Ictcp::PqLmsToIctcp[1]),
-                                                            dot(pqLms, Csp::Ictcp::PqLmsToIctcp[2])));
-
-      outputRgb = max(outputRgb, 0.f);
-
-      return ConvertToOutputCspAfterProcessing(outputRgb);
-    }
-    else
-    {
-      return ConvertToOutputCspWithoutProcessing(Rgb);
-    }
-  }
-  // YCbCr mode
-  else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YCBCR)
-  {
-    ConvertToWorkingCsp(Rgb);
-    float3 inputInPq = Csp::Trc::LinearTo::Pq(Rgb);
-
-    float y1 = dot(inputInPq, Csp::Ycbcr::KBt2020);
-
-    if (y1 <= RollOffStoppingPoint)
-    {
-      float y2 = BlackPointAdaption(y1,
-                                    OldBlackPoint,
-                                    RollOffMinusOldBlackPoint,
-                                    MinLum);
-
-      //to RGB
-      float3 outputRgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(y2,
-                                                               (inputInPq.b - y1) / Csp::Ycbcr::KbBt2020,
-                                                               (inputInPq.r - y1) / Csp::Ycbcr::KrBt2020));
-
-      outputRgb = max(outputRgb, 0.f);
-
-#if (ACTUAL_COLOUR_SPACE != CSP_HDR10)
-
-      outputRgb = Csp::Trc::PqTo::Linear(outputRgb);
-      outputRgb = ConvertToOutputCspAfterProcessing(outputRgb);
-
-#endif
-      return outputRgb;
-    }
-    else
-    {
-      return ConvertToOutputCspWithoutProcessing(Rgb);
-    }
-  }
   // YRGB mode
-  else if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
+  if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode == PRO_MODE_YRGB)
   {
     float y1 = GetNits(Rgb);
 
