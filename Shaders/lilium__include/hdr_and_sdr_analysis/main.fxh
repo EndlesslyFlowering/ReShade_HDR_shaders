@@ -761,68 +761,73 @@ float3 MergeOverlay
 )
 {
   // tone map pixels below the overlay area
-  //
-  // first set 1.0 to be equal to OverlayBrightness
-  float adjustFactor;
+  [branch]
+  if (Alpha > 0.f)
+  {
+    // first set 1.0 to be equal to OverlayBrightness
+    float adjustFactor;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  adjustFactor = OverlayBrightness / 80.f;
+    adjustFactor = OverlayBrightness / 80.f;
 
-  Output = Csp::Mat::Bt709To::Bt2020(Output / adjustFactor);
+    Output = Csp::Mat::Bt709To::Bt2020(Output);
 
-  // safety clamp colours outside of BT.2020
-  Output = max(Output, 0.f);
+    // safety clamp colours outside of BT.2020
+    Output = max(Output, 0.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  adjustFactor = OverlayBrightness / 10000.f;
+    adjustFactor = OverlayBrightness / 10000.f;
 
-  Output = Csp::Trc::PqTo::Linear(Output);
+    Output = Csp::Trc::PqTo::Linear(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  adjustFactor = OverlayBrightness / 100.f;
+    adjustFactor = OverlayBrightness / 100.f;
 
-  Output = DECODE_SDR(Output);
-
-#endif
-
-#if (ACTUAL_COLOUR_SPACE != CSP_SCRGB)
-
-  Output /= adjustFactor;
+    Output = DECODE_SDR(Output);
 
 #endif
 
-  // then tone map to 1.0 at max
-  ExtendedReinhardTmo(Output, OverlayBrightness);
+    Output /= adjustFactor;
+
+    // then tone map to 1.0 at max
+    ExtendedReinhardTmo(Output, OverlayBrightness);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  // safety clamp for the case that there are values that represent above 10000 nits
-  Output.rgb = min(Output.rgb, 1.f);
+    // safety clamp for the case that there are values that represent above 10000 nits
+    Output = min(Output, 1.f);
 
 #endif
 
-  // apply the overlay
-  Output = lerp(Output, Overlay, Alpha);
+#ifdef IS_HDR_CSP
 
-  // map everything back to the used colour space
-  Output *= adjustFactor;
+    Overlay = Csp::Mat::Bt709To::Bt2020(Overlay);
+
+#endif
+
+    // apply the overlay
+    Output = lerp(Output, Overlay, Alpha);
+
+    // map everything back to the used colour space
+    Output *= adjustFactor;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Output = Csp::Mat::Bt2020To::Bt709(Output);
+    Output = Csp::Mat::Bt2020To::Bt709(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  Output = Csp::Trc::LinearTo::Pq(Output);
+    Output = Csp::Trc::LinearTo::Pq(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  Output = ENCODE_SDR(Output);
+    Output = ENCODE_SDR(Output);
 
 #endif
+  }
 
   return Output;
 }
