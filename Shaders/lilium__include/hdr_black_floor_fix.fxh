@@ -204,23 +204,32 @@ float3 Gamma22Emulation(
   return processedColour;
 }
 
-#define BLACK_POINT_ADAPTION(T)                            \
-  T BlackPointAdaption(                                    \
-    const T     C1,                                        \
-    const float OldBlackPoint,                             \
-    const float RollOffMinusOldBlackPoint,                 \
-    const float MinLum)                                    \
-  {                                                        \
-    T C2;                                                  \
-                                                           \
-    /*E1*/                                                 \
-    C2 = (C1 - OldBlackPoint) / RollOffMinusOldBlackPoint; \
-                                                           \
-    /*E3*/                                                 \
-    C2 += MinLum * pow((1.f - C2), 4.f);                   \
-                                                           \
-    /*E4*/                                                 \
-    return C2 * RollOffMinusOldBlackPoint + OldBlackPoint; \
+#define BLACK_POINT_ADAPTION(T)            \
+  T BlackPointAdaption                     \
+  (                                        \
+    const T     C1,                        \
+    const float OldBlackPoint,             \
+    const float RollOffMinusOldBlackPoint, \
+    const float MinLum                     \
+  )                                        \
+  {                                        \
+    T C2;                                  \
+                                           \
+    /*E1*/                                 \
+    C2 = (C1 - OldBlackPoint)              \
+       / RollOffMinusOldBlackPoint;        \
+                                           \
+    /*E3*/                                 \
+    T e3;                                  \
+    e3 = 1.f - C2;                         \
+    e3 = e3*e3;                            \
+    e3 = e3*e3;                            \
+    C2 = MinLum * e3 + C2;                 \
+                                           \
+    /*E4*/                                 \
+    return C2                              \
+         * RollOffMinusOldBlackPoint       \
+         + OldBlackPoint;                  \
   }
 
 BLACK_POINT_ADAPTION(float)
