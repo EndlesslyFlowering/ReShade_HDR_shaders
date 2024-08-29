@@ -1288,7 +1288,8 @@ void VS_RenderNumbers
   BRANCH(x)
   if (SHOW_GAMUT_FROM_CURSOR)
   {
-    const float gamut = floor(tex2Dfetch(SamplerGamuts, MOUSE_POSITION) * 256.f); // *256 for safety
+    const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
+    const float gamut = floor(tex2Dfetch(SamplerGamuts, mousePosition) * 256.f); // *256 for safety
 
     const uint currentVertexID = VertexID % 6;
 
