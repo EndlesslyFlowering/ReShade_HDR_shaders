@@ -2590,8 +2590,10 @@ namespace Csp
       //OKLCh°->OKLab
       float3 OkLab(const float3 OkLch)
       {
-        float2 ab = OkLch.y * float2(cos(OkLch.z),
-                                     sin(OkLch.z));
+        float a, b;
+        sincos(OkLch[2], a, b);
+
+        float2 ab = OkLch.y * float2(a, b);
 
         return float3(OkLch.x, ab);
       }
@@ -3154,8 +3156,10 @@ namespace Csp
       {
         float i_ab = PI_2 * Hsv.x;
 
-        float2 ab = float2(cos(i_ab),
-                           sin(i_ab));
+        float a, b;
+        sincos(i_ab, a, b);
+
+        float2 ab = float2(a, b);
 
         float2 cusp = Csp::OkLab::FindCusp(ab);
 
@@ -3234,8 +3238,11 @@ namespace Csp
         float i_ab = PI_2 * Hsl.x;
 
         L = Csp::OkLab::ToeInv(Hsl.z);
-        ab = float2(cos(i_ab),
-                    sin(i_ab));
+
+        float a, b;
+        sincos(i_ab, a, b);
+
+        ab = float2(a, b);
 
         float3 cs = Csp::OkLab::GetCs(float3(L, ab));
 
