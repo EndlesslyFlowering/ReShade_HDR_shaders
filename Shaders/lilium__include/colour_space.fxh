@@ -485,6 +485,12 @@ struct s_xyY
   float  Y;
 };
 
+struct s_uvY
+{
+  float2 uv;
+  float  Y;
+};
+
 
 namespace Csp
 {
@@ -1214,6 +1220,23 @@ namespace Csp
 
         return xyY;
       }
+
+      s_uvY uvY(const float3 XYZ)
+      {
+        const float X15Y3Z = XYZ.x
+                           + 15.f * XYZ.y
+                           +  3.f * XYZ.z;
+
+        s_uvY uvY;
+
+        // for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
+        uvY.uv = X15Y3Z != 0.f ? float2(4.f, 9.f) * XYZ.xy / X15Y3Z
+                               : 0.f;
+
+        uvY.Y = XYZ.y;
+
+        return uvY;
+      }
     } //XYZTo
 
     namespace xyYTo
@@ -1232,6 +1255,27 @@ namespace Csp
       }
     } //xyYTo
 
+    namespace uvYTo
+    {
+      float3 XYZ(const s_uvY uvY)
+      {
+        float3 XYZ;
+
+        XYZ.x = 9.f * uvY.uv[0];
+
+        XYZ.z = 12.f
+              - (3.f * uvY.uv[0])
+              - (20.f * uvY.uv[1]);
+
+        XYZ.xz = XYZ.xz
+               / (4.f * uvY.uv[1])
+               * uvY.Y;
+
+        XYZ.y = uvY.Y;
+
+        return XYZ;
+      }
+    } //uvYTo
   }
 
 
