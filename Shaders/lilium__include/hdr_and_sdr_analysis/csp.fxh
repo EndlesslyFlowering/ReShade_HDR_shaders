@@ -47,14 +47,14 @@ void FinaliseGamutCounter()
 
 #endif //IS_FLOAT_HDR_CSP
 
-    float percentageBt709   = float(counterBt709)   / PixelCountInFloat * TIMES_100;
-    float percentageDciP3   = float(counterDciP3)   / PixelCountInFloat * TIMES_100;
-    float percentageBt2020  = float(counterBt2020)  / PixelCountInFloat * TIMES_100;
+    float percentageBt709   = float(counterBt709)   / PIXEL_COUNT_FLOAT * TIMES_100;
+    float percentageDciP3   = float(counterDciP3)   / PIXEL_COUNT_FLOAT * TIMES_100;
+    float percentageBt2020  = float(counterBt2020)  / PIXEL_COUNT_FLOAT * TIMES_100;
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-    float percentageAp0     = float(counterAp0)     / PixelCountInFloat * TIMES_100;
-    float percentageInvalid = float(counterInvalid) / PixelCountInFloat * TIMES_100;
+    float percentageAp0     = float(counterAp0)     / PIXEL_COUNT_FLOAT * TIMES_100;
+    float percentageInvalid = float(counterInvalid) / PIXEL_COUNT_FLOAT * TIMES_100;
 
 #endif //IS_FLOAT_HDR_CSP
 
@@ -478,7 +478,7 @@ void PS_FinaliseCountGamuts
     }
   }
 
-  Output = float(gamutCounter) / PixelCountInFloat * TIMES_100;
+  Output = float(gamutCounter) / PIXEL_COUNT_FLOAT * TIMES_100;
 }
 
 #endif //IS_COMPUTE_CAPABLE_API

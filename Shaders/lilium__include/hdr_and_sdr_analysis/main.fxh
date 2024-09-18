@@ -46,11 +46,6 @@
 #define SMALLEST_UINT10 asfloat(0x3AC0300C)
 
 
-static const uint  PixelCountInUint  = BUFFER_WIDTH_UINT
-                                     * BUFFER_HEIGHT_UINT;
-static const float PixelCountInFloat = PixelCountInUint;
-
-
 uniform float FRAMETIME
 <
   source = "frametime";
