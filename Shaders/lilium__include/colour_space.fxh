@@ -1206,8 +1206,9 @@ namespace Csp
 
         s_xyY xyY;
 
-        // max because for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
-        xyY.xy = max(XYZ.xy / xyz, 0.f);
+        // for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
+        xyY.xy = xyz != 0.f ? XYZ.xy / xyz
+                            : 0.f;
 
         xyY.Y = XYZ.y;
 
