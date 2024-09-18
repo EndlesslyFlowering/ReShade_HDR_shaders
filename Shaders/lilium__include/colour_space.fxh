@@ -1237,6 +1237,30 @@ namespace Csp
 
         return uvY;
       }
+
+      float2 xy(const float3 XYZ)
+      {
+        const float xyz = XYZ.x + XYZ.y + XYZ.z;
+
+        // for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
+        float2 xy = xyz != 0.f ? XYZ.xy / xyz
+                               : 0.f;
+
+        return xy;
+      }
+
+      float2 uv(const float3 XYZ)
+      {
+        const float X15Y3Z = XYZ.x
+                           + 15.f * XYZ.y
+                           +  3.f * XYZ.z;
+
+        // for pure black (RGB(0,0,0) = XYZ(0,0,0)) there is a division by 0
+        float2 uv = X15Y3Z != 0.f ? float2(4.f, 9.f) * XYZ.xy / X15Y3Z
+                                  : 0.f;
+
+        return uv;
+      }
     } //XYZTo
 
     namespace xyYTo
@@ -1276,6 +1300,42 @@ namespace Csp
         return XYZ;
       }
     } //uvYTo
+
+    namespace xyTo
+    {
+      float3 XYZ(const float2 xy)
+      {
+        float3 XYZ;
+
+        XYZ.xz = float2(xy.x, (1.f - xy.x - xy.y))
+               / xy.y;
+
+        XYZ.y = 1.f;
+
+        return XYZ;
+      }
+    } //xyTo
+
+    namespace uvTo
+    {
+      float3 XYZ(const float2 uv)
+      {
+        float3 XYZ;
+
+        XYZ.x = 9.f * uv[0];
+
+        XYZ.z = 12.f
+              - ( 3.f * uv[0])
+              - (20.f * uv[1]);
+
+        XYZ.xz /= 4.f * uv[1];
+
+        XYZ.y = 1.f;
+
+        return XYZ;
+      }
+    } //uvTo
+
   }
 
 
