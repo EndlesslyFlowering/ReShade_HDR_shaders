@@ -1314,6 +1314,19 @@ namespace Csp
 
         return XYZ;
       }
+
+      float2 uv(const float2 xy)
+      {
+        float m2x12y3 = -2.f * xy.x
+                      + 12.f * xy.y
+                      +  3.f;
+
+        float2 uv = float2(4.f, 9.f)
+                  * xy
+                  / m2x12y3;
+
+        return uv;
+      }
     } //xyTo
 
     namespace uvTo
