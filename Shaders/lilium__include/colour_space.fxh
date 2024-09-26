@@ -450,9 +450,11 @@ uniform int GLOBAL_INFO
 
 
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
-  #define BRANCH(x) [branch]
+  #define BRANCH(x)  [branch]
+  #define FLATTEN(x) [flatten]
 #else
   #define BRANCH(x)
+  #define FLATTEN(x)
 #endif
 
 
