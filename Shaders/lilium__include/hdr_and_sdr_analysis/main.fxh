@@ -46,12 +46,6 @@
 #define SMALLEST_UINT10 asfloat(0x3AC0300C)
 
 
-uniform float FRAMETIME
-<
-  source = "frametime";
->;
-
-
 //16:9
 //examples:
 // - 1920x1080
@@ -379,27 +373,6 @@ uniform float FRAMETIME
 
 #define NITS_NUMBERS_COLUMNS 4
 #define NITS_NUMBERS_ROWS    4
-
-
-#if defined(IS_FLOAT_HDR_CSP)
-  #define NEEDED_HEIGHT 13
-#elif defined(IS_HDR_CSP)
-  #define NEEDED_HEIGHT 11
-#else
-  #define NEEDED_HEIGHT  8
-#endif
-
-
-//lowest is 9 so only one check needed, since there are only a max of 13 values
-#if (AVG_NITS_HEIGHT >= NEEDED_HEIGHT)
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 1)
-  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
-#else
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (AVG_NITS_WIDTH * NITS_NUMBERS_COLUMNS + 2)
-  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 2)
-#endif
-
-#define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT AVG_NITS_HEIGHT
 
 
 #if defined(IS_HDR_CSP)
@@ -968,6 +941,13 @@ void CS_RenderWaveformAndGenerateCieDiagram
     // get XYZ
     const float3 XYZ = GetXYZFromRgb(pixel);
 
+    BRANCH(x)
+    if (_SHOW_CIE
+     && XYZ.y != 0.f)
+    {
+      GenerateCieDiagram(XYZ, GTID.xy);
+    }
+
     //ignore negative luminance and luminance being 0
     [branch]
     if (XYZ.y <= 0.f)
@@ -975,18 +955,10 @@ void CS_RenderWaveformAndGenerateCieDiagram
       return;
     }
     else
+    BRANCH(x)
+    if (_SHOW_WAVEFORM)
     {
-      BRANCH(x)
-      if (_SHOW_CIE)
-      {
-        GenerateCieDiagram(XYZ, GTID.xy);
-      }
-
-      BRANCH(x)
-      if (_SHOW_WAVEFORM)
-      {
-        RenderWaveform(fetchPos);
-      }
+      RenderWaveform(fetchPos);
     }
   }
 }

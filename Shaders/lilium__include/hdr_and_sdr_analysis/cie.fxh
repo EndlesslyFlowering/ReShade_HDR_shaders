@@ -914,7 +914,7 @@ void CS_RenderCrosshairToCieDiagram
       const float3 cursorXYZ = GetXYZFromRgb(cursorRgb);
 
       [branch]
-      if (cursorXYZ.y > 0.f)
+      if (cursorXYZ.y != 0.f)
       {
         float2 coords;
         float2 renderSizeMinus1;
