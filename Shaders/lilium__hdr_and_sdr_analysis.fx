@@ -22,6 +22,11 @@ uniform int2 MOUSE_POSITION
   source = "mousepoint";
 >;
 
+uniform float FRAMETIME
+<
+  source = "frametime";
+>;
+
 uniform float2 NIT_PINGPONG0
 <
   source    = "pingpong";
@@ -79,7 +84,8 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      SDR_CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       SDR_CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_BT709           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        SDR_CIE_SHOW_GAMUT_POINTERS_OUTLINE
   #define _SHOW_HEATMAP                           SDR_SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
   #define _SHOW_WAVEFORM                          SDR_SHOW_WAVEFORM
@@ -116,7 +122,8 @@ uniform float2 NIT_PINGPONG2
   #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
   #define _CIE_DIAGRAM_ALPHA                      CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_BT709_OUTLINE           SHOW_CIE_CSP_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_BT709           CIE_SHOW_GAMUT_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        CIE_SHOW_GAMUT_POINTERS_OUTLINE
   #define _SHOW_HEATMAP                           SHOW_HEATMAP
   #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
   #define _SHOW_WAVEFORM                          SHOW_WAVEFORM
@@ -392,65 +399,86 @@ uniform float _CIE_DIAGRAM_ALPHA
   ui_step     = 0.5f;
 > = DEFAULT_ALPHA_LEVEL;
 
+
+#define CIE_XY_MAX float2(0.734690189f,   0.834090292f)
+#define CIE_XY_MIN float2(0.00363638415f, 0.00477403076f)
+
+#define CIE_UV_MAX float2(0.623366653f,   0.586759090f)
+#define CIE_UV_MIN float2(0.00137366366f, 0.0158483609f)
+
 #ifdef IS_QHD_OR_HIGHER_RES
-  #define CIE_TEXTURE_FILE_NAME   "lilium__cie_1000x1000_consolidated.png"
-  #define CIE_TEXTURE_WIDTH       5016
-  #define CIE_TEXTURE_HEIGHT      1626
-  #define CIE_BG_BORDER             50
+  #define CIE_BG_BORDER        50
 
-  #define CIE_ORIGINAL_DIM        1000
-
-  #define CIE_1931_WIDTH           736
-  #define CIE_1931_HEIGHT          837
-  #define CIE_1931_BG_WIDTH        836
-  #define CIE_1931_BG_HEIGHT       937
-
-  #define CIE_1976_WIDTH           625
-  #define CIE_1976_HEIGHT          589
-  #define CIE_1976_BG_WIDTH        725
-  #define CIE_1976_BG_HEIGHT       689
+  //#define CIE_TEXTURE_HEIGHT (1024 - CIE_BG_BORDER - CIE_BG_BORDER)
+  #define CIE_TEXTURE_HEIGHT 1024
 #else
-  #define CIE_TEXTURE_FILE_NAME   "lilium__cie_500x500_consolidated.png"
-  #define CIE_TEXTURE_WIDTH       2520
-  #define CIE_TEXTURE_HEIGHT       817
-  #define CIE_BG_BORDER             25
+  #define CIE_BG_BORDER        25
 
-  #define CIE_ORIGINAL_DIM         500
-
-  #define CIE_1931_WIDTH           370
-  #define CIE_1931_HEIGHT          420
-  #define CIE_1931_BG_WIDTH        420
-  #define CIE_1931_BG_HEIGHT       470
-
-  #define CIE_1976_WIDTH           314
-  #define CIE_1976_HEIGHT          297
-  #define CIE_1976_BG_WIDTH        364
-  #define CIE_1976_BG_HEIGHT       347
+  //#define CIE_TEXTURE_HEIGHT (512 - CIE_BG_BORDER - CIE_BG_BORDER)
+  #define CIE_TEXTURE_HEIGHT  512
 #endif
 
-static const float2 CIE_CONSOLIDATED_TEXTURE_SIZE = float2(CIE_TEXTURE_WIDTH, CIE_TEXTURE_HEIGHT);
+#ifdef IS_FLOAT_HDR_CSP
 
-static const int2 CIE_1931_SIZE_INT = int2(CIE_1931_WIDTH, CIE_1931_HEIGHT);
-static const int2 CIE_1976_SIZE_INT = int2(CIE_1976_WIDTH, CIE_1976_HEIGHT);
+  static const float2 CIE_XY_EXTRA     = (CIE_XY_MAX - CIE_XY_MIN) / 10.f;
+  static const float2 CIE_XY_MAX_EXTRA = CIE_XY_MAX + CIE_XY_EXTRA;
+  static const float2 CIE_XY_MIN_EXTRA = CIE_XY_MIN - CIE_XY_EXTRA;
 
-static const float2 CIE_1931_BG_SIZE_FLOAT = float2(CIE_1931_BG_WIDTH, CIE_1931_BG_HEIGHT);
-static const float2 CIE_1976_BG_SIZE_FLOAT = float2(CIE_1976_BG_WIDTH, CIE_1976_BG_HEIGHT);
+  static const float2 CIE_UV_EXTRA     = (CIE_UV_MAX - CIE_UV_MIN) / 10.f;
+  static const float2 CIE_UV_MAX_EXTRA = CIE_UV_MAX + CIE_UV_EXTRA;
+  static const float2 CIE_UV_MIN_EXTRA = CIE_UV_MIN - CIE_UV_EXTRA;
 
-static const float CIE_BG_WIDTH_FLOAT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
-static const float CIE_BG_HEIGHT_FLOAT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+  static const float2 CIE_XY_NORMALISE = CIE_XY_MAX_EXTRA - CIE_XY_MIN_EXTRA;
+  static const float2 CIE_UV_NORMALISE = CIE_UV_MAX_EXTRA - CIE_UV_MIN_EXTRA;
 
-static const int CIE_BG_WIDTH_INT[2]  = { CIE_1931_BG_WIDTH,  CIE_1976_BG_WIDTH };
-static const int CIE_BG_HEIGHT_INT[2] = { CIE_1931_BG_HEIGHT, CIE_1976_BG_HEIGHT };
+#else
 
-static const float2 CIE_BG_SIZE_FLOAT[2] =
-{
-  CIE_1931_BG_SIZE_FLOAT,
-  CIE_1976_BG_SIZE_FLOAT
-};
+  static const float2 CIE_XY_EXTRA     = 0.025f;
+  static const float2 CIE_XY_MAX_EXTRA = CIE_XY_MAX + CIE_XY_EXTRA;
+  static const float2 CIE_XY_MIN_EXTRA = CIE_XY_MIN - CIE_XY_EXTRA;
+
+  static const float2 CIE_UV_EXTRA     = 0.025f;
+  static const float2 CIE_UV_MAX_EXTRA = CIE_UV_MAX + CIE_UV_EXTRA;
+  static const float2 CIE_UV_MIN_EXTRA = CIE_UV_MIN - CIE_UV_EXTRA;
+
+  static const float2 CIE_XY_NORMALISE = CIE_XY_MAX_EXTRA - CIE_XY_MIN_EXTRA;
+  static const float2 CIE_UV_NORMALISE = CIE_UV_MAX_EXTRA - CIE_UV_MIN_EXTRA;
+
+#endif
+
+static const uint CIE_XY_WIDTH = uint(CIE_XY_NORMALISE.x
+                                    / CIE_XY_NORMALISE.y
+                                    * float(CIE_TEXTURE_HEIGHT)
+                                    + 0.5f);
+
+static const uint CIE_UV_WIDTH = uint(CIE_UV_NORMALISE.x
+                                    / CIE_UV_NORMALISE.y
+                                    * float(CIE_TEXTURE_HEIGHT)
+                                    + 0.5f);
+
+static const uint2 CIE_XY_SIZE_UINT = uint2(CIE_XY_WIDTH, CIE_TEXTURE_HEIGHT);
+static const uint2 CIE_UV_SIZE_UINT = uint2(CIE_UV_WIDTH, CIE_TEXTURE_HEIGHT);
+
+static const float2 CIE_XY_SIZE_FLOAT = float2(CIE_XY_SIZE_UINT);
+static const float2 CIE_UV_SIZE_FLOAT = float2(CIE_UV_SIZE_UINT);
+
+//u'v' is wider than xy
+#define CIE_TEXTURE_WIDTH CIE_UV_WIDTH
+
+#define CIE_TEXTURE_WIDTH_MINUS_1  (CIE_TEXTURE_WIDTH  - 1)
+#define CIE_TEXTURE_HEIGHT_MINUS_1 (CIE_TEXTURE_HEIGHT - 1)
+
+
+static const uint2 CIE_XY_TOTAL_SIZE_UINT = uint2(CIE_XY_WIDTH, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
+static const uint2 CIE_UV_TOTAL_SIZE_UINT = uint2(CIE_UV_WIDTH, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
+
+//u'v' is wider than xy
+#define CIE_BG_TEXTURE_SIZE CIE_UV_TOTAL_SIZE_UINT
+
 
 static const float CIE_DIAGRAM_DEFAULT_SIZE = (BUFFER_HEIGHT_FLOAT * 0.375f)
-                                              / CIE_1931_BG_HEIGHT
-                                              * 100.f;
+                                            / CIE_TEXTURE_HEIGHT
+                                            * 100.f;
 
 uniform float _CIE_DIAGRAM_SIZE
 <
@@ -463,33 +491,32 @@ uniform float _CIE_DIAGRAM_SIZE
   ui_step     = 0.1f;
 > = CIE_DIAGRAM_DEFAULT_SIZE;
 
-uniform bool _CIE_SHOW_GAMUT_BT709_OUTLINE
+uniform bool _CIE_SHOW_GAMUT_OUTLINE_BT709
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.709 gamut outline";
 > = true;
 
 #ifdef IS_HDR_CSP
-uniform bool CIE_SHOW_GAMUT_DCI_P3_OUTLINE
+uniform bool CIE_SHOW_GAMUT_OUTLINE_DCI_P3
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show DCI-P3 gamut outline";
 > = true;
 
-uniform bool CIE_SHOW_GAMUT_BT2020_OUTLINE
+uniform bool CIE_SHOW_GAMUT_OUTLINE_BT2020
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.2020 gamut outline";
 > = true;
+#endif //IS_HDR_CSP
 
-#ifdef IS_FLOAT_HDR_CSP
-uniform bool CIE_SHOW_GAMUT_AP0_OUTLINE
+uniform bool _CIE_SHOW_GAMUT_OUTLINE_POINTERS
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "show AP0 gamut outline";
-> = true;
-#endif //IS_FLOAT_HDR_CSP
-#endif //IS_HDR_CSP
+  ui_label    = "show Pointer's gamut outline";
+> = false;
+
 #endif //IS_COMPUTE_CAPABLE_API
 
 
@@ -844,14 +871,13 @@ uniform float _BELOW_NITS_AS_BLACK
 // for the pixel shader.
 void VS_PrepareHdrAnalysis
 (
-  in                  uint   VertexID                        : SV_VertexID,
-  out                 float4 Position                        : SV_Position,
-  out nointerpolation bool2  PingPongChecks                  : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange               : HighlightNitRange
+  in                  uint   VertexID          : SV_VertexID,
+  out                 float4 Position          : SV_Position,
+  out nointerpolation bool2  PingPongChecks    : PingPongChecks,
+  out nointerpolation float4 HighlightNitRange : HighlightNitRange
 #ifdef IS_COMPUTE_CAPABLE_API
-                                                                                ,
-  out nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
-  out nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0
+                                                                  ,
+  out nointerpolation int4   DisplaySizes      : DisplaySizes
 #endif
 )
 {
@@ -868,15 +894,15 @@ void VS_PrepareHdrAnalysis
 #define highlightNitRangeOut HighlightNitRange.rgb
 #define breathing            HighlightNitRange.w
 
-  pingpong0Above1                 = false;
-  breathingIsActive               = false;
-  HighlightNitRange               = 0.f;
+  pingpong0Above1   = false;
+  breathingIsActive = false;
+  HighlightNitRange = 0.f;
 #ifdef IS_COMPUTE_CAPABLE_API
-  WaveformTextureDisplayAreaBegin = 0;
-  CieDiagramSizes0                = 0.f;
+  DisplaySizes      = 0;
 
-#define CieDiagramTextureActiveSize  CieDiagramSizes0.xy
-#define CieDiagramTextureDisplaySize CieDiagramSizes0.zw
+#define WaveformTextureDisplayAreaBegin DisplaySizes.xy
+#define CieDiagramSize                  DisplaySizes.zw
+
 #endif //IS_COMPUTE_CAPABLE_API
 
   BRANCH(x)
@@ -946,15 +972,11 @@ void VS_PrepareHdrAnalysis
   BRANCH(x)
   if (_SHOW_CIE)
   {
-    float cieDiagramSizeFrac = _CIE_DIAGRAM_SIZE / 100.f;
+    float2 cieDiagramRenderSize = GetCieDiagramRenderSize();
 
-    float2 cieDiagramTextureActiveSize = CIE_BG_SIZE_FLOAT[_CIE_DIAGRAM_TYPE]
-                                       * cieDiagramSizeFrac;
+    cieDiagramRenderSize.y = BUFFER_HEIGHT_FLOAT - cieDiagramRenderSize.y;
 
-    CieDiagramTextureActiveSize = float2(cieDiagramTextureActiveSize.x,
-                                         BUFFER_HEIGHT_FLOAT - cieDiagramTextureActiveSize.y);
-
-    CieDiagramTextureDisplaySize = CIE_1931_BG_SIZE_FLOAT * cieDiagramSizeFrac;
+    CieDiagramSize = cieDiagramRenderSize;
   }
 #endif //IS_COMPUTE_CAPABLE_API
 }
@@ -962,14 +984,13 @@ void VS_PrepareHdrAnalysis
 
 void PS_HdrAnalysis
 (
-  in                  float4 Position                        : SV_Position,
-  in  nointerpolation bool2  PingPongChecks                  : PingPongChecks,
-  in  nointerpolation float4 HighlightNitRange               : HighlightNitRange,
+  in                  float4 Position          : SV_Position,
+  in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
+  in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
-  in  nointerpolation int2   WaveformTextureDisplayAreaBegin : WaveformTextureDisplayAreaBegin,
-  in  nointerpolation float4 CieDiagramSizes0                : CieDiagramSizes0,
+  in  nointerpolation int4   DisplaySizes      : DisplaySizes,
 #endif
-  out                 float4 Output                          : SV_Target0
+  out                 float4 Output            : SV_Target0
 )
 {
   const int2 pureCoordAsInt = int2(Position.xy);
@@ -1044,21 +1065,31 @@ void PS_HdrAnalysis
   if (_SHOW_CIE)
   {
     // draw the diagram in the bottom left corner
-    if (Position.x <  CieDiagramTextureActiveSize.x
-     && Position.y >= CieDiagramTextureActiveSize.y)
+    if (pureCoordAsInt.x <  CieDiagramSize.x
+     && pureCoordAsInt.y >= CieDiagramSize.y)
     {
-      // get coords for the sampler
-      float2 cieSamplerCoords = float2(Position.x,
-                                       Position.y - CieDiagramTextureActiveSize.y);
+      int2 cieFetchCoords = int2(pureCoordAsInt.x,
+                                 pureCoordAsInt.y - CieDiagramSize.y);
 
-      cieSamplerCoords /= CieDiagramTextureDisplaySize;
-
-      float4 cieColour = tex2D(SamplerCieFinal, cieSamplerCoords);
+      float4 cieYcbcr = tex2Dfetch(SamplerCieFinal, cieFetchCoords);
 
       // using gamma 2 as intermediate gamma space
-      cieColour.rgb *= cieColour.rgb;
+      cieYcbcr[0] *= cieYcbcr[0];
+
+      cieYcbcr.yz -= (511.f / 1023.f);
+
+#ifdef IS_HDR_CSP
+      float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt2020(cieYcbcr.xyz), cieYcbcr.a);
+#else
+      float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt709(cieYcbcr.xyz), cieYcbcr.a);
+#endif
 
       float alpha = min(cieColour.a + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+
+      //FIX THIS
+#ifdef IS_HDR_CSP
+      cieColour.rgb = Csp::Mat::Bt2020To::Bt709(cieColour.rgb);
+#endif
 
       Output.rgb = MergeOverlay(Output.rgb,
                                 cieColour.rgb,
@@ -1098,6 +1129,7 @@ void PS_HdrAnalysis
 void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
   tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X, 0.f);
+  tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,    0.f);
   return;
 }
 
@@ -1166,14 +1198,17 @@ technique lilium__hdr_and_sdr_analysis
     DispatchSizeY = 1;
   }
 
-//CIE
-  pass PS_ClearCieCurrentTexture
+#if (CIE_TEXTURE_HEIGHT % WAVE64_THREAD_SIZE_X == 0)
+  #define CLEAR_TEXTURE_CIE_COUNTER_DISPATCH (CIE_TEXTURE_HEIGHT / WAVE64_THREAD_SIZE_X)
+#else
+  #define CLEAR_TEXTURE_CIE_COUNTER_DISPATCH (CIE_TEXTURE_HEIGHT / WAVE64_THREAD_SIZE_X + 1)
+#endif
+  pass ClearCieCurrentTexture
   {
-    VertexShader       = VS_Clear;
-     PixelShader       = PS_Clear;
-    RenderTarget       = TextureCieIntermediate;
-    ClearRenderTargets = true;
-    VertexCount        = 1;
+    ComputeShader = CS_ClearTextureCieCounter<WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y, 16>;
+    DispatchSizeX = CLEAR_TEXTURE_CIE_COUNTER_DISPATCH;
+    DispatchSizeY = CLEAR_TEXTURE_CIE_COUNTER_DISPATCH;
+    DispatchSizeZ = 1;
   }
 #endif
 
@@ -1250,6 +1285,24 @@ technique lilium__hdr_and_sdr_analysis
 #endif //IS_COMPUTE_CAPABLE_API
 
 
+#ifdef IS_COMPUTE_CAPABLE_API
+//Waveform and CIE
+  pass CS_RenderWaveformAndGenerateCieDiagram
+  {
+    ComputeShader = CS_RenderWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = WAVE64_DISPATCH_X;
+    DispatchSizeY = WAVE64_DISPATCH_Y;
+  }
+
+  pass CS_GetMaxCieCounter
+  {
+    ComputeShader = CS_GetMaxCieCounter <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = CIE_TEXTURE_HEIGHT / WAVE64_THREAD_SIZE_X;
+    DispatchSizeY = CIE_TEXTURE_HEIGHT / WAVE64_THREAD_SIZE_Y;
+  }
+#endif
+
+
 //finalise things
 #ifdef IS_COMPUTE_CAPABLE_API
   pass CS_Finalise
@@ -1271,18 +1324,10 @@ technique lilium__hdr_and_sdr_analysis
 
 
 #ifdef IS_COMPUTE_CAPABLE_API
-//Waveform and CIE
-  pass CS_RenderWaveformAndGenerateCieDiagram
+  pass PS_ComposeCieDiagram
   {
-    ComputeShader = CS_RenderWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
-    DispatchSizeX = WAVE64_DISPATCH_X;
-    DispatchSizeY = WAVE64_DISPATCH_Y;
-  }
-
-  pass PS_DrawCieGamutOutlines
-  {
-    VertexShader = VS_PostProcessWithoutTexCoord;
-     PixelShader = PS_DrawCieGamutOutlines;
+    VertexShader = VS_PrepareComposeCieDiagram;
+     PixelShader = PS_ComposeCieDiagram;
     RenderTarget = TextureCieFinal;
   }
 

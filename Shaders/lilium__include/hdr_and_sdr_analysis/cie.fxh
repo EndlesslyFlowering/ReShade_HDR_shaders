@@ -1,6 +1,9 @@
 #pragma once
 
 
+#include "cie_datasets.fxh"
+
+
 #define CIE_TEXTURE_ENTRY_DIAGRAM_COLOUR   0
 #define CIE_TEXTURE_ENTRY_DIAGRAM_BLACK_BG 1
 #define CIE_TEXTURE_ENTRY_BT709_OUTLINE    2
@@ -10,45 +13,45 @@
 
 //width and height description are in lilium__hdr_and_sdr_analysis.fx
 
-texture2D TextureCieConsolidated
+texture3D TextureCieCounter
 <
-  source = CIE_TEXTURE_FILE_NAME;
   pooled = true;
 >
 {
   Width  = CIE_TEXTURE_WIDTH;
   Height = CIE_TEXTURE_HEIGHT;
-  Format = RGBA8;
+  Depth  = 16;
+  Format = R32U;
 };
 
-sampler2D<float4> SamplerCieConsolidated
+sampler3D<uint> SamplerCieCounter
 {
-  Texture = TextureCieConsolidated;
+  Texture = TextureCieCounter;
 };
 
-storage2D<float4> StorageCieConsolidated
+storage3D<uint> StorageCieCounter
 {
-  Texture = TextureCieConsolidated;
+  Texture = TextureCieCounter;
 };
 
-texture2D TextureCieIntermediate
+texture2D TextureCieOverlay
 <
   pooled = true;
 >
 {
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
+  Width  = CIE_TEXTURE_WIDTH;
+  Height = CIE_TEXTURE_HEIGHT;
+  Format = R8;
 };
 
-sampler2D<float4> SamplerCieIntermediate
+sampler2D<float> SamplerCieOverlay
 {
-  Texture = TextureCieIntermediate;
+  Texture = TextureCieOverlay;
 };
 
-storage2D<float4> StorageCieIntermediate
+storage2D<float> StorageCieOverlay
 {
-  Texture = TextureCieIntermediate;
+  Texture = TextureCieOverlay;
 };
 
 texture2D TextureCieFinal
@@ -56,9 +59,9 @@ texture2D TextureCieFinal
   pooled = true;
 >
 {
-  Width  = CIE_1931_BG_WIDTH;
-  Height = CIE_1931_BG_HEIGHT;
-  Format = RGBA8;
+  Width  = CIE_TEXTURE_WIDTH;
+  Height = CIE_TEXTURE_HEIGHT;
+  Format = RGB10A2;
 };
 
 sampler2D<float4> SamplerCieFinal
@@ -72,101 +75,628 @@ storage2D<float4> StorageCieFinal
 };
 
 
-float4 FetchGamutOutline
-(
-  const int OutlineTextureOffset,
-  const int CieBgWidth,
-  const int PositionXAsInt,
-  const int FetchPosY
-)
+float GetCieDragramSizeMultiplier()
 {
-  int2 fetchPos =
-    int2(PositionXAsInt.x + (CieBgWidth * OutlineTextureOffset),
-         FetchPosY);
-
-  float4 fetchedPixel = tex2Dfetch(SamplerCieConsolidated, fetchPos);
-
-  // using gamma 2 as intermediate gamma space
-  fetchedPixel.rgb *= fetchedPixel.rgb;
-
-  return fetchedPixel;
+  return clamp(_CIE_DIAGRAM_SIZE / 100.f, 0.f, 1.f);
 }
 
-// draw the gamut outlines on the CIE diagram
-void PS_DrawCieGamutOutlines
+int2 GetCieDiagramRenderSize()
+{
+  const float2 cieSize = _CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_SIZE_FLOAT
+                                                       : CIE_UV_SIZE_FLOAT;
+
+  const float cieDiagramSizeMultiplier = GetCieDragramSizeMultiplier();
+
+  return int2(cieSize * cieDiagramSizeMultiplier);
+}
+
+float2 GetCieDiagramRenderSizeMinus1()
+{
+  const float2 cieSize = _CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_SIZE_FLOAT
+                                                       : CIE_UV_SIZE_FLOAT;
+
+  const float cieDiagramSizeMultiplier = GetCieDragramSizeMultiplier();
+
+  return floor(cieSize * cieDiagramSizeMultiplier - 0.5f);
+}
+
+float2 GetCieDiagramRenderSizeMinus1
 (
-  in  float4 Position : SV_Position,
-  out float4 Out      : SV_Target0
+  const float2 CieSize
 )
 {
-  const int2 positionAsInt2 = int2(Position.xy);
+  const float cieDiagramSizeMultiplier = GetCieDragramSizeMultiplier();
 
-  const int fetchPosY = positionAsInt2.y + int(_CIE_DIAGRAM_TYPE) * int(CIE_1931_BG_HEIGHT);
+  return floor(CieSize * cieDiagramSizeMultiplier - 0.5f);
+}
 
-  const int2 bgFetchPos = int2(positionAsInt2.x + CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
-                               fetchPosY);
+float2 DecodeCieDiagramCoords
+(
+  const float2 EncodedCoords,
+  const float  RenderSizeMinus1Y,
+  const float2 OneDivRenderSizeMinus1
+)
+{
+  float decodedCoordsY = RenderSizeMinus1Y - EncodedCoords.y;
 
-  Out = tex2Dfetch(SamplerCieConsolidated, bgFetchPos);
+  float2 decodedCoords = float2(EncodedCoords.x, decodedCoordsY)
+                       * OneDivRenderSizeMinus1;
 
-  // using gamma 2 as intermediate gamma space
-  Out.rgb *= Out.rgb;
+  return decodedCoords;
+}
 
-  float4 cieCurrent = tex2Dfetch(SamplerCieIntermediate, positionAsInt2);
+float2 ConvertDecodedCieDiagramCoordsToxy
+(
+  const float2 DecodedCoords
+)
+{
+  return DecodedCoords * CIE_XY_NORMALISE + CIE_XY_MIN_EXTRA;
+}
 
-  cieCurrent.rgb *= cieCurrent.rgb;
+float2 ConvertDecodedCieDiagramCoordsTouv
+(
+  const float2 DecodedCoords
+)
+{
+  return DecodedCoords * CIE_UV_NORMALISE + CIE_UV_MIN_EXTRA;
+}
 
-  Out += cieCurrent;
 
-  BRANCH(x)
-  if (_CIE_SHOW_GAMUT_BT709_OUTLINE)
+float2 GetVector
+(
+  const float2 xy0,
+  const float2 xy1
+)
+{
+  return xy1 - xy0;
+}
+
+void DrawCieLines
+(
+  const float2 CieMinExtra,
+  const float2 CieNormalise,
+  const float2 RenderSizeMinus1,
+  const float  Step,
+  const float2 Start,
+  const float2 Stop
+)
+{
+  const float2 vec = GetVector(Start, Stop);
+
+  const float2 stepxy = vec * Step;
+
+  float2 curStepxy = stepxy;
+
+  float counter = 0.f;
+
+  float2 curCoords = Start;
+
+  int2 encodedCoords;
+
+#define DRAW_CIE_GAMUT_LINES                                                         \
+          encodedCoords = int2(saturate((curCoords + (-CieMinExtra)) / CieNormalise) \
+                             * RenderSizeMinus1                                      \
+                             + 0.5f);                                                \
+                                                                                     \
+          encodedCoords.y = int(RenderSizeMinus1.y) - encodedCoords.y;               \
+                                                                                     \
+          tex2Dstore(StorageCieOverlay, encodedCoords, 1.f);                         \
+                                                                                     \
+          counter += 1.f;                                                            \
+                                                                                     \
+          curStepxy = stepxy * counter;                                              \
+                                                                                     \
+          curCoords = Start + curStepxy
+
+  [branch]
+  if (Start.x < Stop.x)
   {
-    float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_BT709_OUTLINE),
-                                            CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
-                                            positionAsInt2.x,
-                                            fetchPosY);
-
-    Out += fetchedPixel;
+    [branch]
+    if (Start.y < Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x <= Stop.x
+            || curCoords.y <= Stop.y);
+    }
+    else
+    [branch]
+    if (Start.y > Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x <= Stop.x
+            || curCoords.y >= Stop.y);
+    }
+    else //if (Start.y == Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x <= Stop.x);
+    }
   }
-#ifdef IS_HDR_CSP
-  BRANCH(x)
-  if (CIE_SHOW_GAMUT_DCI_P3_OUTLINE)
+  else
+  [branch]
+  if (Start.x > Stop.x)
   {
-    float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_DCI_P3_OUTLINE),
-                                            CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
-                                            positionAsInt2.x,
-                                            fetchPosY);
-
-    Out += fetchedPixel;
+    [branch]
+    if (Start.y < Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x >= Stop.x
+            || curCoords.y <= Stop.y);
+    }
+    else
+    [branch]
+    if (Start.y > Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x >= Stop.x
+            || curCoords.y >= Stop.y);
+    }
+    else
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.x >= Stop.x);
+    }
   }
-  BRANCH(x)
-  if (CIE_SHOW_GAMUT_BT2020_OUTLINE)
+  else //if (Start.x == Stop.x)
   {
-    float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_BT2020_OUTLINE),
-                                            CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
-                                            positionAsInt2.x,
-                                            fetchPosY);
-
-    Out += fetchedPixel;
+    [branch]
+    if (Start.y < Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.y <= Stop.y);
+    }
+    else
+    [branch]
+    if (Start.y > Stop.y)
+    {
+      [loop]
+      do
+      {
+        DRAW_CIE_GAMUT_LINES;
+      } while (curCoords.y >= Stop.y);
+    }
   }
-#ifdef IS_FLOAT_HDR_CSP
-  BRANCH(x)
-  if (CIE_SHOW_GAMUT_AP0_OUTLINE)
-  {
-    float4 fetchedPixel = FetchGamutOutline(int(CIE_TEXTURE_ENTRY_AP0_OUTLINE),
-                                            CIE_BG_WIDTH_INT[_CIE_DIAGRAM_TYPE],
-                                            positionAsInt2.x,
-                                            fetchPosY);
-
-    Out += fetchedPixel;
-  }
-#endif
-#endif
-
-  // using gamma 2 as intermediate gamma space
-  Out.rgb = sqrt(Out.rgb);
 
   return;
 }
+
+
+float MitchellNetravali
+(
+        float x,
+  const float B,
+  const float C
+)
+{
+  x = abs(x);
+
+  [branch]
+  if (x < 2.f)
+  {
+    float x2 = x * x;
+    float x3 = x * x2;
+
+    [branch]
+    if (x < 1.f)
+    {
+      return (
+               ( 12.f -  9.f * B - 6.f * C) * x3
+             + (-18.f + 12.f * B + 6.f * C) * x2
+             + (  6.f -  2.f * B)
+             ) / 6.f;
+    }
+    else //if (x >= 1.f && x < 2.f)
+    {
+      return (
+               (       -B -  6.f * C) * x3
+             + (  6.f * B + 30.f * C) * x2
+             + (-12.f * B - 48.f * C) * x
+             + (  8.f * B + 24.f * C)
+             ) / 6.f;
+    }
+  }
+  else
+  {
+    return 0.f;
+  }
+}
+
+float Bicubic
+(
+  const int2  Coords,
+  const float B,
+  const float C
+)
+{
+  float sum = 0.f;
+  float den = 0.f;
+
+  [loop]
+  for (int x = -1; x <= 2; x++)
+  {
+    [loop]
+    for (int y = -1; y <= 2; y++)
+    {
+      float c = tex2Dfetch(StorageCieOverlay, Coords + int2(x, y));
+
+      float2 xy = float2(x, y) - 0.5f;
+
+      float f0 = MitchellNetravali( xy.x, B, C);
+      float f1 = MitchellNetravali(-xy.y, B, C);
+
+      float f0xf1 = f0 * f1;
+
+      sum += c * f0xf1;
+
+      den += f0xf1;
+    }
+  }
+
+  return sum / den;
+}
+
+void DrawCieOutlines()
+{
+  BRANCH(x)
+  if (_SHOW_CIE)
+  {
+    const uint cieSettingsOld = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
+
+                                //safety so it's a big enough float number that does not get flushed
+    const uint cieSettingsNew = uint(0x40000000)
+                              |      (_CIE_DIAGRAM_TYPE                 << CIE_DIAGRAM_TYPE_ENCODE_OFFSET)
+                              | (uint(_CIE_SHOW_GAMUT_OUTLINE_POINTERS) << CIE_SHOW_GAMUT_OUTLINE_POINTERS_ENCODE_OFFSET)
+                              | (uint(_CIE_SHOW_GAMUT_OUTLINE_BT709)    << CIE_SHOW_GAMUT_OUTLINE_BT709_ENCODE_OFFSET)
+#ifdef IS_HDR_CSP
+                              | (uint( CIE_SHOW_GAMUT_OUTLINE_DCI_P3)   << CIE_SHOW_GAMUT_OUTLINE_DCI_P3_ENCODE_OFFSET)
+                              | (uint( CIE_SHOW_GAMUT_OUTLINE_BT2020)   << CIE_SHOW_GAMUT_OUTLINE_BT2020_ENCODE_OFFSET)
+#endif
+                              ;
+
+    [branch]
+    if (cieSettingsOld                                        != cieSettingsNew
+     || tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE) != _CIE_DIAGRAM_SIZE)
+    {
+      [loop]
+      for (int x = 0; x < CIE_TEXTURE_WIDTH; x++)
+      {
+        [loop]
+        for (int y = 0; y < CIE_TEXTURE_HEIGHT; y++)
+        {
+          tex2Dstore(StorageCieOverlay, int2(x, y), 0.f);
+        }
+      }
+
+      float2 cieMinExtra;
+      float2 cieNormalise;
+      float2 cieSize;
+
+      float2 primBt709R;
+      float2 primBt709G;
+      float2 primBt709B;
+
+      float2 coordsPointersGamut[32];
+
+#ifdef IS_HDR_CSP
+      float2 primDciP3R;
+      float2 primDciP3G;
+      float2 primDciP3B;
+
+      float2 primBt2020R;
+      float2 primBt2020G;
+      float2 primBt2020B;
+#endif
+
+      FLATTEN(x)
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        cieMinExtra  = CIE_XY_MIN_EXTRA;
+        cieNormalise = CIE_XY_NORMALISE;
+        cieSize      = CIE_XY_SIZE_FLOAT;
+
+        coordsPointersGamut = PointersGamutxy;
+
+        primBt709R = xyPrimaryBt709Red;
+        primBt709G = xyPrimaryBt709Green;
+        primBt709B = xyPrimaryBt709Blue;
+
+#ifdef IS_HDR_CSP
+        primDciP3R = xyPrimaryDciP3Red;
+        primDciP3G = xyPrimaryDciP3Green;
+        primDciP3B = xyPrimaryDciP3Blue;
+
+        primBt2020R = xyPrimaryBt2020Red;
+        primBt2020G = xyPrimaryBt2020Green;
+        primBt2020B = xyPrimaryBt2020Blue;
+#endif
+      }
+      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        cieMinExtra  = CIE_UV_MIN_EXTRA;
+        cieNormalise = CIE_UV_NORMALISE;
+        cieSize      = CIE_UV_SIZE_FLOAT;
+
+        coordsPointersGamut = PointersGamutuv;
+
+        primBt709R = uvPrimaryBt709Red;
+        primBt709G = uvPrimaryBt709Green;
+        primBt709B = uvPrimaryBt709Blue;
+
+#ifdef IS_HDR_CSP
+        primDciP3R = uvPrimaryDciP3Red;
+        primDciP3G = uvPrimaryDciP3Green;
+        primDciP3B = uvPrimaryDciP3Blue;
+
+        primBt2020R = uvPrimaryBt2020Red;
+        primBt2020G = uvPrimaryBt2020Green;
+        primBt2020B = uvPrimaryBt2020Blue;
+#endif
+      }
+
+      const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
+
+      const float step = 0.1f / max(cieSize.x, cieSize.y);
+
+#define DRAW_CIE_LINES(PRIM0, PRIM1)     \
+          DrawCieLines(cieMinExtra,      \
+                       cieNormalise,     \
+                       renderSizeMinus1, \
+                       step,             \
+                       PRIM0,            \
+                       PRIM1)
+
+#define DRAW_COORDS_FROM_ARRAY(ARRAY_NAME, ARRAY_LENGTH)         \
+          [loop]                                                 \
+          for (uint i = 0; i < ARRAY_LENGTH; i++)                \
+          {                                                      \
+            float2 coords0 = ARRAY_NAME[i];                      \
+            float2 coords1 = ARRAY_NAME[(i + 1) % ARRAY_LENGTH]; \
+                                                                 \
+            DRAW_CIE_LINES(coords0, coords1);                    \
+          }
+
+      BRANCH(x)
+      if (_CIE_SHOW_GAMUT_OUTLINE_POINTERS)
+      {
+        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32)
+      }
+
+      BRANCH(x)
+      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
+      {
+        DRAW_CIE_LINES(primBt709R, primBt709G);
+        DRAW_CIE_LINES(primBt709B, primBt709G);
+        DRAW_CIE_LINES(primBt709B, primBt709R);
+      }
+#ifdef IS_HDR_CSP
+      BRANCH(x)
+      if (CIE_SHOW_GAMUT_OUTLINE_DCI_P3)
+      {
+        DRAW_CIE_LINES(primDciP3R, primDciP3G);
+        DRAW_CIE_LINES(primDciP3B, primDciP3G);
+        DRAW_CIE_LINES(primDciP3B, primDciP3R);
+      }
+      BRANCH(x)
+      if (CIE_SHOW_GAMUT_OUTLINE_BT2020)
+      {
+        DRAW_CIE_LINES(primBt2020R, primBt2020G);
+        DRAW_CIE_LINES(primBt2020B, primBt2020G);
+        DRAW_CIE_LINES(primBt2020B, primBt2020R);
+      }
+#endif
+
+      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS, asfloat(cieSettingsNew));
+      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,     _CIE_DIAGRAM_SIZE);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,         FRAMETIME);
+    }
+
+
+    float cieTimer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
+
+    [branch]
+    if (cieTimer >= 1000.f)
+    {
+      float2 cieMinExtra;
+      float2 cieNormalise;
+      float2 cieSize;
+
+      float2 coordsSpectralLocus[340];
+
+      FLATTEN(x)
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        cieMinExtra  = CIE_XY_MIN_EXTRA;
+        cieNormalise = CIE_XY_NORMALISE;
+        cieSize      = CIE_XY_SIZE_FLOAT;
+
+        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_xy;
+      }
+      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        cieMinExtra  = CIE_UV_MIN_EXTRA;
+        cieNormalise = CIE_UV_NORMALISE;
+        cieSize      = CIE_UV_SIZE_FLOAT;
+
+        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_uv;
+      }
+
+      const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
+
+      const float step = 0.1f / max(cieSize.x, cieSize.y);
+
+      DRAW_COORDS_FROM_ARRAY(coordsSpectralLocus, 340)
+
+      memoryBarrier();
+
+      static const int2 renderSizeMinus1AsInt = int2(renderSizeMinus1);
+
+      //putting loop here somehow made the compiler not unroll this in performance mode...
+      [loop]
+      for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
+      {
+        [loop]
+        for (int y = 0; y <= renderSizeMinus1AsInt.y; y++)
+        {
+          int2 xy = int2(x, y);
+
+          tex2Dstore(StorageCieOverlay, xy, Bicubic(xy, 1.f, 0.f));
+        }
+      }
+
+
+      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, -1.f);
+    }
+    else
+    [branch]
+    if (cieTimer >= 0.f)
+    {
+      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, cieTimer + FRAMETIME);
+    }
+
+  }
+
+  return;
+}
+
+
+void VS_PrepareComposeCieDiagram
+(
+  in                  uint   VertexID : SV_VertexID,
+  out                 float4 Position : SV_Position,
+  out nointerpolation float3 CieData0 : CieData0
+)
+{
+  float2 texCoord;
+  texCoord.x = (VertexID == 2) ? 2.f : 0.f;
+  texCoord.y = (VertexID == 1) ? 2.f : 0.f;
+
+  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+
+  CieData0 = 0.f;
+
+#define renderSizeMinus1Y      CieData0.x
+#define oneDivRenderSizeMinus1 CieData0.yz
+
+  const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1();
+
+  renderSizeMinus1Y = renderSizeMinus1.y;
+
+  oneDivRenderSizeMinus1 = 1.f / renderSizeMinus1;
+
+  return;
+}
+
+// draw the gamut outlines on the CIE diagram
+void PS_ComposeCieDiagram
+(
+  in                  float4 Position : SV_Position,
+  in  nointerpolation float3 CieData0 : CieData0,
+  out                 float4 Out      : SV_Target0
+)
+{
+  Out = 0.f;
+
+  BRANCH(x)
+  if (_SHOW_CIE)
+  {
+    const int2 positionAsInt2 = int2(Position.xy);
+
+    const float Outline = tex2Dfetch(SamplerCieOverlay, positionAsInt2) * 0.18f;
+
+    uint cieCurrent = tex3Dfetch(SamplerCieCounter, int3(positionAsInt2,  0));
+
+    static const float cieCurrentMax =
+      float(tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX));
+
+    float cieCurrentIntensity = float(cieCurrent) / cieCurrentMax;
+
+    [branch]
+    if (cieCurrentIntensity > 0.f)
+    {
+      const float2 decodedCoords = DecodeCieDiagramCoords(floor(Position.xy),
+                                                          renderSizeMinus1Y,
+                                                          oneDivRenderSizeMinus1);
+
+      float Y = min(pow(cieCurrentIntensity, 1.f / 3.f) + (1.f / 1023.f), 1.f);
+
+      float3 XYZ;
+
+      BRANCH(x)
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        float2 xy = ConvertDecodedCieDiagramCoordsToxy(decodedCoords);
+
+        XYZ = Csp::CieXYZ::xyTo::XYZ(xy);
+      }
+      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        float2 uv = ConvertDecodedCieDiagramCoordsTouv(decodedCoords);
+
+        XYZ = Csp::CieXYZ::uvTo::XYZ(uv);
+      }
+
+#ifdef IS_HDR_CSP
+      float3 rgb = Csp::Mat::XYZTo::Bt2020(XYZ);
+#else
+      float3 rgb = Csp::Mat::XYZTo::Bt709(XYZ);
+#endif
+
+      rgb = max(rgb, 0.f);
+
+      rgb /= MAXRGB(rgb);
+
+      rgb = rgb * Y + Outline;
+
+#ifdef IS_HDR_CSP
+      float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(rgb);
+#else
+      float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt709(rgb);
+#endif
+
+      ycbcr[0] = sqrt(ycbcr[0]);
+
+      ycbcr.yz += (511.f / 1023.f);
+
+      Out = float4(ycbcr, 1.f);
+    }
+    else
+    [branch]
+    if (Outline != 0.f)
+    {
+      Out = float4(sqrt(Outline), (511.f / 1023.f), (511.f / 1023.f), 1.f);
+    }
+    else
+    {
+      Out.xyz = float3(0.f, (511.f / 1023.f), (511.f / 1023.f));
+    }
+  }
+
+  return;
+}
+
+#undef oneDivRenderSizeMinus1
+#undef renderSizeMinus1Y
 
 
 float3 GetXYZFromRgb
@@ -203,42 +733,48 @@ float3 GetXYZFromRgb
   return XYZ;
 }
 
-int2 GetxyFromXYZForDiagram
+void CS_ClearTextureCieCounter
+(
+  uint3 DTID : SV_DispatchThreadID
+)
+{
+  BRANCH(x)
+  if (_SHOW_CIE)
+  {
+    tex3Dstore(StorageCieCounter, DTID, 0u);
+  }
+
+  return;
+}
+
+float2 GetxyFromXYZForDiagram
 (
   const float3 XYZ
 )
 {
-  const float xyz = XYZ.x + XYZ.y + XYZ.z;
+  float2 xy = Csp::CieXYZ::XYZTo::xy(XYZ);
 
-           int2 xy = int2(round(XYZ.x / xyz * float(CIE_ORIGINAL_DIM)),
-    CIE_1931_HEIGHT - 1 - round(XYZ.y / xyz * float(CIE_ORIGINAL_DIM)));
+  //adjust for negative values
+  xy -= CIE_XY_MIN_EXTRA;
 
-  // adjust for the added borders
-  xy += CIE_BG_BORDER;
-
-  // clamp to borders
-  xy = clamp(xy, CIE_BG_BORDER, CIE_1931_SIZE_INT + CIE_BG_BORDER);
+  //normalise and clamp
+  xy = saturate(xy / CIE_XY_NORMALISE);
 
   return xy;
 }
 
-int2 GetuvFromXYZForDiagram
+float2 GetuvFromXYZForDiagram
 (
   const float3 XYZ
 )
 {
-  const float X15Y3Z = XYZ.x
-                     + 15.f * XYZ.y
-                     +  3.f * XYZ.z;
+  float2 uv = Csp::CieXYZ::XYZTo::uv(XYZ);
 
-           int2 uv = int2(round(4.f * XYZ.x / X15Y3Z * float(CIE_ORIGINAL_DIM)),
-    CIE_1976_HEIGHT - 1 - round(9.f * XYZ.y / X15Y3Z * float(CIE_ORIGINAL_DIM)));
+  //adjust for negative values
+  uv -= CIE_UV_MIN_EXTRA;
 
-  // adjust for the added borders
-  uv += CIE_BG_BORDER;
-
-  // clamp to borders
-  uv = clamp(uv, CIE_BG_BORDER, CIE_1976_SIZE_INT + CIE_BG_BORDER);
+  //normalise and clamp
+  uv = saturate(uv / CIE_UV_NORMALISE);
 
   return uv;
 }
@@ -246,44 +782,112 @@ int2 GetuvFromXYZForDiagram
 
 void GenerateCieDiagram
 (
-  const float3 XYZ
+  const float3 XYZ,
+  const uint2  GTIDXY
 )
 {
+  float2 coords;
+  float2 renderSizeMinus1;
+
+  const float cieDragramSizeMultiplier = GetCieDragramSizeMultiplier();
+
   BRANCH(x)
   if (_CIE_DIAGRAM_TYPE == CIE_1931)
   {
     // get xy
-    const int2 xy = GetxyFromXYZForDiagram(XYZ);
+    coords = GetxyFromXYZForDiagram(XYZ);
 
-    // leave this as sampler and not storage
-    // otherwise d3d complains about the resource still being bound on input
-    // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-    // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-    // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-    const float4 xyColour = tex2Dfetch(SamplerCieConsolidated, xy);
-
-    tex2Dstore(StorageCieIntermediate,
-               xy,
-               xyColour);
+    renderSizeMinus1 = CIE_XY_SIZE_FLOAT * cieDragramSizeMultiplier - 0.5f;
   }
   else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
   {
     // get u'v'
-    const int2 uv = GetuvFromXYZForDiagram(XYZ);
+    coords = GetuvFromXYZForDiagram(XYZ);
 
-    const int2 uvFetchPos = int2(uv.x, uv.y + CIE_1931_BG_HEIGHT);
-
-    // leave this as sampler and not storage
-    // otherwise d3d complains about the resource still being bound on input
-    // D3D11 WARNING: ID3D11DeviceContext::CSSetUnorderedAccessViews:
-    // Resource being set to CS UnorderedAccessView slot 3 is still bound on input!
-    // [ STATE_SETTING WARNING #2097354: DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD]
-    const float4 uvColour = tex2Dfetch(SamplerCieConsolidated, uvFetchPos);
-
-    tex2Dstore(StorageCieIntermediate,
-               uv,
-               uvColour);
+    renderSizeMinus1 = CIE_UV_SIZE_FLOAT * cieDragramSizeMultiplier - 0.5f;
   }
+
+  renderSizeMinus1 = floor(renderSizeMinus1);
+
+  int2 encodedCoords = int2(coords * renderSizeMinus1 + 0.5f);
+
+  encodedCoords.y = int(renderSizeMinus1.y) - encodedCoords.y;
+
+  const uint u2 = GTIDXY.x + GTIDXY.y + 1u;
+
+  atomicAdd(StorageCieCounter, int3(encodedCoords, u2), 1u);
+
+  return;
+}
+
+groupshared uint GroupMaxCie;
+void CS_GetMaxCieCounter
+(
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
+{
+  BRANCH(x)
+  if (_SHOW_CIE)
+  {
+    [branch]
+    if (all(DTID.xy == 0))
+    {
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX, 0);
+    }
+
+    memoryBarrier();
+
+    //worth to do performance wise
+    [branch]
+    if (DTID.x < (_CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_WIDTH : CIE_UV_WIDTH))
+    {
+      [branch]
+      if (all(GTID.xy == 0))
+      {
+        GroupMaxCie = 0u;
+      }
+
+      groupMemoryBarrier();
+
+      static const int2 DTIDAsInt = int2(DTID.xy);
+
+                                       //needs to be storage for d3d11
+      const uint cieCurrent = tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  1))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  2))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  3))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  4))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  5))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  6))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  7))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  8))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt,  9))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 10))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 11))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 12))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 13))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 14))
+                            + tex3Dfetch(StorageCieCounter, int3(DTIDAsInt, 15));
+
+      atomicMax(GroupMaxCie, cieCurrent);
+
+      groupMemoryBarrier();
+
+      tex3Dstore(StorageCieCounter, int3(DTIDAsInt, 0), cieCurrent);
+
+      [branch]
+      if (all(GTID.xy == 0))
+      {
+#ifdef IS_FLOAT_HDR_CSP
+        atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX, int(GroupMaxCie));
+#else
+        atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX, GroupMaxCie);
+#endif
+      }
+    }
+  }
+
+  return;
 }
 
 groupshared int2 StorePos;
@@ -292,11 +896,15 @@ void CS_RenderCrosshairToCieDiagram
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  static const float4 storeColourBlack = float4(0.f, 0.f, 0.f, 1.f);
-  static const float4 storeColourWhite = float4(1.f, 1.f, 1.f, 1.f);
+  static const float3 ycbcrBlack = float3(0.f, (511.f / 1023.f), (511.f / 1023.f));
+  static const float3 ycbcrWhite = float3(1.f, (511.f / 1023.f), (511.f / 1023.f));
+
+  static const float4 storeColourBlack = float4(ycbcrBlack, 1.f);
+  static const float4 storeColourWhite = float4(ycbcrWhite, 1.f);
 
   BRANCH(x)
-  if (_SHOW_CROSSHAIR_ON_CIE_DIAGRAM)
+  if (_SHOW_CIE
+   && _SHOW_CROSSHAIR_ON_CIE_DIAGRAM)
   {
 
     if (all(DTID.xy == 0))
@@ -308,17 +916,32 @@ void CS_RenderCrosshairToCieDiagram
       [branch]
       if (cursorXYZ.y > 0.f)
       {
+        float2 coords;
+        float2 renderSizeMinus1;
+
+        const float cieDragramSizeMultiplier = GetCieDragramSizeMultiplier();
+
         BRANCH(x)
         if (_CIE_DIAGRAM_TYPE == CIE_1931)
         {
           // get xy
-          StorePos = GetxyFromXYZForDiagram(cursorXYZ);
+          coords = GetxyFromXYZForDiagram(cursorXYZ);
+
+          renderSizeMinus1 = CIE_XY_SIZE_FLOAT * cieDragramSizeMultiplier - 0.5f;
         }
         else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
         {
           // get u'v'
-          StorePos = GetuvFromXYZForDiagram(cursorXYZ);
+          coords = GetuvFromXYZForDiagram(cursorXYZ);
+
+          renderSizeMinus1 = CIE_UV_SIZE_FLOAT * cieDragramSizeMultiplier - 0.5f;
         }
+
+        renderSizeMinus1 = floor(renderSizeMinus1);
+
+        StorePos = int2(coords * renderSizeMinus1 + 0.5f);
+
+        StorePos.y = int(renderSizeMinus1.y) - StorePos.y;
       }
       else
       {
