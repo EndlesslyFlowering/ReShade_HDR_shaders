@@ -960,17 +960,6 @@ void CS_RenderCrosshairToCieDiagram
       posX.x = DTIDInt2.x + 4;
       posX.y = DTIDInt2.y - 5;
 
-      int2 negX = int2(-posX.x,
-                        posX.y);
-
-      int2 posY = int2(posX.y,
-                       posX.x);
-
-      int2 negY = int2(posX.y,
-                       negX.x);
-
-      float4 storeColour;
-
       const uint absPosXy = abs(posX.y);
 
       [branch]
@@ -981,37 +970,41 @@ void CS_RenderCrosshairToCieDiagram
       {
         return;
       }
-      else if (absPosXy >   3
-            || posX.x   ==  4
-            || posX.x   ==  5
-            || posX.x   >  15
-            || (absPosXy ==  2 && posX.x == 6)
-            || (absPosXy ==  3 && (posX.x ==  6
-                                || posX.x ==  7
-                                || posX.x == 15)))
-      {
-        storeColour = float4(1.f, 1.f, 1.f, 1.f);
-      }
       else
       {
-        storeColour = float4(0.f, 0.f, 0.f, 1.f);
+        float4 storeColour;
+
+        [flatten]
+        if (absPosXy >   3
+         || posX.x   ==  4
+         || posX.x   ==  5
+         || posX.x   >  15
+         || (absPosXy ==  2 && posX.x == 6)
+         || (absPosXy ==  3 && (posX.x ==  6
+                             || posX.x ==  7
+                             || posX.x == 15)))
+        {
+          storeColour = storeColourWhite;
+        }
+        else
+        {
+          storeColour = storeColourBlack;
+        }
+
+        int2 negX = int2(-posX.x,
+                          posX.y);
+
+        int2 posY = int2(posX.y,
+                         posX.x);
+
+        int2 negY = int2(posX.y,
+                         negX.x);
+
+        tex2Dstore(StorageCieFinal, StorePos + posX, storeColour);
+        tex2Dstore(StorageCieFinal, StorePos + negX, storeColour);
+        tex2Dstore(StorageCieFinal, StorePos + posY, storeColour);
+        tex2Dstore(StorageCieFinal, StorePos + negY, storeColour);
       }
-
-      tex2Dstore(StorageCieFinal,
-                 StorePos + posX,
-                 storeColour);
-
-      tex2Dstore(StorageCieFinal,
-                 StorePos + negX,
-                 storeColour);
-
-      tex2Dstore(StorageCieFinal,
-                 StorePos + posY,
-                 storeColour);
-
-      tex2Dstore(StorageCieFinal,
-                 StorePos + negY,
-                 storeColour);
     }
     else
     {
