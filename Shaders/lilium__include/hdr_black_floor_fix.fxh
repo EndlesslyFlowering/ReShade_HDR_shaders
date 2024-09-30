@@ -461,7 +461,7 @@ float3 LowerBlackFloor
 
         float3 outputRgb = y2 / y1 * Rgb;
 
-        return ConvertToOutputCspWithoutProcessing(outputRgb);
+        return ConvertToOutputCspAfterProcessing(outputRgb);
       }
       else
       {
