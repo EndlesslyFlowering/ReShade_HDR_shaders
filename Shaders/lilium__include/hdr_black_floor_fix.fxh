@@ -373,6 +373,10 @@ float3 ConvertToOutputCspWithoutProcessing
     {
       outputColour = Csp::Mat::Bt2020To::Bt709(Colour);
     }
+    else
+    {
+      outputColour = Colour;
+    }
 
     outputColour *= 125.f;
 
@@ -388,6 +392,10 @@ float3 ConvertToOutputCspWithoutProcessing
     if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
     {
       outputColour = Csp::Mat::DciP3To::Bt2020(Colour);
+    }
+    else
+    {
+      outputColour = Colour;
     }
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
