@@ -1568,6 +1568,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
   const float2 CharSize
 )
 {
+  VertexCoordsAndTexCoords ret;
+
   switch(VertexID)
   {
     case 0:
@@ -1597,14 +1599,11 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         pos.x = BUFFER_WIDTH_FLOAT - pos.x;
       }
 
-      VertexCoordsAndTexCoords ret;
-
       ret.vertexCoords = GetPositonCoordsFromRegularCoords(pos, BUFFER_SIZE_FLOAT);
 //      ret.vertexCoords = float2(-2.f, -2.f);
       ret.texCoords    = float2(-1.f, -1.f);
-
-      return ret;
     }
+    break;
     default:
     {
       const uint textBlockVertexID = VertexID - 3;
@@ -1621,9 +1620,13 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
                                                      && !_SHOW_NITS_VALUES
                                                      && _SHOW_NITS_FROM_CURSOR;
 
+      bool calcOffsets;
+
       //Analysis Header
       if (currentTextBlockID == 0)
       {
+        calcOffsets = true;
+
         vertexOffset.y = 0.f;
       }
       //max:
@@ -1633,116 +1636,125 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
             && (_SHOW_NITS_VALUES
              || specificallyNeedNitsRgbHeader))
       {
+        calcOffsets = true;
+
         vertexOffset.y = 1.f;
       }
       //cursor:
       else if (currentTextBlockID == 2
             && _SHOW_NITS_FROM_CURSOR)
       {
+        calcOffsets = true;
+
         vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
                                            : 2.f;
       }
 #ifdef IS_HDR_CSP
       //gamut percentages
+      else if (currentTextBlockID == 3
+            && SHOW_GAMUTS)
+      {
+        calcOffsets = true;
+
+        vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
+                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
+                       : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
+                                                                         : 2.f;
+      }
       //cursor gamut
+      else if (currentTextBlockID == 4
+            && SHOW_GAMUT_FROM_CURSOR)
+      {
+        calcOffsets = true;
+
+        vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
+                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
+                       : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
+                                                                         : 2.f;
+        vertexOffset.y += GAMUT_PERCENTAGES_LINES;
+      }
+#endif
       else
       {
-        const bool isShowGamuts          = currentTextBlockID == 3 && SHOW_GAMUTS;
-        const bool isShowGamutFromCursor = currentTextBlockID == 4 && SHOW_GAMUT_FROM_CURSOR;
-
-        if (isShowGamuts
-         || isShowGamutFromCursor)
-        {
-          vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
-                         : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
-                         : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                           : 2.f;
-
-          [flatten]
-          if (isShowGamutFromCursor
-           && SHOW_GAMUTS)
-          {
-            vertexOffset.y += GAMUT_PERCENTAGES_LINES;
-          }
-        }
-#endif
-        else
-        {
-          return ReturnOffScreen();
-        }
-#ifdef IS_HDR_CSP
-      }
-#endif
-
-      vertexOffset.x = TEXT_BLOCK_DRAW_X_OFFSET[currentTextBlockID];
-
-      float2 size = TEXT_BLOCK_SIZES[currentTextBlockID];
-
-      [flatten]
-      if (specificallyNeedNitsRgbHeader)
-      {
-        size.y -= 3.f;
+        calcOffsets = false;
       }
 
-      texCoordOffset = TEXT_BLOCK_FETCH_OFFSETS[currentTextBlockID];
-
-      [flatten]
-      if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES
-       && (currentTextBlockID == 1 || currentTextBlockID == 2))
+      [branch]
+      if (calcOffsets)
       {
-#ifdef IS_HDR_CSP
-        size.x -= 26.f;
+        vertexOffset.x = TEXT_BLOCK_DRAW_X_OFFSET[currentTextBlockID];
 
-        texCoordOffset.x += 24.f;
+        float2 size = TEXT_BLOCK_SIZES[currentTextBlockID];
+
+        [flatten]
+        if (specificallyNeedNitsRgbHeader)
+        {
+          size.y -= 3.f;
+        }
+
+        vertexOffset *= CharSize;
+
+        texCoordOffset = TEXT_BLOCK_FETCH_OFFSETS[currentTextBlockID];
+
+        [flatten]
+        if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES
+         && (currentTextBlockID == 1 || currentTextBlockID == 2))
+        {
+#ifdef IS_HDR_CSP
+          size.x -= 26.f;
+
+          texCoordOffset.x += 24.f;
 #else
-        size.x -= 24.f;
+          size.x -= 24.f;
 #endif
-        texCoordOffset.y += 5.f;
-      }
+          texCoordOffset.y += 5.f;
+        }
 
-      vertexOffset *= CharSize;
+        texCoordOffset *= CHAR_DIM_FLOAT;
 
-      texCoordOffset *= CHAR_DIM_FLOAT;
+        const float2   vertexOffset2 = size * CharSize       +   vertexOffset;
+        const float2 texCoordOffset2 = size * CHAR_DIM_FLOAT + texCoordOffset;
 
-      const float2   vertexOffset2 = size * CharSize       +   vertexOffset;
-      const float2 texCoordOffset2 = size * CHAR_DIM_FLOAT + texCoordOffset;
+        [flatten]
+        if (localVertexID == 1)
+        {
+            vertexOffset.y =   vertexOffset2.y;
+          texCoordOffset.y = texCoordOffset2.y;
+        }
+        else
+        [flatten]
+        if (localVertexID == 4)
+        {
+            vertexOffset.x =   vertexOffset2.x;
+          texCoordOffset.x = texCoordOffset2.x;
+        }
+        else
+        [flatten]
+        if (localVertexID == 2
+         || localVertexID == 5)
+        {
+            vertexOffset =   vertexOffset2;
+          texCoordOffset = texCoordOffset2;
+        }
 
-      [flatten]
-      if (localVertexID == 1)
-      {
-          vertexOffset.y =   vertexOffset2.y;
-        texCoordOffset.y = texCoordOffset2.y;
+        FLATTEN(x)
+        if (_TEXT_POSITION != 0)
+        {
+          vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
+        }
+
+        ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
+        ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
       }
       else
-      [flatten]
-      if (localVertexID == 4)
       {
-          vertexOffset.x =   vertexOffset2.x;
-        texCoordOffset.x = texCoordOffset2.x;
+        ret = ReturnOffScreen();
       }
-      else
-      [flatten]
-      if (localVertexID == 2
-       || localVertexID == 5)
-      {
-          vertexOffset =   vertexOffset2;
-        texCoordOffset = texCoordOffset2;
-      }
-
-      [flatten]
-      if (_TEXT_POSITION != 0)
-      {
-        vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
-      }
-
-      VertexCoordsAndTexCoords ret;
-
-      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
-      ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
-
-      return ret;
     }
+    break;
   }
+
+  return ret;
 }
 
 
@@ -1797,6 +1809,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
   int2 fetchPos;
 
 #ifdef IS_HDR_CSP
+  [branch]
   if (currentNumberID < NITS_NUMBERS_TOTAL)
   {
 #endif
@@ -1825,7 +1838,24 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 #endif
                                      ;
 
-  //[branch] can't branch here iirc?
+#define SHOW_NITS_VALUES_NUMBER_ID_MAX      (NITS_NUMBERS_PER_ROW * 3)
+#define SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 4)
+
+#ifdef IS_FLOAT_HDR_CSP
+  #define SHOW_GAMUTS_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
+                                   + NITS_NUMBERS_PER_ROW * 1 \
+                                   + 6 * 5)
+#else
+  #define SHOW_GAMUTS_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
+                                   + NITS_NUMBERS_PER_ROW * 1 \
+                                   + 6 * 3)
+#endif
+
+  VertexCoordsAndTexCoords ret;
+  ret.vertexCoords = float2(0.f, 0.f);
+  ret.texCoords    = float2(0.f, 0.f);
+
+  [branch]
   if (curNumber < 11u)
   {
     const uint currentVertexID = VertexID % 6;
@@ -1842,92 +1872,83 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #endif
 
+    static const bool drawMaxRbgOrMaxCll =
+      ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
+     || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES);
+
+    bool calcOffsets = false;
+
     //max/avg/min nits
-    [flatten]
-    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3)
-     && _SHOW_NITS_VALUES)
+    BRANCH(x)
+    if (_SHOW_NITS_VALUES
+     && currentNumberID < SHOW_NITS_VALUES_NUMBER_ID_MAX
+     && drawMaxRbgOrMaxCll)
     {
-      [branch]
-      if ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
-       || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES)
-      {
-        uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
+      calcOffsets = true;
 
-        uint b = a / NITS_NUMBERS_COUNT;
+      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
-        uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+      uint b = a / NITS_NUMBERS_COUNT;
 
-        uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+
+      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1u) / DOT_OFFSET_DIV;
 
 #ifndef IS_HDR_CSP
 
-        spacerOffset *= 2;
+      spacerOffset *= 2;
 
-        dotOffset = min(dotOffset, 1);
+      dotOffset = min(dotOffset, 1);
 
 #endif
 
-        vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
 
-        vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
-      }
-      else
-      {
-        return ReturnOffScreen();
-      }
+      vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
     }
 
     //cursor nits
     else
-    [flatten]
-    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 4)
-     && _SHOW_NITS_FROM_CURSOR)
+    BRANCH(x)
+    if (_SHOW_NITS_FROM_CURSOR
+     && currentNumberID >= SHOW_NITS_VALUES_NUMBER_ID_MAX
+     && currentNumberID <  SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
+     && drawMaxRbgOrMaxCll)
     {
-      [branch]
-      if ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
-       || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES)
-      {
-        uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
+      calcOffsets = true;
 
-        uint b = a / NITS_NUMBERS_COUNT;
+      uint a = currentNumberID % NITS_NUMBERS_PER_ROW;
 
-        uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+      uint b = a / NITS_NUMBERS_COUNT;
 
-        uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+      uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+
+      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
 
 #ifndef IS_HDR_CSP
 
-        spacerOffset *= 2;
+      spacerOffset *= 2;
 
-        dotOffset = min(dotOffset, 1);
+      dotOffset = min(dotOffset, 1);
 
 #endif
 
-        vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
 
-        vertexOffset.y = _SHOW_NITS_VALUES ? 5
-                                           : 2;
-      }
-      else
-      {
-        return ReturnOffScreen();
-      }
+      vertexOffset.y = _SHOW_NITS_VALUES ? 5
+                                         : 2;
     }
 
 #ifdef IS_HDR_CSP
     else
-    [flatten]
-    if (currentNumberID < (NITS_NUMBERS_PER_ROW * 3
-                         + NITS_NUMBERS_PER_ROW * 1
-                         + 6 *
-#ifdef IS_FLOAT_HDR_CSP
-                               5
-#else
-                               3
-#endif
-                          ) && SHOW_GAMUTS)
+    BRANCH(x)
+    if (SHOW_GAMUTS
+     && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
+     && currentNumberID < SHOW_GAMUTS_NUMBER_ID_MAX)
     //gamut percentages
     {
+      calcOffsets = true;
+
       currentNumberID -= (NITS_NUMBERS_PER_ROW * 3
                         + NITS_NUMBERS_PER_ROW * 1);
 
@@ -1947,55 +1968,61 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 #endif //IS_HDR_CSP
     else
     {
-      return ReturnOffScreen();
+      calcOffsets = false;
     }
 
-    vertexOffset *= CharSize;
-
-    float2 texCoordOffset = float2(CHAR_DIM_FLOAT.x * curNumber, 0.f);
-
-    const float2   vertexOffset2 =   vertexOffset + CharSize;
-    const float2 texCoordOffset2 = texCoordOffset + CHAR_DIM_FLOAT;
-
-    [flatten]
-    if (currentVertexID == 1)
+    [branch]
+    if (calcOffsets)
     {
-        vertexOffset.y =   vertexOffset2.y;
-      texCoordOffset.y = texCoordOffset2.y;
+      vertexOffset *= CharSize;
+
+      float2 texCoordOffset = float2(CHAR_DIM_FLOAT.x * curNumber, 0.f);
+
+      const float2   vertexOffset2 =   vertexOffset + CharSize;
+      const float2 texCoordOffset2 = texCoordOffset + CHAR_DIM_FLOAT;
+
+      [flatten]
+      if (currentVertexID == 1)
+      {
+          vertexOffset.y =   vertexOffset2.y;
+        texCoordOffset.y = texCoordOffset2.y;
+      }
+      else
+      [flatten]
+      if (currentVertexID == 4)
+      {
+          vertexOffset.x =   vertexOffset2.x;
+        texCoordOffset.x = texCoordOffset2.x;
+      }
+      else
+      [flatten]
+      if (currentVertexID == 2
+       || currentVertexID == 5)
+      {
+          vertexOffset =   vertexOffset2;
+        texCoordOffset = texCoordOffset2;
+      }
+
+      FLATTEN(x)
+      if (_TEXT_POSITION != 0)
+      {
+        vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
+      }
+
+      ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
+      ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
     }
     else
-    [flatten]
-    if (currentVertexID == 4)
     {
-        vertexOffset.x =   vertexOffset2.x;
-      texCoordOffset.x = texCoordOffset2.x;
+      ret = ReturnOffScreen();
     }
-    else
-    [flatten]
-    if (currentVertexID == 2
-     || currentVertexID == 5)
-    {
-        vertexOffset =   vertexOffset2;
-      texCoordOffset = texCoordOffset2;
-    }
-
-    [flatten]
-    if (_TEXT_POSITION != 0)
-    {
-      vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
-    }
-
-    VertexCoordsAndTexCoords ret;
-
-    ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
-    ret.texCoords    = GetTexCoordsFromRegularCoords(texCoordOffset);
-
-    return ret;
   }
   else
   {
-    return ReturnOffScreen();
+    ret = ReturnOffScreen();
   }
+
+  return ret;
 }
 
 void VS_RenderNumbers
