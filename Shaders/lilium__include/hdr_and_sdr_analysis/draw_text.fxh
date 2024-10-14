@@ -875,7 +875,7 @@ void CS_GetNitNumbers
     nits = tex1Dfetch(SamplerConsolidated, fetchPos);
   }
   else
-  [branch]
+  BRANCH(x)
   if (_SHOW_NITS_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
@@ -1468,7 +1468,7 @@ float GetMaxChars()
 {
   float maxChars = MAX_CHARS;
 
-  [flatten]
+  FLATTEN(x)
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
@@ -1488,7 +1488,7 @@ float GetMaxChars()
   }
 
 #ifdef IS_HDR_CSP
-  [flatten]
+  FLATTEN(x)
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
@@ -1506,13 +1506,13 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   ret.maxChars = MAX_CHARS;
   ret.maxLines = MAX_LINES;
 
-  [flatten]
+  FLATTEN(x)
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
     uint textOffsetNitsCursor = uint(TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x);
 
-    [flatten]
+    FLATTEN(x)
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
 #ifdef IS_HDR_CSP
@@ -1525,13 +1525,13 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
     ret.maxChars = max(ret.maxChars, textOffsetNitsCursor + NITS_EXTRA_CHARS);
   }
 
-  [flatten]
+  FLATTEN(x)
   if (!_SHOW_NITS_VALUES)
   {
     ret.maxLines -= 3;
   }
 
-  [flatten]
+  FLATTEN(x)
   if (!_SHOW_NITS_FROM_CURSOR)
   {
     ret.maxLines -= 1;
@@ -1539,20 +1539,20 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
 
 #ifdef IS_HDR_CSP
 
-  [flatten]
+  FLATTEN(x)
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxChars = max(ret.maxChars, uint(TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
   }
 
-  [flatten]
+  FLATTEN(x)
   if (!SHOW_GAMUTS)
   {
     ret.maxLines -= GAMUT_PERCENTAGES_LINES;
   }
 
-  [flatten]
+  FLATTEN(x)
   if (!SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxLines -= 1;
@@ -1583,19 +1583,19 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
                           _max.maxLines * CharSize.y);
 
       [flatten]
-      if (VertexID == 1)
+      if (VertexID == 1u)
       {
         pos.x = -pos.x;
       }
       else
       [flatten]
-      if (VertexID == 2)
+      if (VertexID == 2u)
       {
         pos.y = -pos.y;
       }
 
       [flatten]
-      if (_TEXT_POSITION != 0)
+      if (_TEXT_POSITION != 0u)
       {
         pos.x = BUFFER_WIDTH_FLOAT - pos.x;
       }
@@ -1607,11 +1607,11 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
     break;
     default:
     {
-      const uint textBlockVertexID = VertexID - 3;
+      const uint textBlockVertexID = VertexID - 3u;
 
-      const uint localVertexID = textBlockVertexID % 6;
+      const uint localVertexID = textBlockVertexID % 6u;
 
-      uint currentTextBlockID = textBlockVertexID / 6;
+      uint currentTextBlockID = textBlockVertexID / 6u;
 
       float2 vertexOffset;
 
@@ -1805,7 +1805,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
   const float2 CharSize
 )
 {
-  uint currentNumberID = VertexID / 6;
+  uint currentNumberID = VertexID / 6u;
 
   int2 fetchPos;
 
@@ -1859,17 +1859,17 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
   [branch]
   if (curNumber < 11u)
   {
-    const uint currentVertexID = VertexID % 6;
+    const uint currentVertexID = VertexID % 6u;
 
     float2 vertexOffset;
 
 #ifdef IS_HDR_CSP
 
-  #define DOT_OFFSET_DIV 6
+  #define DOT_OFFSET_DIV 6u
 
 #else
 
-  #define DOT_OFFSET_DIV 4
+  #define DOT_OFFSET_DIV 4u
 
 #endif
 
@@ -2058,14 +2058,14 @@ void VS_RenderNumbers
 
     float2 vertexOffset;
 
-    vertexOffset.x = 10;
+    vertexOffset.x = 10.f;
 
     vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                    : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
                    : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
                                                                      : 2.f;
 
-    [flatten]
+    FLATTEN(x)
     if (SHOW_GAMUTS)
     {
       vertexOffset.y += GAMUT_PERCENTAGES_LINES;
@@ -2109,7 +2109,7 @@ void VS_RenderNumbers
       texCoordOffset = texCoordOffset2;
     }
 
-    [flatten]
+    FLATTEN(x)
     if (_TEXT_POSITION != 0)
     {
       vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxChars() * charSize.x));
