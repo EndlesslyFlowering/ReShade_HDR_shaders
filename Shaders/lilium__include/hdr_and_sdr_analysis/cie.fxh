@@ -188,93 +188,81 @@ void DrawCieLines
                                                                                      \
           curCoords = Start + curStepxy
 
-  [branch]
-  if (Start.x < Stop.x)
+
+  static const bool startX_smaller_stopX = Start.x < Stop.x;
+  static const bool startX_greater_stopX = Start.x > Stop.x;
+
+  static const bool startY_smaller_stopY = Start.y < Stop.y;
+  static const bool startY_greater_stopY = Start.y > Stop.y;
+
+
+  bool doLoop = true;
+
+  [loop]
+  while (doLoop)
   {
-    [branch]
-    if (Start.y < Stop.y)
+    DRAW_CIE_GAMUT_LINES;
+
+    [flatten]
+    if (startX_smaller_stopX)
     {
-      [loop]
-      do
+      [flatten]
+      if (startY_smaller_stopY)
       {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x <= Stop.x
-            || curCoords.y <= Stop.y);
+        doLoop = curCoords.x <= Stop.x
+              || curCoords.y <= Stop.y;
+      }
+      else
+      [flatten]
+      if (startY_greater_stopY)
+      {
+        doLoop = curCoords.x <= Stop.x
+              || curCoords.y >= Stop.y;
+      }
+      else //if (Start.y == Stop.y)
+      {
+        doLoop = curCoords.x <= Stop.x;
+      }
     }
     else
-    [branch]
-    if (Start.y > Stop.y)
+    [flatten]
+    if (startX_greater_stopX)
     {
-      [loop]
-      do
+      [flatten]
+      if (startY_smaller_stopY)
       {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x <= Stop.x
-            || curCoords.y >= Stop.y);
+        doLoop = curCoords.x >= Stop.x
+              || curCoords.y <= Stop.y;
+      }
+      else
+      [branch]
+      if (startY_greater_stopY)
+      {
+        doLoop = curCoords.x >= Stop.x
+              || curCoords.y >= Stop.y;
+      }
+      else //if (Start.y == Stop.y)
+      {
+        doLoop = curCoords.x >= Stop.x;
+      }
     }
-    else //if (Start.y == Stop.y)
+    else //if (Start.x == Stop.x)
     {
-      [loop]
-      do
+      [flatten]
+      if (startY_smaller_stopY)
       {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x <= Stop.x);
-    }
-  }
-  else
-  [branch]
-  if (Start.x > Stop.x)
-  {
-    [branch]
-    if (Start.y < Stop.y)
-    {
-      [loop]
-      do
+        doLoop = curCoords.y <= Stop.y;
+      }
+      else
+      [flatten]
+      if (startY_greater_stopY)
       {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x >= Stop.x
-            || curCoords.y <= Stop.y);
-    }
-    else
-    [branch]
-    if (Start.y > Stop.y)
-    {
-      [loop]
-      do
+        doLoop = curCoords.y >= Stop.y;
+      }
+      else
       {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x >= Stop.x
-            || curCoords.y >= Stop.y);
-    }
-    else
-    {
-      [loop]
-      do
-      {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.x >= Stop.x);
-    }
-  }
-  else //if (Start.x == Stop.x)
-  {
-    [branch]
-    if (Start.y < Stop.y)
-    {
-      [loop]
-      do
-      {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.y <= Stop.y);
-    }
-    else
-    [branch]
-    if (Start.y > Stop.y)
-    {
-      [loop]
-      do
-      {
-        DRAW_CIE_GAMUT_LINES;
-      } while (curCoords.y >= Stop.y);
+        doLoop = false;
+      }
     }
   }
 
@@ -458,6 +446,13 @@ void DrawCieOutlines()
 
       const float step = 0.1f / max(cieSize.x, cieSize.y);
 
+
+#ifdef IS_HDR_CSP
+                                  //BT.709 + DCI-P3 + BT.2020
+      static const uint drawCount = 1 + 1 + 1;
+#endif
+
+
 #define DRAW_CIE_LINES(PRIM0, PRIM1)     \
           DrawCieLines(cieMinExtra,      \
                        cieNormalise,     \
@@ -482,27 +477,65 @@ void DrawCieOutlines()
         DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32)
       }
 
+
+#ifdef IS_HDR_CSP
+      [loop]
+      for (uint i = 0; i < drawCount; i++)
+      {
+        float2 coordsArray[3];
+
+        bool needsDrawing;
+
+        [forcecase]
+        switch(i)
+        {
+          case 0:
+          {
+            coordsArray[0] = primBt709R;
+            coordsArray[1] = primBt709G;
+            coordsArray[2] = primBt709B;
+
+            needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
+          }
+          break;
+          case 1:
+          {
+            coordsArray[0] = primDciP3R;
+            coordsArray[1] = primDciP3G;
+            coordsArray[2] = primDciP3B;
+
+            needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
+          }
+          break;
+          default: //case 2:
+          {
+            coordsArray[0] = primBt2020R;
+            coordsArray[1] = primBt2020G;
+            coordsArray[2] = primBt2020B;
+
+            needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
+          }
+          break;
+        }
+
+        [branch]
+        if (needsDrawing)
+        {
+          DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
+        }
+      }
+#else
+      static const float2 coordsArray[3] =
+      {
+        primBt709R,
+        primBt709G,
+        primBt709B
+      };
+
       BRANCH(x)
       if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
       {
-        DRAW_CIE_LINES(primBt709R, primBt709G);
-        DRAW_CIE_LINES(primBt709B, primBt709G);
-        DRAW_CIE_LINES(primBt709B, primBt709R);
-      }
-#ifdef IS_HDR_CSP
-      BRANCH(x)
-      if (CIE_SHOW_GAMUT_OUTLINE_DCI_P3)
-      {
-        DRAW_CIE_LINES(primDciP3R, primDciP3G);
-        DRAW_CIE_LINES(primDciP3B, primDciP3G);
-        DRAW_CIE_LINES(primDciP3B, primDciP3R);
-      }
-      BRANCH(x)
-      if (CIE_SHOW_GAMUT_OUTLINE_BT2020)
-      {
-        DRAW_CIE_LINES(primBt2020R, primBt2020G);
-        DRAW_CIE_LINES(primBt2020B, primBt2020G);
-        DRAW_CIE_LINES(primBt2020B, primBt2020R);
+        DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
       }
 #endif
 
