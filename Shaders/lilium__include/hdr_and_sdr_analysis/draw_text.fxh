@@ -2156,46 +2156,56 @@ void PS_RenderNumbers
 
   const float outline = smoothstep(0.f, 0.1f, (opacity + mtsdf.a) / 2.f); //higher range for better outline?
 
+  [branch]
+  if (_TEXT_BG_ALPHA > 0.f
+   || opacity        > 0.f
+   || outline        > 0.f)
+  {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Output.rgb = inputColour.rgb / 125.f;
+    Output.rgb = inputColour.rgb / 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  Output.rgb = Csp::Trc::PqTo::Linear(inputColour.rgb);
+    Output.rgb = Csp::Trc::PqTo::Linear(inputColour.rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  Output.rgb = DECODE_SDR(inputColour.rgb);
+    Output.rgb = DECODE_SDR(inputColour.rgb);
 
 #endif
 
-  float textBrightness;
+    float textBrightness;
 
 #ifdef IS_HDR_CSP
 
-  textBrightness = (_TEXT_BRIGHTNESS / 10000.f);
+    textBrightness = (_TEXT_BRIGHTNESS / 10000.f);
 
 #else
 
-  textBrightness = (_TEXT_BRIGHTNESS / 100.f);
+    textBrightness = (_TEXT_BRIGHTNESS / 100.f);
 
 #endif
 
-  Output.rgb = lerp(Output.rgb, 0.f, outline);
-  Output.rgb = lerp(Output.rgb, textBrightness, opacity);
+    Output.rgb = lerp(Output.rgb, 0.f, outline);
+    Output.rgb = lerp(Output.rgb, textBrightness, opacity);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Output.rgb *= 125.f;
+    Output.rgb *= 125.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  Output.rgb = Csp::Trc::LinearTo::Pq(Output.rgb);
+    Output.rgb = Csp::Trc::LinearTo::Pq(Output.rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  Output.rgb = ENCODE_SDR(Output.rgb);
+    Output.rgb = ENCODE_SDR(Output.rgb);
 
 #endif
+  }
+  else
+  {
+    Output.rgb = inputColour.rgb;
+  }
 }
