@@ -1345,13 +1345,11 @@ float3 MergeText
   float  ScreenPixelRange
 )
 {
-  const float sd = GetMedian(Mtsdf.rgb);
+  const float2 opacityAndOutline = Msdf::GetOpacityAndOutline(Mtsdf, ScreenPixelRange);
 
-  const float screenPixelDistance = ScreenPixelRange * (sd - 0.5f);
+  const float opacity = opacityAndOutline[0];
 
-  const float opacity = saturate(screenPixelDistance + 0.5f);
-
-  const float outline = smoothstep(0.f, 0.1f, (opacity + Mtsdf.a) / 2.f);
+  const float outline = opacityAndOutline[1];
 
   // tone map pixels below the overlay area
   [branch]
@@ -1402,7 +1400,7 @@ float3 MergeText
 
     // apply the text
     Output = lerp(Output, 0.f, outline);
-    Output = lerp(Output, 1.f, opacity);
+    Output = lerp(Output, lerp(0.5f, 1.f, opacity), opacity);
 
     // map everything back to the used colour space
     Output *= adjustFactor;
@@ -1775,7 +1773,7 @@ void VS_RenderText
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE, RANGE);
+  ScreenPixelRange = Msdf::GetScreenPixelRange(_TEXT_SIZE, RANGE);
 
   return;
 }
@@ -2128,7 +2126,7 @@ void VS_RenderNumbers
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = GetScreenPixelRange(_TEXT_SIZE, RANGE);
+  ScreenPixelRange = Msdf::GetScreenPixelRange(_TEXT_SIZE, RANGE);
 
   return;
 }
@@ -2148,13 +2146,11 @@ void PS_RenderNumbers
 
   float4 mtsdf = tex2D(SamplerFontAtlasConsolidated, TexCoord);
 
-  const float sd = GetMedian(mtsdf.rgb);
+  const float2 opacityAndOutline = Msdf::GetOpacityAndOutline(mtsdf, ScreenPixelRange);
 
-  const float screenPixelDistance = ScreenPixelRange * (sd - 0.5f);
+  const float opacity = opacityAndOutline[0];
 
-  const float opacity = saturate(screenPixelDistance + 0.5f);
-
-  const float outline = smoothstep(0.f, 0.1f, (opacity + mtsdf.a) / 2.f); //higher range for better outline?
+  const float outline = opacityAndOutline[1];
 
   [branch]
   if (_TEXT_BG_ALPHA > 0.f
@@ -2188,7 +2184,7 @@ void PS_RenderNumbers
 #endif
 
     Output.rgb = lerp(Output.rgb, 0.f, outline);
-    Output.rgb = lerp(Output.rgb, textBrightness, opacity);
+    Output.rgb = lerp(Output.rgb, lerp(textBrightness * 0.5f, textBrightness, opacity), opacity);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

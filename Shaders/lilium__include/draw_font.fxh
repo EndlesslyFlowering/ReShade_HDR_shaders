@@ -149,21 +149,47 @@ static const float2 TEXT_BLOCK_FETCH_OFFSETS[] =
 };
 
 
-float GetScreenPixelRange(
-  const float Factor,
-  const float Range)
+namespace Msdf
 {
-  float unitRange = Factor * Range;
+  float GetScreenPixelRange
+  (
+    const float Factor,
+    const float Range
+  )
+  {
+    float unitRange = Factor * Range;
 
-//  return max(unitRange, 1.f);
-  return unitRange;
+  //  return max(unitRange, 1.f);
+    return unitRange;
+  }
+
+  float GetMedian
+  (
+    const float3 Rgb
+  )
+  {
+    return max(min(Rgb.r, Rgb.g), min(max(Rgb.r, Rgb.g), Rgb.b));
+  }
+
+  float2 GetOpacityAndOutline
+  (
+    const float4 Mtsdf,
+    const float  ScreenPixelRange
+  )
+  {
+    const float sd = GetMedian(Mtsdf.rgb);
+
+    const float screenPixelDistance = ScreenPixelRange * (sd - 0.5f);
+
+    float opacity = saturate(screenPixelDistance + 0.5f);
+    opacity *= opacity;
+
+    const float outline = smoothstep(0.f, 0.1f, min(opacity + Mtsdf.a, 1.f));
+
+    return float2(opacity, outline);
+  }
 }
 
-float GetMedian(
-  const float3 Rgb)
-{
-  return max(min(Rgb.r, Rgb.g), min(max(Rgb.r, Rgb.g), Rgb.b));
-}
 
 
 #define _0                  uint2( 0, 0)

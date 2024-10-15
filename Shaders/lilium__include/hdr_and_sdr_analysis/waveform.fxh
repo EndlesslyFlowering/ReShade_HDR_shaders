@@ -424,26 +424,21 @@ namespace Waveform
                             lerp(c, d, fract.x),
                             fract.y);
 
+        const float screenPixelRange = Msdf::GetScreenPixelRange(CharDim.x / WAVEFORM_CHAR_DIM_FLOAT.x, WAVEFORM_RANGE);
 
-        const float sd = GetMedian(mtsdf.rgb);
+        const float2 opacityAndOutline = Msdf::GetOpacityAndOutline(mtsdf, screenPixelRange);
 
-        const float screenPixelDistance = GetScreenPixelRange(CharDim.x / WAVEFORM_CHAR_DIM_FLOAT.x, WAVEFORM_RANGE)
-                                        * (sd - 0.5f);
+        const float opacity = opacityAndOutline[0];
 
-        const float opacity = saturate(screenPixelDistance + 0.5f);
+        const float outline = opacityAndOutline[1];
 
-        const float outline = smoothstep(0.f, 0.1f, (opacity + mtsdf.a) / 2.f);
+        float grey = lerp(0.f, 0.5f, opacity);
 
-        //float test = lerp(0.f, 0.5f, opacity);
-
-        float test = lerp(1.f, 0.f, 1 - outline);
-        test = lerp(test - 1, 0.5f, opacity);
-
-        //float alpha = test;
+        float alpha = (grey || outline) > 0.f ? 1.f : 0.f;
 
         int2 currentDrawOffset = currentDrawPos + currentOffset;
 
-        tex2Dstore(StorageWaveformScale, currentDrawOffset, float4(sqrt(test), test, test, test));
+        tex2Dstore(StorageWaveformScale, currentDrawOffset, float4(sqrt(grey), alpha, alpha, alpha));
 
         currentOffset.y++;
       }
