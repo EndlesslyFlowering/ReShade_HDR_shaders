@@ -463,7 +463,7 @@ void RenderWaveform
   static const float2 waveformSizeFactor = float2(_WAVEFORM_SIZE.x / 100.f, 1.f);
 #endif
 
-  static const float2 coordFactors = float2(TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR, float(TEXTURE_WAVEFORM_USED_HEIGHT - 1))
+  static const float2 coordFactors = float2(TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR, float(TEXTURE_WAVEFORM_USED_HEIGHT))
                                    * waveformSizeFactor;
 
   BRANCH(x)
@@ -477,22 +477,28 @@ void RenderWaveform
     float encodedPixel = ENCODE_SDR(curPixelNits / 100.f);
 #endif
 
-    int2 coord = float2(float(FetchPos.x)
-                      * coordFactors.x,
-                        coordFactors.y
-                      - (encodedPixel * coordFactors.y));
+    const float coordsY = floor(encodedPixel * coordFactors.y);
 
-    float3 waveformColour = WaveformRgbValues(curPixelNits);
+    int2 coords = float2(float(FetchPos.x)
+                       * coordFactors.x,
+                         coordFactors.y
+                       - coordsY);
+
+#ifdef IS_HDR_CSP
+    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(coordsY / coordFactors.y));
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(coordsY / coordFactors.y));
+#endif
     waveformColour = sqrt(waveformColour);
 
     tex2Dstore(StorageWaveform,
-               coord,
+               coords,
                float4(waveformColour, 1.f));
 
     return;
   }
   else
-  [branch]
+  BRANCH(x)
   if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
   {
     float pixelCll;
@@ -522,16 +528,22 @@ void RenderWaveform
 
 #endif
 
-    int2 coord = float2(float(FetchPos.x)
-                      * coordFactors.x,
-                        coordFactors.y
-                      - (pixelEncoded * coordFactors.y));
+    const float coordsY = floor(pixelEncoded * coordFactors.y);
 
-    float3 waveformColour = WaveformRgbValues(pixelCll);
+    int2 coords = float2(float(FetchPos.x)
+                       * coordFactors.x,
+                         coordFactors.y
+                       - coordsY);
+
+#ifdef IS_HDR_CSP
+    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(coordsY / coordFactors.y));
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(coordsY / coordFactors.y));
+#endif
     waveformColour = sqrt(waveformColour);
 
     tex2Dstore(StorageWaveform,
-               coord,
+               coords,
                float4(waveformColour, 1.f));
 
     return;
@@ -586,6 +598,14 @@ void RenderWaveform
     waveformColourRG = (waveformColour.r - 1.f) * Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1];
     waveformColourBG = (waveformColour.b - 1.f) * Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1];
 
+    waveformColour = ceil(waveformColour * coordFactors.y)
+                   / coordFactors.y;
+
+    waveformColourRG = ceil(waveformColourRG * coordFactors.y)
+                     / coordFactors.y;
+    waveformColourBG = ceil(waveformColourBG * coordFactors.y)
+                     / coordFactors.y;
+
     waveformColour = sqrt(waveformColour);
 
     waveformColourRG = sqrt(waveformColourRG);
@@ -606,7 +626,7 @@ void RenderWaveform
     int xCoord2 = xCoord1 + textureWaveformWidthDiv3;
 
     int3 yCoords = coordFactors.y
-                 - (encodedPixel * coordFactors.y);
+                 - floor(encodedPixel * coordFactors.y);
 
     tex2Dstore(StorageWaveform,
                int2(xCoord0, yCoords[0]),
