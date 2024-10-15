@@ -647,7 +647,7 @@ void RenderWaveform
 
 void RenderWaveformScale()
 {
-  BRANCH(x)
+  [branch]
   if (tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X)       != _WAVEFORM_SIZE.x
    || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y)       != _WAVEFORM_SIZE.y
 #ifdef IS_HDR_CSP
@@ -656,8 +656,10 @@ void RenderWaveformScale()
   )
   {
     //make background all black
+    [loop]
     for (int x = 0; x < TEXTURE_WAVEFORM_SCALE_WIDTH; x++)
     {
+      [loop]
       for (int y = 0; y < TEXTURE_WAVEFORM_SCALE_HEIGHT; y++)
       {
         tex2Dstore(StorageWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
@@ -703,6 +705,7 @@ void RenderWaveformScale()
     const int2 text____0_05Offset = nits____0_05Offset - waveDat.textOffset;
     const int2 text____0_00Offset = nits____0_00Offset - waveDat.textOffset;
 
+
     int charOffsets[8];
 
     if (WAVEFORM_CUTOFF_POINT == 0)
@@ -730,116 +733,215 @@ void RenderWaveformScale()
         6 };
     }
 
-    if (WAVEFORM_CUTOFF_POINT == 0)
+
+    static const int charList10000_00[8] = { _1_w, _0_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList_4000_00[7] = {       _4_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList_2000_00[7] = {       _2_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList_1000_00[7] = {       _1_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList__400_00[6] = {             _4_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList__203_00[6] = {             _2_w, _0_w, _3_w, _dot_w, _0_w, _0_w };
+    static const int charList__100_00[6] = {             _1_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList___50_00[5] = {                   _5_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList___25_00[5] = {                   _2_w, _5_w, _dot_w, _0_w, _0_w };
+    static const int charList___10_00[5] = {                   _1_w, _0_w, _dot_w, _0_w, _0_w };
+    static const int charList____5_00[4] = {                         _5_w, _dot_w, _0_w, _0_w };
+    static const int charList____2_50[4] = {                         _2_w, _dot_w, _5_w, _0_w };
+    static const int charList____1_00[4] = {                         _1_w, _dot_w, _0_w, _0_w };
+    static const int charList____0_25[4] = {                         _0_w, _dot_w, _2_w, _5_w };
+    static const int charList____0_05[4] = {                         _0_w, _dot_w, _0_w, _5_w };
+    static const int charList____0_00[4] = {                         _0_w, _dot_w, _0_w, _0_w };
+
+    static const uint charListsCount = 16;
+
+    [loop]
+    for (uint i = 0; i < charListsCount; i++)
     {
-      Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, text10000_00Offset, charOffsets[0]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[1]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[2]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[3]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[4]);
-      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text10000_00Offset, charOffsets[5]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[6]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text10000_00Offset, charOffsets[7]);
+      int currentNumber;
+
+      int2 currentTextOffset;
+
+      int currentCharOffset;
+
+      bool needsDrawing = true;
+
+
+      [loop]
+      for (int j = 0; j < 8; j++)
+      {
+        const int minj6 = min(j, 6);
+        const int minj5 = min(j, 5);
+        const int minj4 = min(j, 4);
+        const int minj3 = min(j, 3);
+
+        [forcecase]
+        switch(i)
+        {
+          case 0:
+          {
+            currentNumber = charList10000_00[j];
+
+            currentTextOffset = text10000_00Offset;
+
+            currentCharOffset = 0;
+
+            needsDrawing = WAVEFORM_CUTOFF_POINT == 0;
+          }
+          break;
+          case 1:
+          {
+            currentNumber = charList_4000_00[minj6];
+
+            currentTextOffset = text_4000_00Offset;
+
+            currentCharOffset = 1;
+
+            needsDrawing = WAVEFORM_CUTOFF_POINT <= 1;
+          }
+          break;
+          case 2:
+          {
+            currentNumber = charList_2000_00[minj6];
+
+            currentTextOffset = text_2000_00Offset;
+
+            currentCharOffset = 1;
+
+            needsDrawing = WAVEFORM_CUTOFF_POINT <= 2;
+          }
+          break;
+          case 3:
+          {
+            currentNumber = charList_1000_00[minj6];
+
+            currentTextOffset = text_1000_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 4:
+          {
+            currentNumber = charList__400_00[minj5];
+
+            currentTextOffset = text__400_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 5:
+          {
+            currentNumber = charList__203_00[minj5];
+
+            currentTextOffset = text__203_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 6:
+          {
+            currentNumber = charList__100_00[minj5];
+
+            currentTextOffset = text__100_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 7:
+          {
+            currentNumber = charList___50_00[minj4];
+
+            currentTextOffset = text___50_00Offset;
+
+            currentCharOffset = 3;
+          }
+          break;
+          case 8:
+          {
+            currentNumber = charList___25_00[minj4];
+
+            currentTextOffset = text___25_00Offset;
+
+            currentCharOffset = 3;
+          }
+          break;
+          case 9:
+          {
+            currentNumber = charList___10_00[minj4];
+
+            currentTextOffset = text___10_00Offset;
+
+            currentCharOffset = 3;
+          }
+          break;
+          case 10:
+          {
+            currentNumber = charList____5_00[minj3];
+
+            currentTextOffset = text____5_00Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+          case 11:
+          {
+            currentNumber = charList____2_50[minj3];
+
+            currentTextOffset = text____2_50Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+          case 12:
+          {
+            currentNumber = charList____1_00[minj3];
+
+            currentTextOffset = text____1_00Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+          case 13:
+          {
+            currentNumber = charList____0_25[minj3];
+
+            currentTextOffset = text____0_25Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+          case 14:
+          {
+            currentNumber = charList____0_05[minj3];
+
+            currentTextOffset = text____0_05Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+          default: //case 15:
+          {
+            currentNumber = charList____0_00[minj3];
+
+            currentTextOffset = text____0_00Offset;
+
+            currentCharOffset = 4;
+          }
+          break;
+        }
+
+        [branch]
+        if (needsDrawing
+         && (-(j - 7) >= currentCharOffset))
+        {
+          Waveform::DrawCharToScale(currentNumber,
+                                    waveDat.charDimensions,
+                                    currentTextOffset,
+                                    charOffsets[j + currentCharOffset]);
+        }
+      }
+
+
+
     }
-
-    if (WAVEFORM_CUTOFF_POINT <= 1)
-    {
-      Waveform::DrawCharToScale(  _4_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[1]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[2]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[3]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[4]);
-      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[5]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[6]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_4000_00Offset, charOffsets[7]);
-    }
-
-    if (WAVEFORM_CUTOFF_POINT <= 2)
-    {
-      Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[1]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[2]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[3]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[4]);
-      Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[5]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[6]);
-      Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_2000_00Offset, charOffsets[7]);
-    }
-
-    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[1]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[2]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text_1000_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _4_w, waveDat.charDimensions, text__400_00Offset, charOffsets[2]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__400_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__400_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text__400_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__400_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__400_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, text__203_00Offset, charOffsets[2]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__203_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _3_w, waveDat.charDimensions, text__203_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text__203_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__203_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__203_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, text__100_00Offset, charOffsets[2]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__100_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__100_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text__100_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__100_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text__100_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text___50_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___50_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text___50_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___50_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___50_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, text___25_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text___25_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text___25_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___25_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___25_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, text___10_00Offset, charOffsets[3]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___10_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text___10_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___10_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text___10_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text____5_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____5_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____5_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____5_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, text____2_50Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____2_50Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text____2_50Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____2_50Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _1_w, waveDat.charDimensions, text____1_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____1_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____1_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____1_00Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_25Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____0_25Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _2_w, waveDat.charDimensions, text____0_25Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text____0_25Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_05Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____0_05Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_05Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _5_w, waveDat.charDimensions, text____0_05Offset, charOffsets[7]);
-
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_00Offset, charOffsets[4]);
-    Waveform::DrawCharToScale(_dot_w, waveDat.charDimensions, text____0_00Offset, charOffsets[5]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_00Offset, charOffsets[6]);
-    Waveform::DrawCharToScale(  _0_w, waveDat.charDimensions, text____0_00Offset, charOffsets[7]);
 
 #else
 
@@ -885,116 +987,208 @@ void RenderWaveformScale()
 #endif
     const int2 text__0_00Offset = nits__0_00Offset - waveDat.textOffset;
 
-    const float2 charDimensionsForPercent = float2(waveDat.charDimensionXForPercent, waveDat.charDimensions.y);
 
-    Waveform::DrawCharToScale(      _1_w, waveDat.charDimensions, text100_00Offset, 0);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text100_00Offset, 1);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text100_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text100_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text100_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text100_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text100_00Offset, 6);
+    const int charOffsets[7] = {0, 1, 2, 3, 4, 5, 6};
 
-    Waveform::DrawCharToScale(      _8_w, waveDat.charDimensions, text_87_50Offset, 1);
-    Waveform::DrawCharToScale(      _7_w, waveDat.charDimensions, text_87_50Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_87_50Offset, 3);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text_87_50Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_87_50Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_87_50Offset, 6);
 
-    Waveform::DrawCharToScale(      _7_w, waveDat.charDimensions, text_75_00Offset, 1);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text_75_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_75_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_75_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_75_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_75_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _6_w, waveDat.charDimensions, text_60_00Offset, 1);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_60_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_60_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_60_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_60_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_60_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text_50_00Offset, 1);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_50_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_50_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_50_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_50_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_50_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _3_w, waveDat.charDimensions, text_35_00Offset, 1);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text_35_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_35_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_35_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_35_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_35_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _2_w, waveDat.charDimensions, text_25_00Offset, 1);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text_25_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_25_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_25_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_25_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_25_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _1_w, waveDat.charDimensions, text_18_00Offset, 1);
-    Waveform::DrawCharToScale(      _8_w, waveDat.charDimensions, text_18_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_18_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_18_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_18_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_18_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _1_w, waveDat.charDimensions, text_10_00Offset, 1);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_10_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text_10_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_10_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text_10_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text_10_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text__5_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__5_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__5_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__5_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__5_00Offset, 6);
-
-    Waveform::DrawCharToScale(      _2_w, waveDat.charDimensions, text__2_50Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__2_50Offset, 3);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text__2_50Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__2_50Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__2_50Offset, 6);
-
-    Waveform::DrawCharToScale(      _1_w, waveDat.charDimensions, text__1_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__1_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__1_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__1_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__1_00Offset, 6);
-
+    static const int charList100_00[7] = { _1_w, _0_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_87_50[6] = {       _8_w, _7_w, _dot_w, _5_w, _0_w, _percent_w };
+    static const int charList_75_00[6] = {       _7_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_60_00[6] = {       _6_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_50_00[6] = {       _5_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_35_00[6] = {       _3_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_25_00[6] = {       _2_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_18_00[6] = {       _1_w, _8_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList_10_00[6] = {       _1_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList__5_00[5] = {             _5_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const int charList__2_50[5] = {             _2_w, _dot_w, _5_w, _0_w, _percent_w };
+    static const int charList__1_00[5] = {             _1_w, _dot_w, _0_w, _0_w, _percent_w };
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_25Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__0_25Offset, 3);
-    Waveform::DrawCharToScale(      _2_w, waveDat.charDimensions, text__0_25Offset, 4);
-    Waveform::DrawCharToScale(      _5_w, waveDat.charDimensions, text__0_25Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__0_25Offset, 6);
+    static const int charList__0_25[5] = {             _0_w, _dot_w, _2_w, _5_w, _percent_w };
 #else
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_40Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__0_40Offset, 3);
-    Waveform::DrawCharToScale(      _4_w, waveDat.charDimensions, text__0_40Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_40Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__0_40Offset, 6);
+    static const int charList__0_40[5] = {             _0_w, _dot_w, _4_w, _0_w, _percent_w };
 #endif
+    static const int charList__0_00[5] = {             _0_w, _dot_w, _0_w, _0_w, _percent_w };
 
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_00Offset, 2);
-    Waveform::DrawCharToScale(    _dot_w, waveDat.charDimensions, text__0_00Offset, 3);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_00Offset, 4);
-    Waveform::DrawCharToScale(      _0_w, waveDat.charDimensions, text__0_00Offset, 5);
-    Waveform::DrawCharToScale(_percent_w, charDimensionsForPercent, text__0_00Offset, 6);
+    static const uint charListsCount = 14;
+
+    float2 charDims;
+
+    charDims.y = waveDat.charDimensions.y;
+
+    [loop]
+    for (uint i = 0; i < charListsCount; i++)
+    {
+      int currentNumber;
+
+      int2 currentTextOffset;
+
+      int currentCharOffset;
+
+      [loop]
+      for (int j = 0; j < 7; j++)
+      {
+        const int minj5 = min(j, 5);
+        const int minj4 = min(j, 4);
+
+        [forcecase]
+        switch(i)
+        {
+          case 0:
+          {
+            currentNumber = charList100_00[j];
+
+            currentTextOffset = text100_00Offset;
+
+            currentCharOffset = 0;
+          }
+          break;
+          case 1:
+          {
+            currentNumber = charList_87_50[minj5];
+
+            currentTextOffset = text_87_50Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 2:
+          {
+            currentNumber = charList_75_00[minj5];
+
+            currentTextOffset = text_75_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 3:
+          {
+            currentNumber = charList_60_00[minj5];
+
+            currentTextOffset = text_60_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 4:
+          {
+            currentNumber = charList_50_00[minj5];
+
+            currentTextOffset = text_50_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 5:
+          {
+            currentNumber = charList_35_00[minj5];
+
+            currentTextOffset = text_35_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 6:
+          {
+            currentNumber = charList_25_00[minj5];
+
+            currentTextOffset = text_25_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 7:
+          {
+            currentNumber = charList_18_00[minj5];
+
+            currentTextOffset = text_18_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 8:
+          {
+            currentNumber = charList_10_00[minj5];
+
+            currentTextOffset = text_10_00Offset;
+
+            currentCharOffset = 1;
+          }
+          break;
+          case 9:
+          {
+            currentNumber = charList__5_00[minj4];
+
+            currentTextOffset = text__5_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 10:
+          {
+            currentNumber = charList__2_50[minj4];
+
+            currentTextOffset = text__2_50Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 11:
+          {
+            currentNumber = charList__1_00[minj4];
+
+            currentTextOffset = text__1_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+          case 12:
+          {
+#if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+  || OVERWRITE_SDR_GAMMA == GAMMA_22    \
+  || OVERWRITE_SDR_GAMMA == GAMMA_24)
+            currentNumber = charList__0_25[minj4];
+
+            currentTextOffset = text__0_25Offset;
+#else
+            currentNumber = charList__0_40[minj4];
+
+            currentTextOffset = text__0_40Offset;
+#endif
+            currentCharOffset = 2;
+          }
+          break;
+          default: //case 13:
+          {
+            currentNumber = charList__0_00[minj4];
+
+            currentTextOffset = text__0_00Offset;
+
+            currentCharOffset = 2;
+          }
+          break;
+        }
+
+        charDims.x = currentNumber != _percent_w ? waveDat.charDimensions.x
+                                                 : waveDat.charDimensionXForPercent;
+
+        [branch]
+        if (-(j - 7) > currentCharOffset)
+        {
+          Waveform::DrawCharToScale(currentNumber,
+                                    charDims,
+                                    currentTextOffset,
+                                    charOffsets[j + currentCharOffset]);
+        }
+      }
+    }
 
 #endif
 
     // draw the frame, ticks and horizontal lines
+    [loop]
     for (int y = 0; y < waveDat.endXY.y; y++)
     {
       int2 curPos = waveDat.offsetToFrame
@@ -1008,9 +1202,11 @@ void RenderWaveformScale()
       float4 curColour = float4(curGrey, 1.f.xxx);
 
       // draw top and bottom part of the frame
+      [branch]
       if (y <  waveDat.frameSize
        || y >= waveDat.lowerFrameStart)
       {
+        [loop]
         for (int x = 0; x < waveDat.endXY.x; x++)
         {
           int2 curXPos = int2(curPos.x + x,
@@ -1021,6 +1217,7 @@ void RenderWaveformScale()
       // draw left and right part of the frame
       else
       {
+        [loop]
         for (int x = 0; x < waveDat.frameSize; x++)
         {
           int2 curLeftPos  = int2(curPos.x + x,
@@ -1032,6 +1229,7 @@ void RenderWaveformScale()
       }
 
       // draw top tick and bottom tick
+      [branch]
 #ifdef IS_HDR_CSP
   #ifdef IS_QHD_OR_HIGHER_RES
       if ((WAVEFORM_CUTOFF_POINT == 0 && ((nits10000_00Offset.y - 1) == curPos.y || nits10000_00Offset.y == curPos.y || (nits10000_00Offset.y + 1) == curPos.y))
@@ -1056,6 +1254,7 @@ void RenderWaveformScale()
   #endif
 #endif
       {
+        [loop]
         for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.frameSize); x++)
         {
           int2 curTickPos = int2(x,
@@ -1065,6 +1264,7 @@ void RenderWaveformScale()
       }
 
       // draw ticks + draw horizontal lines
+      [branch]
 #ifdef IS_HDR_CSP
   #ifdef IS_QHD_OR_HIGHER_RES
       if ((WAVEFORM_CUTOFF_POINT < 1 && ((nits_4000_00Offset.y - 1) == curPos.y || nits_4000_00Offset.y == curPos.y || (nits_4000_00Offset.y + 1) == curPos.y))
@@ -1141,6 +1341,7 @@ void RenderWaveformScale()
   #endif
 #endif
       {
+        [loop]
         for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.endXY.x); x++)
         {
           int2 curTickPos = int2(x,
