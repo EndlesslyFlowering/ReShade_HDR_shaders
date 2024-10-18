@@ -1,8 +1,7 @@
 #pragma once
 
 
-#if (BUFFER_WIDTH  > 2560) \
- && (BUFFER_HEIGHT > 1440)
+#ifdef IS_HIGHER_THAN_QHD_RES
 
   #define TEXTURE_FILENAME "lilium__font_atlas_1.333.png"
 

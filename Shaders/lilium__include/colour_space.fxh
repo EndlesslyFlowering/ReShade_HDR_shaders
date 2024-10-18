@@ -75,6 +75,11 @@ static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOA
   #define IS_QHD_OR_HIGHER_RES
 #endif
 
+#if (BUFFER_WIDTH  > 2560) \
+ && (BUFFER_HEIGHT > 1440)
+  #define IS_HIGHER_THAN_QHD_RES
+#endif
+
 
 #ifdef GAMESCOPE
   #ifndef GAMESCOPE_SDR_ON_HDR_NITS
