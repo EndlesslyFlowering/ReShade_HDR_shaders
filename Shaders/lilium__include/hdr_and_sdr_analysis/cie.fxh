@@ -41,15 +41,15 @@ texture2D TextureCieOverlay
 {
   Width  = CIE_TEXTURE_WIDTH;
   Height = CIE_TEXTURE_HEIGHT;
-  Format = R8;
+  Format = RG8;
 };
 
-sampler2D<float> SamplerCieOverlay
+sampler2D<float4> SamplerCieOverlay
 {
   Texture = TextureCieOverlay;
 };
 
-storage2D<float> StorageCieOverlay
+storage2D<float4> StorageCieOverlay
 {
   Texture = TextureCieOverlay;
 };
@@ -180,7 +180,7 @@ void DrawCieLines
                                                                                      \
           encodedCoords.y = int(RenderSizeMinus1.y) - encodedCoords.y;               \
                                                                                      \
-          tex2Dstore(StorageCieOverlay, encodedCoords, 1.f);                         \
+          tex2Dstore(StorageCieOverlay, encodedCoords, float4(1.f, 1.f, 0.f, 0.f));  \
                                                                                      \
           counter += 1.f;                                                            \
                                                                                      \
@@ -310,7 +310,7 @@ float MitchellNetravali
   }
 }
 
-float Bicubic
+float2 Bicubic
 (
   const int2  Coords,
   const float B,
@@ -320,13 +320,24 @@ float Bicubic
   float sum = 0.f;
   float den = 0.f;
 
+  float alpha;
+
   [loop]
   for (int x = -1; x <= 2; x++)
   {
     [loop]
     for (int y = -1; y <= 2; y++)
     {
-      float c = tex2Dfetch(StorageCieOverlay, Coords + int2(x, y));
+      float2 currentPixel = tex2Dfetch(StorageCieOverlay, Coords + int2(x, y)).xy;
+
+      float c = currentPixel[0];
+
+      [branch]
+      if (x == 0
+       && y == 0)
+      {
+        alpha = currentPixel[1];
+      }
 
       float2 xy = float2(x, y) - 0.5f;
 
@@ -341,7 +352,11 @@ float Bicubic
     }
   }
 
-  return sum / den;
+  float c = sum / den;
+
+  alpha = max(c, alpha);
+
+  return float2(c, alpha);
 }
 
 void DrawCieOutlines()
@@ -372,7 +387,7 @@ void DrawCieOutlines()
         [loop]
         for (int y = 0; y < CIE_TEXTURE_HEIGHT; y++)
         {
-          tex2Dstore(StorageCieOverlay, int2(x, y), 0.f);
+          tex2Dstore(StorageCieOverlay, int2(x, y), (float4)0.f);
         }
       }
 
@@ -539,13 +554,148 @@ void DrawCieOutlines()
       }
 #endif
 
+//#ifdef IS_HDR_CSP
+//      [loop]
+//      for (int i = 0; i < drawCount; i++)
+//      {
+//        float2 coords0;
+//        float2 coords1;
+//
+//        bool needsDrawing;
+//
+//        [forcecase]
+//        switch(i)
+//        {
+//          //BT.709
+//          case 0:
+//          {
+//              coords0 = primBt709R;
+//              coords1 = primBt709G;
+//
+//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
+//          }
+//          break;
+//          case 1:
+//          {
+//              coords0 = primBt709B;
+//              coords1 = primBt709G;
+//
+//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
+//          }
+//          break;
+//          case 2:
+//          {
+//              coords0 = primBt709B;
+//              coords1 = primBt709R;
+//
+//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
+//          }
+//          break;
+//          //DCI-P3
+//          case 3:
+//          {
+//              coords0 = primDciP3R;
+//              coords1 = primDciP3G;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
+//          }
+//          break;
+//          case 4:
+//          {
+//              coords0 = primDciP3B;
+//              coords1 = primDciP3G;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
+//          }
+//          break;
+//          case 5:
+//          {
+//              coords0 = primDciP3B;
+//              coords1 = primDciP3R;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
+//          }
+//          break;
+//          //BT.2020
+//          case 6:
+//          {
+//              coords0 = primBt2020R;
+//              coords1 = primBt2020G;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
+//          }
+//          break;
+//          case 7:
+//          {
+//              coords0 = primBt2020B;
+//              coords1 = primBt2020G;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
+//          }
+//          break;
+//          default: //case 8:
+//          {
+//              coords0 = primBt2020B;
+//              coords1 = primBt2020R;
+//
+//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
+//          }
+//          break;
+//        }
+//
+//        [branch]
+//        if (needsDrawing)
+//        {
+//          DRAW_CIE_LINES(coords0, coords1);
+//        }
+//      }
+//#else
+//      static const float2 coordsArray[3] =
+//      {
+//        primBt709R,
+//        primBt709G,
+//        primBt709B
+//      };
+//
+//      BRANCH(x)
+//      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
+//      {
+//        DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
+//      }
+//#endif
+
+//this is theoretically faster by ~0.04s
+//      BRANCH(x)
+//      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
+//      {
+//        DRAW_CIE_LINES(primBt709R, primBt709G);
+//        DRAW_CIE_LINES(primBt709B, primBt709G);
+//        DRAW_CIE_LINES(primBt709B, primBt709R);
+//      }
+//#ifdef IS_HDR_CSP
+//      BRANCH(x)
+//      if (CIE_SHOW_GAMUT_OUTLINE_DCI_P3)
+//      {
+//        DRAW_CIE_LINES(primDciP3R, primDciP3G);
+//        DRAW_CIE_LINES(primDciP3B, primDciP3G);
+//        DRAW_CIE_LINES(primDciP3B, primDciP3R);
+//      }
+//      BRANCH(x)
+//      if (CIE_SHOW_GAMUT_OUTLINE_BT2020)
+//      {
+//        DRAW_CIE_LINES(primBt2020R, primBt2020G);
+//        DRAW_CIE_LINES(primBt2020B, primBt2020G);
+//        DRAW_CIE_LINES(primBt2020B, primBt2020R);
+//      }
+//#endif
+
       tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS, asfloat(cieSettingsNew));
       tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,     _CIE_DIAGRAM_SIZE);
       tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,         FRAMETIME);
     }
 
 
-    float cieTimer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
+    static const float cieTimer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
 
     [branch]
     if (cieTimer >= 1000.f)
@@ -586,14 +736,86 @@ void DrawCieOutlines()
 
       //putting loop here somehow made the compiler not unroll this in performance mode...
       [loop]
-      for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
+      for (int y = 0; y <= renderSizeMinus1AsInt.y; y++)
       {
+        int coordsXLeft;
+        int coordsXRight;
+
+
+        int xLeft = 0;
+
+        //search from the left for first pixel that is no 0
         [loop]
-        for (int y = 0; y <= renderSizeMinus1AsInt.y; y++)
+        while (xLeft <= renderSizeMinus1AsInt.x)
+        {
+          int2 xyLeft = int2(xLeft, y);
+
+          float currentPixel = tex2Dfetch(StorageCieOverlay, xyLeft).x;
+
+          //if the first pixel is found end loop
+          [flatten]
+          if (currentPixel == 1.f)
+          {
+            coordsXLeft = xLeft;
+
+            xLeft = renderSizeMinus1AsInt.x;
+          }
+          else
+          {
+            xLeft++;
+          }
+        }
+
+
+        int xRight = renderSizeMinus1AsInt.x;
+
+        //search from the right for first pixel that is no 0
+        [loop]
+        while (xRight >= 0)
+        {
+          int2 xyRight = int2(xRight, y);
+
+          float currentPixel = tex2Dfetch(StorageCieOverlay, xyRight).x;
+
+          //if the first pixel is found end loop
+          [flatten]
+          if (currentPixel == 1.f)
+          {
+            coordsXRight = xRight;
+
+            xRight = -1;
+          }
+          else
+          {
+            xRight--;
+          }
+        }
+
+
+        //set alpha to 1 so that the background also gets drawn
+        for (int xAlpha = coordsXLeft; xAlpha < coordsXRight; xAlpha++)
+        {
+          int2 xyAlpha = int2(xAlpha, y);
+
+          float currentPixel = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+
+          tex2Dstore(StorageCieOverlay, xyAlpha, float4(currentPixel, 1.f, 0.f, 0.f));
+        }
+
+
+        memoryBarrier();
+
+        //bicubic interpolation with Mitchell-Netravali
+        [loop]
+        for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
         {
           int2 xy = int2(x, y);
 
-          tex2Dstore(StorageCieOverlay, xy, Bicubic(xy, 1.f, 0.f));
+          float2 interpolated = Bicubic(xy, 1.f, 0.f);
+
+          interpolated[1] = sqrt(interpolated[1]);
+
+          tex2Dstore(StorageCieOverlay, xy, float4(interpolated, 0.f, 0.f));
         }
       }
 
@@ -613,11 +835,13 @@ void DrawCieOutlines()
 }
 
 
+//pointer's gamut https://www.desmos.com/calculator/3cmjepebtb
+
 void VS_PrepareComposeCieDiagram
 (
   in                  uint   VertexID : SV_VertexID,
   out                 float4 Position : SV_Position,
-  out nointerpolation float3 CieData0 : CieData0
+  out nointerpolation float4 CieData0 : CieData0
 )
 {
   float2 texCoord;
@@ -630,12 +854,15 @@ void VS_PrepareComposeCieDiagram
 
 #define renderSizeMinus1Y      CieData0.x
 #define oneDivRenderSizeMinus1 CieData0.yz
+#define cieTimerCurrent        CieData0.w
 
   const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1();
 
   renderSizeMinus1Y = renderSizeMinus1.y;
 
   oneDivRenderSizeMinus1 = 1.f / renderSizeMinus1;
+
+  cieTimerCurrent = tex1Dfetch(SamplerConsolidated, COORDS_CIE_TIMER);
 
   return;
 }
@@ -644,7 +871,7 @@ void VS_PrepareComposeCieDiagram
 void PS_ComposeCieDiagram
 (
   in                  float4 Position : SV_Position,
-  in  nointerpolation float3 CieData0 : CieData0,
+  in  nointerpolation float4 CieData0 : CieData0,
   out                 float4 Out      : SV_Target0
 )
 {
@@ -655,7 +882,14 @@ void PS_ComposeCieDiagram
   {
     const int2 positionAsInt2 = int2(Position.xy);
 
-    const float Outline = tex2Dfetch(SamplerCieOverlay, positionAsInt2) * 0.18f;
+    float2 Outline = tex2Dfetch(SamplerCieOverlay, positionAsInt2).xy;
+
+    Outline[0] *= 0.18f;
+
+    if (cieTimerCurrent != -1.f)
+    {
+      Outline[1] = 1.f;
+    }
 
     uint cieCurrent = tex3Dfetch(SamplerCieCounter, int3(positionAsInt2,  0));
 
@@ -699,7 +933,7 @@ void PS_ComposeCieDiagram
 
       rgb /= MAXRGB(rgb);
 
-      rgb = rgb * Y + Outline;
+      rgb = rgb * Y + Outline[0];
 
 #ifdef IS_HDR_CSP
       float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(rgb);
@@ -712,16 +946,13 @@ void PS_ComposeCieDiagram
       ycbcr.yz += (511.f / 1023.f);
 
       Out = float4(ycbcr, 1.f);
+//      Out = float4(sqrt(rgb), 1.f);
     }
     else
-    [branch]
-    if (Outline != 0.f)
+    [branch] //flatten?
+    if (Outline[1] != 0.f)
     {
-      Out = float4(sqrt(Outline), (511.f / 1023.f), (511.f / 1023.f), 1.f);
-    }
-    else
-    {
-      Out.xyz = float3(0.f, (511.f / 1023.f), (511.f / 1023.f));
+      Out = float4(sqrt(Outline[0]), (511.f / 1023.f), (511.f / 1023.f), Outline[1]);
     }
   }
 

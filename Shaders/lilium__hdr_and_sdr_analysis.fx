@@ -1094,28 +1094,32 @@ void PS_HdrAnalysis
 
       float4 cieYcbcr = tex2Dfetch(SamplerCieFinal, cieFetchCoords);
 
-      // using gamma 2 as intermediate gamma space
-      cieYcbcr[0] *= cieYcbcr[0];
+      [branch]
+      if (cieYcbcr.a > 0.f)
+      {
+        // using gamma 2 as intermediate gamma space (also for the alpha)
+        cieYcbcr.xw *= cieYcbcr.xw;
 
-      cieYcbcr.yz -= (511.f / 1023.f);
+        cieYcbcr.yz -= (511.f / 1023.f);
 
 #ifdef IS_HDR_CSP
-      float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt2020(cieYcbcr.xyz), cieYcbcr.a);
+        float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt2020(cieYcbcr.xyz), cieYcbcr.a);
 #else
-      float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt709(cieYcbcr.xyz), cieYcbcr.a);
+        float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt709(cieYcbcr.xyz), cieYcbcr.a);
 #endif
 
-      float alpha = min(cieColour.a + _CIE_DIAGRAM_ALPHA / 100.f, 1.f);
+        float alpha = cieColour.a;
 
       //FIX THIS
 #ifdef IS_HDR_CSP
-      cieColour.rgb = Csp::Mat::Bt2020To::Bt709(cieColour.rgb);
+        cieColour.rgb = Csp::Mat::Bt2020To::Bt709(cieColour.rgb);
 #endif
 
-      Output.rgb = MergeOverlay(Output.rgb,
-                                cieColour.rgb,
-                                _CIE_DIAGRAM_BRIGHTNESS,
-                                alpha);
+        Output.rgb = MergeOverlay(Output.rgb,
+                                  cieColour.rgb,
+                                  _CIE_DIAGRAM_BRIGHTNESS,
+                                  alpha);
+      }
     }
   }
 
