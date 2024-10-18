@@ -184,7 +184,7 @@ uniform float _TEXT_BRIGHTNESS
 uniform float _TEXT_BG_ALPHA
 <
   ui_category = "Global";
-  ui_label    = "text background transparency";
+  ui_label    = "text background opacity";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      = 0.f;
@@ -405,7 +405,7 @@ uniform float _CIE_DIAGRAM_BRIGHTNESS
 uniform float _CIE_DIAGRAM_ALPHA
 <
   ui_category = "CIE diagram visualisation";
-  ui_label    = "CIE diagram transparency";
+  ui_label    = "CIE diagram opacity";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      = 0.f;
@@ -662,7 +662,7 @@ uniform float _WAVEFORM_BRIGHTNESS
 uniform float _WAVEFORM_ALPHA
 <
   ui_category = "Waveform";
-  ui_label    = "waveform transparency";
+  ui_label    = "waveform opacity";
   ui_type     = "slider";
   ui_units    = "%%";
   ui_min      = 0.f;
