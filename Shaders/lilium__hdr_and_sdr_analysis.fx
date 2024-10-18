@@ -420,11 +420,16 @@ uniform float _CIE_DIAGRAM_ALPHA
 #define CIE_UV_MAX float2(0.623366653f,   0.586759090f)
 #define CIE_UV_MIN float2(0.00137366366f, 0.0158483609f)
 
-#ifdef IS_QHD_OR_HIGHER_RES
+#ifdef IS_HIGHER_THAN_QHD_RES
   #define CIE_BG_BORDER        50
 
   //#define CIE_TEXTURE_HEIGHT (1024 - CIE_BG_BORDER - CIE_BG_BORDER)
   #define CIE_TEXTURE_HEIGHT 1024
+#elif defined(IS_QHD_OR_HIGHER_RES)
+  #define CIE_BG_BORDER        38
+
+  //#define CIE_TEXTURE_HEIGHT (768 - CIE_BG_BORDER - CIE_BG_BORDER)
+  #define CIE_TEXTURE_HEIGHT  768
 #else
   #define CIE_BG_BORDER        25
 
