@@ -414,10 +414,10 @@ void CS_GetMaxAvgMinNits
 
     int2 curThreadPos = DTID.xy * GET_MAX_AVG_MIN_NITS_THREAD;
 
-    [unroll]
+    [loop]
     for (int x = 0; x < GET_MAX_AVG_MIN_NITS_THREAD; x++)
     {
-      [unroll]
+      [loop]
       for (int y = 0; y < GET_MAX_AVG_MIN_NITS_THREAD; y++)
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
@@ -470,56 +470,24 @@ void CS_GetMaxAvgMinNits
 
     static const bool4 threadMaxNitsIsNegative = threadMaxNitsAsInt & int(0x80000000);
 
-    [flatten]
-    if (threadMaxNitsIsNegative.r)
-    {
-      threadMaxNitsAsInt.r ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMaxNitsIsNegative.g)
-    {
-      threadMaxNitsAsInt.g ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMaxNitsIsNegative.b)
-    {
-      threadMaxNitsAsInt.b ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMaxNitsIsNegative.w)
-    {
-      threadMaxNitsAsInt.w ^= 0x7FFFFFFF;
-    }
+    const int4 threadMaxNitsAsIntNegativeCorrected = threadMaxNitsAsInt ^ 0x7FFFFFFF;
 
-    const int4 threadAvgNitsAsInt = int4((threadAvgNits + (sign(threadAvgNits) * 0.0005f)) * 1000.f);
+    threadMaxNitsAsInt = threadMaxNitsIsNegative ? threadMaxNitsAsIntNegativeCorrected
+                                                 : threadMaxNitsAsInt;
+
+    const int4 threadAvgNitsAsInt = int4(threadAvgNits * 1000.f + 0.5f); //same as (threadAvgNits + 0.0005f) * 1000.f
 
     int4 threadMinNitsAsInt = asint(threadMinNits);
 
     static const bool4 threadMinNitsIsNegative = threadMinNitsAsInt & int(0x80000000);
 
-    [flatten]
-    if (threadMinNitsIsNegative.r)
-    {
-      threadMinNitsAsInt.r ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMinNitsIsNegative.g)
-    {
-      threadMinNitsAsInt.g ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMinNitsIsNegative.b)
-    {
-      threadMinNitsAsInt.b ^= 0x7FFFFFFF;
-    }
-    [flatten]
-    if (threadMinNitsIsNegative.w)
-    {
-      threadMinNitsAsInt.w ^= 0x7FFFFFFF;
-    }
+    const int4 threadMinNitsAsIntNegativeCorrected = threadMinNitsAsInt ^ 0x7FFFFFFF;
+
+    threadMinNitsAsInt = threadMinNitsIsNegative ? threadMinNitsAsIntNegativeCorrected
+                                                 : threadMinNitsAsInt;
 #else
     const uint4 threadMaxNitsAsUint = asuint(threadMaxNits);
-    const uint4 threadAvgNitsAsUint = uint4((threadAvgNits + 0.0005f) * 1000.f);
+    const uint4 threadAvgNitsAsUint = uint4(threadAvgNits * 1000.f + 0.5f); //same as (threadAvgNits + 0.0005f) * 1000.f
     const uint4 threadMinNitsAsUint = asuint(threadMinNits);
 #endif
 
@@ -560,9 +528,9 @@ void CS_GetMaxAvgMinNits
                                 / float(WAVE64_THREAD_SIZE);
 
 #ifdef IS_FLOAT_HDR_CSP
-      const  int4 groupAvgNitsInt  =  int4((groupAvgNits + (sign(groupAvgNits) * 0.0005f)) * 1000.f);
+      const  int4 groupAvgNitsInt  =  int4(groupAvgNits * 1000.f + 0.5f);
 #else
-      const uint4 groupAvgNitsUint = uint4((groupAvgNits + 0.0005f) * 1000.f);
+      const uint4 groupAvgNitsUint = uint4(groupAvgNits * 1000.f + 0.5f);
 #endif
 
       const int2 averageStorePosW = int2(GID.xy % uint2(AVG_NITS_WIDTH, AVG_NITS_HEIGHT));
@@ -611,26 +579,10 @@ void FinaliseMaxAvgMinNits()
 
   const bool4 maxRgbNitsIsNegative = maxRgbNitsInt < 0;
 
-  [flatten]
-  if (maxRgbNitsIsNegative.r)
-  {
-    maxRgbNitsInt.r ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (maxRgbNitsIsNegative.g)
-  {
-    maxRgbNitsInt.g ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (maxRgbNitsIsNegative.b)
-  {
-    maxRgbNitsInt.b ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (maxRgbNitsIsNegative.w)
-  {
-    maxRgbNitsInt.w ^= 0x7FFFFFFF;
-  }
+  const int4 maxRgbNitsIntNegativeCorrected = maxRgbNitsInt ^ 0x7FFFFFFF;
+
+  maxRgbNitsInt = maxRgbNitsIsNegative ? maxRgbNitsIntNegativeCorrected
+                                       : maxRgbNitsInt;
 
   const float4 maxRgbNits = asfloat(maxRgbNitsInt);
 
@@ -642,26 +594,10 @@ void FinaliseMaxAvgMinNits()
 
   const bool4 minRgbNitsIsNegative = minRgbNitsInt < 0;
 
-  [flatten]
-  if (minRgbNitsIsNegative.r)
-  {
-    minRgbNitsInt.r ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (minRgbNitsIsNegative.g)
-  {
-    minRgbNitsInt.g ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (minRgbNitsIsNegative.b)
-  {
-    minRgbNitsInt.b ^= 0x7FFFFFFF;
-  }
-  [flatten]
-  if (minRgbNitsIsNegative.w)
-  {
-    minRgbNitsInt.w ^= 0x7FFFFFFF;
-  }
+  const int4 minRgbNitsIntNegativeCorrected = minRgbNitsInt ^ 0x7FFFFFFF;
+
+  minRgbNitsInt = minRgbNitsIsNegative ? minRgbNitsIntNegativeCorrected
+                                       : minRgbNitsInt;
 
   const float4 minRgbNits = asfloat(minRgbNitsInt);
 
@@ -681,8 +617,12 @@ void FinaliseMaxAvgMinNits()
 
   float4 avgRgbNits = 0.f;
 
+  [loop]
   for (int x = 0; x < AVG_NITS_WIDTH; x++)
   {
+    float4 yLocalAvgRgbNits = 0.f;
+
+    [loop]
     for (int y = 0; y < AVG_NITS_HEIGHT; y++)
     {
       int2 fetchPosW = int2(x, y);
@@ -690,16 +630,23 @@ void FinaliseMaxAvgMinNits()
       int2 fetchPosG = fetchPosW + int2(AVG_NITS_WIDTH * 2, 0);
       int2 fetchPosB = fetchPosW + int2(AVG_NITS_WIDTH * 3, 0);
 
-      avgRgbNits.w += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosW)) / 1000.f;
-      avgRgbNits.r += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosR)) / 1000.f;
-      avgRgbNits.g += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosG)) / 1000.f;
-      avgRgbNits.b += float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosB)) / 1000.f;
+      float4 localAvgRgbNits =
+        float4(float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosR)),
+               float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosG)),
+               float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosB)),
+               float(tex2Dfetch(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, fetchPosW))) / 1000.f;
+
+      yLocalAvgRgbNits += localAvgRgbNits;
     }
+
+    avgRgbNits += yLocalAvgRgbNits / float(AVG_NITS_HEIGHT);
   }
 
+  avgRgbNits /= float(AVG_NITS_WIDTH);
+
   static const float2 dispatchWxH = BUFFER_SIZE_FLOAT
-                                  / float2(GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X,
-                                           GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y);
+                                  / float2((GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_X * AVG_NITS_WIDTH),
+                                           (GET_MAX_AVG_MIN_NITS_GROUP_PIXELS_Y * AVG_NITS_HEIGHT));
 
   static const float dispatchArea = dispatchWxH.x
                                   * dispatchWxH.y;
