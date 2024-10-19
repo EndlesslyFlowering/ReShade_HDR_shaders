@@ -392,6 +392,12 @@ namespace Waveform
 
     const int2 currentDrawPos = Pos + int2(CharCount * CharDim.x, 0);
 
+
+    const float charDimFactor = CharDim.x / WAVEFORM_CHAR_DIM_FLOAT.x;
+
+    const float screenPixelRange = Msdf::GetScreenPixelRange(charDimFactor, WAVEFORM_RANGE);
+
+
     const int2 ceilCharDim = floor(CharDim);
 
     int2 currentOffset = int2(0, 0);
@@ -424,8 +430,6 @@ namespace Waveform
                             lerp(c, d, fract.x),
                             fract.y);
 
-        const float screenPixelRange = Msdf::GetScreenPixelRange(CharDim.x / WAVEFORM_CHAR_DIM_FLOAT.x, WAVEFORM_RANGE);
-
         const float2 opacityAndOutline = Msdf::GetOpacityAndOutline(mtsdf, screenPixelRange);
 
         const float opacity = opacityAndOutline[0];
@@ -434,11 +438,12 @@ namespace Waveform
 
         float grey = lerp(0.f, 0.5f, opacity);
 
-        float alpha = (grey || outline) > 0.f ? 1.f : 0.f;
+        float alpha = (grey || outline) > 0.f ? 1.f
+                                              : 0.f;
 
         int2 currentDrawOffset = currentDrawPos + currentOffset;
 
-        tex2Dstore(StorageWaveformScale, currentDrawOffset, float4(sqrt(grey), alpha, alpha, alpha));
+        tex2Dstore(StorageWaveformScale, currentDrawOffset, float4(sqrt(grey), alpha, 0.f, 0.f));
 
         currentOffset.y++;
       }
