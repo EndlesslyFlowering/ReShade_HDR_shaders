@@ -155,10 +155,10 @@ namespace Waveform
     waveDat.frameSize  = clamp(int(TEXTURE_WAVEFORM_BUFFER_FACTOR *  7.f * borderAndFrameSizeFactor + 0.5f),  4, maxFrameSize);
 
     static const float maxFontSize =
-      max(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.5f);
+      max(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.725f);
 
     const float fontSize =
-      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.5f, maxFontSize);
+      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.725f, maxFontSize);
 
 #ifndef IS_HDR_CSP
     waveDat.charDimensionXForPercent = WAVEFORM_CHAR_DIM_FLOAT.x * fontSize.x;
@@ -392,7 +392,7 @@ namespace Waveform
 
     const int2 currentDrawPos = Pos + int2(CharCount * CharDim.x, 0);
 
-    const int2 ceilCharDim = ceil(CharDim);
+    const int2 ceilCharDim = floor(CharDim);
 
     int2 currentOffset = int2(0, 0);
 
@@ -665,6 +665,8 @@ void RenderWaveformScale()
         tex2Dstore(StorageWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
       }
     }
+
+    memoryBarrier();
 
     Waveform::SWaveformData waveDat = Waveform::GetData();
 
