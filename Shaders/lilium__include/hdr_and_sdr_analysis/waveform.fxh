@@ -1709,7 +1709,7 @@ void PS_RenderWaveformToScale
       int minLineY;
       int maxLineY;
 
-      [flatten]
+      FLATTEN(x)
       if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
       {
         minLineY = MinNitsLineY;
@@ -1765,7 +1765,7 @@ void PS_RenderWaveformToScale
         bool waveformCoordsGTEMaxLine;
         bool waveformCoordsSTEMinLine;
 
-        [flatten]
+        FLATTEN(x)
         if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
         {
           waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;
