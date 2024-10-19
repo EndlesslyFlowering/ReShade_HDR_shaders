@@ -321,10 +321,10 @@ void CS_CountGamuts
 
     int2 curThreadPos = DTID.xy * GAMUT_COUNTER_THREAD;
 
-    [unroll]
+    [loop]
     for (int x = 0; x < GAMUT_COUNTER_THREAD; x++)
     {
-      [unroll]
+      [loop]
       for (int y = 0; y < GAMUT_COUNTER_THREAD; y++)
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
