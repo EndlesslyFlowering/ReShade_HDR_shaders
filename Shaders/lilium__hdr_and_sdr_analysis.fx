@@ -710,28 +710,41 @@ static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3u;
 
 static const uint TEXTURE_WAVEFORM_USED_HEIGHT = TEXTURE_WAVEFORM_HEIGHT - 1;
 
+
 static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
                           / float(TEXTURE_WAVEFORM_HEIGHT)
                           * 10000.f);
+
 // "minimum of 2 variables" without using functions...
 // https://guru.multimedia.cx/category/optimization/
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  static const int UGH2 = uint(int(40000) + ((UGH - int(40000)) & ((UGH - int(40000)) >> 31)));
+
+  #define UGH_MAX 40000
+  #define UGH_MIN 10000
+
 #else
-  static const int UGH2 = uint(int(10000) + ((UGH - int(10000)) & ((UGH - int(10000)) >> 31)));
+
+  #define UGH_MAX 10000
+  #define UGH_MIN  5000
+
 #endif
 
-static const uint UGH3 = UGH2 - ((UGH2 - int(5000)) & ((UGH2 - int(5000)) >> 31));
+static const int UGH2 = uint(int(UGH_MAX) + ((UGH - int(UGH_MAX)) & ((UGH - int(UGH_MAX)) >> 31)));
 
-static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 = UGH3
-                                                       / 100.f;
+static const uint UGH3 = UGH2 - ((UGH2 - int(UGH_MIN)) & ((UGH2 - int(UGH_MIN)) >> 31));
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = (LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0 + 300.f) / 7.f;
+
+  //inverse of "WaveformSizeYFactor" in waveform.fxh
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT =
+    (((float(UGH3) / 10000.f) / (3.f / 350.f)) * 3.f + 700.f) / 21.f;
+
 #else
-  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = LUMINANCE_WAVEFORM_DEFAULT_HEIGHT_0;
+
+  static const float LUMINANCE_WAVEFORM_DEFAULT_HEIGHT = float(UGH3) / 100.f;
+
 #endif
 
 uniform float2 _WAVEFORM_SIZE
