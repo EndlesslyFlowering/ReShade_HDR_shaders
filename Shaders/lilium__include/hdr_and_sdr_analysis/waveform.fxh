@@ -67,7 +67,7 @@ texture2D TextureWaveform
 {
   Width  = TEXTURE_WAVEFORM_WIDTH;
   Height = TEXTURE_WAVEFORM_HEIGHT;
-  Format = RGBA8;
+  Format = RGB10A2;
 };
 
 sampler2D<float4> SamplerWaveform
@@ -88,7 +88,7 @@ texture2D TextureWaveformFinal
 {
   Width  = TEXTURE_WAVEFORM_SCALE_WIDTH;
   Height = TEXTURE_WAVEFORM_SCALE_HEIGHT;
-  Format = RGBA8;
+  Format = RGB10A2;
 };
 
 sampler2D<float4> SamplerWaveformFinal
