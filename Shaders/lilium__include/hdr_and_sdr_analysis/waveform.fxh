@@ -474,25 +474,29 @@ void RenderWaveform
   BRANCH(x)
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
-    float curPixelNits = CalcNits(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
+    float pixelNits = CalcNits(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
 
 #ifdef IS_HDR_CSP
-    float encodedPixel = Csp::Trc::NitsTo::Pq(curPixelNits);
+    float pixelEncoded = Csp::Trc::NitsTo::Pq(pixelNits);
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    float encodedPixel = ENCODE_SDR(curPixelNits / 100.f);
+    float pixelEncoded = ENCODE_SDR(pixelNits / 100.f);
 #endif
 
-    const float coordsY = floor(encodedPixel * coordFactors.y);
+    const int2 coords = float2(float(FetchPos.x)
+                             * coordFactors.x,
+                               (float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                              - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
+                             * waveformSizeFactor.y + 0.5f);
 
-    int2 coords = float2(float(FetchPos.x)
-                       * coordFactors.x,
-                         coordFactors.y
-                       - coordsY);
+    const float waveformEncoded = 1.f
+                                - (ceil(float(coords.y)
+                                      / waveformSizeFactor.y)
+                                 / float(TEXTURE_WAVEFORM_USED_HEIGHT));
 
 #ifdef IS_HDR_CSP
-    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(coordsY / coordFactors.y));
+    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(waveformEncoded));
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(coordsY / coordFactors.y));
+    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(waveformEncoded));
 #endif
     waveformColour = sqrt(waveformColour);
 
@@ -533,17 +537,21 @@ void RenderWaveform
 
 #endif
 
-    const float coordsY = floor(pixelEncoded * coordFactors.y);
+    const int2 coords = float2(float(FetchPos.x)
+                             * coordFactors.x,
+                               (float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                              - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
+                             * waveformSizeFactor.y + 0.5f);
 
-    int2 coords = float2(float(FetchPos.x)
-                       * coordFactors.x,
-                         coordFactors.y
-                       - coordsY);
+    const float waveformEncoded = 1.f
+                                - (ceil(float(coords.y)
+                                      / waveformSizeFactor.y)
+                                 / float(TEXTURE_WAVEFORM_USED_HEIGHT));
 
 #ifdef IS_HDR_CSP
-    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(coordsY / coordFactors.y));
+    float3 waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(waveformEncoded));
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(coordsY / coordFactors.y));
+    float3 waveformColour = WaveformRgbValues(ENCODE_SDR(waveformEncoded));
 #endif
     waveformColour = sqrt(waveformColour);
 
@@ -555,8 +563,8 @@ void RenderWaveform
   }
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
   {
-    float3 encodedPixel;
-    float3 curPixelRgb;
+    float3 pixelEncoded;
+    float3 pixelRgb;
     float3 waveformColour;
 
     float waveformColourRG;
@@ -566,20 +574,20 @@ void RenderWaveform
 
     #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      curPixelRgb = CalcCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
+      pixelRgb = CalcCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
 
-      encodedPixel = Csp::Trc::NitsTo::Pq(curPixelRgb);
+      pixelEncoded = Csp::Trc::NitsTo::Pq(pixelRgb);
 
     //this is more performant to do
     #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      encodedPixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
+      pixelEncoded = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
 
-      curPixelRgb = CalcCll(encodedPixel);
+      pixelRgb = CalcCll(pixelEncoded);
 
     #endif
 
-    waveformColour  = curPixelRgb - 100.f;
+    waveformColour  = pixelRgb - 100.f;
     waveformColour  = max(waveformColour, 0.f);
     waveformColour += 600.f;
     waveformColour /= 10500.f;
@@ -587,11 +595,11 @@ void RenderWaveform
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
     //this is more performant to do
-    encodedPixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
+    pixelEncoded = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
 
-    curPixelRgb = DECODE_SDR(encodedPixel);
+    pixelRgb = DECODE_SDR(pixelEncoded);
 
-    waveformColour  = curPixelRgb - 0.1f;
+    waveformColour  = pixelRgb - 0.1f;
     waveformColour  = max(waveformColour, 0.f);
     waveformColour += 0.1f;
 
@@ -603,13 +611,23 @@ void RenderWaveform
     waveformColourRG = (waveformColour.r - 1.f) * Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1];
     waveformColourBG = (waveformColour.b - 1.f) * Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1];
 
-    waveformColour = ceil(waveformColour * coordFactors.y)
-                   / coordFactors.y;
+    waveformColour = floor(waveformColour
+                         * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                         * waveformSizeFactor.y)
+                   / waveformSizeFactor.y
+                   / float(TEXTURE_WAVEFORM_USED_HEIGHT);
 
-    waveformColourRG = ceil(waveformColourRG * coordFactors.y)
-                     / coordFactors.y;
-    waveformColourBG = ceil(waveformColourBG * coordFactors.y)
-                     / coordFactors.y;
+    waveformColourRG = floor(waveformColourRG
+                           * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                           * waveformSizeFactor.y)
+                     / waveformSizeFactor.y
+                     / float(TEXTURE_WAVEFORM_USED_HEIGHT);
+
+    waveformColourBG = floor(waveformColourBG
+                           * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                           * waveformSizeFactor.y)
+                     / waveformSizeFactor.y
+                     / float(TEXTURE_WAVEFORM_USED_HEIGHT);
 
     waveformColour = sqrt(waveformColour);
 
@@ -630,8 +648,9 @@ void RenderWaveform
     int xCoord1 = xCoord0 + textureWaveformWidthDiv3;
     int xCoord2 = xCoord1 + textureWaveformWidthDiv3;
 
-    int3 yCoords = coordFactors.y
-                 - floor(encodedPixel * coordFactors.y);
+    int3 yCoords = (float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                  - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
+                 * waveformSizeFactor.y + 0.5f;
 
     tex2Dstore(StorageWaveform,
                int2(xCoord0, yCoords[0]),
