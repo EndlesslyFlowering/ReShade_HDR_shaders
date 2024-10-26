@@ -75,15 +75,18 @@
 
 #endif
 
-#define TEXT_BLOCK_FETCH_OFFSET_NITS_MAX_AVG_MIN float2( 0, 3)
-#define TEXT_BLOCK_FETCH_OFFSET_NITS_CURSOR      float2( 0, 7)
+#define TEXT_BLOCK_FETCH_OFFSET_NITS_RGB_DESCRIPTION float2( 0, 3)
+#define TEXT_BLOCK_FETCH_OFFSET_NITS_MAX_AVG_MIN     float2( 0, 4)
+#define TEXT_BLOCK_FETCH_OFFSET_NITS_CURSOR          float2( 0, 7)
 
 #ifdef IS_HDR_CSP
-  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN   float2(49, 4) //    "max|     .      |     .      |     .      |     ."
-  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR        float2(52, 1) // "cursor|     .      |     .      |     .      |     ."
+  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(50, 1) //       "|nits        |red (CLL)   |green (CLL) |blue (CLL)"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(49, 3) //    "max|     .      |     .      |     .      |     ."
+  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(52, 1) // "cursor|     .      |     .      |     .      |     ."
 #else
-  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN   float2(51, 4) //    "max|   .      %|   .      %|   .      %|   .      %"
-  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR        float2(54, 1) // "cursor|   .      %|   .      %|   .      %|   .      %"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(47, 1) //       "|nits       |red (CLL)  |green (CLL)|blue (CLL)"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(51, 3) //    "max|   .      %|   .      %|   .      %|   .      %"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(54, 1) // "cursor|   .      %|   .      %|   .      %|   .      %"
 #endif
 
 #define TEXT_BLOCK_FETCH_OFFSET_GAMUT_PERCENTAGES    float2( 0,  8)
@@ -117,6 +120,7 @@
 static const float2 TEXT_BLOCK_SIZES[] =
 {
   TEXT_BLOCK_SIZE_ANALYIS_HEADER,
+  TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION,
   TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN,
   TEXT_BLOCK_SIZE_NITS_RGB_CURSOR,
 #ifdef IS_HDR_CSP
@@ -128,6 +132,7 @@ static const float2 TEXT_BLOCK_SIZES[] =
 static const float TEXT_BLOCK_DRAW_X_OFFSET[] =
 {
   0,
+  6,
   3,
   0,
 #ifdef IS_HDR_CSP
@@ -139,6 +144,7 @@ static const float TEXT_BLOCK_DRAW_X_OFFSET[] =
 static const float2 TEXT_BLOCK_FETCH_OFFSETS[] =
 {
   TEXT_BLOCK_FETCH_OFFSET_ANALYIS_HEADER,
+  TEXT_BLOCK_FETCH_OFFSET_NITS_RGB_DESCRIPTION,
   TEXT_BLOCK_FETCH_OFFSET_NITS_MAX_AVG_MIN,
   TEXT_BLOCK_FETCH_OFFSET_NITS_CURSOR,
 #ifdef IS_HDR_CSP

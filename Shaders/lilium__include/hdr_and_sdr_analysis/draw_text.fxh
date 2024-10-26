@@ -246,44 +246,48 @@ void DrawText()
 #ifdef IS_HDR_CSP
 
   //8
-  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space, _space
-  //9
-  #define SPACES_RED   _space, _space, _space, _space, _space, _space, _space, _space, _space
-  //7
-  #define SPACES_GREEN _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS     _space, _space, _space, _space, _space, _space, _space, _space
+  //4
+  #define SPACES_RED      _space, _space, _space
+  //2
+  #define SPACES_GREEN(x) _space,
 
   #define SPACES_NITS_COUNT  8
-  #define SPACES_RED_COUNT   9
-  #define SPACES_GREEN_COUNT 7
+  #define SPACES_RED_COUNT   3
+  #define SPACES_GREEN_COUNT 1
 
 #else
 
   //7
-  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space
-  //8
-  #define SPACES_RED   _space, _space, _space, _space, _space, _space, _space, _space
-  //6
-  #define SPACES_GREEN _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS     _space, _space, _space, _space, _space, _space, _space
+  //2
+  #define SPACES_RED      _space, _space
+  //0
+  #define SPACES_GREEN(x)
 
   #define SPACES_NITS_COUNT  7
-  #define SPACES_RED_COUNT   8
-  #define SPACES_GREEN_COUNT 6
+  #define SPACES_RED_COUNT   2
+  #define SPACES_GREEN_COUNT 0
 
 #endif
 
-#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB (1 + 4 + SPACES_NITS_COUNT  \
-                                          + 1 + 3 + SPACES_RED_COUNT   \
-                                          + 1 + 5 + SPACES_GREEN_COUNT \
-                                          + 1 + 4)
+#define CHARS_CLL_IN_BRACKETS _space, _roundBracketOpen, _C, _L, _L, _roundBracketClose
 
-  static const uint2 charListTextNitsRGBOffset = uint2(3, 3);
+#define CHARS_COUNT_CLL_IN_BRACKETS 6
+
+#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB (1 + 4                               + SPACES_NITS_COUNT  \
+                                          + 1 + 3 + CHARS_COUNT_CLL_IN_BRACKETS + SPACES_RED_COUNT   \
+                                          + 1 + 5 + CHARS_COUNT_CLL_IN_BRACKETS + SPACES_GREEN_COUNT \
+                                          + 1 + 4 + CHARS_COUNT_CLL_IN_BRACKETS)
+
+  static const uint2 charListTextNitsRGBOffset = uint2(0, 3);
 
   static const uint2 charListTextNitsRGB[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB] =
   {
-    _verticalLine, _n, _i, _t, _s,     SPACES_NITS,
-    _verticalLine, _r, _e, _d,         SPACES_RED,
-    _verticalLine, _g, _r, _e, _e, _n, SPACES_GREEN,
-    _verticalLine, _b, _l, _u, _e
+    _verticalLine, _n, _i, _t, _s,                             SPACES_NITS,
+    _verticalLine, _r, _e, _d,         CHARS_CLL_IN_BRACKETS,  SPACES_RED,
+    _verticalLine, _g, _r, _e, _e, _n, CHARS_CLL_IN_BRACKETS,  SPACES_GREEN(x)
+    _verticalLine, _b, _l, _u, _e,     CHARS_CLL_IN_BRACKETS,
   };
 
 
@@ -419,7 +423,7 @@ void DrawText()
   static const uint2 charListTextNitsCllBaseOffset = uint2(0, 8);
 #endif
 
-  static const uint2 charListTextNitsCllOffset = charListTextNitsCllBaseOffset + uint2(3, 0);
+  static const uint2 charListTextNitsCllOffset = charListTextNitsCllBaseOffset;
 
   static const uint2 charListTextNitsCll[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_CLL] =
   {
@@ -1611,13 +1615,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
       uint currentTextBlockID = textBlockVertexID / 6u;
 
-      float2 vertexOffset;
+      float2 vertexOffset = (float2)0;
 
       float2 texCoordOffset;
-
-      static const bool specificallyNeedNitsRgbHeader = currentTextBlockID == 1
-                                                     && !_SHOW_NITS_VALUES
-                                                     && _SHOW_NITS_FROM_CURSOR;
 
       bool calcOffsets;
 
@@ -1628,19 +1628,26 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
         vertexOffset.y = 0.f;
       }
-      //max:
-      //avg:
-      //min:
+      //nits|red(CLL)|green(CLL)|blue(CLL)
       else if (currentTextBlockID == 1
-            && (_SHOW_NITS_VALUES
-             || specificallyNeedNitsRgbHeader))
+            && (_SHOW_NITS_VALUES || _SHOW_NITS_FROM_CURSOR))
       {
         calcOffsets = true;
 
         vertexOffset.y = 1.f;
       }
-      //cursor:
+      //max:
+      //avg:
+      //min:
       else if (currentTextBlockID == 2
+            && _SHOW_NITS_VALUES)
+      {
+        calcOffsets = true;
+
+        vertexOffset.y = 2.f;
+      }
+      //cursor:
+      else if (currentTextBlockID == 3
             && _SHOW_NITS_FROM_CURSOR)
       {
         calcOffsets = true;
@@ -1650,7 +1657,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
       }
 #ifdef IS_HDR_CSP
       //gamut percentages
-      else if (currentTextBlockID == 3
+      else if (currentTextBlockID == 4
             && SHOW_GAMUTS)
       {
         calcOffsets = true;
@@ -1661,7 +1668,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
                                                                          : 2.f;
       }
       //cursor gamut
-      else if (currentTextBlockID == 4
+      else if (currentTextBlockID == 5
             && SHOW_GAMUT_FROM_CURSOR)
       {
         calcOffsets = true;
@@ -1681,15 +1688,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
       [branch]
       if (calcOffsets)
       {
-        vertexOffset.x = TEXT_BLOCK_DRAW_X_OFFSET[currentTextBlockID];
+        vertexOffset.x += TEXT_BLOCK_DRAW_X_OFFSET[currentTextBlockID];
 
         float2 size = TEXT_BLOCK_SIZES[currentTextBlockID];
-
-        [flatten]
-        if (specificallyNeedNitsRgbHeader)
-        {
-          size.y -= 3.f;
-        }
 
         vertexOffset *= CharSize;
 
@@ -1697,7 +1698,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
         [flatten]
         if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES
-         && (currentTextBlockID == 1 || currentTextBlockID == 2))
+         && (currentTextBlockID > 0 && currentTextBlockID < 4))
         {
 #ifdef IS_HDR_CSP
           size.x -= 26.f;

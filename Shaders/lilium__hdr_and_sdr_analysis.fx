@@ -1439,9 +1439,9 @@ technique lilium__hdr_and_sdr_analysis
   }
 
 #ifdef IS_HDR_CSP
-  #define FONT_TEXT_VERTEX_COUNT (5 * 6)
+  #define FONT_TEXT_VERTEX_COUNT (6 * 6)
 #else
-  #define FONT_TEXT_VERTEX_COUNT (3 * 6)
+  #define FONT_TEXT_VERTEX_COUNT (4 * 6)
 #endif
 
   pass PS_RenderText
