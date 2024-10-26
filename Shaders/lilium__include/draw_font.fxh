@@ -61,7 +61,7 @@
 
   #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
 
-    #define TEXT_BLOCK_SIZE_ANALYIS_HEADER float2(24, 1)
+    #define TEXT_BLOCK_SIZE_ANALYIS_HEADER float2(23, 1)
 
   #elif (OVERWRITE_SDR_GAMMA == CSP_SRGB)
 
@@ -69,7 +69,7 @@
 
   #else
 
-    #define TEXT_BLOCK_SIZE_ANALYIS_HEADER float2(24, 1)
+    #define TEXT_BLOCK_SIZE_ANALYIS_HEADER float2(23, 1)
 
   #endif
 

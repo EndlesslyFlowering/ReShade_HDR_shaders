@@ -1539,6 +1539,13 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
     ret.maxLines -= 1;
   }
 
+  FLATTEN(x)
+  if (!_SHOW_NITS_VALUES
+   && !_SHOW_NITS_FROM_CURSOR)
+  {
+    ret.maxLines -= 1;
+  }
+
 #ifdef IS_HDR_CSP
 
   FLATTEN(x)
@@ -1665,7 +1672,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                        : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
                        : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                         : 2.f;
+                                                                         : 1.f;
       }
       //cursor gamut
       else if (currentTextBlockID == 5
@@ -1676,8 +1683,17 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                        : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
                        : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                         : 2.f;
-        vertexOffset.y += GAMUT_PERCENTAGES_LINES;
+                                                                         : 1.f;
+
+        [flatten]
+        if (SHOW_GAMUTS)
+        {
+          vertexOffset.y += GAMUT_PERCENTAGES_LINES;
+        }
+        else
+        {
+          vertexOffset.x -= 1.f;
+        }
       }
 #endif
       else
@@ -1944,7 +1960,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     BRANCH(x)
     if (SHOW_GAMUTS
      && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
-     && currentNumberID < SHOW_GAMUTS_NUMBER_ID_MAX)
+     && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
     //gamut percentages
     {
       calcOffsets = true;
@@ -1963,7 +1979,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
                       : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                        : 2.f;
+                                                                        : 1.f;
     }
 #endif //IS_HDR_CSP
     else
@@ -2062,12 +2078,16 @@ void VS_RenderNumbers
     vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                    : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
                    : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                     : 2.f;
+                                                                     : 1.f;
 
     FLATTEN(x)
     if (SHOW_GAMUTS)
     {
       vertexOffset.y += GAMUT_PERCENTAGES_LINES;
+    }
+    else
+    {
+      vertexOffset.x -= 1.f;
     }
 
     vertexOffset *= charSize;
