@@ -6,6 +6,8 @@
 // - implement vertex shader for optimisation ?
 // - add namespace for UI
 
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
 uniform uint INPUT_TRC
 <
   ui_label = "input Gamma";
@@ -134,3 +136,5 @@ technique lilium__sdr_trc_fix
      PixelShader = PS_SdrTrcFix;
   }
 }
+
+#endif //is SDR colour space
