@@ -1,5 +1,19 @@
 #pragma once
 
+
+#define RESHADE_MAJOR    6
+#define RESHADE_MINOR    3
+#define RESHADE_REVISION 2
+
+#define RESHADE_VERSION (RESHADE_MAJOR * 10000 \
+                       + RESHADE_MINOR *   100 \
+                       + RESHADE_REVISION)
+
+#if (__RESHADE__ < RESHADE_VERSION)
+  #error "ReShade version too old! Please update!"
+#endif
+
+
 #pragma warning(disable : 3571) // disable warning about potentially using pow on a negative value
 
 
