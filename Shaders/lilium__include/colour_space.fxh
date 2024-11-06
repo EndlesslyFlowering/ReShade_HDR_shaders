@@ -526,49 +526,29 @@ namespace Csp
     namespace SrgbTo
     {
       // IEC 61966-2-1
-      float Linear(float C)
-      {
-        [branch]
-        if (C <= 0.04045f)
-        {
-          return C / 12.92f;
+      #define SRGB_TO_LINEAR(T)                                      \
+        T Linear(T C)                                                \
+        {                                                            \
+          return C <= 0.04045f ? C / 12.92f                          \
+                               : pow(((C + 0.055f) / 1.055f), 2.4f); \
         }
-        else
-        {
-          return pow(((C + 0.055f) / 1.055f), 2.4f);
-        }
-      }
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::SrgbTo::Linear(Colour.r),
-                      Csp::Trc::SrgbTo::Linear(Colour.g),
-                      Csp::Trc::SrgbTo::Linear(Colour.b));
-      }
+      SRGB_TO_LINEAR(float)
+      SRGB_TO_LINEAR(float3)
     } //SrgbTo
 
 
     namespace LinearTo
     {
-      float Srgb(float C)
-      {
-        [branch]
-        if (C <= 0.0031308f)
-        {
-          return C * 12.92f;
+      #define LINEAR_TO_SRGB(T)                                          \
+        T Srgb(T C)                                                      \
+        {                                                                \
+          return C <= 0.0031308f ? C * 12.92f                            \
+                                 : 1.055f * pow(C, 1.f / 2.4f) - 0.055f; \
         }
-        else
-        {
-          return 1.055f * pow(C, 1.f / 2.4f) - 0.055f;
-        }
-      }
 
-      float3 Srgb(float3 Colour)
-      {
-        return float3(Csp::Trc::LinearTo::Srgb(Colour.r),
-                      Csp::Trc::LinearTo::Srgb(Colour.g),
-                      Csp::Trc::LinearTo::Srgb(Colour.b));
-      }
+      LINEAR_TO_SRGB(float)
+      LINEAR_TO_SRGB(float3)
     } //LinearTo
 
 
@@ -588,7 +568,9 @@ namespace Csp
         {
           return signC * ((1.055f * pow(absC - 0.940277040004730224609375f, (1.f / 2.4f)) - 0.055f) + 0.728929579257965087890625f);
         }
-        else if (absC > 0.04045f)
+        else
+        [branch]
+        if (absC > 0.04045f)
         {
           return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
         }
@@ -640,7 +622,9 @@ namespace Csp
         {
           return C;
         }
-        else if (absC > 0.04045f)
+        else
+        [branch]
+        if (absC > 0.04045f)
         {
           return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
         }
