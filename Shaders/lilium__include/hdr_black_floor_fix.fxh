@@ -49,8 +49,8 @@ namespace Ui
         ui_tooltip  = "How much of the lower range range should be processed.";
         ui_type     = "drag";
         ui_units    = " nits";
-        ui_min      = 40.f;
-        ui_max      = 300.f;
+        ui_min      = 10.f;
+        ui_max      = 400.f;
         ui_step     = 0.5f;
       > = 80.f;
 
@@ -108,7 +108,7 @@ namespace Ui
         ui_type      = "drag";
         ui_units     = " nits";
         ui_min       = 1.f;
-        ui_max       = 20.f;
+        ui_max       = 50.f;
         ui_step      = 0.01f;
       > = 10.f;
 
