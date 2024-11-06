@@ -121,98 +121,57 @@ void PS_HdrBlackFloorFix
 
   const float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
-  float3 colour = inputColour.rgb;
+  bool processingDone = false;
+
+  CO::ColourObject co;
+
+  co.RGB = inputColour.rgb;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  colour /= 125.f;
+  co.trc  = TRC_LINEAR_80;
+  co.prim = PRIM_BT709;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  colour = Csp::Trc::PqTo::Linear(colour);
+  co.trc  = TRC_PQ;
+  co.prim = PRIM_BT2020;
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  colour = Csp::Trc::HlgTo::Linear(colour);
-
-#else //ACTUAL_COLOUR_SPACE ==
-
-  colour = float3(0.f, 0.f, 0.f);
-
-#endif //ACTUAL_COLOUR_SPACE ==
-
+#endif
 
   BRANCH(x)
   if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
   {
-    colour = Gamma22Emulation(colour,
-                              whitePointNormalised);
+    co = ConvertColourForGamma22Emulation(co);
 
-    BRANCH(x)
-    if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
-    {
-      colour = LowerBlackFloor(colour,
-                               rollOffStoppingPoint,
-                               oldBlackPoint,
-                               rollOffMinusOldBlackPoint,
-                               minLum);
-    }
-    else
-    {
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-      BRANCH(x)
-      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-      {
-        colour = Csp::Mat::DciP3To::Bt709(colour);
-      }
-      else
-      BRANCH(x)
-      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
-      {
-        colour = Csp::Mat::Bt2020To::Bt709(colour);
-      }
-
-      colour *= 125.f;
-
-#elif defined(IS_HDR10_LIKE_CSP)
-
-      BRANCH(x)
-      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
-      {
-        colour = Csp::Mat::Bt709To::Bt2020(colour);
-      }
-      else
-      BRANCH(x)
-      if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
-      {
-        colour = Csp::Mat::DciP3To::Bt2020(colour);
-      }
-
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-      colour = Csp::Trc::LinearTo::Pq(colour);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-      colour = Csp::Trc::LinearTo::Hlg(colour);
-
-#endif //ACTUAL_COLOUR_SPACE ==
-
-#endif //IS_XXX_LIKE_CSP
-
-    }
+    co = Gamma22Emulation(co,
+                          whitePointNormalised,
+                          processingDone);
   }
-  else
+
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
   {
-    colour = LowerBlackFloor(colour,
-                             rollOffStoppingPoint,
-                             oldBlackPoint,
-                             rollOffMinusOldBlackPoint,
-                             minLum);
+    LowerBlackFloor(co,
+                    rollOffStoppingPoint,
+                    oldBlackPoint,
+                    rollOffMinusOldBlackPoint,
+                    minLum,
+                    processingDone);
   }
 
-  Output = float4(colour, inputColour.a);
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+  && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
+  {
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+    co = CO::ConvertCspTo::ScRgb(co);
+#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    co = CO::ConvertCspTo::Hdr10(co);
+#endif
+  }
+
+  Output = float4(co.RGB, inputColour.a);
 }
 
 
