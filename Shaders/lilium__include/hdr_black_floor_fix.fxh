@@ -4,7 +4,8 @@
 
 
 #if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+   || ACTUAL_COLOUR_SPACE == CSP_HDR10))
 
 
 // TODO:
