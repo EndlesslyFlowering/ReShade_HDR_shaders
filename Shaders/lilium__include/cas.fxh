@@ -1,13 +1,13 @@
 // Original functions are part of the FidelityFX SDK.
 //
-// Copyright (C)2023 Advanced Micro Devices, Inc.
+// Copyright (C) 2023 Advanced Micro Devices, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the “Software”), to deal
+// of this software and associated documentation files (the “Software”), to deal
 // in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
+// furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
@@ -24,6 +24,7 @@
 #include "cas_helpers.fxh"
 
 
+#if (__RESHADE_PERFORMANCE_MODE__ == 0)
 uniform int CAS_ABOUT
 <
   ui_category = "About CAS";
@@ -33,6 +34,7 @@ uniform int CAS_ABOUT
            "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling."
                 "The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
 >;
+#endif
 
 uniform bool SHARPEN_ONLY
 <
@@ -45,27 +47,18 @@ uniform bool SHARPEN_ONLY
 uniform float SHARPEN_AMOUNT
 <
   ui_label   = "sharpness amount";
-  ui_tooltip = "Even a value of 0 applies a bit of sharpness!";
   ui_type    = "drag";
   ui_min     = 0.f;
-  ui_max     = 1.f;
-  ui_step    = 0.001f;
-> = 0.f;
-
-uniform float APPLY_AMOUNT
-<
-  ui_label   = "amount of sharpness to apply";
-  ui_tooltip = "How much of the sharpness to apply to the final image.";
-  ui_type    = "drag";
-  ui_min     = 0.f;
-  ui_max     = 1.f;
-  ui_step    = 0.001f;
-> = 1.f;
+  ui_max     = 0.2f;
+  ui_step    = 0.0001f;
+> = 0.1f;
 
 
-float3 CasSharpenOnly(
+float3 CasSharpenOnly
+(
   const SPixelsToProcess Ptp,
-  const float            Peak)
+  const float            Peak
+)
 {
   // Load a collection of samples in a 3x3 neighorhood, where e is the current pixel.
   // a b c
@@ -106,19 +99,19 @@ float3 CasSharpenOnly(
 
   float3 weight = amplifyRgb * Peak;
 
-  float3 rcpWeight = rcp(1.f + 4.f * weight);
+  float3 rcpWeight = rcp(4.f * weight + 1.f);
 
   float3 output = saturate(((b + d + f + h) * weight + e) * rcpWeight);
-
-  output = lerp(e, output, APPLY_AMOUNT);
 
   return PrepareForOutput(output);
 }
 
 
-float3 CasSharpenAndUpscale(
+float3 CasSharpenAndUpscale
+(
   const SPixelsToProcess Ptp,
-  const float            Peak)
+  const float            Peak
+)
 {
   //  a b c d
   //  e f g h
@@ -198,8 +191,6 @@ float3 CasSharpenAndUpscale(
   float3 rcpWeight = rcp(4.f * wfRgb_x_s + s);
 
   float3 output = saturate(((b + e + g + j) * wfRgb_x_s.g + (f * s)) * rcpWeight);
-
-  output = lerp(f, output, APPLY_AMOUNT);
 
   return PrepareForOutput(output);
 }
