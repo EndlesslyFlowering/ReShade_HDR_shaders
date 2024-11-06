@@ -144,9 +144,9 @@ void PS_HdrBlackFloorFix
   {
     co = ConvertColourForGamma22Emulation(co);
 
-    co = Gamma22Emulation(co,
-                          whitePointNormalised,
-                          processingDone);
+    Gamma22Emulation(co,
+                     whitePointNormalised,
+                     processingDone);
   }
 
   BRANCH(x)

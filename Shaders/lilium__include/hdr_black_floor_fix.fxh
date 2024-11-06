@@ -162,67 +162,36 @@ CO::ColourObject ConvertColourForGamma22Emulation
 }
 
 
-CO::ColourObject Gamma22Emulation
+void Gamma22Emulation
 (
-        CO::ColourObject CO,
+  inout CO::ColourObject CO,
   const float            WhitePointNormalised,
   inout bool             ProcessingDone
 )
 {
-  const bool3 isInProcessingRange = CO.RGB < WhitePointNormalised;
+  const float maxRange =
+    Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels ? 0.3892221149351f * WhitePointNormalised
+                                                           : WhitePointNormalised;
+
+  const bool3 isInProcessingRange = CO.RGB < maxRange;
   const bool3 isAbove0            = CO.RGB > 0.f;
 
   const bool3 needsProcessing = isInProcessingRange && isAbove0;
 
-  float3 processedColour = CO.RGB;
-
   [branch]
-  if (needsProcessing.r)
+  if (any(needsProcessing))
   {
-    processedColour.r = pow(Csp::Trc::LinearTo::Srgb(CO.RGB.r / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), 2.2f) * WhitePointNormalised;
 
-    [flatten]
-    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
-     && processedColour.r > CO.RGB.r)
-    {
-      processedColour.r = CO.RGB.r;
-    }
-
-    ProcessingDone = true;
-  }
-  [branch]
-  if (needsProcessing.g)
-  {
-    processedColour.g = pow(Csp::Trc::LinearTo::Srgb(CO.RGB.g / WhitePointNormalised), 2.2f) * WhitePointNormalised;
-
-    [flatten]
-    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
-     && processedColour.g > CO.RGB.g)
-    {
-      processedColour.g = CO.RGB.g;
-    }
-
-    ProcessingDone = true;
-  }
-  [branch]
-  if (needsProcessing.b)
-  {
-    processedColour.b = pow(Csp::Trc::LinearTo::Srgb(CO.RGB.b / WhitePointNormalised), 2.2f) * WhitePointNormalised;
-
-    [flatten]
-    if (Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
-     && processedColour.b > CO.RGB.b)
-    {
-      processedColour.b = CO.RGB.b;
-    }
+    CO.RGB = needsProcessing ? processedColour
+                             : CO.RGB;
 
     ProcessingDone = true;
   }
 
-  CO.RGB = processedColour;
-
-  return CO;
+  return;
 }
+
 
 #define BLACK_POINT_ADAPTION(T)            \
   T BlackPointAdaption                     \
