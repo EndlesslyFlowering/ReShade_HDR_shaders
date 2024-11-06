@@ -1556,6 +1556,24 @@ namespace Csp
       );
 
 
+    //DCI-P3 80 To
+    static const float3x3 DciP3_80ToXYZ =
+      float3x3
+      (
+        0.00389256747f, 0.00212534144f,  0.00158573826f,
+        0.00183179648f, 0.00553390802f,  0.000634295283f,
+        0.f,            0.000360907055f, 0.00835155509f
+      );
+
+    static const float3x3 DciP3_80ToBt2020Normalised =
+      float3x3
+      (
+         0.00603066431f,    0.00158877891f,  0.000380556768f,
+         0.000365950778f,   0.00753421755f,  0.0000998314499f,
+        -0.00000968272252f, 0.000140813732f, 0.00786886923f
+      );
+
+
     //BT.2020 To
     static const float3x3 Bt2020ToXYZ =
       float3x3
@@ -1621,6 +1639,16 @@ namespace Csp
          207.561370f, -73.4551391f, -9.10623264f,
         -15.5688095f,  141.612487f, -1.04367780f,
         -2.26884531f, -12.5723619f,  139.841201f
+      );
+
+
+    //BT.2020 80 To
+    static const float3x3 Bt2020_80ToXYZ =
+      float3x3
+      (
+        0.00509566441f, 0.00115693523f,  0.00135104777f,
+        0.00210160179f, 0.00542398449f,  0.000474413740f,
+        0.f,            0.000224581541f, 0.00848788022f
       );
 
 
@@ -1842,6 +1870,19 @@ namespace Csp
       }
     } //DciP3To
 
+    namespace DciP3_80To
+    {
+      float3 XYZ(float3 Colour)
+      {
+        return mul(DciP3_80ToXYZ, Colour);
+      }
+
+      float3 Bt2020Normalised(float3 Colour)
+      {
+        return mul(DciP3_80ToBt2020Normalised, Colour);
+      }
+    } //DciP3_80To
+
     namespace Bt2020To
     {
       float3 XYZ(float3 Colour)
@@ -1885,6 +1926,14 @@ namespace Csp
       float3 ScRgb(float3 Colour)
       {
         return mul(Bt2020NormalisedToScRgb, Colour);
+      }
+    } //Bt2020NormalisedTo
+
+    namespace Bt2020_80To
+    {
+      float3 XYZ(float3 Colour)
+      {
+        return mul(Bt2020_80ToXYZ, Colour);
       }
     } //Bt2020NormalisedTo
 
