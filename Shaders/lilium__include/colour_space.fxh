@@ -41,8 +41,8 @@ static const float2 BUFFER_SIZE_FLOAT = float2(BUFFER_WIDTH_FLOAT, BUFFER_HEIGHT
 static const  uint PIXEL_COUNT_UINT  = BUFFER_WIDTH_UINT * BUFFER_HEIGHT_UINT;
 static const float PIXEL_COUNT_FLOAT = float(PIXEL_COUNT_UINT);
 
-static const uint BUFFER_WIDTH_MINUS_1_UINT  = BUFFER_WIDTH_UINT  - 1;
-static const uint BUFFER_HEIGHT_MINUS_1_UINT = BUFFER_HEIGHT_UINT - 1;
+static const uint BUFFER_WIDTH_MINUS_1_UINT  = BUFFER_WIDTH_UINT  - 1u;
+static const uint BUFFER_HEIGHT_MINUS_1_UINT = BUFFER_HEIGHT_UINT - 1u;
 
 static const uint BUFFER_WIDTH_MINUS_1_INT  = BUFFER_WIDTH_INT  - 1;
 static const uint BUFFER_HEIGHT_MINUS_1_INT = BUFFER_HEIGHT_INT - 1;
@@ -1002,8 +1002,8 @@ namespace Csp
     static const float PQ_c2 = 18.8515625f;       // = 2413 /  128;
     static const float PQ_c3 = 18.6875f;          // = 2392 /  128;
 
-    static const float _1_div_PQ_m1 = 6.277394771575927734375f;
-    static const float _1_div_PQ_m2 = 0.0126833133399486541748046875f;
+    static const float _1_div_PQ_m1 = 6.27739477f;
+    static const float _1_div_PQ_m2 = 0.0126833133f;
 
 
     // Rec. ITU-R BT.2100-2 Table 4
@@ -2762,10 +2762,10 @@ namespace Csp
       //OKLCh°->OKLab
       float3 OkLab(const float3 OkLch)
       {
-        float a, b;
-        sincos(OkLch[2], a, b);
+        float2 ab;
+        sincos(OkLch[2], ab[0], ab[1]);
 
-        float2 ab = OkLch.y * float2(a, b);
+        ab *= OkLch.y;
 
         return float3(OkLch.x, ab);
       }
@@ -3328,10 +3328,8 @@ namespace Csp
       {
         float i_ab = PI_2 * Hsv.x;
 
-        float a, b;
-        sincos(i_ab, a, b);
-
-        float2 ab = float2(a, b);
+        float2 ab;
+        sincos(i_ab, ab[0], ab[1]);
 
         float2 cusp = Csp::OkLab::FindCusp(ab);
 
@@ -3411,10 +3409,7 @@ namespace Csp
 
         L = Csp::OkLab::ToeInv(Hsl.z);
 
-        float a, b;
-        sincos(i_ab, a, b);
-
-        ab = float2(a, b);
+        sincos(i_ab, ab[0], ab[1]);
 
         float3 cs = Csp::OkLab::GetCs(float3(L, ab));
 
