@@ -18,6 +18,8 @@ uniform uint INPUT_TRC
                 "PQ\0";
 > = 0;
 
+#undef TRC_PQ
+
 #define TRC_GAMMA_22                    0
 #define TRC_GAMMA_24                    1
 #define TRC_LINEAR                      2
