@@ -149,9 +149,9 @@ void PS_HdrBlackFloorFix
 
   // optimisation
   BRANCH(x)
-  if ( Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
-   &&  Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment
-   && !Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
+  if ( Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable
+   &&  Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable
+   && !Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuOnlyLowerBlackLevels
    &&  Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint == Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint)
   {
     Gamma22EmulationAndGammaAdjustment(co,
@@ -161,7 +161,7 @@ void PS_HdrBlackFloorFix
   else
   {
     BRANCH(x)
-    if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable)
     {
       Gamma22Emulation(co,
                        g22EmuWhitePointNormalised,
@@ -169,7 +169,7 @@ void PS_HdrBlackFloorFix
     }
 
     BRANCH(x)
-    if (Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment)
+    if (Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable)
     {
       GammaAdjustment(co,
                       gaWhitePointNormalised,
@@ -178,7 +178,7 @@ void PS_HdrBlackFloorFix
   }
 
   BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Lowering::EnableLowering)
+  if (Ui::HdrBlackFloorFix::Lowering::LoweringEnable)
   {
     LowerBlackFloor(co,
                     rollOffStoppingPoint,
@@ -189,7 +189,7 @@ void PS_HdrBlackFloorFix
   }
 
   [branch]
-  if ((Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu || Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment)
+  if ((Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable || Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable)
   && processingDone)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)

@@ -18,7 +18,7 @@ namespace Ui
   {
     namespace Gamma22Emu
     {
-      uniform bool EnableGamma22Emu
+      uniform bool G22EmuEnable
       <
         ui_category = "SDR black floor emulation";
         ui_label    = "enable SDR black floor emulation";
@@ -54,7 +54,7 @@ namespace Ui
         ui_step     = 0.5f;
       > = 80.f;
 
-      uniform bool OnlyLowerBlackLevels
+      uniform bool G22EmuOnlyLowerBlackLevels
       <
         ui_category = "SDR black floor emulation";
         ui_label    = "only lower black levels";
@@ -65,7 +65,7 @@ namespace Ui
 
     namespace GammaAdjustment
     {
-      uniform bool EnableGammaAdjustment
+      uniform bool GAEnable
       <
         ui_category = "gamma adjustment";
         ui_label    = "enable gamma adjustment";
@@ -113,7 +113,7 @@ namespace Ui
 
     namespace Lowering
     {
-      uniform bool EnableLowering
+      uniform bool LoweringEnable
       <
         ui_category = "black floor lowering";
         ui_label    = "enable black floor lowering";
@@ -220,8 +220,8 @@ void Gamma22Emulation
   CO = ConvertColourForGamma22Emulation(CO);
 
   const float maxRange =
-    Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels ? 0.3892221149351f * WhitePointNormalised
-                                                           : WhitePointNormalised;
+    Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuOnlyLowerBlackLevels ? 0.3892221149351f * WhitePointNormalised
+                                                                 : WhitePointNormalised;
 
   const bool3 isInProcessingRange = CO.RGB < maxRange;
   const bool3 isAbove0            = CO.RGB > 0.f;
