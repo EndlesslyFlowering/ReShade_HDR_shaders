@@ -12,13 +12,16 @@ void GetParams
   out float OutOldBlackPoint,
   out float OutRollOffMinusOldBlackPoint,
   out float OutMinLum,
-  out float OutWhitePointNormalised
+  out float OutG22EmuWhitePointNormalised,
+  out float OutGAWhitePointNormalised
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-    OutWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::WhitePoint / 80.f;
+    OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 80.f;
+    OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 80.f;
 #else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    OutWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::WhitePoint / 10000.f;
+    OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 10000.f;
+    OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 10000.f;
 #endif
 
 
@@ -57,7 +60,7 @@ void VS_PrepareHdrBlackFloorFix
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
                                                      ,
   out nointerpolation float4 FuncParms0 : FuncParms0,
-  out nointerpolation float  FuncParms1 : FuncParms1
+  out nointerpolation float2 FuncParms1 : FuncParms1
 #endif
 )
 {
@@ -81,13 +84,16 @@ void VS_PrepareHdrBlackFloorFix
 #define minLum                    FuncParms0.w
 
 // gamma 2.2 emulation
-#define whitePointNormalised FuncParms1
+#define g22EmuWhitePointNormalised FuncParms1.x
+// gamma adjustment
+#define gaWhitePointNormalised     FuncParms1.y
 
   GetParams(rollOffStoppingPoint,
             oldBlackPoint,
             rollOffMinusOldBlackPoint,
             minLum,
-            whitePointNormalised);
+            g22EmuWhitePointNormalised,
+            gaWhitePointNormalised);
 
 #endif
 }
@@ -98,7 +104,7 @@ void PS_HdrBlackFloorFix
   in                  float4 Position   : SV_Position,
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
   in  nointerpolation float4 FuncParms0 : FuncParms0,
-  in  nointerpolation float  FuncParms1 : FuncParms1,
+  in  nointerpolation float2 FuncParms1 : FuncParms1,
 #endif
   out                 float4 Output     : SV_Target0
 )
@@ -109,13 +115,15 @@ void PS_HdrBlackFloorFix
   float oldBlackPoint;
   float rollOffMinusOldBlackPoint;
   float minLum;
-  float whitePointNormalised;
+  float g22EmuWhitePointNormalised;
+  float gaWhitePointNormalised;
 
   GetParams(rollOffStoppingPoint,
             oldBlackPoint,
             rollOffMinusOldBlackPoint,
             minLum,
-            whitePointNormalised);
+            g22EmuWhitePointNormalised,
+            gaWhitePointNormalised);
 
 #endif
 
@@ -139,14 +147,34 @@ void PS_HdrBlackFloorFix
 
 #endif
 
+  // optimisation
   BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
+  if ( Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
+   &&  Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment
+   && !Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels
+   &&  Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint == Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint)
   {
-    co = ConvertColourForGamma22Emulation(co);
+    Gamma22EmulationAndGammaAdjustment(co,
+                                       g22EmuWhitePointNormalised,
+                                       processingDone);
+  }
+  else
+  {
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu)
+    {
+      Gamma22Emulation(co,
+                       g22EmuWhitePointNormalised,
+                       processingDone);
+    }
 
-    Gamma22Emulation(co,
-                     whitePointNormalised,
-                     processingDone);
+    BRANCH(x)
+    if (Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment)
+    {
+      GammaAdjustment(co,
+                      gaWhitePointNormalised,
+                      processingDone);
+    }
   }
 
   BRANCH(x)
@@ -160,15 +188,19 @@ void PS_HdrBlackFloorFix
                     processingDone);
   }
 
-  BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu
-  && !Ui::HdrBlackFloorFix::Lowering::EnableLowering)
+  [branch]
+  if ((Ui::HdrBlackFloorFix::Gamma22Emu::EnableGamma22Emu || Ui::HdrBlackFloorFix::GammaAdjustment::EnableGammaAdjustment)
+  && processingDone)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     co = CO::ConvertCspTo::ScRgb(co);
 #else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
     co = CO::ConvertCspTo::Hdr10(co);
 #endif
+  }
+  else
+  {
+    discard;
   }
 
   Output = float4(co.RGB, inputColour.a);

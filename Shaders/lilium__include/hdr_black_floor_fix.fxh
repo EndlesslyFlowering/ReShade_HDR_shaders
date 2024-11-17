@@ -25,7 +25,7 @@ namespace Ui
         ui_tooltip  = "This emulates how the black floor looks on an SDR display using gamma 2.2.";
       > = false;
 
-      uniform uint ProcessingColourSpace
+      uniform uint G22EmuProcessingColourSpace
       <
         ui_category = "SDR black floor emulation";
         ui_label    = "processing colour space";
@@ -38,11 +38,11 @@ namespace Ui
                       "BT.2020\0";
       > = 0;
 
-#define HDR_BF_FIX_CSP_BT709  0
-#define HDR_BF_FIX_CSP_DCI_P3 1
-#define HDR_BF_FIX_CSP_BT2020 2
+#define G22_EMU_CSP_BT709  0
+#define G22_EMU_CSP_DCI_P3 1
+#define G22_EMU_CSP_BT2020 2
 
-      uniform float WhitePoint
+      uniform float G22EmuWhitePoint
       <
         ui_category = "SDR black floor emulation";
         ui_label    = "processing cut off";
@@ -61,6 +61,54 @@ namespace Ui
         ui_tooltip  = "The gamma 2.2 emulation lowers black levels and slightly raises hightlights."
                  "\n" "This option only enables the lowering of black levels.";
       > = false;
+    }
+
+    namespace GammaAdjustment
+    {
+      uniform bool EnableGammaAdjustment
+      <
+        ui_category = "gamma adjustment";
+        ui_label    = "enable gamma adjustment";
+      > = false;
+
+      uniform uint GAProcessingColourSpace
+      <
+        ui_category = "gamma adjustment";
+        ui_label    = "processing colour space";
+        ui_tooltip  = "Using BT.709 will not push affected colours outside of BT.709."
+                 "\n" "Using DCI-P3 can push affected colours into DCI-P3."
+                 "\n" "Using BT.2020 can push affected colours into DCI-P3 and BT.2020.";
+        ui_type     = "combo";
+        ui_items    = "BT.709\0"
+                      "DCI-P3\0"
+                      "BT.2020\0";
+      > = 0;
+
+#define GA_CSP_BT709  0
+#define GA_CSP_DCI_P3 1
+#define GA_CSP_BT2020 2
+
+      uniform float GAGamma
+      <
+        ui_category = "gamma adjustment";
+        ui_label    = "gamma";
+        ui_type     = "drag";
+        ui_min      = 0.5f;
+        ui_max      = 1.5f;
+        ui_step     = 0.001f;
+      > = 1.f;
+
+      uniform float GAWhitePoint
+      <
+        ui_category = "gamma adjustment";
+        ui_label    = "processing cut off";
+        ui_tooltip  = "How much of the lower range range should be processed.";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 10.f;
+        ui_max      = 400.f;
+        ui_step     = 0.5f;
+      > = 80.f;
     }
 
     namespace Lowering
@@ -138,21 +186,21 @@ CO::ColourObject ConvertColourForGamma22Emulation
   CO = CO::ConvertTrcTo::LinearNormalised(CO);
 
   BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT709)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT709)
   {
     CO = CO::ConvertPrimariesTo::Bt709(CO);
   }
   else
 #endif
   BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_DCI_P3)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_DCI_P3)
   {
     CO = CO::ConvertPrimariesTo::DciP3(CO);
   }
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   else
   BRANCH(x)
-  if (Ui::HdrBlackFloorFix::Gamma22Emu::ProcessingColourSpace == HDR_BF_FIX_CSP_BT2020)
+  if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT2020)
   {
     CO = CO::ConvertPrimariesTo::Bt2020(CO);
   }
@@ -169,6 +217,8 @@ void Gamma22Emulation
   inout bool             ProcessingDone
 )
 {
+  CO = ConvertColourForGamma22Emulation(CO);
+
   const float maxRange =
     Ui::HdrBlackFloorFix::Gamma22Emu::OnlyLowerBlackLevels ? 0.3892221149351f * WhitePointNormalised
                                                            : WhitePointNormalised;
@@ -181,7 +231,93 @@ void Gamma22Emulation
   [branch]
   if (any(needsProcessing))
   {
-    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), 2.2f) * WhitePointNormalised;
+    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), 2.2f)
+                           * WhitePointNormalised;
+
+    CO.RGB = needsProcessing ? processedColour
+                             : CO.RGB;
+
+    ProcessingDone = true;
+  }
+
+  return;
+}
+
+
+void GammaAdjustment
+(
+  inout CO::ColourObject CO,
+  const float            WhitePointNormalised,
+  inout bool             ProcessingDone
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  CO = CO::ConvertTrcTo::LinearNormalised(CO);
+#endif
+
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT709)
+  {
+    CO = CO::ConvertPrimariesTo::Bt709(CO);
+  }
+  else
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_DCI_P3)
+  {
+    CO = CO::ConvertPrimariesTo::DciP3(CO);
+  }
+  else
+  BRANCH(x)
+  if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT2020)
+  {
+    CO = CO::ConvertPrimariesTo::Bt2020(CO);
+  }
+
+
+  const bool3 isInProcessingRange = CO.RGB < WhitePointNormalised;
+  const bool3 isAbove0            = CO.RGB > 0.f;
+
+  const bool3 needsProcessing = isInProcessingRange && isAbove0;
+
+  [branch]
+  if (any(needsProcessing))
+  {
+
+    float3 processedColour = pow(CO.RGB / WhitePointNormalised, Ui::HdrBlackFloorFix::GammaAdjustment::GAGamma)
+                           * WhitePointNormalised;
+
+    CO.RGB = needsProcessing ? processedColour
+                             : CO.RGB;
+
+    ProcessingDone = true;
+  }
+
+  return;
+}
+
+
+void Gamma22EmulationAndGammaAdjustment
+(
+  inout CO::ColourObject CO,
+  const float            WhitePointNormalised,
+  inout bool             ProcessingDone
+)
+{
+  CO = ConvertColourForGamma22Emulation(CO);
+
+  const bool3 isInProcessingRange = CO.RGB < WhitePointNormalised;
+  const bool3 isAbove0            = CO.RGB > 0.f;
+
+  const bool3 needsProcessing = isInProcessingRange && isAbove0;
+
+  [branch]
+  if (any(needsProcessing))
+  {
+    const float currentPow = 2.2f *
+                             Ui::HdrBlackFloorFix::GammaAdjustment::GAGamma;
+
+    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), currentPow)
+                           * WhitePointNormalised;
 
     CO.RGB = needsProcessing ? processedColour
                              : CO.RGB;
