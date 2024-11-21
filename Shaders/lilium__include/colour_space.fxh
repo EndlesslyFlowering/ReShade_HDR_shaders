@@ -51,7 +51,7 @@ static const float BUFFER_WIDTH_MINUS_1_FLOAT  = float(BUFFER_WIDTH_MINUS_1_UINT
 static const float BUFFER_HEIGHT_MINUS_1_FLOAT = float(BUFFER_HEIGHT_MINUS_1_UINT);
 
 static const  uint2 BUFFER_SIZE_MINUS_1_UINT  =  uint2(BUFFER_WIDTH_MINUS_1_UINT,  BUFFER_HEIGHT_MINUS_1_UINT);
-static const  uint2 BUFFER_SIZE_MINUS_1_INT   =  uint2(BUFFER_WIDTH_MINUS_1_INT,   BUFFER_HEIGHT_MINUS_1_INT);
+static const  uint2 BUFFER_SIZE_MINUS_1_INT   =   int2(BUFFER_WIDTH_MINUS_1_INT,   BUFFER_HEIGHT_MINUS_1_INT);
 static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOAT, BUFFER_HEIGHT_MINUS_1_FLOAT);
 
 
@@ -490,11 +490,20 @@ uniform int GLOBAL_INFO
 
 #define MIN3(A, B, C) min(A, min(B, C))
 
+#define MIN4(A, B, C, D) min(A, min(B, max(C, D)))
+
+
 #define MAX3(A, B, C) max(A, max(B, C))
 
 #define MAX4(A, B, C, D) max(A, max(B, max(C, D)))
 
 #define MAX5(A, B, C, D, E) max(A, max(B, max(C, max(D, E))))
+
+#define MAX6(A, B, C, D, E, F) max(A, max(B, max(C, max(D, max(E, F)))))
+
+#define MAX7(A, B, C, D, E, F, G) max(A, max(B, max(C, max(D, max(E, max(F, G))))))
+
+#define MAX8(A, B, C, D, E, F, G, H) max(A, max(B, max(C, max(D, max(E, max(F, max(G, H)))))))
 
 #define MAXRGB(Rgb) max(Rgb.r, max(Rgb.g, Rgb.b))
 #define MINRGB(Rgb) min(Rgb.r, min(Rgb.g, Rgb.b))
