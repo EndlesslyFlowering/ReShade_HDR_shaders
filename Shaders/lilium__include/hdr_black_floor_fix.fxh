@@ -1,5 +1,7 @@
 #pragma once
 
+#define ENABLE_COLOUR_OBJECT
+
 #include "colour_space.fxh"
 
 

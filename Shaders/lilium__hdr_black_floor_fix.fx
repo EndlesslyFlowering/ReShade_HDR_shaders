@@ -142,8 +142,9 @@ void PS_HdrBlackFloorFix
 
 #else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  co.trc  = TRC_PQ;
-  co.prim = PRIM_BT2020;
+  co.trc         = TRC_PQ;
+  co.prim        = PRIM_BT2020;
+  co.isUntouched = true;
 
 #endif
 
