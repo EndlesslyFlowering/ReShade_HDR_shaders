@@ -812,7 +812,7 @@ float3 MergeOverlay
 
     adjustFactor = OverlayBrightness / 10000.f;
 
-    Output = Csp::Trc::PqTo::Linear(Output);
+    Output = FetchFromHdr10ToLinearLUT(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

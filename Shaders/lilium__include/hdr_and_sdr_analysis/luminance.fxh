@@ -193,7 +193,7 @@ float CalcNits
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
@@ -241,7 +241,7 @@ float3 CalcCll
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
@@ -282,7 +282,7 @@ float4 CalcNitsAndCll
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 

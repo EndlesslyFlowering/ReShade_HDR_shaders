@@ -527,7 +527,7 @@ void RenderWaveform
 
     pixelEncoded = MAXRGB(pixel);
 
-    pixelCll = Csp::Trc::PqTo::Nits(pixelEncoded);
+    pixelCll = FetchFromHdr10ToLinearLUT(pixelEncoded) * 10000.f;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

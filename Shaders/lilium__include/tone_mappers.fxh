@@ -6,6 +6,19 @@
 
 
 
+
+HDR10_TO_LINEAR_LUT()
+
+// convert HDR10 to normalised BT.2020
+float3 ConditionallyLineariseHdr10Temp(float3 Colour)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  Colour = FetchFromHdr10ToLinearLUT(Colour);
+#endif
+  return Colour;
+}
+
+
 namespace Tmos
 {
   // Rep. ITU-R BT.2446-1 Table 2 & 3
@@ -24,7 +37,7 @@ namespace Tmos
     //scRGB
     Colour = ConditionallyNormaliseScRgb(Colour);
     //HDR10
-    Colour = ConditionallyLineariseHdr10(Colour);
+    Colour = ConditionallyLineariseHdr10Temp(Colour);
 
     // adjust the max of 1 according to max nits
     Colour *= (10000.f / MaxNits);
@@ -81,7 +94,7 @@ namespace Tmos
     //scRGB
     Rgb = ConditionallyNormaliseScRgb(Rgb);
     //HDR10
-    Rgb = ConditionallyLineariseHdr10(Rgb);
+    Rgb = ConditionallyLineariseHdr10Temp(Rgb);
 
     // adjust the max of 1 according to maxCLL
     Rgb *= (10000.f / MaxNits);
@@ -265,7 +278,7 @@ namespace Tmos
       if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
         //HDR10
-        float3 Rgb = ConditionallyLineariseHdr10(Colour);
+        float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
@@ -369,7 +382,7 @@ namespace Tmos
         m2 = Csp::Trc::PqTo::Linear(m2);
 
         //HDR10
-        Rgb = ConditionallyLineariseHdr10(Rgb);
+        Rgb = ConditionallyLineariseHdr10Temp(Rgb);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         //more performant than to linearise maxCll1Pq
@@ -511,7 +524,7 @@ namespace Tmos
       if (ProcessingMode == DICE_PRO_MODE_YRGB)
       {
         //HDR10
-        float3 Rgb = ConditionallyLineariseHdr10(Colour);
+        float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
@@ -576,7 +589,7 @@ namespace Tmos
           m2 = Csp::Trc::PqTo::Linear(m2);
 
           //HDR10
-          Rgb = ConditionallyLineariseHdr10(Rgb);
+          Rgb = ConditionallyLineariseHdr10Temp(Rgb);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
           //more performant than to linearise maxCll1Pq

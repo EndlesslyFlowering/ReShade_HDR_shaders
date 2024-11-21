@@ -1377,7 +1377,7 @@ float3 MergeText
 
     adjustFactor = _TEXT_BRIGHTNESS / 10000.f;
 
-    Output = Csp::Trc::PqTo::Linear(Output);
+    Output = FetchFromHdr10ToLinearLUT(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -2184,7 +2184,7 @@ void PS_RenderNumbers
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    Output.rgb = Csp::Trc::PqTo::Linear(inputColour.rgb);
+    Output.rgb = FetchFromHdr10ToLinearLUT(inputColour.rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

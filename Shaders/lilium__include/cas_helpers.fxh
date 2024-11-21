@@ -1,6 +1,9 @@
 #include "colour_space.fxh"
 
 
+HDR10_TO_LINEAR_LUT()
+
+
 // for pixel shader
 float2 GetEfhiCoords
 (
@@ -23,7 +26,7 @@ float3 PrepareForProcessing
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::PqTo::Linear(Colour);
+  return FetchFromHdr10ToLinearLUT(Colour);
 
 #else
 
