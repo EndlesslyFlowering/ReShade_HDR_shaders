@@ -1486,6 +1486,12 @@ float GetMaxChars()
 #endif
     }
 
+    FLATTEN(x)
+    if (!_SHOW_NITS_FROM_CURSOR)
+    {
+      textBlockSizeNitsRgbCursor -= 3.f;
+    }
+
     maxChars = max(TEXT_BLOCK_SIZE_ANALYIS_HEADER.x, textBlockSizeNitsRgbCursor + NITS_EXTRA_CHARS);
   }
 
@@ -1708,23 +1714,33 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
         float2 size = TEXT_BLOCK_SIZES[currentTextBlockID];
 
-        vertexOffset *= CharSize;
-
         texCoordOffset = TEXT_BLOCK_FETCH_OFFSETS[currentTextBlockID];
 
         [flatten]
-        if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES
-         && (currentTextBlockID > 0 && currentTextBlockID < 4))
+        if (currentTextBlockID > 0
+         && currentTextBlockID < 4)
         {
+          [flatten]
+          if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
+          {
 #ifdef IS_HDR_CSP
-          size.x -= 26.f;
+            size.x -= 26.f;
 
-          texCoordOffset.x += 24.f;
+            texCoordOffset.x += 24.f;
 #else
-          size.x -= 24.f;
+            size.x -= 24.f;
 #endif
-          texCoordOffset.y += 5.f;
+            texCoordOffset.y += 5.f;
+          }
+
+          [flatten]
+          if (!_SHOW_NITS_FROM_CURSOR)
+          {
+            vertexOffset.x -= 3.f;
+          }
         }
+
+        vertexOffset *= CharSize;
 
         texCoordOffset *= CHAR_DIM_FLOAT;
 
@@ -1918,9 +1934,12 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #endif
 
-      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+      uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
+                                               : 4u;
 
-      vertexOffset.y = currentNumberID / NITS_NUMBERS_PER_ROW + 2;
+      vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
+
+      vertexOffset.y = float(currentNumberID / NITS_NUMBERS_PER_ROW + 2u);
     }
 
     //cursor nits
@@ -1949,10 +1968,13 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #endif
 
-      vertexOffset.x = 7 + a + b + spacerOffset + dotOffset;
+      uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
+                                               : 4u;
 
-      vertexOffset.y = _SHOW_NITS_VALUES ? 5
-                                         : 2;
+      vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
+
+      vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
+                                         : 2.f;
     }
 
 #ifdef IS_HDR_CSP
