@@ -101,25 +101,44 @@ void CSGetPixels
 // for pixel shader
 void PSGetPixels
 (
-  in  const float2           Coords,
-  in  const float2           EfhiCoords,
+  in  const int2             Position,
   out       SPixelsToProcess Ptp
 )
 {
-  float4 efhiR = tex2DgatherR(SamplerBackBuffer, EfhiCoords);
-  float4 efhiG = tex2DgatherG(SamplerBackBuffer, EfhiCoords);
-  float4 efhiB = tex2DgatherB(SamplerBackBuffer, EfhiCoords);
+  Ptp.e = tex2Dfetch(SamplerBackBuffer,   Position   ).rgb;
+  Ptp.e = PrepareForProcessing(Ptp.e);
 
-  Ptp.e = float3(efhiR.w, efhiG.w, efhiB.w);
-  Ptp.f = float3(efhiR.z, efhiG.z, efhiB.z);
-  Ptp.h = float3(efhiR.x, efhiG.x, efhiB.x);
-  Ptp.i = float3(efhiR.y, efhiG.y, efhiB.y);
+  const int4 abPosition = Position.xyxy + int4(-1, -1,  0, -1);
 
-  Ptp.a = tex2D(SamplerBackBuffer, Coords, int2(-1, -1)).rgb;
-  Ptp.b = tex2D(SamplerBackBuffer, Coords, int2( 0, -1)).rgb;
-  Ptp.c = tex2D(SamplerBackBuffer, Coords, int2( 1, -1)).rgb;
-  Ptp.d = tex2D(SamplerBackBuffer, Coords, int2(-1,  0)).rgb;
-  Ptp.g = tex2D(SamplerBackBuffer, Coords, int2(-1,  1)).rgb;
+  Ptp.a = tex2Dfetch(SamplerBackBuffer, abPosition.xy).rgb;
+  Ptp.a = PrepareForProcessing(Ptp.a);
+
+  Ptp.b = tex2Dfetch(SamplerBackBuffer, abPosition.zw).rgb;
+  Ptp.b = PrepareForProcessing(Ptp.b);
+
+  const int4 cdPosition = Position.xyxy + int4( 1, -1, -1,  0);
+
+  Ptp.c = tex2Dfetch(SamplerBackBuffer, cdPosition.xy).rgb;
+  Ptp.c = PrepareForProcessing(Ptp.c);
+
+  Ptp.d = tex2Dfetch(SamplerBackBuffer, cdPosition.zw).rgb;
+  Ptp.d = PrepareForProcessing(Ptp.d);
+
+  const int4 fgPosition = Position.xyxy + int4( 1,  0, -1,  1);
+
+  Ptp.f = tex2Dfetch(SamplerBackBuffer, fgPosition.xy).rgb;
+  Ptp.f = PrepareForProcessing(Ptp.f);
+
+  Ptp.g = tex2Dfetch(SamplerBackBuffer, fgPosition.zw).rgb;
+  Ptp.g = PrepareForProcessing(Ptp.g);
+
+  const int4 hiPosition = Position.xyxy + int4( 0,  1,  1,  1);
+
+  Ptp.h = tex2Dfetch(SamplerBackBuffer, hiPosition.xy).rgb;
+  Ptp.h = PrepareForProcessing(Ptp.h);
+
+  Ptp.i = tex2Dfetch(SamplerBackBuffer, hiPosition.zw).rgb;
+  Ptp.i = PrepareForProcessing(Ptp.i);
 
   return;
 }

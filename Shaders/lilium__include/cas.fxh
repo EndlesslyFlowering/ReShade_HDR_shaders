@@ -65,15 +65,15 @@ float3 CasSharpenOnly
   // d e f
   // g h i
 
-  static const float3 a = PrepareForProcessing(Ptp.a);
-  static const float3 b = PrepareForProcessing(Ptp.b);
-  static const float3 c = PrepareForProcessing(Ptp.c);
-  static const float3 d = PrepareForProcessing(Ptp.d);
-  static const float3 e = PrepareForProcessing(Ptp.e);
-  static const float3 f = PrepareForProcessing(Ptp.f);
-  static const float3 g = PrepareForProcessing(Ptp.g);
-  static const float3 h = PrepareForProcessing(Ptp.h);
-  static const float3 i = PrepareForProcessing(Ptp.i);
+  static const float3 a = Ptp.a;
+  static const float3 b = Ptp.b;
+  static const float3 c = Ptp.c;
+  static const float3 d = Ptp.d;
+  static const float3 e = Ptp.e;
+  static const float3 f = Ptp.f;
+  static const float3 g = Ptp.g;
+  static const float3 h = Ptp.h;
+  static const float3 i = Ptp.i;
 
   // Soft min and max.
   //  a b c             b
@@ -128,15 +128,15 @@ float3 CasSharpenAndUpscale
   //  |     |     |
   //  +-----+-----+
 
-  static const float3 a = PrepareForProcessing(Ptp.a);
-  static const float3 b = PrepareForProcessing(Ptp.b);
-  static const float3 c = PrepareForProcessing(Ptp.c);
-  static const float3 e = PrepareForProcessing(Ptp.d);
-  static const float3 f = PrepareForProcessing(Ptp.e);
-  static const float3 g = PrepareForProcessing(Ptp.f);
-  static const float3 i = PrepareForProcessing(Ptp.h);
-  static const float3 j = PrepareForProcessing(Ptp.i);
-  static const float3 k = PrepareForProcessing(Ptp.g);
+  static const float3 a = Ptp.a;
+  static const float3 b = Ptp.b;
+  static const float3 c = Ptp.c;
+  static const float3 e = Ptp.d;
+  static const float3 f = Ptp.e;
+  static const float3 g = Ptp.f;
+  static const float3 i = Ptp.h;
+  static const float3 j = Ptp.i;
+  static const float3 k = Ptp.g;
 
 
   // Soft min and max.

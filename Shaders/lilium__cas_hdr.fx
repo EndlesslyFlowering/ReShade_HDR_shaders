@@ -11,11 +11,9 @@ void PS_Cas
 {
   static const float Peak = -SHARPEN_AMOUNT;
 
-  static const float2 coordsEfhi = GetEfhiCoords(TexCoord);
-
   SPixelsToProcess ptp;
 
-  PSGetPixels(TexCoord, coordsEfhi, ptp);
+  PSGetPixels(int2(Position.xy), ptp);
 
   BRANCH()
   if (SHARPEN_ONLY)
