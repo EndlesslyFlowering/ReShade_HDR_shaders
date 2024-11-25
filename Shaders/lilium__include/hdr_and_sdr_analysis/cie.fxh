@@ -18,7 +18,7 @@ texture3D TextureCieCounter
   pooled = true;
 >
 {
-  Width  = CIE_TEXTURE_WIDTH;
+  Width  = CIE_TEXTURE_WIDTH_UINT;
   Height = CIE_TEXTURE_HEIGHT;
   Depth  = 16;
   Format = R32U;
@@ -39,7 +39,7 @@ texture2D TextureCieOverlay
   pooled = true;
 >
 {
-  Width  = CIE_TEXTURE_WIDTH;
+  Width  = CIE_TEXTURE_WIDTH_UINT;
   Height = CIE_TEXTURE_HEIGHT;
   Format = RG8;
 };
@@ -59,7 +59,7 @@ texture2D TextureCieFinal
   pooled = true;
 >
 {
-  Width  = CIE_TEXTURE_WIDTH;
+  Width  = CIE_TEXTURE_WIDTH_UINT;
   Height = CIE_TEXTURE_HEIGHT;
   Format = RGB10A2;
 };
@@ -382,10 +382,10 @@ void DrawCieOutlines()
      || tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE) != _CIE_DIAGRAM_SIZE)
     {
       [loop]
-      for (int x = 0; x < CIE_TEXTURE_WIDTH; x++)
+      for (int x = 0; x < CIE_TEXTURE_WIDTH_INT; x++)
       {
         [loop]
-        for (int y = 0; y < CIE_TEXTURE_HEIGHT; y++)
+        for (int y = 0; y < CIE_TEXTURE_HEIGHT_INT; y++)
         {
           tex2Dstore(StorageCieOverlay, int2(x, y), (float4)0.f);
         }
@@ -1104,7 +1104,7 @@ void CS_GetMaxCieCounter
 
     //worth to do performance wise
     [branch]
-    if (DTID.x < (_CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_WIDTH : CIE_UV_WIDTH))
+    if (DTID.x < (_CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_WIDTH_UINT : CIE_UV_WIDTH_UINT))
     {
       [branch]
       if (all(GTID.xy == 0))

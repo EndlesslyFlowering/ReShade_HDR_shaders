@@ -469,31 +469,35 @@ uniform float _CIE_DIAGRAM_ALPHA
 
 #endif
 
-static const uint CIE_XY_WIDTH = uint(CIE_XY_NORMALISE.x
-                                    / CIE_XY_NORMALISE.y
-                                    * float(CIE_TEXTURE_HEIGHT)
-                                    + 0.5f);
+static const uint CIE_XY_WIDTH_UINT = uint(CIE_XY_NORMALISE.x
+                                         / CIE_XY_NORMALISE.y
+                                         * float(CIE_TEXTURE_HEIGHT)
+                                         + 0.5f);
 
-static const uint CIE_UV_WIDTH = uint(CIE_UV_NORMALISE.x
-                                    / CIE_UV_NORMALISE.y
-                                    * float(CIE_TEXTURE_HEIGHT)
-                                    + 0.5f);
+static const uint CIE_UV_WIDTH_UINT = uint(CIE_UV_NORMALISE.x
+                                         / CIE_UV_NORMALISE.y
+                                         * float(CIE_TEXTURE_HEIGHT)
+                                         + 0.5f);
 
-static const uint2 CIE_XY_SIZE_UINT = uint2(CIE_XY_WIDTH, CIE_TEXTURE_HEIGHT);
-static const uint2 CIE_UV_SIZE_UINT = uint2(CIE_UV_WIDTH, CIE_TEXTURE_HEIGHT);
+static const uint2 CIE_XY_SIZE_UINT = uint2(CIE_XY_WIDTH_UINT, CIE_TEXTURE_HEIGHT);
+static const uint2 CIE_UV_SIZE_UINT = uint2(CIE_UV_WIDTH_UINT, CIE_TEXTURE_HEIGHT);
 
 static const float2 CIE_XY_SIZE_FLOAT = float2(CIE_XY_SIZE_UINT);
 static const float2 CIE_UV_SIZE_FLOAT = float2(CIE_UV_SIZE_UINT);
 
 //u'v' is wider than xy
-#define CIE_TEXTURE_WIDTH CIE_UV_WIDTH
+#define CIE_TEXTURE_WIDTH_UINT CIE_UV_WIDTH_UINT
 
-#define CIE_TEXTURE_WIDTH_MINUS_1  (CIE_TEXTURE_WIDTH  - 1)
+static const int CIE_TEXTURE_WIDTH_INT  = int(CIE_TEXTURE_WIDTH_UINT);
+static const int CIE_TEXTURE_HEIGHT_INT = int(CIE_TEXTURE_HEIGHT);
+
+#define CIE_TEXTURE_WIDTH_MINUS_1_UINT (CIE_TEXTURE_WIDTH_UINT - 1u)
+
 #define CIE_TEXTURE_HEIGHT_MINUS_1 (CIE_TEXTURE_HEIGHT - 1)
 
 
-static const uint2 CIE_XY_TOTAL_SIZE_UINT = uint2(CIE_XY_WIDTH, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
-static const uint2 CIE_UV_TOTAL_SIZE_UINT = uint2(CIE_UV_WIDTH, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
+static const uint2 CIE_XY_TOTAL_SIZE_UINT = uint2(CIE_XY_WIDTH_UINT, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
+static const uint2 CIE_UV_TOTAL_SIZE_UINT = uint2(CIE_UV_WIDTH_UINT, CIE_TEXTURE_HEIGHT) + CIE_BG_BORDER + CIE_BG_BORDER;
 
 //u'v' is wider than xy
 #define CIE_BG_TEXTURE_SIZE CIE_UV_TOTAL_SIZE_UINT
