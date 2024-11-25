@@ -29,7 +29,7 @@ void GetParams
   OutOldBlackPoint        = Ui::HdrBlackFloorFix::Lowering::OldBlackPoint        / 10000.f;
   float newBlackPoint     = Ui::HdrBlackFloorFix::Lowering::NewBlackPoint        / 10000.f;
 
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode != PRO_MODE_RGB)
   {
     OutRollOffStoppingPoint = Csp::Trc::LinearTo::Pq(OutRollOffStoppingPoint);
@@ -149,7 +149,7 @@ void PS_HdrBlackFloorFix
 #endif
 
   // optimisation
-  BRANCH(x)
+  BRANCH()
   if ( Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable
    &&  Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable
    && !Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuOnlyLowerBlackLevels
@@ -161,7 +161,7 @@ void PS_HdrBlackFloorFix
   }
   else
   {
-    BRANCH(x)
+    BRANCH()
     if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable)
     {
       Gamma22Emulation(co,
@@ -169,7 +169,7 @@ void PS_HdrBlackFloorFix
                        processingDone);
     }
 
-    BRANCH(x)
+    BRANCH()
     if (Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable)
     {
       GammaAdjustment(co,
@@ -178,7 +178,7 @@ void PS_HdrBlackFloorFix
     }
   }
 
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::Lowering::LoweringEnable)
   {
     LowerBlackFloor(co,

@@ -201,7 +201,7 @@ namespace Tmos
       )                                       \
       {                                       \
         /* E1 */                              \
-        BRANCH(x)                             \
+        BRANCH()                              \
         if (DisableBlackFloorAdaption)        \
         {                                     \
           return Input / SrcMaxPq;            \
@@ -227,7 +227,7 @@ namespace Tmos
         const bool  DisableBlackFloorAdaption \
       )                                       \
       {                                       \
-        BRANCH(x)                             \
+        BRANCH()                              \
         if (DisableBlackFloorAdaption)        \
         {                                     \
           /* E4 */                            \
@@ -274,7 +274,7 @@ namespace Tmos
       float OneDivOneMinusKneeStart = 1.f / OneMinusKneeStart;
       float KneeStartDivOneMinusKneeStart = KneeStart / OneMinusKneeStart;
 
-      BRANCH(x)
+      BRANCH()
       if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
         //HDR10
@@ -330,7 +330,7 @@ namespace Tmos
         return;
       }
       else
-      BRANCH(x)
+      BRANCH()
       if (ProcessingMode == BT2390_PRO_MODE_MAXCLL)
       {
         //scRGB
@@ -520,7 +520,7 @@ namespace Tmos
     )
     {
       // YRGB method copied from BT.2390
-      BRANCH(x)
+      BRANCH()
       if (ProcessingMode == DICE_PRO_MODE_YRGB)
       {
         //HDR10
@@ -559,7 +559,7 @@ namespace Tmos
         }
       }
       else
-      BRANCH(x)
+      BRANCH()
       if (ProcessingMode == DICE_PRO_MODE_MAXCLL)
       {
         //scRGB

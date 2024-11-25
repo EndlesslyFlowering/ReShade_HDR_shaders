@@ -17,7 +17,7 @@ void PS_Cas
 
   PSGetPixels(TexCoord, coordsEfhi, ptp);
 
-  BRANCH(x)
+  BRANCH()
   if (SHARPEN_ONLY)
   {
     Output.rgb = CasSharpenOnly(ptp, Peak);

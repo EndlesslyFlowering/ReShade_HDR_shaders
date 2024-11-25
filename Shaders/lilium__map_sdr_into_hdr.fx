@@ -114,7 +114,7 @@ void PS_MapSdrIntoHdr(
   {
     case TRC_GAMMA_22:
     {
-      BRANCH(x)
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
@@ -136,7 +136,7 @@ void PS_MapSdrIntoHdr(
     break;
     case TRC_GAMMA_24:
     {
-      BRANCH(x)
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
@@ -158,7 +158,7 @@ void PS_MapSdrIntoHdr(
     break;
     case TRC_LINEAR:
     {
-      BRANCH(x)
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
@@ -167,7 +167,7 @@ void PS_MapSdrIntoHdr(
     break;
     case TRC_LINEAR_WITH_BLACK_FLOOR_EMU:
     {
-      BRANCH(x)
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
@@ -205,7 +205,7 @@ void PS_MapSdrIntoHdr(
     break;
     case TRC_SRGB:
     {
-      BRANCH(x)
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);

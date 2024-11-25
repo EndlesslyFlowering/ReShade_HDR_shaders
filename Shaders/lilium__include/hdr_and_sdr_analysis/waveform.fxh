@@ -471,7 +471,7 @@ void RenderWaveform
   static const float2 coordFactors = float2(TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR, float(TEXTURE_WAVEFORM_USED_HEIGHT))
                                    * waveformSizeFactor;
 
-  BRANCH(x)
+  BRANCH()
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
     float pixelNits = CalcNits(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
@@ -507,7 +507,7 @@ void RenderWaveform
     return;
   }
   else
-  BRANCH(x)
+  BRANCH()
   if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
   {
     float pixelCll;
@@ -1482,7 +1482,7 @@ void VS_PrepareRenderWaveformToScale
   #define WaveformCutoffOffset 0
 #endif
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_WAVEFORM)
   {
     Waveform::SWaveformData waveDat = Waveform::GetData();
@@ -1510,10 +1510,10 @@ void VS_PrepareRenderWaveformToScale
   #define MAX_NITS_LINE_CUTOFF 100.f
 #endif
 
-    BRANCH(x)
+    BRANCH()
     if (_WAVEFORM_SHOW_MIN_NITS_LINE)
     {
-      BRANCH(x)
+      BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
       {
         const float minNits = tex1Dfetch(SamplerConsolidated, COORDS_MIN_NITS_VALUE);
@@ -1531,7 +1531,7 @@ void VS_PrepareRenderWaveformToScale
         }
       }
       else
-      BRANCH(x)
+      BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
       {
         const float minCll = tex1Dfetch(SamplerConsolidated, COORDS_MIN_CLL_VALUE);
@@ -1590,10 +1590,10 @@ void VS_PrepareRenderWaveformToScale
       }
     }
 
-    BRANCH(x)
+    BRANCH()
     if (_WAVEFORM_SHOW_MAX_NITS_LINE)
     {
-      BRANCH(x)
+      BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
       {
         const float maxNits = tex1Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
@@ -1611,7 +1611,7 @@ void VS_PrepareRenderWaveformToScale
         }
       }
       else
-      BRANCH(x)
+      BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
       {
         const float maxCll = tex1Dfetch(SamplerConsolidated, COORDS_MAX_CLL_VALUE);
@@ -1670,7 +1670,7 @@ void VS_PrepareRenderWaveformToScale
       }
     }
 
-    BRANCH(x)
+    BRANCH()
     if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
     {
       GLinePartX = uint(waveDat.waveformArea.x) / 3u;
@@ -1706,7 +1706,7 @@ void PS_RenderWaveformToScale
 {
   Out = 0.f;
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_WAVEFORM)
   {
     const int2 pureCoordAsInt = int2(Position.xy);
@@ -1728,7 +1728,7 @@ void PS_RenderWaveformToScale
       int minLineY;
       int maxLineY;
 
-      FLATTEN(x)
+      FLATTEN()
       if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
       {
         minLineY = MinNitsLineY;
@@ -1784,7 +1784,7 @@ void PS_RenderWaveformToScale
         bool waveformCoordsGTEMaxLine;
         bool waveformCoordsSTEMinLine;
 
-        FLATTEN(x)
+        FLATTEN()
         if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
         {
           waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;

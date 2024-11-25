@@ -879,7 +879,7 @@ void CS_GetNitNumbers
     nits = tex1Dfetch(SamplerConsolidated, fetchPos);
   }
   else
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_NITS_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
@@ -1470,13 +1470,13 @@ float GetMaxChars()
 {
   float maxChars = MAX_CHARS;
 
-  FLATTEN(x)
+  FLATTEN()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
     float textBlockSizeNitsRgbCursor = TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x;
 
-    FLATTEN(x)
+    FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
 #ifdef IS_HDR_CSP
@@ -1486,7 +1486,7 @@ float GetMaxChars()
 #endif
     }
 
-    FLATTEN(x)
+    FLATTEN()
     if (!_SHOW_NITS_FROM_CURSOR)
     {
       textBlockSizeNitsRgbCursor -= 3.f;
@@ -1496,7 +1496,7 @@ float GetMaxChars()
   }
 
 #ifdef IS_HDR_CSP
-  FLATTEN(x)
+  FLATTEN()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
@@ -1514,13 +1514,13 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
   ret.maxChars = MAX_CHARS;
   ret.maxLines = MAX_LINES;
 
-  FLATTEN(x)
+  FLATTEN()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
     uint textOffsetNitsCursor = uint(TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x);
 
-    FLATTEN(x)
+    FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
 #ifdef IS_HDR_CSP
@@ -1533,19 +1533,19 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
     ret.maxChars = max(ret.maxChars, textOffsetNitsCursor + NITS_EXTRA_CHARS);
   }
 
-  FLATTEN(x)
+  FLATTEN()
   if (!_SHOW_NITS_VALUES)
   {
     ret.maxLines -= 3;
   }
 
-  FLATTEN(x)
+  FLATTEN()
   if (!_SHOW_NITS_FROM_CURSOR)
   {
     ret.maxLines -= 1;
   }
 
-  FLATTEN(x)
+  FLATTEN()
   if (!_SHOW_NITS_VALUES
    && !_SHOW_NITS_FROM_CURSOR)
   {
@@ -1554,20 +1554,20 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
 
 #ifdef IS_HDR_CSP
 
-  FLATTEN(x)
+  FLATTEN()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxChars = max(ret.maxChars, uint(TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
   }
 
-  FLATTEN(x)
+  FLATTEN()
   if (!SHOW_GAMUTS)
   {
     ret.maxLines -= GAMUT_PERCENTAGES_LINES;
   }
 
-  FLATTEN(x)
+  FLATTEN()
   if (!SHOW_GAMUT_FROM_CURSOR)
   {
     ret.maxLines -= 1;
@@ -1769,7 +1769,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
           texCoordOffset = texCoordOffset2;
         }
 
-        FLATTEN(x)
+        FLATTEN()
         if (_TEXT_POSITION != 0)
         {
           vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
@@ -1911,7 +1911,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     bool calcOffsets = false;
 
     //max/avg/min nits
-    BRANCH(x)
+    BRANCH()
     if (_SHOW_NITS_VALUES
      && currentNumberID < SHOW_NITS_VALUES_NUMBER_ID_MAX
      && drawMaxRbgOrMaxCll)
@@ -1944,7 +1944,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
     //cursor nits
     else
-    BRANCH(x)
+    BRANCH()
     if (_SHOW_NITS_FROM_CURSOR
      && currentNumberID >= SHOW_NITS_VALUES_NUMBER_ID_MAX
      && currentNumberID <  SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
@@ -1979,7 +1979,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #ifdef IS_HDR_CSP
     else
-    BRANCH(x)
+    BRANCH()
     if (SHOW_GAMUTS
      && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
      && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
@@ -2041,7 +2041,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
         texCoordOffset = texCoordOffset2;
       }
 
-      FLATTEN(x)
+      FLATTEN()
       if (_TEXT_POSITION != 0)
       {
         vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
@@ -2085,7 +2085,7 @@ void VS_RenderNumbers
   }
   //cursor gamut
   else
-  BRANCH(x)
+  BRANCH()
   if (SHOW_GAMUT_FROM_CURSOR)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
@@ -2102,7 +2102,7 @@ void VS_RenderNumbers
                    : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
                                                                      : 1.f;
 
-    FLATTEN(x)
+    FLATTEN()
     if (SHOW_GAMUTS)
     {
       vertexOffset.y += GAMUT_PERCENTAGES_LINES;
@@ -2150,7 +2150,7 @@ void VS_RenderNumbers
       texCoordOffset = texCoordOffset2;
     }
 
-    FLATTEN(x)
+    FLATTEN()
     if (_TEXT_POSITION != 0)
     {
       vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxChars() * charSize.x));

@@ -361,7 +361,7 @@ float2 Bicubic
 
 void DrawCieOutlines()
 {
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     const uint cieSettingsOld = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
@@ -411,7 +411,7 @@ void DrawCieOutlines()
       float2 primBt2020B;
 #endif
 
-      FLATTEN(x)
+      FLATTEN()
       if (_CIE_DIAGRAM_TYPE == CIE_1931)
       {
         cieMinExtra  = CIE_XY_MIN_EXTRA;
@@ -486,7 +486,7 @@ void DrawCieOutlines()
             DRAW_CIE_LINES(coords0, coords1);                    \
           }
 
-      BRANCH(x)
+      BRANCH()
       if (_CIE_SHOW_GAMUT_OUTLINE_POINTERS)
       {
         DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32)
@@ -547,7 +547,7 @@ void DrawCieOutlines()
         primBt709B
       };
 
-      BRANCH(x)
+      BRANCH()
       if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
       {
         DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
@@ -657,7 +657,7 @@ void DrawCieOutlines()
 //        primBt709B
 //      };
 //
-//      BRANCH(x)
+//      BRANCH()
 //      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
 //      {
 //        DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
@@ -665,7 +665,7 @@ void DrawCieOutlines()
 //#endif
 
 //this is theoretically faster by ~0.04s
-//      BRANCH(x)
+//      BRANCH()
 //      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
 //      {
 //        DRAW_CIE_LINES(primBt709R, primBt709G);
@@ -673,14 +673,14 @@ void DrawCieOutlines()
 //        DRAW_CIE_LINES(primBt709B, primBt709R);
 //      }
 //#ifdef IS_HDR_CSP
-//      BRANCH(x)
+//      BRANCH()
 //      if (CIE_SHOW_GAMUT_OUTLINE_DCI_P3)
 //      {
 //        DRAW_CIE_LINES(primDciP3R, primDciP3G);
 //        DRAW_CIE_LINES(primDciP3B, primDciP3G);
 //        DRAW_CIE_LINES(primDciP3B, primDciP3R);
 //      }
-//      BRANCH(x)
+//      BRANCH()
 //      if (CIE_SHOW_GAMUT_OUTLINE_BT2020)
 //      {
 //        DRAW_CIE_LINES(primBt2020R, primBt2020G);
@@ -706,7 +706,7 @@ void DrawCieOutlines()
 
       float2 coordsSpectralLocus[340];
 
-      FLATTEN(x)
+      FLATTEN()
       if (_CIE_DIAGRAM_TYPE == CIE_1931)
       {
         cieMinExtra  = CIE_XY_MIN_EXTRA;
@@ -877,7 +877,7 @@ void PS_ComposeCieDiagram
 {
   Out = 0.f;
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     const int2 positionAsInt2 = int2(Position.xy);
@@ -909,7 +909,7 @@ void PS_ComposeCieDiagram
 
       float3 XYZ;
 
-      BRANCH(x)
+      BRANCH()
       if (_CIE_DIAGRAM_TYPE == CIE_1931)
       {
         float2 xy = ConvertDecodedCieDiagramCoordsToxy(decodedCoords);
@@ -1002,7 +1002,7 @@ void CS_ClearTextureCieCounter
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     tex3Dstore(StorageCieCounter, DTID, 0u);
@@ -1055,7 +1055,7 @@ void GenerateCieDiagram
 
   const float cieDragramSizeMultiplier = GetCieDragramSizeMultiplier();
 
-  BRANCH(x)
+  BRANCH()
   if (_CIE_DIAGRAM_TYPE == CIE_1931)
   {
     // get xy
@@ -1091,7 +1091,7 @@ void CS_GetMaxCieCounter
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     [branch]
@@ -1166,7 +1166,7 @@ void CS_RenderCrosshairToCieDiagram
   static const float4 storeColourBlack = float4(ycbcrBlack, 1.f);
   static const float4 storeColourWhite = float4(ycbcrWhite, 1.f);
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE
    && _SHOW_CROSSHAIR_ON_CIE_DIAGRAM)
   {
@@ -1185,7 +1185,7 @@ void CS_RenderCrosshairToCieDiagram
 
         const float cieDragramSizeMultiplier = GetCieDragramSizeMultiplier();
 
-        BRANCH(x)
+        BRANCH()
         if (_CIE_DIAGRAM_TYPE == CIE_1931)
         {
           // get xy

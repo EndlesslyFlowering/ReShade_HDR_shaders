@@ -383,7 +383,7 @@ void CS_GetMaxAvgMinNits
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_NITS_VALUES
    || (_SHOW_WAVEFORM
     && (_WAVEFORM_SHOW_MIN_NITS_LINE || _WAVEFORM_SHOW_MAX_NITS_LINE)))

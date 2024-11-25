@@ -303,7 +303,7 @@ void PS_InverseToneMapping(
   {
     case CONTENT_TRC_GAMMA_22:
     {
-      BRANCH(x)
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
@@ -325,7 +325,7 @@ void PS_InverseToneMapping(
     break;
     case CONTENT_TRC_GAMMA_24:
     {
-      BRANCH(x)
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
@@ -347,7 +347,7 @@ void PS_InverseToneMapping(
     break;
     case CONTENT_TRC_LINEAR:
     {
-      BRANCH(x)
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
@@ -356,7 +356,7 @@ void PS_InverseToneMapping(
     break;
     case CONTENT_TRC_LINEAR_WITH_BLACK_FLOOR_EMU:
     {
-      BRANCH(x)
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
@@ -394,7 +394,7 @@ void PS_InverseToneMapping(
     break;
     case CONTENT_TRC_SRGB:
     {
-      BRANCH(x)
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);

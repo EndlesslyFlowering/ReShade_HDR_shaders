@@ -168,7 +168,7 @@ void PS_CalcGamuts
 {
   CurGamut = 0.f;
 
-  BRANCH(x)
+  BRANCH()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR
    || SHOW_GAMUT_MAP)
@@ -297,7 +297,7 @@ void CS_CountGamuts
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  BRANCH(x)
+  BRANCH()
   if (SHOW_GAMUTS)
   {
 

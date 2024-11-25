@@ -920,7 +920,7 @@ void CS_RenderWaveformAndGenerateCieDiagram
 )
 {
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_WAVEFORM
    || _SHOW_CIE)
   {
@@ -944,7 +944,7 @@ void CS_RenderWaveformAndGenerateCieDiagram
     // get XYZ
     const float3 XYZ = GetXYZFromRgb(pixel);
 
-    BRANCH(x)
+    BRANCH()
     if (_SHOW_CIE
      && XYZ.y != 0.f)
     {
@@ -958,7 +958,7 @@ void CS_RenderWaveformAndGenerateCieDiagram
       return;
     }
     else
-    BRANCH(x)
+    BRANCH()
     if (_SHOW_WAVEFORM)
     {
       RenderWaveform(fetchPos);

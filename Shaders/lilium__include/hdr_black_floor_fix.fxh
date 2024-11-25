@@ -187,21 +187,21 @@ CO::ColourObject ConvertColourForGamma22Emulation
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
   CO = CO::ConvertTrcTo::LinearNormalised(CO);
 
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT709)
   {
     CO = CO::ConvertPrimariesTo::Bt709(CO);
   }
   else
 #endif
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_DCI_P3)
   {
     CO = CO::ConvertPrimariesTo::DciP3(CO);
   }
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   else
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT2020)
   {
     CO = CO::ConvertPrimariesTo::Bt2020(CO);
@@ -257,19 +257,19 @@ void GammaAdjustment
   CO = CO::ConvertTrcTo::LinearNormalised(CO);
 #endif
 
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT709)
   {
     CO = CO::ConvertPrimariesTo::Bt709(CO);
   }
   else
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_DCI_P3)
   {
     CO = CO::ConvertPrimariesTo::DciP3(CO);
   }
   else
-  BRANCH(x)
+  BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT2020)
   {
     CO = CO::ConvertPrimariesTo::Bt2020(CO);
@@ -388,7 +388,7 @@ void LowerBlackFloor
 
       CO_org = CO;
 
-      BRANCH(x)
+      BRANCH()
       if (CO.trc == TRC_PQ)
       {
         CO = CO::ConvertTrcTo::LinearNormalised(CO);
@@ -455,7 +455,7 @@ void LowerBlackFloor
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      BRANCH(x)
+      BRANCH()
       if (CO.trc != TRC_PQ)
       {
         CO = CO::ConvertCspTo::Hdr10(CO);
@@ -515,7 +515,7 @@ void LowerBlackFloor
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      BRANCH(x)
+      BRANCH()
       if (CO.trc == TRC_PQ)
       {
         CO = CO::ConvertTrcTo::LinearNormalised(CO);

@@ -947,7 +947,7 @@ void VS_PrepareHdrAnalysis
 
 #endif //IS_COMPUTE_CAPABLE_API
 
-  BRANCH(x)
+  BRANCH()
   if (_HIGHLIGHT_NIT_RANGE)
   {
     float pingpong0 = NIT_PINGPONG0.x + 0.5f;
@@ -1005,13 +1005,13 @@ void VS_PrepareHdrAnalysis
   }
 
 #ifdef IS_COMPUTE_CAPABLE_API
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_WAVEFORM)
   {
     WaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
   }
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     float2 cieDiagramRenderSize = GetCieDiagramRenderSize();
@@ -1039,7 +1039,7 @@ void PS_HdrAnalysis
 
   Output = tex2Dfetch(SamplerBackBuffer, pureCoordAsInt);
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_HEATMAP
 #ifdef IS_HDR_CSP
    || SHOW_GAMUT_MAP
@@ -1051,7 +1051,7 @@ void PS_HdrAnalysis
     //static const float4 pixelRgbNits = CalcNitsAndCll(Output.rgb);
     static const float pixelNits = max(CalcNits(Output.rgb), 0.f);
 
-    BRANCH(x)
+    BRANCH()
     if (_SHOW_HEATMAP)
     {
       Output.rgb = HeatmapRgbValues(pixelNits,
@@ -1070,7 +1070,7 @@ void PS_HdrAnalysis
     }
 #endif
 
-    BRANCH(x)
+    BRANCH()
     if (_HIGHLIGHT_NIT_RANGE)
     {
       if (pixelNits >= _HIGHLIGHT_NIT_RANGE_START_POINT
@@ -1083,7 +1083,7 @@ void PS_HdrAnalysis
       }
     }
 
-    BRANCH(x)
+    BRANCH()
     if (_DRAW_ABOVE_NITS_AS_BLACK)
     {
       if (pixelNits > _ABOVE_NITS_AS_BLACK)
@@ -1092,7 +1092,7 @@ void PS_HdrAnalysis
       }
     }
 
-    BRANCH(x)
+    BRANCH()
     if (_DRAW_BELOW_NITS_AS_BLACK)
     {
       if (pixelNits < _BELOW_NITS_AS_BLACK)
@@ -1103,7 +1103,7 @@ void PS_HdrAnalysis
   }
 
 #ifdef IS_COMPUTE_CAPABLE_API
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_CIE)
   {
     // draw the diagram in the bottom left corner
@@ -1144,7 +1144,7 @@ void PS_HdrAnalysis
     }
   }
 
-  BRANCH(x)
+  BRANCH()
   if (_SHOW_WAVEFORM)
   {
     // draw the waveform in the bottom right corner
