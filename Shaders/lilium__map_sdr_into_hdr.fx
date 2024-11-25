@@ -100,9 +100,11 @@ uniform float CLAMP_POSITIVE_TO
 > = 125.f;
 
 
-void PS_MapSdrIntoHdr(
+void PS_MapSdrIntoHdr
+(
       float4 Position : SV_Position,
-  out float4 Output   : SV_Target0)
+  out float4 Output   : SV_Target0
+)
 {
   float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
@@ -119,11 +121,15 @@ void PS_MapSdrIntoHdr(
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * pow(abs(colour), 2.2f);
       }
@@ -141,11 +147,15 @@ void PS_MapSdrIntoHdr(
       {
         colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * pow(abs(colour), 2.4f);
       }
@@ -172,7 +182,9 @@ void PS_MapSdrIntoHdr(
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       {
         float3 absColour  = abs(colour);
         float3 signColour = sign(colour);
@@ -192,7 +204,9 @@ void PS_MapSdrIntoHdr(
           colour.b = signColour.b * pow(Csp::Trc::LinearTo::Srgb(absColour.b), 2.2f);
         }
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * pow(Csp::Trc::LinearTo::Srgb(abs(colour)), 2.2f);
       }
@@ -210,11 +224,15 @@ void PS_MapSdrIntoHdr(
       {
         colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
       }
-      else if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
       }
@@ -242,11 +260,13 @@ void PS_MapSdrIntoHdr(
       break;
   }
 
+  BRANCH()
   if (ENABLE_CLAMPING)
   {
     colour = clamp(colour, CLAMP_NEGATIVE_TO, CLAMP_POSITIVE_TO);
   }
 
+  BRANCH()
   if (ENABLE_GAMMA_ADJUST
    && !inputTrcIsPq)
   {
@@ -256,6 +276,7 @@ void PS_MapSdrIntoHdr(
 //  if (dot(Bt709ToXYZ[1].rgb, colour) < 0.f)
 //    colour = float3(0.f, 0.f, 0.f);
 
+  BRANCH()
   if (!inputTrcIsPq)
   {
 
