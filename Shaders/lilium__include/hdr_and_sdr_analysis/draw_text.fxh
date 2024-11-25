@@ -1444,15 +1444,15 @@ VertexCoordsAndTexCoords ReturnOffScreen()
   return ret;
 }
 
+#define MAX_LINES_NITS_RGB_CLL 6
+
 #if defined(IS_FLOAT_HDR_CSP)
-  #define MAX_LINES 12
+  #define MAX_LINES_GAMUT 6
 #elif defined(IS_HDR10_LIKE_CSP)
-  #define MAX_LINES 10
-#else
-  #define MAX_LINES  6
+  #define MAX_LINES_GAMUT 4
 #endif
 
-#define MAX_CHARS TEXT_BLOCK_SIZE_ANALYIS_HEADER.x
+#define MAX_CHARS_NITS_RGB_CLL TEXT_BLOCK_SIZE_ANALYIS_HEADER.x
 
 #ifdef IS_HDR_CSP
   #define NITS_EXTRA_CHARS 6
@@ -1466,9 +1466,9 @@ struct MaxCharsAndMaxLines
   uint maxLines;
 };
 
-float GetMaxChars()
+float GetMaxCharsForNitsRgbCll()
 {
-  float maxChars = MAX_CHARS;
+  float maxChars = MAX_CHARS_NITS_RGB_CLL;
 
   FLATTEN()
   if (_SHOW_NITS_VALUES
@@ -1495,24 +1495,31 @@ float GetMaxChars()
     maxChars = max(TEXT_BLOCK_SIZE_ANALYIS_HEADER.x, textBlockSizeNitsRgbCursor + NITS_EXTRA_CHARS);
   }
 
+  return maxChars;
+}
+
 #ifdef IS_HDR_CSP
+float GetMaxCharsForGamut()
+{
+  float maxChars = 0.f;
+
   FLATTEN()
   if (SHOW_GAMUTS
    || SHOW_GAMUT_FROM_CURSOR)
   {
     maxChars = max(maxChars, TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x + TEXT_BLOCK_DRAW_X_OFFSET[3]);
   }
-#endif
 
   return maxChars;
 }
+#endif
 
-MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
+MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
 {
   MaxCharsAndMaxLines ret;
 
-  ret.maxChars = MAX_CHARS;
-  ret.maxLines = MAX_LINES;
+  ret.maxChars = MAX_CHARS_NITS_RGB_CLL;
+  ret.maxLines = MAX_LINES_NITS_RGB_CLL;
 
   FLATTEN()
   if (_SHOW_NITS_VALUES
@@ -1558,14 +1565,17 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
     ret.maxLines -= 1;
   }
 
-#ifdef IS_HDR_CSP
+  return ret;
+}
 
-  FLATTEN()
-  if (SHOW_GAMUTS
-   || SHOW_GAMUT_FROM_CURSOR)
-  {
-    ret.maxChars = max(ret.maxChars, uint(TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]));
-  }
+
+#ifdef IS_HDR_CSP
+MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForGamut()
+{
+  MaxCharsAndMaxLines ret;
+
+  ret.maxChars = uint(TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x) + uint(TEXT_BLOCK_DRAW_X_OFFSET[3]);
+  ret.maxLines = MAX_LINES_GAMUT;
 
   FLATTEN()
   if (!SHOW_GAMUTS)
@@ -1579,10 +1589,9 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
     ret.maxLines -= 1;
   }
 
-#endif
-
   return ret;
 }
+#endif
 
 VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 (
@@ -1594,23 +1603,41 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
   switch(VertexID)
   {
-    case 0:
-    case 1:
-    case 2:
+    case 0u:
+    case 1u:
+    case 2u:
+#ifdef IS_HDR_CSP
+    case 3u:
+    case 4u:
+    case 5u:
+#endif
     {
-      MaxCharsAndMaxLines _max = GetMaxCharsAndMaxLines();
+      MaxCharsAndMaxLines _max = GetMaxCharsAndMaxLinesForNitsRgbCll();
+
+#ifdef IS_HDR_CSP
+      [branch]
+      if (VertexID > 2u)
+      {
+        MaxCharsAndMaxLines _max1 = GetMaxCharsAndMaxLinesForGamut();
+
+        _max.maxChars  = _max1.maxChars;
+        // this works because the 3rd vertex left or right of the target area
+        // it's above but that is fine
+        _max.maxLines += _max1.maxLines;
+      }
+#endif
 
       float2 pos = float2(_max.maxChars * CharSize.x,
                           _max.maxLines * CharSize.y);
 
       [flatten]
-      if (VertexID == 1u)
+      if (VertexID % 3u == 1u)
       {
         pos.x = -pos.x;
       }
       else
       [flatten]
-      if (VertexID == 2u)
+      if (VertexID % 3u == 2u)
       {
         pos.y = -pos.y;
       }
@@ -1628,7 +1655,11 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
     break;
     default:
     {
+#ifdef IS_HDR_CSP
+      const uint textBlockVertexID = VertexID - 6u;
+#else
       const uint textBlockVertexID = VertexID - 3u;
+#endif
 
       const uint localVertexID = textBlockVertexID % 6u;
 
@@ -1776,9 +1807,26 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         }
 
         FLATTEN()
-        if (_TEXT_POSITION != 0)
+        if (_TEXT_POSITION != 0u)
         {
-          vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
+          float maxChars;
+
+#ifdef IS_HDR_CSP
+
+          [flatten]
+          if (currentTextBlockID == 4
+           || currentTextBlockID == 5)
+          {
+            maxChars = GetMaxCharsForGamut();
+          }
+          else
+          {
+            maxChars = GetMaxCharsForNitsRgbCll();
+          }
+#else
+          maxChars = GetMaxCharsForNitsRgbCll();
+#endif
+          vertexOffset.x += BUFFER_WIDTH_FLOAT - (maxChars * CharSize.x);
         }
 
         ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
@@ -1993,16 +2041,17 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     {
       calcOffsets = true;
 
-      currentNumberID -= (NITS_NUMBERS_PER_ROW * 3
-                        + NITS_NUMBERS_PER_ROW * 1);
+      uint localNumberID = currentNumberID
+                         - (NITS_NUMBERS_PER_ROW * 3u
+                          + NITS_NUMBERS_PER_ROW * 1u);
 
-      uint a = (currentNumberID % 6);
+      uint a = (localNumberID % 6);
 
       vertexOffset.x = a + 9;
 
       vertexOffset.x += a / 3;
 
-      vertexOffset.y = currentNumberID / 6;
+      vertexOffset.y = localNumberID / 6;
 
       vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
@@ -2050,7 +2099,25 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       FLATTEN()
       if (_TEXT_POSITION != 0)
       {
-        vertexOffset.x += BUFFER_WIDTH_FLOAT - (GetMaxChars() * CharSize.x);
+        float maxChars;
+
+#ifdef IS_HDR_CSP
+
+        [flatten]
+        if (SHOW_GAMUTS
+         && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
+         && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
+        {
+          maxChars = GetMaxCharsForGamut();
+        }
+        else
+        {
+          maxChars = GetMaxCharsForNitsRgbCll();
+        }
+#else
+        maxChars = GetMaxCharsForNitsRgbCll();
+#endif
+        vertexOffset.x += BUFFER_WIDTH_FLOAT - (maxChars * CharSize.x);
       }
 
       ret.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);
@@ -2159,7 +2226,7 @@ void VS_RenderNumbers
     FLATTEN()
     if (_TEXT_POSITION != 0)
     {
-      vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxChars() * charSize.x));
+      vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxCharsForGamut() * charSize.x));
     }
 
     vertexCoordsAndTexCoords.vertexCoords = GetPositonCoordsFromRegularCoords(vertexOffset, BUFFER_SIZE_FLOAT);

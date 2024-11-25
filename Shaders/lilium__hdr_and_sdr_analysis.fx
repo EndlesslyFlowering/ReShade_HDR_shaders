@@ -1456,7 +1456,11 @@ technique lilium__hdr_and_sdr_analysis
   {
     VertexShader = VS_RenderText;
     PixelShader  = PS_RenderText;
+#ifdef IS_HDR_CSP
+    VertexCount  = (3 + 3 + FONT_TEXT_VERTEX_COUNT);
+#else
     VertexCount  = (3 + FONT_TEXT_VERTEX_COUNT);
+#endif
   }
 
   pass PS_RenderNumbers
