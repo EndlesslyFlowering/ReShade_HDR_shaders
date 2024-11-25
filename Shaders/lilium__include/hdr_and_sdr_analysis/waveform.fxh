@@ -188,7 +188,9 @@ namespace Waveform
 #endif
 
 #ifdef IS_HDR_CSP
-    static const int cutoffPoints[16] = {
+
+    waveDat.tickPoints =
+    {
       int(0),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
@@ -204,9 +206,46 @@ namespace Waveform
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   1.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.25f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.05f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int(                                                                         float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f) };
+      int(                                                                         float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f)
+    };
+
+    waveDat.cutoffOffset = waveDat.tickPoints[WAVEFORM_CUTOFF_POINT];
+
+    waveDat.tickPoints[ 1] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 2] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 3] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 4] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 5] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 6] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 7] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 8] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[ 9] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[10] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[11] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[12] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[13] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[14] -= waveDat.cutoffOffset;
+    waveDat.tickPoints[15] -= waveDat.cutoffOffset;
+
+    if (WAVEFORM_CUTOFF_POINT > 0u)
+    {
+      waveDat.tickPoints[0] = -100;
+
+      if (WAVEFORM_CUTOFF_POINT > 1u)
+      {
+        waveDat.tickPoints[1] = -100;
+
+        if (WAVEFORM_CUTOFF_POINT > 2u)
+        {
+          waveDat.tickPoints[2] = -100;
+        }
+      }
+    }
+
 #else
-    waveDat.tickPoints = {
+
+    waveDat.tickPoints =
+    {
       int(0),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.875f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.75f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
@@ -226,108 +265,19 @@ namespace Waveform
 #else
       int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.004f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
 #endif
-      int(                                                              float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f) };
+      int(                                                              float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f)
+    };
+
 #endif
 
     waveDat.waveformArea =
       int2(uint(TEXTURE_WAVEFORM_WIDTH * waveformScaleFactorXY.x * 3.f) / 3u,
 #ifdef IS_HDR_CSP
-           cutoffPoints[15] - cutoffPoints[WAVEFORM_CUTOFF_POINT]
+           waveDat.tickPoints[15]
 #else
            waveDat.tickPoints[13]
 #endif
            );
-
-#ifdef IS_HDR_CSP
-    if (WAVEFORM_CUTOFF_POINT == 0)
-    {
-      waveDat.cutoffOffset = 0;
-
-      waveDat.tickPoints = {
-        int(0),
-        int(cutoffPoints[ 1]),
-        int(cutoffPoints[ 2]),
-        int(cutoffPoints[ 3]),
-        int(cutoffPoints[ 4]),
-        int(cutoffPoints[ 5]),
-        int(cutoffPoints[ 6]),
-        int(cutoffPoints[ 7]),
-        int(cutoffPoints[ 8]),
-        int(cutoffPoints[ 9]),
-        int(cutoffPoints[10]),
-        int(cutoffPoints[11]),
-        int(cutoffPoints[12]),
-        int(cutoffPoints[13]),
-        int(cutoffPoints[14]),
-        int(cutoffPoints[15]) };
-    }
-    else if (WAVEFORM_CUTOFF_POINT == 1)
-    {
-      waveDat.cutoffOffset = cutoffPoints[1];
-
-      waveDat.tickPoints = {
-        int(-100),
-        int(0),
-        int(cutoffPoints[ 2] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 3] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
-        int(cutoffPoints[10] - waveDat.cutoffOffset),
-        int(cutoffPoints[11] - waveDat.cutoffOffset),
-        int(cutoffPoints[12] - waveDat.cutoffOffset),
-        int(cutoffPoints[13] - waveDat.cutoffOffset),
-        int(cutoffPoints[14] - waveDat.cutoffOffset),
-        int(cutoffPoints[15] - waveDat.cutoffOffset) };
-    }
-    else if (WAVEFORM_CUTOFF_POINT == 2)
-    {
-      waveDat.cutoffOffset = cutoffPoints[2];
-
-      waveDat.tickPoints = {
-        int(-100),
-        int(-100),
-        int(0),
-        int(cutoffPoints[ 3] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
-        int(cutoffPoints[10] - waveDat.cutoffOffset),
-        int(cutoffPoints[11] - waveDat.cutoffOffset),
-        int(cutoffPoints[12] - waveDat.cutoffOffset),
-        int(cutoffPoints[13] - waveDat.cutoffOffset),
-        int(cutoffPoints[14] - waveDat.cutoffOffset),
-        int(cutoffPoints[15] - waveDat.cutoffOffset) };
-    }
-    else //if (WAVEFORM_CUTOFF_POINT == 3)
-    {
-      waveDat.cutoffOffset = cutoffPoints[3];
-
-      waveDat.tickPoints = {
-        int(-100),
-        int(-100),
-        int(-100),
-        int(0),
-        int(cutoffPoints[ 4] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 5] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 6] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 7] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 8] - waveDat.cutoffOffset),
-        int(cutoffPoints[ 9] - waveDat.cutoffOffset),
-        int(cutoffPoints[10] - waveDat.cutoffOffset),
-        int(cutoffPoints[11] - waveDat.cutoffOffset),
-        int(cutoffPoints[12] - waveDat.cutoffOffset),
-        int(cutoffPoints[13] - waveDat.cutoffOffset),
-        int(cutoffPoints[14] - waveDat.cutoffOffset),
-        int(cutoffPoints[15] - waveDat.cutoffOffset) };
-    }
-#endif
 
     waveDat.textOffset = int2(0, int(float(waveDat.charDimensions.y) / 2.f + 0.5f));
 
@@ -338,10 +288,12 @@ namespace Waveform
     waveDat.lowerFrameStart = waveDat.frameSize
                             + waveDat.waveformArea.y;
 
-    waveDat.endXY = waveDat.frameSize * 2
+    waveDat.endXY = waveDat.frameSize
+                  * 2
                   + waveDat.waveformArea;
 
-    waveDat.endYminus1 = waveDat.endXY.y - 1;
+    waveDat.endYminus1 = waveDat.endXY.y
+                       - 1;
 
     return waveDat;
   }
@@ -398,18 +350,18 @@ namespace Waveform
     const float screenPixelRange = Msdf::GetScreenPixelRange(charDimFactor, WAVEFORM_RANGE);
 
 
-    const int2 ceilCharDim = floor(CharDim);
+    const int2 floorCharDim = floor(CharDim);
 
     int2 currentOffset = int2(0, 0);
 
     [loop]
-    while (currentOffset.x < ceilCharDim.x)
+    while (currentOffset.x < floorCharDim.x)
     {
 #ifndef NO_WORKAROUND_NEEDED
       currentOffset.x += floor(FRAMETIME / 100000.f + 0.1f);
 #endif
       [loop]
-      while (currentOffset.y < ceilCharDim.y)
+      while (currentOffset.y < floorCharDim.y)
       {
 #ifndef NO_WORKAROUND_NEEDED
         currentOffset.y += floor(FRAMETIME / 100000.f);
@@ -696,22 +648,30 @@ void RenderWaveformScale()
 
 #ifdef IS_HDR_CSP
 
-    const int2 nits10000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 0]);
-    const int2 nits_4000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 1]);
-    const int2 nits_2000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 2]);
-    const int2 nits_1000_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 3]);
-    const int2 nits__400_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 4]);
-    const int2 nits__203_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 5]);
-    const int2 nits__100_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 6]);
-    const int2 nits___50_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 7]);
-    const int2 nits___25_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 8]);
-    const int2 nits___10_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 9]);
-    const int2 nits____5_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[10]);
-    const int2 nits____2_50Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[11]);
-    const int2 nits____1_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[12]);
-    const int2 nits____0_25Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[13]);
-    const int2 nits____0_05Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[14]);
-    const int2 nits____0_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[15]);
+    int2 nitsOffsets[16];
+
+    [loop]
+    for (uint i = 0u; i < 16u; i++)
+    {
+      nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
+    }
+
+    #define nits10000_00Offset nitsOffsets[ 0]
+    #define nits_4000_00Offset nitsOffsets[ 1]
+    #define nits_2000_00Offset nitsOffsets[ 2]
+    #define nits_1000_00Offset nitsOffsets[ 3]
+    #define nits__400_00Offset nitsOffsets[ 4]
+    #define nits__203_00Offset nitsOffsets[ 5]
+    #define nits__100_00Offset nitsOffsets[ 6]
+    #define nits___50_00Offset nitsOffsets[ 7]
+    #define nits___25_00Offset nitsOffsets[ 8]
+    #define nits___10_00Offset nitsOffsets[ 9]
+    #define nits____5_00Offset nitsOffsets[10]
+    #define nits____2_50Offset nitsOffsets[11]
+    #define nits____1_00Offset nitsOffsets[12]
+    #define nits____0_25Offset nitsOffsets[13]
+    #define nits____0_05Offset nitsOffsets[14]
+    #define nits____0_00Offset nitsOffsets[15]
 
 
     const int2 text10000_00Offset = nits10000_00Offset - waveDat.textOffset;
@@ -971,26 +931,34 @@ void RenderWaveformScale()
 
 #else
 
-    const int2 nits100_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 0]);
-    const int2 nits_87_50Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 1]);
-    const int2 nits_75_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 2]);
-    const int2 nits_60_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 3]);
-    const int2 nits_50_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 4]);
-    const int2 nits_35_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 5]);
-    const int2 nits_25_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 6]);
-    const int2 nits_18_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 7]);
-    const int2 nits_10_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 8]);
-    const int2 nits__5_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[ 9]);
-    const int2 nits__2_50Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[10]);
-    const int2 nits__1_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[11]);
+    int2 nitsOffsets[14];
+
+    [loop]
+    for (uint i = 0u; i < 14u; i++)
+    {
+      nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
+    }
+
+    #define nits100_00Offset nitsOffsets[ 0]
+    #define nits_87_50Offset nitsOffsets[ 1]
+    #define nits_75_00Offset nitsOffsets[ 2]
+    #define nits_60_00Offset nitsOffsets[ 3]
+    #define nits_50_00Offset nitsOffsets[ 4]
+    #define nits_35_00Offset nitsOffsets[ 5]
+    #define nits_25_00Offset nitsOffsets[ 6]
+    #define nits_18_00Offset nitsOffsets[ 7]
+    #define nits_10_00Offset nitsOffsets[ 8]
+    #define nits__5_00Offset nitsOffsets[ 9]
+    #define nits__2_50Offset nitsOffsets[10]
+    #define nits__1_00Offset nitsOffsets[11]
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-    const int2 nits__0_25Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[12]);
+    #define nits__0_25Offset nitsOffsets[12]
 #else
-    const int2 nits__0_40Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[12]);
+    #define nits__0_40Offset nitsOffsets[12]
 #endif
-    const int2 nits__0_00Offset = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[13]);
+    #define nits__0_00Offset nitsOffsets[13]
 
     const int2 text100_00Offset = nits100_00Offset - waveDat.textOffset;
     const int2 text_87_50Offset = nits_87_50Offset - waveDat.textOffset;
