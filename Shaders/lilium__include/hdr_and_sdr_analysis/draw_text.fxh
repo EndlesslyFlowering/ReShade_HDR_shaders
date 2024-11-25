@@ -1530,6 +1530,12 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLines()
 #endif
     }
 
+    FLATTEN()
+    if (!_SHOW_NITS_FROM_CURSOR)
+    {
+      textOffsetNitsCursor -= 3u;
+    }
+
     ret.maxChars = max(ret.maxChars, textOffsetNitsCursor + NITS_EXTRA_CHARS);
   }
 
