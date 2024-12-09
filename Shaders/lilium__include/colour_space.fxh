@@ -3,7 +3,7 @@
 
 #define RESHADE_MAJOR    6
 #define RESHADE_MINOR    3
-#define RESHADE_REVISION 2
+#define RESHADE_REVISION 3
 
 #define RESHADE_VERSION (RESHADE_MAJOR * 10000 \
                        + RESHADE_MINOR *   100 \
