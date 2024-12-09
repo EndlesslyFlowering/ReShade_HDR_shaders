@@ -1,51 +1,21 @@
 #pragma once
 
 
-#ifdef IS_HIGHER_THAN_QHD_RES
+#define TEXTURE_FILENAME "lilium__font_atlas_mtsdf.png"
 
-  #define TEXTURE_FILENAME "lilium__font_atlas_1.333.png"
+#define CHAR_WIDTH  25
+#define CHAR_HEIGHT 39
 
-  #define FONT_TEXTURE_WIDTH  1674
-  #define FONT_TEXTURE_HEIGHT  637
+#define FONT_TEXTURE_WIDTH  (54 * CHAR_WIDTH)
+#define FONT_TEXTURE_HEIGHT (13 * CHAR_HEIGHT)
 
-  #define WAVEFORM_ATLAS_OFFSET float2(1421, 0)
+#define CHAR_DIM_UINT   uint2(CHAR_WIDTH, CHAR_HEIGHT)
+#define CHAR_DIM_INT     int2(CHAR_WIDTH, CHAR_HEIGHT)
+#define CHAR_DIM_FLOAT float2(CHAR_WIDTH, CHAR_HEIGHT)
 
-  #define CHAR_DIM_UINT  uint2(31, 49)
-  #define CHAR_DIM_FLOAT float2(CHAR_DIM_UINT)
+#define PX_RANGE 6.f
 
-  #define WAVEFORM_CHAR_DIM_UINT  uint2(21, 27)
-  #define WAVEFORM_CHAR_DIM_FLOAT float2(WAVEFORM_CHAR_DIM_UINT)
-
-  #define RANGE 1.5f
-
-  #define WAVEFORM_RANGE 2.f
-
-  #define FONT_SIZE_MULTIPLIER 1.f
-
-  #define IS_BIG_FONT_ATLAS
-
-#else
-
-  #define TEXTURE_FILENAME "lilium__font_atlas_1.000.png"
-
-  #define FONT_TEXTURE_WIDTH  1296
-  #define FONT_TEXTURE_HEIGHT  494
-
-  #define WAVEFORM_ATLAS_OFFSET float2(1115, 0)
-
-  #define CHAR_DIM_UINT  uint2(24, 38)
-  #define CHAR_DIM_FLOAT float2(CHAR_DIM_UINT)
-
-  #define WAVEFORM_CHAR_DIM_UINT  uint2(15, 19)
-  #define WAVEFORM_CHAR_DIM_FLOAT float2(WAVEFORM_CHAR_DIM_UINT)
-
-  #define RANGE 2.f
-
-  #define WAVEFORM_RANGE 1.5f
-
-  #define FONT_SIZE_MULTIPLIER 1.41f
-
-#endif
+#define FONT_SIZE_MULTIPLIER (((21.f / float(CHAR_WIDTH)) + (27.f / float(CHAR_HEIGHT))) * 0.6f)
 
 
 #define FONT_TEXTURE_SIZE_FLOAT float2(FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT)
@@ -158,14 +128,10 @@ namespace Msdf
 {
   float GetScreenPixelRange
   (
-    const float Factor,
-    const float Range
+    const float Factor
   )
   {
-    float unitRange = Factor * Range;
-
-  //  return max(unitRange, 1.f);
-    return unitRange;
+    return Factor * PX_RANGE;
   }
 
   float GetMedian
@@ -176,22 +142,34 @@ namespace Msdf
     return max(min(Rgb.r, Rgb.g), min(max(Rgb.r, Rgb.g), Rgb.b));
   }
 
-  float2 GetOpacityAndOutline
+  float2 GetTextOpacities
   (
     const float4 Mtsdf,
     const float  ScreenPixelRange
   )
   {
-    const float sd = GetMedian(Mtsdf.rgb);
+    const float signedDistance = max(GetMedian(Mtsdf.rgb), Mtsdf.a);
 
-    const float screenPixelDistance = ScreenPixelRange * (sd - 0.5f);
+    [branch]
+    if (signedDistance > 0.f)
+    {
+      static const float innerBias = 0.05f;
+      static const float outerBias = 0.4f;
+      static const float outline   = 0.4f;
+      static const float threshold = 0.5f;
 
-    float opacity = saturate(screenPixelDistance + 0.5f);
-    opacity *= opacity;
+      const float2 screenPixelDistances = ScreenPixelRange
+                                        * (signedDistance - threshold + float2(innerBias, outline));
 
-    const float outline = smoothstep(0.f, 0.1f, min(opacity + Mtsdf.a, 1.f));
+      float2 opacities = saturate(screenPixelDistances + 0.5f + float2(0.f, outerBias));
+      opacities *= opacities;
 
-    return float2(opacity, outline);
+      return opacities;
+    }
+    else
+    {
+      return (float2)0;
+    }
   }
 }
 
@@ -271,19 +249,6 @@ namespace Msdf
 #define _x                  uint2(34, 1)
 #define _y                  uint2(35, 1)
 #define _z                  uint2(36, 1)
-
-#define _0_w       uint( 0)
-#define _1_w       uint( 1)
-#define _2_w       uint( 2)
-#define _3_w       uint( 3)
-#define _4_w       uint( 4)
-#define _5_w       uint( 5)
-#define _6_w       uint( 6)
-#define _7_w       uint( 7)
-#define _8_w       uint( 8)
-#define _9_w       uint( 9)
-#define _dot_w     uint(10)
-#define _percent_w uint(11)
 
 
 texture2D TextureFontAtlasConsolidated

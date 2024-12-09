@@ -95,6 +95,7 @@ uniform float2 NIT_PINGPONG2
   #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
   #define _SHOW_WAVEFORM                          SDR_SHOW_WAVEFORM
   #define _WAVEFORM_MODE                          SDR_WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST              SDR_WAVEFORM_TEXT_SIZE_ADJUST
   #define _WAVEFORM_BRIGHTNESS                    SDR_WAVEFORM_BRIGHTNESS
   #define _WAVEFORM_ALPHA                         SDR_WAVEFORM_ALPHA
   #define _WAVEFORM_SIZE                          SDR_WAVEFORM_SIZE
@@ -134,6 +135,7 @@ uniform float2 NIT_PINGPONG2
   #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
   #define _SHOW_WAVEFORM                          SHOW_WAVEFORM
   #define _WAVEFORM_MODE                          WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST              WAVEFORM_TEXT_SIZE_ADJUST
   #define _WAVEFORM_BRIGHTNESS                    WAVEFORM_BRIGHTNESS
   #define _WAVEFORM_ALPHA                         WAVEFORM_ALPHA
   #define _WAVEFORM_SIZE                          WAVEFORM_SIZE
@@ -156,7 +158,7 @@ uniform float _TEXT_SIZE
   ui_label    = "text size";
   ui_type     = "slider";
   ui_units    = "%%";
-  ui_min      = 0.75f;
+  ui_min      = 0.35f;
   ui_max      = 2.f;
   ui_step     = 0.00001f;
 > = 1.f;
@@ -649,6 +651,17 @@ uniform uint WAVEFORM_CUTOFF_POINT
                 " 1000\0";
 > = 0;
 #endif //IS_HDR_CSP
+
+uniform float _WAVEFORM_TEXT_SIZE_ADJUST
+<
+  ui_category = "Waveform";
+  ui_label    = "waveform text size adjust";
+  ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      = 0.f;
+  ui_max      = 2.f;
+  ui_step     = 0.05f;
+> = 1.f;
 
 uniform float _WAVEFORM_BRIGHTNESS
 <
@@ -1159,7 +1172,7 @@ void PS_HdrAnalysis
       // using gamma 2 as intermediate gamma space
       currentPixelToDisplay.rgb *= currentPixelToDisplay.rgb;
 
-      float alpha = min(_WAVEFORM_ALPHA / 100.f + currentPixelToDisplay.a, 1.f);
+      float alpha = max(currentPixelToDisplay.a, _WAVEFORM_ALPHA / 100.f);
 
       Output.rgb = MergeOverlay(Output.rgb,
                                 currentPixelToDisplay.rgb,

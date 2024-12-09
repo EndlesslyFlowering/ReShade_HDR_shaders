@@ -154,17 +154,21 @@ namespace Waveform
     waveDat.borderSize = clamp(int(TEXTURE_WAVEFORM_BUFFER_FACTOR * 35.f * borderAndFrameSizeFactor + 0.5f), 10, maxBorderSize);
     waveDat.frameSize  = clamp(int(TEXTURE_WAVEFORM_BUFFER_FACTOR *  7.f * borderAndFrameSizeFactor + 0.5f),  4, maxFrameSize);
 
+    static const float minFontSize = 0.375f;
+
     static const float maxFontSize =
-      max(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.725f);
+      max(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, minFontSize);
 
     const float fontSize =
-      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, 0.725f, maxFontSize);
+      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER * _WAVEFORM_TEXT_SIZE_ADJUST,
+            minFontSize,
+            maxFontSize);
 
 #ifndef IS_HDR_CSP
-    waveDat.charDimensionXForPercent = WAVEFORM_CHAR_DIM_FLOAT.x * fontSize.x;
+    waveDat.charDimensionXForPercent = CHAR_DIM_FLOAT.x * fontSize.x;
 #endif
 
-    waveDat.charDimensions = float2(WAVEFORM_CHAR_DIM_FLOAT.x - 1, WAVEFORM_CHAR_DIM_FLOAT.y) * fontSize;
+    waveDat.charDimensions = float2(CHAR_DIM_FLOAT.x - 1.f, CHAR_DIM_FLOAT.y) * fontSize;
 
 #ifdef IS_HDR_CSP
     const int maxChars = WAVEFORM_CUTOFF_POINT == 0 ? 8
@@ -333,21 +337,20 @@ namespace Waveform
 
   void DrawCharToScale
   (
-    const uint   Char,
+    const uint2  Char,
     const float2 CharDim,
     const int2   Pos,
     const int    CharCount
   )
   {
-    const float2 charFetchPos = float2(WAVEFORM_ATLAS_OFFSET.x + (Char * WAVEFORM_CHAR_DIM_UINT.x),
-                                       WAVEFORM_ATLAS_OFFSET.y);
+    const float2 charFetchPos = float2(Char * CHAR_DIM_UINT);
 
     const int2 currentDrawPos = Pos + int2(CharCount * CharDim.x, 0);
 
 
-    const float charDimFactor = CharDim.x / WAVEFORM_CHAR_DIM_FLOAT.x;
+    const float charDimFactor = CharDim.x / CHAR_DIM_FLOAT.x;
 
-    const float screenPixelRange = Msdf::GetScreenPixelRange(charDimFactor, WAVEFORM_RANGE);
+    const float screenPixelRange = Msdf::GetScreenPixelRange(charDimFactor);
 
 
     const int2 floorCharDim = floor(CharDim);
@@ -367,7 +370,9 @@ namespace Waveform
         currentOffset.y += floor(FRAMETIME / 100000.f);
 #endif
         float2 currentSamplePos = charFetchPos
-                                + float2(currentOffset) * (min(WAVEFORM_CHAR_DIM_FLOAT / CharDim, 2.f)) + 0.5f;
+                                + float2(currentOffset)
+                                * (min(CHAR_DIM_FLOAT / CharDim, 2.f))
+                                + 0.5f;
 
         float2 fract = frac(currentSamplePos);
 
@@ -382,16 +387,15 @@ namespace Waveform
                             lerp(c, d, fract.x),
                             fract.y);
 
-        const float2 opacityAndOutline = Msdf::GetOpacityAndOutline(mtsdf, screenPixelRange);
+        const float2 opacities = Msdf::GetTextOpacities(mtsdf, screenPixelRange);
 
-        const float opacity = opacityAndOutline[0];
+        const float innerOpacity = opacities[0];
 
-        const float outline = opacityAndOutline[1];
+        const float outerOpacity = opacities[1];
 
-        float grey = lerp(0.f, 0.5f, opacity);
+        float grey = lerp(0, 0.5f, innerOpacity);
 
-        float alpha = (grey || outline) > 0.f ? 1.f
-                                              : 0.f;
+        float alpha = innerOpacity + outerOpacity;
 
         int2 currentDrawOffset = currentDrawPos + currentOffset;
 
@@ -624,10 +628,11 @@ void RenderWaveform
 void RenderWaveformScale()
 {
   [branch]
-  if (tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X)       != _WAVEFORM_SIZE.x
-   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y)       != _WAVEFORM_SIZE.y
+  if (tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X)           != _WAVEFORM_SIZE.x
+   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y)           != _WAVEFORM_SIZE.y
+   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST) != _WAVEFORM_TEXT_SIZE_ADJUST
 #ifdef IS_HDR_CSP
-   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT) != WAVEFORM_CUTOFF_POINT
+   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT)     != WAVEFORM_CUTOFF_POINT
 #endif
   )
   {
@@ -720,29 +725,29 @@ void RenderWaveformScale()
     }
 
 
-    static const int charList10000_00[8] = { _1_w, _0_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList_4000_00[7] = {       _4_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList_2000_00[7] = {       _2_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList_1000_00[7] = {       _1_w, _0_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList__400_00[6] = {             _4_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList__203_00[6] = {             _2_w, _0_w, _3_w, _dot_w, _0_w, _0_w };
-    static const int charList__100_00[6] = {             _1_w, _0_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList___50_00[5] = {                   _5_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList___25_00[5] = {                   _2_w, _5_w, _dot_w, _0_w, _0_w };
-    static const int charList___10_00[5] = {                   _1_w, _0_w, _dot_w, _0_w, _0_w };
-    static const int charList____5_00[4] = {                         _5_w, _dot_w, _0_w, _0_w };
-    static const int charList____2_50[4] = {                         _2_w, _dot_w, _5_w, _0_w };
-    static const int charList____1_00[4] = {                         _1_w, _dot_w, _0_w, _0_w };
-    static const int charList____0_25[4] = {                         _0_w, _dot_w, _2_w, _5_w };
-    static const int charList____0_05[4] = {                         _0_w, _dot_w, _0_w, _5_w };
-    static const int charList____0_00[4] = {                         _0_w, _dot_w, _0_w, _0_w };
+    static const uint2 charList10000_00[8] = { _1, _0, _0, _0, _0, _dot, _0, _0 };
+    static const uint2 charList_4000_00[7] = {     _4, _0, _0, _0, _dot, _0, _0 };
+    static const uint2 charList_2000_00[7] = {     _2, _0, _0, _0, _dot, _0, _0 };
+    static const uint2 charList_1000_00[7] = {     _1, _0, _0, _0, _dot, _0, _0 };
+    static const uint2 charList__400_00[6] = {         _4, _0, _0, _dot, _0, _0 };
+    static const uint2 charList__203_00[6] = {         _2, _0, _3, _dot, _0, _0 };
+    static const uint2 charList__100_00[6] = {         _1, _0, _0, _dot, _0, _0 };
+    static const uint2 charList___50_00[5] = {             _5, _0, _dot, _0, _0 };
+    static const uint2 charList___25_00[5] = {             _2, _5, _dot, _0, _0 };
+    static const uint2 charList___10_00[5] = {             _1, _0, _dot, _0, _0 };
+    static const uint2 charList____5_00[4] = {                 _5, _dot, _0, _0 };
+    static const uint2 charList____2_50[4] = {                 _2, _dot, _5, _0 };
+    static const uint2 charList____1_00[4] = {                 _1, _dot, _0, _0 };
+    static const uint2 charList____0_25[4] = {                 _0, _dot, _2, _5 };
+    static const uint2 charList____0_05[4] = {                 _0, _dot, _0, _5 };
+    static const uint2 charList____0_00[4] = {                 _0, _dot, _0, _0 };
 
     static const uint charListsCount = 16;
 
     [loop]
     for (uint i = 0; i < charListsCount; i++)
     {
-      int currentNumber;
+      uint2 currentNumber;
 
       int2 currentTextOffset;
 
@@ -985,26 +990,26 @@ void RenderWaveformScale()
     const int charOffsets[7] = {0, 1, 2, 3, 4, 5, 6};
 
 
-    static const int charList100_00[7] = { _1_w, _0_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_87_50[6] = {       _8_w, _7_w, _dot_w, _5_w, _0_w, _percent_w };
-    static const int charList_75_00[6] = {       _7_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_60_00[6] = {       _6_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_50_00[6] = {       _5_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_35_00[6] = {       _3_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_25_00[6] = {       _2_w, _5_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_18_00[6] = {       _1_w, _8_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList_10_00[6] = {       _1_w, _0_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList__5_00[5] = {             _5_w, _dot_w, _0_w, _0_w, _percent_w };
-    static const int charList__2_50[5] = {             _2_w, _dot_w, _5_w, _0_w, _percent_w };
-    static const int charList__1_00[5] = {             _1_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const uint2 charList100_00[7] = { _1, _0, _0, _dot, _0, _0, _percent };
+    static const uint2 charList_87_50[6] = {     _8, _7, _dot, _5, _0, _percent };
+    static const uint2 charList_75_00[6] = {     _7, _5, _dot, _0, _0, _percent };
+    static const uint2 charList_60_00[6] = {     _6, _0, _dot, _0, _0, _percent };
+    static const uint2 charList_50_00[6] = {     _5, _0, _dot, _0, _0, _percent };
+    static const uint2 charList_35_00[6] = {     _3, _5, _dot, _0, _0, _percent };
+    static const uint2 charList_25_00[6] = {     _2, _5, _dot, _0, _0, _percent };
+    static const uint2 charList_18_00[6] = {     _1, _8, _dot, _0, _0, _percent };
+    static const uint2 charList_10_00[6] = {     _1, _0, _dot, _0, _0, _percent };
+    static const uint2 charList__5_00[5] = {         _5, _dot, _0, _0, _percent };
+    static const uint2 charList__2_50[5] = {         _2, _dot, _5, _0, _percent };
+    static const uint2 charList__1_00[5] = {         _1, _dot, _0, _0, _percent };
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-    static const int charList__0_25[5] = {             _0_w, _dot_w, _2_w, _5_w, _percent_w };
+    static const uint2 charList__0_25[5] = {         _0, _dot, _2, _5, _percent };
 #else
-    static const int charList__0_40[5] = {             _0_w, _dot_w, _4_w, _0_w, _percent_w };
+    static const uint2 charList__0_40[5] = {         _0, _dot, _4, _0, _percent };
 #endif
-    static const int charList__0_00[5] = {             _0_w, _dot_w, _0_w, _0_w, _percent_w };
+    static const uint2 charList__0_00[5] = {         _0, _dot, _0, _0, _percent };
 
     static const uint charListsCount = 14;
 
@@ -1015,7 +1020,7 @@ void RenderWaveformScale()
     [loop]
     for (uint i = 0; i < charListsCount; i++)
     {
-      int currentNumber;
+      uint2 currentNumber;
 
       int2 currentTextOffset;
 
@@ -1165,8 +1170,8 @@ void RenderWaveformScale()
           break;
         }
 
-        charDims.x = currentNumber != _percent_w ? waveDat.charDimensions.x
-                                                 : waveDat.charDimensionXForPercent;
+        charDims.x = currentNumber != _percent ? waveDat.charDimensions.x
+                                               : waveDat.charDimensionXForPercent;
 
         [branch]
         if (-(j - 7) > currentCharOffset)
@@ -1345,10 +1350,11 @@ void RenderWaveformScale()
       }
     }
 
-    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X,       _WAVEFORM_SIZE.x);
-    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y,       _WAVEFORM_SIZE.y);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X,           _WAVEFORM_SIZE.x);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y,           _WAVEFORM_SIZE.y);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST, _WAVEFORM_TEXT_SIZE_ADJUST);
 #ifdef IS_HDR_CSP
-    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT, WAVEFORM_CUTOFF_POINT);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT,     WAVEFORM_CUTOFF_POINT);
 #endif
   }
 
