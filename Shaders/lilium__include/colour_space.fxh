@@ -3616,7 +3616,7 @@ namespace Csp
       pass CreateHdr10ToLinearLUT                                  \
       {                                                            \
         ComputeShader = CS_CreateHdr10ToLinearLUT <16, 1>;         \
-        DispatchSizeX = (1024 / 16);                               \
+        DispatchSizeX = 64; /* (1024 / 16) */                      \
         DispatchSizeY = 1;                                         \
       }                                                            \
     }
