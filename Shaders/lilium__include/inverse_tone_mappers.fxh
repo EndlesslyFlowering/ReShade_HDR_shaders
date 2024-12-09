@@ -36,31 +36,40 @@ namespace Itmos
     //clamp to avoid invalid numbers
     ySdr = max(ySdr, 1e-20);
     //Y'SDR
-    ySdr = pow(ySdr, 1.f / (2.4f + GammaIn));
+    const float y_Sdr = pow(ySdr, 1.f / (2.4f + GammaIn));
 
     //Y'c
     //if pSdr == 1 there is a division by zero
     //this happens when LSdr == 0
-    const float yC = log((ySdr * (pSdr - 1.f)) + 1.f)
-                   / log(pSdr); //log = ln
+    const float y_C = log((y_Sdr * (pSdr - 1.f)) + 1.f)
+                    / log(pSdr); //log = ln
 
-    // Tone mapping step 2 (inverse)
-    // get Y'p
-    const float yP0 = yC
-                    / 1.0770f;
-    const float yP2 = (yC - 0.5000f)
-                    / 0.5000f;
+    // order of branching is so that a float accuracy issue edge case
+    // where none of the cases match is covered
+    // this happens when:
+    //  - y_P0 is slightly above 0.7399 and should be the match
+    //  - y_P2 is slightly below 0.9909 and should be the match
+    // this is caught by the else case always being y_P1
+    // which causes no curve discontinuity issues
+    const float y_P0 = y_C
+                     / 1.0770f;
 
-    //(4.83307641 - 4.604f * yC) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - yC))
-    const float yP = yP0 <= 0.7399f ? yP0
-                   : yP2 >= 0.9909f ? yP2
-                                    : (-2.7811f + sqrt(4.83307641f - 4.604f * yC))
-                                    / -2.302f;
+    //(4.83307641 - 4.604f * y_C) == (pow(2.7811f, 2) - 4 * (-1.151f) * (-0.6302f - y_C))
+    const float y_P1 = (-2.7811f + sqrt(4.83307641f - 4.604f * y_C))
+                     / -2.302f;
+
+    const float y_P2 = (y_C - 0.5000f)
+                     / 0.5000f;
+
+    const float y_P = y_P0 <= 0.7399f ? y_P0
+                    : y_P2 >= 0.9909f ? y_P2
+                                      : y_P1;
+
     //Y'HDR
     //if pHdr == 1 there is a division by zero
     //this happens when LHdr == 0
-    const float yHdr = (pow(pHdr, yP) - 1.f)
-                     / (pHdr - 1.f);
+    const float y_Hdr = (pow(pHdr, y_P) - 1.f)
+                      / (pHdr - 1.f);
 
     float3 hdr;
 
@@ -69,16 +78,19 @@ namespace Itmos
     {
       case BT2446A_PRO_MODE_LUMINANCE:
       {
-        hdr = sdr * (yHdr / ySdr);
+        hdr = sdr * (y_Hdr / y_Sdr);
       }
       break;
       case BT2446A_PRO_MODE_YCBCR_LIKE:
       {
-        const float2 yHdrYSdr = pow(float2(yHdr, ySdr), 2.4f);
+        const float yHdr = pow(y_Hdr, 2.4f);
 
-        hdr = sdr * (yHdrYSdr[0] / yHdrYSdr[1]);
+        hdr = sdr * (yHdr / ySdr);
       }
       break;
+      default:
+        hdr = 0.f;
+        break;
     }
 
     //expand to target luminance
