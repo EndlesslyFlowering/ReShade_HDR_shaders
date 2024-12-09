@@ -745,7 +745,7 @@ void RenderWaveformScale()
     static const uint charListsCount = 16;
 
     [loop]
-    for (uint i = 0; i < charListsCount; i++)
+    for (uint i = 0u; i < charListsCount; i++)
     {
       uint2 currentNumber;
 
@@ -757,7 +757,7 @@ void RenderWaveformScale()
 
 
       [loop]
-      for (int j = 0; j < 8; j++)
+      for (int j = 0u; j < 8u; j++)
       {
         const int minj6 = min(j, 6);
         const int minj5 = min(j, 5);

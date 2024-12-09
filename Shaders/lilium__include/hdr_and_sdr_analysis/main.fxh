@@ -974,6 +974,7 @@ void CopyShowValues()
   frametimeCounter += FRAMETIME;
 
   // only update every 1/2 of a second
+  [branch]
   if (frametimeCounter >= _VALUES_UPDATE_RATE)
   {
     tex1Dstore(StorageConsolidated, COORDS_UPDATE_OVERLAY_PERCENTAGES, 0.f);

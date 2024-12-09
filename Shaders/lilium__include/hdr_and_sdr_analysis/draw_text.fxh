@@ -246,11 +246,11 @@ void DrawText()
 #ifdef IS_HDR_CSP
 
   //8
-  #define SPACES_NITS     _space, _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS    _space, _space, _space, _space, _space, _space, _space, _space
   //4
-  #define SPACES_RED      _space, _space, _space
+  #define SPACES_RED     _space, _space, _space
   //2
-  #define SPACES_GREEN(x) _space,
+  #define SPACES_GREEN() _space,
 
   #define SPACES_NITS_COUNT  8
   #define SPACES_RED_COUNT   3
@@ -259,11 +259,11 @@ void DrawText()
 #else
 
   //7
-  #define SPACES_NITS     _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS    _space, _space, _space, _space, _space, _space, _space
   //2
-  #define SPACES_RED      _space, _space
+  #define SPACES_RED     _space, _space
   //0
-  #define SPACES_GREEN(x)
+  #define SPACES_GREEN()
 
   #define SPACES_NITS_COUNT  7
   #define SPACES_RED_COUNT   2
@@ -286,7 +286,7 @@ void DrawText()
   {
     _verticalLine, _n, _i, _t, _s,                             SPACES_NITS,
     _verticalLine, _r, _e, _d,         CHARS_CLL_IN_BRACKETS,  SPACES_RED,
-    _verticalLine, _g, _r, _e, _e, _n, CHARS_CLL_IN_BRACKETS,  SPACES_GREEN(x)
+    _verticalLine, _g, _r, _e, _e, _n, CHARS_CLL_IN_BRACKETS,  SPACES_GREEN()
     _verticalLine, _b, _l, _u, _e,     CHARS_CLL_IN_BRACKETS,
   };
 
@@ -315,21 +315,21 @@ void DrawText()
 
 #ifdef IS_HDR_CSP
 
-  #define SDR_PERCENT(x)
+  #define SDR_PERCENT()
 
   #define SDR_PERCENT_COUNT 0
 
-  #define SDR_SPACES_FOR_LAST_PERCENT(x)
+  #define SDR_SPACES_FOR_LAST_PERCENT()
 
   #define SDR_SPACES_FOR_LAST_PERCENT_COUNT 0
 
 #else //IS_HDR_CSP
 
-  #define SDR_PERCENT(x) _percent,
+  #define SDR_PERCENT() _percent,
 
   #define SDR_PERCENT_COUNT 1
 
-  #define SDR_SPACES_FOR_LAST_PERCENT(x) SPACES_AFTER_DOT ## ,
+  #define SDR_SPACES_FOR_LAST_PERCENT() SPACES_AFTER_DOT ## ,
 
   #define SDR_SPACES_FOR_LAST_PERCENT_COUNT SPACES_AFTER_DOT_COUNT
 
@@ -349,13 +349,13 @@ void DrawText()
     _m, _a, _x,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListAvgNitsRGBOffset = uint2(0, 5);
@@ -365,13 +365,13 @@ void DrawText()
     _a, _v, _g,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListMinNitsRGBOffset = uint2(0, 6);
@@ -381,13 +381,13 @@ void DrawText()
     _m, _i, _n,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 #define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB                                       \
@@ -404,13 +404,13 @@ void DrawText()
     _c, _u, _r, _s, _o, _r,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 
@@ -443,9 +443,9 @@ void DrawText()
     _m, _a, _x,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListAvgNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 2);
@@ -455,9 +455,9 @@ void DrawText()
     _a, _v, _g,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListMinNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 3);
@@ -467,9 +467,9 @@ void DrawText()
     _m, _i, _n,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 #define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL                                             \
@@ -484,9 +484,9 @@ void DrawText()
     _c, _u, _r, _s, _o, _r,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,              SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT(x) SDR_PERCENT(x)
+    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 
@@ -1965,7 +1965,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     bool calcOffsets = false;
 
     //max/avg/min nits
-    BRANCH()
+    [branch]
     if (_SHOW_NITS_VALUES
      && currentNumberID < SHOW_NITS_VALUES_NUMBER_ID_MAX
      && drawMaxRbgOrMaxCll)
@@ -1982,9 +1982,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #ifndef IS_HDR_CSP
 
-      spacerOffset *= 2;
+      spacerOffset *= 2u;
 
-      dotOffset = min(dotOffset, 1);
+      dotOffset = min(dotOffset, 1u);
 
 #endif
 
@@ -1998,7 +1998,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
     //cursor nits
     else
-    BRANCH()
+    [branch]
     if (_SHOW_NITS_FROM_CURSOR
      && currentNumberID >= SHOW_NITS_VALUES_NUMBER_ID_MAX
      && currentNumberID <  SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
@@ -2012,13 +2012,13 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
       uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
 
-      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1) / DOT_OFFSET_DIV;
+      uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1u) / DOT_OFFSET_DIV;
 
 #ifndef IS_HDR_CSP
 
-      spacerOffset *= 2;
+      spacerOffset *= 2u;
 
-      dotOffset = min(dotOffset, 1);
+      dotOffset = min(dotOffset, 1u);
 
 #endif
 
@@ -2033,7 +2033,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #ifdef IS_HDR_CSP
     else
-    BRANCH()
+    [branch]
     if (SHOW_GAMUTS
      && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
      && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
@@ -2045,13 +2045,13 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
                          - (NITS_NUMBERS_PER_ROW * 3u
                           + NITS_NUMBERS_PER_ROW * 1u);
 
-      uint a = (localNumberID % 6);
+      uint a = localNumberID % 6u;
 
-      vertexOffset.x = a + 9;
+      vertexOffset.x = float(a + 9u);
 
-      vertexOffset.x += a / 3;
+      vertexOffset.x += float(a / 3u);
 
-      vertexOffset.y = localNumberID / 6;
+      vertexOffset.y = float(localNumberID / 6u);
 
       vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
@@ -2075,29 +2075,29 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       const float2 texCoordOffset2 = texCoordOffset + CHAR_DIM_FLOAT;
 
       [flatten]
-      if (currentVertexID == 1)
+      if (currentVertexID == 1u)
       {
           vertexOffset.y =   vertexOffset2.y;
         texCoordOffset.y = texCoordOffset2.y;
       }
       else
       [flatten]
-      if (currentVertexID == 4)
+      if (currentVertexID == 4u)
       {
           vertexOffset.x =   vertexOffset2.x;
         texCoordOffset.x = texCoordOffset2.x;
       }
       else
       [flatten]
-      if (currentVertexID == 2
-       || currentVertexID == 5)
+      if (currentVertexID == 2u
+       || currentVertexID == 5u)
       {
           vertexOffset =   vertexOffset2;
         texCoordOffset = texCoordOffset2;
       }
 
       FLATTEN()
-      if (_TEXT_POSITION != 0)
+      if (_TEXT_POSITION != 0u)
       {
         float maxChars;
 
@@ -2149,8 +2149,8 @@ void VS_RenderNumbers
   VertexCoordsAndTexCoords vertexCoordsAndTexCoords;
 
 #ifdef IS_HDR_CSP
-  //[branch] can't branch here iirc?
-  if (VertexID < (NUMBERS_COUNT - 1) * 6)
+  [branch]
+  if (VertexID < (NUMBERS_COUNT - 1u) * 6u)
   {
 #endif
     vertexCoordsAndTexCoords = GetVertexCoordsAndTexCoordsForNumbers(VertexID, charSize);
@@ -2164,7 +2164,7 @@ void VS_RenderNumbers
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
     const float gamut = floor(tex2Dfetch(SamplerGamuts, mousePosition) * 256.f); // *256 for safety
 
-    const uint currentVertexID = VertexID % 6;
+    const uint currentVertexID = VertexID % 6u;
 
     float2 vertexOffset;
 
@@ -2202,29 +2202,29 @@ void VS_RenderNumbers
     const float2 texCoordOffset2 = float2(x2[1], y2[1]);
 
     [flatten]
-    if (currentVertexID == 1)
+    if (currentVertexID == 1u)
     {
         vertexOffset.y =   vertexOffset2.y;
       texCoordOffset.y = texCoordOffset2.y;
     }
     else
     [flatten]
-    if (currentVertexID == 4)
+    if (currentVertexID == 4u)
     {
         vertexOffset.x =   vertexOffset2.x;
       texCoordOffset.x = texCoordOffset2.x;
     }
     else
     [flatten]
-    if (currentVertexID == 2
-     || currentVertexID == 5)
+    if (currentVertexID == 2u
+     || currentVertexID == 5u)
     {
         vertexOffset =   vertexOffset2;
       texCoordOffset = texCoordOffset2;
     }
 
     FLATTEN()
-    if (_TEXT_POSITION != 0)
+    if (_TEXT_POSITION != 0u)
     {
       vertexOffset.x += (BUFFER_WIDTH_FLOAT - (GetMaxCharsForGamut() * charSize.x));
     }
