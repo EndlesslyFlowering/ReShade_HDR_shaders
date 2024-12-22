@@ -191,7 +191,7 @@ void PS_HdrBlackFloorFix
 
   [branch]
   if ((Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable || Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable)
-  && processingDone)
+   && processingDone)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     co = CO::ConvertCspTo::ScRgb(co);
@@ -200,6 +200,8 @@ void PS_HdrBlackFloorFix
 #endif
   }
   else
+  [branch]
+  if (!Ui::HdrBlackFloorFix::Lowering::LoweringEnable)
   {
     discard;
   }
