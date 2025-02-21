@@ -61,7 +61,7 @@ texture2D TextureCieFinal
 {
   Width  = CIE_TEXTURE_WIDTH_UINT;
   Height = CIE_TEXTURE_HEIGHT;
-  Format = RGB10A2;
+  Format = RGBA8;
 };
 
 sampler2D<float4> SamplerCieFinal
@@ -151,117 +151,175 @@ float2 GetVector
   return xy1 - xy0;
 }
 
-void DrawCieLines
+float GetM
 (
-  const float2 CieMinExtra,
-  const float2 CieNormalise,
-  const float2 RenderSizeMinus1,
-  const float  Step,
+  const float2 xy0,
+  const float2 xy1
+)
+{
+  float num = xy1.y - xy0.y;
+  float den = xy1.x - xy0.x;
+
+  if (den == 0.f)
+  {
+    return num;
+  }
+  else
+  {
+    return num
+         / den;
+  }
+}
+
+float GetB
+(
+  const float2 xy0,
+  const float  m
+)
+{
+  return xy0.y - m * xy0.x;
+}
+
+void Draw_Cie_Lines
+(
+  const float2 Cie_Min_Extra,
+  const float2 Cie_Normalise,
+  const float2 Render_Size_Minus_1,
   const float2 Start,
   const float2 Stop
 )
 {
-  const float2 vec = GetVector(Start, Stop);
+  const float2 diff = abs(Start - Stop);
 
-  const float2 stepxy = vec * Step;
+  const bool diff_x_greater = diff.x > diff.y;
 
-  float2 curStepxy = stepxy;
+  float4 start_stop;
 
-  float counter = 0.f;
-
-  float2 curCoords = Start;
-
-  int2 encodedCoords;
-
-#define DRAW_CIE_GAMUT_LINES                                                         \
-          encodedCoords = int2(saturate((curCoords + (-CieMinExtra)) / CieNormalise) \
-                             * RenderSizeMinus1                                      \
-                             + 0.5f);                                                \
-                                                                                     \
-          encodedCoords.y = int(RenderSizeMinus1.y) - encodedCoords.y;               \
-                                                                                     \
-          tex2Dstore(StorageCieOverlay, encodedCoords, float4(1.f, 1.f, 0.f, 0.f));  \
-                                                                                     \
-          counter += 1.f;                                                            \
-                                                                                     \
-          curStepxy = stepxy * counter;                                              \
-                                                                                     \
-          curCoords = Start + curStepxy
-
-
-  static const bool startX_smaller_stopX = Start.x < Stop.x;
-  static const bool startX_greater_stopX = Start.x > Stop.x;
-
-  static const bool startY_smaller_stopY = Start.y < Stop.y;
-  static const bool startY_greater_stopY = Start.y > Stop.y;
-
-
-  bool doLoop = true;
-
-  [loop]
-  while (doLoop)
+  [flatten]
+  if (diff_x_greater)
   {
-    DRAW_CIE_GAMUT_LINES;
+    start_stop = Start.x < Stop.x ? float4(Start, Stop) : float4(Stop, Start);
+  }
+  else
+  {
+    start_stop = Start.y < Stop.y ? float4(Start, Stop) : float4(Stop, Start);
+  }
 
-    [flatten]
-    if (startX_smaller_stopX)
+  const float2 start_encoded = ((start_stop.xy + (-Cie_Min_Extra)) / Cie_Normalise) * Render_Size_Minus_1;
+  const float2  stop_encoded = ((start_stop.zw + (-Cie_Min_Extra)) / Cie_Normalise) * Render_Size_Minus_1;
+
+
+  const float m = GetM(start_encoded, stop_encoded);
+  const float b = GetB(start_encoded, m);
+
+
+  const float2 start_encoded_floor = floor(start_encoded);
+  const float2 stop_encoded_floor  = floor(stop_encoded);
+
+  const float2 start_encoded_ceil = ceil(start_encoded);
+  const float2 stop_encoded_ceil  = ceil(stop_encoded);
+
+
+  [branch]
+  if (diff_x_greater)
+  {
+    [loop]
+    for (float x = start_encoded_floor.x - 1.f; x <= stop_encoded_ceil.x + 1.f; x = x + 1.f)
     {
-      [flatten]
-      if (startY_smaller_stopY)
+      float y_correct = m * x + b;
+      float y_floor   = floor(y_correct);
+      float y_ceil    =  ceil(y_correct);
+
+      //optimise this
+      float x_fract_start = (start_encoded.x - x) * 0.5f;
+      float x_fract_stop  = (x - stop_encoded.x)  * 0.5f;
+      float x_fract = (x_fract_start >= 1.f || x_fract_stop >= 1.f) ? 1.f
+                    : (x_fract_start >  0.f && x_fract_start < 1.f) ? x_fract_start
+                    : (x_fract_stop  >  0.f && x_fract_stop  < 1.f) ? x_fract_stop
+                    :                                                 0.f;
+
+      [loop]
+      for (float y = y_floor - 1.f; y <= y_ceil + 1.f; y = y + 1.f)
       {
-        doLoop = curCoords.x <= Stop.x
-              || curCoords.y <= Stop.y;
-      }
-      else
-      [flatten]
-      if (startY_greater_stopY)
-      {
-        doLoop = curCoords.x <= Stop.x
-              || curCoords.y >= Stop.y;
-      }
-      else //if (Start.y == Stop.y)
-      {
-        doLoop = curCoords.x <= Stop.x;
+        float y_fract = abs(y_correct - y) * 0.5f;
+
+        //optimise this
+        float fract = y_fract < 1.f ? 1.f - y_fract - x_fract
+                    : x_fract < 1.f ? 1.f - x_fract
+                    :                 0.f;
+
+        float2 xy = float2(x, y);
+
+        float grey = lerp(0.f, 1.f, fract);
+
+        if (grey > 0.f)
+        {
+          float grey_encoded = sqrt(grey);
+
+          xy.y = Render_Size_Minus_1.y - xy.y;
+
+          int2 xy_as_int = int2(xy);
+
+          memoryBarrier();
+
+          float current_value = tex2Dfetch(StorageCieOverlay, xy_as_int).x;
+
+          if (grey_encoded > current_value)
+          {
+            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
+          }
+        }
       }
     }
-    else
-    [flatten]
-    if (startX_greater_stopX)
+  }
+  else
+  {
+    [loop]
+    for (float y = start_encoded_floor.y - 1.f; y <= stop_encoded_ceil.y + 1.f; y = y + 1.f)
     {
-      [flatten]
-      if (startY_smaller_stopY)
+      float x_correct = (y - b) / m;
+      float x_floor   = floor(x_correct);
+      float x_ceil    =  ceil(x_correct);
+
+      //optimise this
+      float y_fract_start = (start_encoded.y - y) * 0.5f;
+      float y_fract_stop  = (y - stop_encoded.y)  * 0.5f;
+      float y_fract = (y_fract_start >= 1.f || y_fract_stop >= 1.f) ? 1.f
+                    : (y_fract_start >  0.f && y_fract_start < 1.f) ? y_fract_start
+                    : (y_fract_stop  >  0.f && y_fract_stop  < 1.f) ? y_fract_stop
+                    :                                                 0.f;
+
+      [loop]
+      for (float x = x_floor - 1.f; x <= x_ceil + 1.f; x = x + 1.f)
       {
-        doLoop = curCoords.x >= Stop.x
-              || curCoords.y <= Stop.y;
-      }
-      else
-      [branch]
-      if (startY_greater_stopY)
-      {
-        doLoop = curCoords.x >= Stop.x
-              || curCoords.y >= Stop.y;
-      }
-      else //if (Start.y == Stop.y)
-      {
-        doLoop = curCoords.x >= Stop.x;
-      }
-    }
-    else //if (Start.x == Stop.x)
-    {
-      [flatten]
-      if (startY_smaller_stopY)
-      {
-        doLoop = curCoords.y <= Stop.y;
-      }
-      else
-      [flatten]
-      if (startY_greater_stopY)
-      {
-        doLoop = curCoords.y >= Stop.y;
-      }
-      else
-      {
-        doLoop = false;
+        float x_fract = abs(x_correct - x) * 0.5f;
+
+        //optimise this
+        float fract = x_fract < 1.f ? 1.f - x_fract - y_fract
+                    : y_fract < 1.f ? 1.f - y_fract
+                    :                 0.f;
+
+        float2 xy = float2(x, y);
+
+        float grey = lerp(0.f, 1.f, fract);
+
+        if (grey > 0.f)
+        {
+          float grey_encoded = sqrt(grey);
+
+          xy.y = Render_Size_Minus_1.y - xy.y;
+
+          int2 xy_as_int = int2(xy);
+
+          memoryBarrier();
+
+          float current_value = tex2Dfetch(StorageCieOverlay, xy_as_int).x;
+
+          if (grey_encoded > current_value)
+          {
+            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
+          }
+        }
       }
     }
   }
@@ -310,6 +368,7 @@ float MitchellNetravali
   }
 }
 
+//https://www.codeproject.com/Articles/236394/Bi-Cubic-and-Bi-Linear-Interpolation-with-GLSL
 float2 Bicubic
 (
   const int2  Coords,
@@ -459,22 +518,20 @@ void DrawCieOutlines()
 
       const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
 
-      const float step = 0.1f / max(cieSize.x, cieSize.y);
-
 
 #ifdef IS_HDR_CSP
                                   //BT.709 + DCI-P3 + BT.2020
       static const uint drawCount = 1 + 1 + 1;
+//      static const uint drawCount = 3 + 3 + 3;
 #endif
 
 
-#define DRAW_CIE_LINES(PRIM0, PRIM1)     \
-          DrawCieLines(cieMinExtra,      \
-                       cieNormalise,     \
-                       renderSizeMinus1, \
-                       step,             \
-                       PRIM0,            \
-                       PRIM1)
+#define DRAW_CIE_LINES(PRIM0, PRIM1)       \
+          Draw_Cie_Lines(cieMinExtra,      \
+                         cieNormalise,     \
+                         renderSizeMinus1, \
+                         PRIM0,            \
+                         PRIM1)
 
 #define DRAW_COORDS_FROM_ARRAY(ARRAY_NAME, ARRAY_LENGTH)         \
           [loop]                                                 \
@@ -554,141 +611,6 @@ void DrawCieOutlines()
       }
 #endif
 
-//#ifdef IS_HDR_CSP
-//      [loop]
-//      for (int i = 0; i < drawCount; i++)
-//      {
-//        float2 coords0;
-//        float2 coords1;
-//
-//        bool needsDrawing;
-//
-//        [forcecase]
-//        switch(i)
-//        {
-//          //BT.709
-//          case 0:
-//          {
-//              coords0 = primBt709R;
-//              coords1 = primBt709G;
-//
-//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
-//          }
-//          break;
-//          case 1:
-//          {
-//              coords0 = primBt709B;
-//              coords1 = primBt709G;
-//
-//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
-//          }
-//          break;
-//          case 2:
-//          {
-//              coords0 = primBt709B;
-//              coords1 = primBt709R;
-//
-//              needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
-//          }
-//          break;
-//          //DCI-P3
-//          case 3:
-//          {
-//              coords0 = primDciP3R;
-//              coords1 = primDciP3G;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
-//          }
-//          break;
-//          case 4:
-//          {
-//              coords0 = primDciP3B;
-//              coords1 = primDciP3G;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
-//          }
-//          break;
-//          case 5:
-//          {
-//              coords0 = primDciP3B;
-//              coords1 = primDciP3R;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
-//          }
-//          break;
-//          //BT.2020
-//          case 6:
-//          {
-//              coords0 = primBt2020R;
-//              coords1 = primBt2020G;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
-//          }
-//          break;
-//          case 7:
-//          {
-//              coords0 = primBt2020B;
-//              coords1 = primBt2020G;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
-//          }
-//          break;
-//          default: //case 8:
-//          {
-//              coords0 = primBt2020B;
-//              coords1 = primBt2020R;
-//
-//              needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
-//          }
-//          break;
-//        }
-//
-//        [branch]
-//        if (needsDrawing)
-//        {
-//          DRAW_CIE_LINES(coords0, coords1);
-//        }
-//      }
-//#else
-//      static const float2 coordsArray[3] =
-//      {
-//        primBt709R,
-//        primBt709G,
-//        primBt709B
-//      };
-//
-//      BRANCH()
-//      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
-//      {
-//        DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
-//      }
-//#endif
-
-//this is theoretically faster by ~0.04s
-//      BRANCH()
-//      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
-//      {
-//        DRAW_CIE_LINES(primBt709R, primBt709G);
-//        DRAW_CIE_LINES(primBt709B, primBt709G);
-//        DRAW_CIE_LINES(primBt709B, primBt709R);
-//      }
-//#ifdef IS_HDR_CSP
-//      BRANCH()
-//      if (CIE_SHOW_GAMUT_OUTLINE_DCI_P3)
-//      {
-//        DRAW_CIE_LINES(primDciP3R, primDciP3G);
-//        DRAW_CIE_LINES(primDciP3B, primDciP3G);
-//        DRAW_CIE_LINES(primDciP3B, primDciP3R);
-//      }
-//      BRANCH()
-//      if (CIE_SHOW_GAMUT_OUTLINE_BT2020)
-//      {
-//        DRAW_CIE_LINES(primBt2020R, primBt2020G);
-//        DRAW_CIE_LINES(primBt2020B, primBt2020G);
-//        DRAW_CIE_LINES(primBt2020B, primBt2020R);
-//      }
-//#endif
-
       tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS, asfloat(cieSettingsNew));
       tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,     _CIE_DIAGRAM_SIZE);
       tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,         FRAMETIME);
@@ -726,8 +648,6 @@ void DrawCieOutlines()
 
       const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
 
-      const float step = 0.1f / max(cieSize.x, cieSize.y);
-
       DRAW_COORDS_FROM_ARRAY(coordsSpectralLocus, 340)
 
       memoryBarrier();
@@ -744,79 +664,224 @@ void DrawCieOutlines()
 
         int xLeft = 0;
 
-        //search from the left for first pixel that is no 0
+        //search from the left for the first pixel that is not 0
         [loop]
         while (xLeft <= renderSizeMinus1AsInt.x)
         {
           int2 xyLeft = int2(xLeft, y);
 
-          float currentPixel = tex2Dfetch(StorageCieOverlay, xyLeft).x;
+          float current_pixel = tex2Dfetch(StorageCieOverlay, xyLeft).x;
+
+          xLeft++;
 
           //if the first pixel is found end loop
-          [flatten]
-          if (currentPixel == 1.f)
+          if (current_pixel > 0.f)
           {
             coordsXLeft = xLeft;
 
-            xLeft = renderSizeMinus1AsInt.x;
-          }
-          else
-          {
-            xLeft++;
+            break;
           }
         }
 
 
         int xRight = renderSizeMinus1AsInt.x;
 
-        //search from the right for first pixel that is no 0
+        //search from the right for the first pixel that is not 0
         [loop]
         while (xRight >= 0)
         {
           int2 xyRight = int2(xRight, y);
 
-          float currentPixel = tex2Dfetch(StorageCieOverlay, xyRight).x;
+          float current_pixel = tex2Dfetch(StorageCieOverlay, xyRight).x;
+
+          xRight--;
 
           //if the first pixel is found end loop
-          [flatten]
-          if (currentPixel == 1.f)
+          if (current_pixel > 0.f)
           {
             coordsXRight = xRight;
 
-            xRight = -1;
-          }
-          else
-          {
-            xRight--;
+            break;
           }
         }
 
 
         //set alpha to 1 so that the background also gets drawn
-        for (int xAlpha = coordsXLeft; xAlpha < coordsXRight; xAlpha++)
+
+        //int left_right_diff = abs(coordsXRight - coordsXLeft);
+        //int check = clamp(left_right_diff, 3, clamp(left_right_diff / 10, 4, 10));
+        //int check = left_right_diff / 10;
+        int check = 6;
+
+        float last_value = 0.f;
+
+        bool row_has_value_at_zero           = false;
+        bool curr_row_has_been_greater_once  = false;
+        bool curr_row_has_been_smaller_once  = false;
+        bool curr_row_has_been_greater_twice = false;
+        for (int xAlpha = coordsXLeft; xAlpha <= coordsXRight; xAlpha++)
         {
           int2 xyAlpha = int2(xAlpha, y);
 
-          float currentPixel = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+          float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
 
-          tex2Dstore(StorageCieOverlay, xyAlpha, float4(currentPixel, 1.f, 0.f, 0.f));
+          if (!row_has_value_at_zero)
+          {
+            row_has_value_at_zero = current_value == 0.f;
+          }
+
+          // up
+          if (!curr_row_has_been_greater_once)
+          {
+            curr_row_has_been_greater_once = current_value > last_value;
+          }
+
+          // up + down
+          if (!curr_row_has_been_smaller_once)
+          {
+            curr_row_has_been_smaller_once = curr_row_has_been_greater_once
+                                          && current_value < last_value;
+          }
+
+          // up + down + up
+          if (!curr_row_has_been_greater_twice)
+          {
+            curr_row_has_been_greater_twice = curr_row_has_been_smaller_once
+                                           && current_value > last_value;
+          }
+
+          last_value = current_value;
         }
 
-
-        memoryBarrier();
-
-        //bicubic interpolation with Mitchell-Netravali
-        [loop]
-        for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
+        [branch]
+        if (curr_row_has_been_greater_twice
+         || row_has_value_at_zero)
         {
-          int2 xy = int2(x, y);
+          last_value = -1.f;
 
-          float2 interpolated = Bicubic(xy, 1.f, 0.f);
+          bool left_border_crossed  = false;
+          bool right_border_crossed = false;
+          bool lower_end_reached    = false;
 
-          interpolated[1] = sqrt(interpolated[1]);
+          for (int xAlpha = coordsXLeft; xAlpha <= coordsXRight; xAlpha++)
+          {
+            int2 xyAlpha = int2(xAlpha, y);
 
-          tex2Dstore(StorageCieOverlay, xy, float4(interpolated, 0.f, 0.f));
+            float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+
+            if (!left_border_crossed)
+            {
+              left_border_crossed = current_value < last_value;
+
+              //makes sure the brightes pixel gets an alpha of 1
+              if (left_border_crossed)
+              {
+                int2 last_pos = int2(xAlpha - 1, y);
+                float last_value = tex2Dfetch(StorageCieOverlay, last_pos).x;
+                tex2Dstore(StorageCieOverlay, last_pos, float4(last_value, 1.f, 0.f, 0.f));
+              }
+            }
+
+            if (left_border_crossed && !right_border_crossed)
+            {
+              right_border_crossed = current_value < last_value;
+
+              [flatten]
+              if (row_has_value_at_zero)
+              {
+                right_border_crossed = right_border_crossed
+                                    && (coordsXRight - xAlpha) < check;
+              }
+              else
+              {
+                if (!lower_end_reached)
+                {
+                  lower_end_reached = current_value > last_value;
+                }
+
+                right_border_crossed = right_border_crossed
+                                    && lower_end_reached;
+              }
+            }
+
+            if (left_border_crossed && !right_border_crossed)
+            {
+              tex2Dstore(StorageCieOverlay, xyAlpha, float4(current_value, 1.f, 0.f, 0.f));
+            }
+
+            last_value = current_value;
+          }
+
+          memoryBarrier();
+
+          last_value = -1.f;
+
+          left_border_crossed  = false;
+          right_border_crossed = false;
+          lower_end_reached    = false;
+
+          for (int xAlpha = coordsXRight; xAlpha >= coordsXLeft; xAlpha--)
+          {
+            int2 xyAlpha = int2(xAlpha, y);
+
+            float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+
+            if (!right_border_crossed)
+            {
+              right_border_crossed = current_value < last_value;
+
+              //makes sure the brightes pixel gets an alpha of 1
+              if (right_border_crossed)
+              {
+                int2 last_pos = int2(xAlpha + 1, y);
+                float last_value = tex2Dfetch(StorageCieOverlay, last_pos).x;
+                tex2Dstore(StorageCieOverlay, last_pos, float4(last_value, 1.f, 0.f, 0.f));
+              }
+            }
+
+            if (right_border_crossed && !left_border_crossed)
+            {
+              left_border_crossed = current_value < last_value;
+
+              [flatten]
+              if (row_has_value_at_zero)
+              {
+                left_border_crossed = left_border_crossed
+                                   && (xAlpha - coordsXLeft) < check;
+              }
+              else
+              {
+                if (!lower_end_reached)
+                {
+                  lower_end_reached = current_value > last_value;
+                }
+
+                left_border_crossed = left_border_crossed
+                                   && lower_end_reached;
+              }
+            }
+
+            if (right_border_crossed && !left_border_crossed)
+            {
+              tex2Dstore(StorageCieOverlay, xyAlpha, float4(current_value, 1.f, 0.f, 0.f));
+            }
+
+            last_value = current_value;
+          }
         }
+
+//        memoryBarrier();
+//
+//        //bicubic interpolation with Mitchell-Netravali
+//        [loop]
+//        for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
+//        {
+//          int2 xy = int2(x, y);
+//
+//          float2 interpolated = Bicubic(xy, 1.f, 0.f);
+//
+//          tex2Dstore(StorageCieOverlay, xy, float4(interpolated, 0.f, 0.f));
+//        }
       }
 
 
@@ -884,7 +949,7 @@ void PS_ComposeCieDiagram
 
     float2 Outline = tex2Dfetch(SamplerCieOverlay, positionAsInt2).xy;
 
-    Outline[0] *= 0.18f;
+    Outline[0] = (Outline[0] * Outline[0]) * 0.18f;
 
     if (cieTimerCurrent != -1.f)
     {
@@ -905,7 +970,7 @@ void PS_ComposeCieDiagram
                                                           renderSizeMinus1Y,
                                                           oneDivRenderSizeMinus1);
 
-      float Y = min(pow(cieCurrentIntensity, 1.f / 3.f) + (1.f / 1023.f), 1.f);
+      float Y = min(pow(cieCurrentIntensity, 1.f / 3.f) + (1.f / 255.f), 1.f);
 
       float3 XYZ;
 
@@ -943,7 +1008,7 @@ void PS_ComposeCieDiagram
 
       ycbcr[0] = sqrt(ycbcr[0]);
 
-      ycbcr.yz += (511.f / 1023.f);
+      ycbcr.yz += (127.f / 255.f);
 
       Out = float4(ycbcr, 1.f);
 //      Out = float4(sqrt(rgb), 1.f);
@@ -952,7 +1017,7 @@ void PS_ComposeCieDiagram
     [branch] //flatten?
     if (Outline[1] != 0.f)
     {
-      Out = float4(sqrt(Outline[0]), (511.f / 1023.f), (511.f / 1023.f), Outline[1]);
+      Out = float4(sqrt(Outline[0]), (127.f / 255.f), (127.f / 255.f), Outline[1]);
     }
   }
 
@@ -1160,8 +1225,8 @@ void CS_RenderCrosshairToCieDiagram
   uint3 DTID : SV_DispatchThreadID
 )
 {
-  static const float3 ycbcrBlack = float3(0.f, (511.f / 1023.f), (511.f / 1023.f));
-  static const float3 ycbcrWhite = float3(1.f, (511.f / 1023.f), (511.f / 1023.f));
+  static const float3 ycbcrBlack = float3(0.f, (127.f / 255.f), (127.f / 255.f));
+  static const float3 ycbcrWhite = float3(1.f, (127.f / 255.f), (127.f / 255.f));
 
   static const float4 storeColourBlack = float4(ycbcrBlack, 1.f);
   static const float4 storeColourWhite = float4(ycbcrWhite, 1.f);

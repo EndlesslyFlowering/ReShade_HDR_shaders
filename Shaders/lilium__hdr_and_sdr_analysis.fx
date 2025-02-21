@@ -1131,10 +1131,10 @@ void PS_HdrAnalysis
       [branch]
       if (cieYcbcr.a > 0.f)
       {
-        // using gamma 2 as intermediate gamma space (also for the alpha)
-        cieYcbcr.xw *= cieYcbcr.xw;
+        // using gamma 2 as intermediate gamma space
+        cieYcbcr.x *= cieYcbcr.x;
 
-        cieYcbcr.yz -= (511.f / 1023.f);
+        cieYcbcr.yz -= (127.f / 255.f);
 
 #ifdef IS_HDR_CSP
         float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt2020(cieYcbcr.xyz), cieYcbcr.a);
@@ -1142,7 +1142,6 @@ void PS_HdrAnalysis
         float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt709(cieYcbcr.xyz), cieYcbcr.a);
 #endif
 
-        float alpha = cieColour.a;
 
       //FIX THIS
 #ifdef IS_HDR_CSP
@@ -1152,7 +1151,7 @@ void PS_HdrAnalysis
         Output.rgb = MergeOverlay(Output.rgb,
                                   cieColour.rgb,
                                   _CIE_DIAGRAM_BRIGHTNESS,
-                                  alpha);
+                                  cieColour.a);
       }
     }
   }
