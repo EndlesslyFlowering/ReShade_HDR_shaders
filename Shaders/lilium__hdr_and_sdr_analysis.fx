@@ -76,7 +76,7 @@ uniform float2 NIT_PINGPONG2
   #define _TEXT_POSITION                          SDR_TEXT_POSITION
   #define _VALUES_UPDATE_RATE                     SDR_VALUES_UPDATE_RATE
   #define _ACTIVE_AREA_ENABLE                     SDR_ACTIVE_AREA_ENABLE
-  #define _TACTIVE_AREA_CROP_LEFT                 SDR_ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_LEFT                  SDR_ACTIVE_AREA_CROP_LEFT
   #define _ACTIVE_AREA_CROP_TOP                   SDR_ACTIVE_AREA_CROP_TOP
   #define _ACTIVE_AREA_CROP_RIGHT                 SDR_ACTIVE_AREA_CROP_RIGHT
   #define _ACTIVE_AREA_CROP_BOTTOM                SDR_ACTIVE_AREA_CROP_BOTTOM
