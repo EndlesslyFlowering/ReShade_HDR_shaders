@@ -136,14 +136,14 @@ void VS_PostProcessWithoutTexCoord
 #define YES 1
 #define NO  0
 
-#define CSP_UNKNOWN 0
-#define CSP_SRGB    1
-#define CSP_SCRGB   2
-#define CSP_HDR10   3
-#define CSP_HLG     4
-#define CSP_PS5     5
-#define CSP_UNSET   254
-#define CSP_FAIL    255
+#define CSP_UNKNOWN             0
+#define CSP_SRGB                1
+#define CSP_SCRGB               2
+#define CSP_HDR10               3
+#define CSP_HLG                 4
+#define CSP_BT2020_EXTENDED   253
+#define CSP_UNSET             254
+#define CSP_FAIL              255
 
 #if (BUFFER_COLOR_BIT_DEPTH == 8 || BUFFER_COLOR_BIT_DEPTH == 10)
   #define IS_POSSIBLE_SRGB_BIT_DEPTH
@@ -159,7 +159,7 @@ void VS_PostProcessWithoutTexCoord
 #endif
 
 #if (BUFFER_COLOR_BIT_DEPTH == 16)
-  #define IS_POSSIBLE_PS5_BIT_DEPTH
+  #define IS_POSSIBLE_BT2020_EXTENDED_BIT_DEPTH
 #endif
 
 
@@ -213,9 +213,9 @@ void VS_PostProcessWithoutTexCoord
   #define ACTUAL_COLOUR_SPACE CSP_HLG
   #define FONT_BRIGHTNESS 0.69691214644230630735
 
-#elif (CSP_OVERRIDE == CSP_PS5 && defined(IS_POSSIBLE_PS5_BIT_DEPTH))
+#elif (CSP_OVERRIDE == CSP_BT2020_EXTENDED && defined(IS_POSSIBLE_BT2020_EXTENDED_BIT_DEPTH))
 
-  #define ACTUAL_COLOUR_SPACE CSP_PS5
+  #define ACTUAL_COLOUR_SPACE CSP_BT2020_EXTENDED
   #define FONT_BRIGHTNESS 2.03f
 
 #elif ((BUFFER_COLOR_SPACE == CSP_SRGB && CSP_OVERRIDE == CSP_UNSET && defined(IS_POSSIBLE_SRGB_BIT_DEPTH))  \
@@ -240,13 +240,13 @@ void VS_PostProcessWithoutTexCoord
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_HLG   \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+  || ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   #define IS_HDR_CSP
 #endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+  || ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   #define IS_FLOAT_HDR_CSP
 #endif
@@ -4130,7 +4130,7 @@ namespace Csp
 float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-  || ACTUAL_COLOUR_SPACE == CSP_PS5)
+  || ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
   Colour = Csp::Mat::Bt709To::Bt2020(Colour);
 #endif
   return Colour;

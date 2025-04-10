@@ -251,7 +251,7 @@ void PS_MapSdrIntoHdr
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
       colour *= 125.f;
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
       colour *= 100.f;
 #endif
     }
@@ -288,7 +288,7 @@ void PS_MapSdrIntoHdr
 
     colour *= (SDR_WHITEPOINT_NITS / 10000.f);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
     colour *= (SDR_WHITEPOINT_NITS / 100.f);
 

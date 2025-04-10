@@ -896,7 +896,7 @@ float3 MapBt709IntoCurrentCsp
 
   return Csp::Map::Bt709Into::Hlg(Colour, Brightness);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   return Csp::Map::Bt709Into::Ps5(Colour, Brightness);
 

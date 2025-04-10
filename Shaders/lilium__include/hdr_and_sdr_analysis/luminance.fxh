@@ -203,7 +203,7 @@ float CalcNits
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   curRgb = Pixel * 100.f;
 
@@ -247,7 +247,7 @@ float3 CalcCll
 
   curRgb = Csp::Trc::HlgTo::Nits(Pixel);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   curRgb = Pixel * 100.f;
 
@@ -292,7 +292,7 @@ float4 CalcNitsAndCll
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   curRgb = Pixel * 100.f;
 
