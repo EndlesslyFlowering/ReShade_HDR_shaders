@@ -66,21 +66,24 @@ namespace Ui
       uniform uint OverbrightHandling
       <
         ui_label    = "overbright bits handling";
-        ui_tooltip  = "- filmic roll off uses the inverse of the gamma function to create a smooth roll off"
-                 "\n" "- linear takes the input value as is without applying any modifications"
-                 "\n" "- apply gamma applies the gamma normally, which leads to an exponential increase of the brightness that may be undesireable"
-                 "\n" "- clamp clamps the overbright bits away (mostly for testing)";
+        ui_tooltip  = "- \"roll off to linear\" uses the inverse of the gamma function until the slope is 1 and then it is linear"
+                 "\n" "- \"filmic roll off\" uses the inverse of the gamma function to create a smooth roll off"
+                 "\n" "- \"linear\" takes the input value as is without applying any modifications"
+                 "\n" "- \"apply gamma\" applies the gamma normally, which leads to an exponential increase of the brightness that may be undesireable"
+                 "\n" "- \"clamp\" clamps the overbright bits away (mostly for testing)";
         ui_type     = "combo";
-        ui_items    = "filmic roll off (S-curve)\0"
+        ui_items    = "roll off to linear\0"
+                      "filmic roll off (S-curve)\0"
                       "linear\0"
                       "apply gamma\0"
                       "clamp\0";
       > = 0;
 
-#define OVERBRIGHT_HANDLING_S_CURVE     0
-#define OVERBRIGHT_HANDLING_LINEAR      1
-#define OVERBRIGHT_HANDLING_APPLY_GAMMA 2
-#define OVERBRIGHT_HANDLING_CLAMP       3
+#define OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR 0
+#define OVERBRIGHT_HANDLING_S_CURVE            1
+#define OVERBRIGHT_HANDLING_LINEAR             2
+#define OVERBRIGHT_HANDLING_APPLY_GAMMA        3
+#define OVERBRIGHT_HANDLING_CLAMP              4
 
       uniform float TargetBrightness
       <
@@ -304,15 +307,25 @@ void PS_InverseToneMapping(
     case CONTENT_TRC_GAMMA_22:
     {
       BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
+      {
+        colour = Csp::Trc::ExtendedGamma22RollOffToLinearTo::Linear(colour);
+      }
+      else
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * pow(abs(colour), 2.2f);
       }
@@ -326,15 +339,25 @@ void PS_InverseToneMapping(
     case CONTENT_TRC_GAMMA_24:
     {
       BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
+      {
+        colour = Csp::Trc::ExtendedGamma24RollOffToLinearTo::Linear(colour);
+      }
+      else
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * pow(abs(colour), 2.4f);
       }
@@ -357,53 +380,49 @@ void PS_InverseToneMapping(
     case CONTENT_TRC_LINEAR_WITH_BLACK_FLOOR_EMU:
     {
       BRANCH()
-      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
-      {
-        colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(colour));
-      }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
         float3 absColour  = abs(colour);
         float3 signColour = sign(colour);
-        [branch]
-        if (absColour.r < 1.f)
-        {
-          colour.r = signColour.r * pow(Csp::Trc::LinearTo::Srgb(absColour.r), 2.2f);
-        }
-        [branch]
-        if (absColour.g < 1.f)
-        {
-          colour.g = signColour.g * pow(Csp::Trc::LinearTo::Srgb(absColour.g), 2.2f);
-        }
-        [branch]
-        if (absColour.b < 1.f)
-        {
-          colour.b = signColour.b * pow(Csp::Trc::LinearTo::Srgb(absColour.b), 2.2f);
-        }
-      }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
-      {
-        colour = sign(colour) * pow(Csp::Trc::LinearTo::Srgb(abs(colour)), 2.2f);
+
+        colour = absColour < 1.f ? signColour * pow(Csp::Trc::LinearTo::Srgb(absColour), 2.2f)
+                                 : colour;
       }
       else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
       }
+//      else
+//      {
+//        colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+//      }
     }
     break;
     case CONTENT_TRC_SRGB:
     {
       BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
+      {
+        colour = Csp::Trc::ExtendedSrgbRollOffToLinearTo::Linear(colour);
+      }
+      else
+      BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
         colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
         colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
       }
-      else if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
         colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
       }
