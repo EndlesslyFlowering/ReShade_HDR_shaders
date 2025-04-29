@@ -2285,6 +2285,10 @@ void PS_RenderNumbers
 
     Output.rgb = DECODE_SDR(inputColour.rgb);
 
+#else // fallback for shader permutations
+
+    Output.rgb = 0.f;
+
 #endif
 
     float textBrightness;
@@ -2313,6 +2317,10 @@ void PS_RenderNumbers
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
     Output.rgb = ENCODE_SDR(Output.rgb);
+
+#else // fallback for shader permutations
+
+    Output.rgb = 0.f;
 
 #endif
   }

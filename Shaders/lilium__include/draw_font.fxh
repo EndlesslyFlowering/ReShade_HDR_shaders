@@ -43,6 +43,10 @@
 
   #endif
 
+#else // fallback for shader permutations
+
+  #define TEXT_BLOCK_SIZE_ANALYIS_HEADER float2(23, 1)
+
 #endif
 
 #define TEXT_BLOCK_FETCH_OFFSET_NITS_RGB_DESCRIPTION float2( 0, 3)

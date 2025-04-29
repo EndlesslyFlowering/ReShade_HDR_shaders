@@ -1,10 +1,11 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-   || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
-   || ACTUAL_COLOUR_SPACE == CSP_SRGB))
+#if (defined(IS_ANALYSIS_CAPABLE_API)   \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+    || ACTUAL_COLOUR_SPACE == CSP_SRGB) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 
 HDR10_TO_LINEAR_LUT()
@@ -15,6 +16,30 @@ HDR10_TO_LINEAR_LUT()
 #ifndef GAMESCOPE
   //#define _DEBUG
 #endif
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+  #ifdef IS_COMPUTE_CAPABLE_API
+    #define HIDDEN_OPTION_COMPUTE_CAPABLE_API false
+  #else
+    #define HIDDEN_OPTION_COMPUTE_CAPABLE_API true
+  #endif
+
+#else //MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+  #define HIDDEN_OPTION_COMPUTE_CAPABLE_API false
+
+#endif //MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
 
 
 #define DEFAULT_BRIGHTNESS 80.f
@@ -69,7 +94,8 @@ uniform float2 NIT_PINGPONG2
 #endif
 
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  && !defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
   #define _TEXT_SIZE                              SDR_TEXT_SIZE
   #define _TEXT_BRIGHTNESS                        SDR_TEXT_BRIGHTNESS
   #define _TEXT_BG_ALPHA                          SDR_TEXT_BG_ALPHA
@@ -332,18 +358,22 @@ uniform uint _SHOW_RGB_OR_CLL
 
 
 // gamuts
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform bool SHOW_GAMUTS
 <
   ui_category = "Gamut analysis";
   ui_label    = "show gamuts used";
   ui_tooltip  = "in %";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = true;
 
 uniform bool SHOW_GAMUT_FROM_CURSOR
 <
   ui_category = "Gamut analysis";
   ui_label    = "show gamut from cursor position";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = true;
 
 uniform bool SHOW_GAMUT_MAP
@@ -356,15 +386,21 @@ uniform bool SHOW_GAMUT_MAP
            "\n" "           blue: BT.2020"
            "\n" "            red: AP0"
            "\n" "           pink: invalid";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = false;
-#endif // IS_HDR_CSP
 
-#ifdef IS_COMPUTE_CAPABLE_API
+#endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)
+
+
+#if (defined(IS_COMPUTE_CAPABLE_API) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 // CIE
 uniform bool _SHOW_CIE
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
 uniform bool _SHOW_CROSSHAIR_ON_CIE_DIAGRAM
@@ -372,6 +408,7 @@ uniform bool _SHOW_CROSSHAIR_ON_CIE_DIAGRAM
   ui_category = "CIE diagram visualisation";
   ui_label    = "show crosshair of cursor gamut on CIE diagram";
   ui_tooltip  = "it disappears when the colour is 100% black!";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
 #define CIE_1931 0
@@ -384,6 +421,7 @@ uniform uint _CIE_DIAGRAM_TYPE
   ui_type     = "combo";
   ui_items    = "CIE 1931 xy\0"
                 "CIE 1976 UCS u'v'\0";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = CIE_1931;
 
 uniform float _CIE_DIAGRAM_BRIGHTNESS
@@ -401,6 +439,7 @@ uniform float _CIE_DIAGRAM_BRIGHTNESS
   ui_max      = 100.f;
 #endif
   ui_step     = 0.5f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 #if (defined(GAMESCOPE) \
   && defined(IS_HDR_CSP))
 > = GAMESCOPE_SDR_ON_HDR_NITS;
@@ -417,6 +456,7 @@ uniform float _CIE_DIAGRAM_ALPHA
   ui_min      = 0.f;
   ui_max      = 100.f;
   ui_step     = 0.5f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = DEFAULT_ALPHA_LEVEL;
 
 
@@ -518,35 +558,43 @@ uniform float _CIE_DIAGRAM_SIZE
   ui_min      = 50.f;
   ui_max      = 100.f;
   ui_step     = 0.1f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = CIE_DIAGRAM_DEFAULT_SIZE;
 
 uniform bool _CIE_SHOW_GAMUT_OUTLINE_BT709
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.709 gamut outline";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform bool CIE_SHOW_GAMUT_OUTLINE_DCI_P3
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show DCI-P3 gamut outline";
+  hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
 > = true;
 
 uniform bool CIE_SHOW_GAMUT_OUTLINE_BT2020
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.2020 gamut outline";
+  hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
 > = true;
-#endif //IS_HDR_CSP
+
+#endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)
 
 uniform bool _CIE_SHOW_GAMUT_OUTLINE_POINTERS
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show Pointer's gamut outline";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = false;
 
-#endif //IS_COMPUTE_CAPABLE_API
+#endif //defined(IS_COMPUTE_CAPABLE_API) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)
 
 
 // heatmap
@@ -588,7 +636,9 @@ uniform float _HEATMAP_BRIGHTNESS
   ui_step     = 0.5f;
 > = DEFAULT_BRIGHTNESS;
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform uint HEATMAP_CUTOFF_POINT
 <
   ui_category = "Heatmap visualisation";
@@ -611,16 +661,21 @@ uniform uint HEATMAP_CUTOFF_POINT
            "\n" "extra cases:"
            "\n" "highly saturated red:  above the cutoff point"
            "\n" "highly saturated blue: below 0 nits";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0;
-#endif //IS_HDR_CSP
+
+#endif //(defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
 
-#ifdef IS_COMPUTE_CAPABLE_API
+#if (defined(IS_COMPUTE_CAPABLE_API) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform bool _SHOW_WAVEFORM
 <
   ui_category = "Waveform";
   ui_label    = "show waveform";
   ui_tooltip  = "Luminance waveform paid for by Aemony.";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
 uniform uint _WAVEFORM_MODE
@@ -633,13 +688,16 @@ uniform uint _WAVEFORM_MODE
   ui_items    = "luminance\0"
                 "maxCLL\0"
                 "RGB individiually\0";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = 0;
 
 #define WAVEFORM_MODE_LUMINANCE        0
 #define WAVEFORM_MODE_MAX_CLL          1
 #define WAVEFORM_MODE_RGB_INDIVIDUALLY 2
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform uint WAVEFORM_CUTOFF_POINT
 <
   ui_category = "Waveform";
@@ -649,8 +707,10 @@ uniform uint WAVEFORM_CUTOFF_POINT
                 " 4000\0"
                 " 2000\0"
                 " 1000\0";
+  hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
 > = 0;
-#endif //IS_HDR_CSP
+
+#endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
 uniform float _WAVEFORM_TEXT_SIZE_ADJUST
 <
@@ -661,6 +721,7 @@ uniform float _WAVEFORM_TEXT_SIZE_ADJUST
   ui_min      = 0.f;
   ui_max      = 2.f;
   ui_step     = 0.05f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = 1.f;
 
 uniform float _WAVEFORM_BRIGHTNESS
@@ -678,6 +739,7 @@ uniform float _WAVEFORM_BRIGHTNESS
   ui_max      = 100.f;
 #endif
   ui_step     = 0.5f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 #if (defined(GAMESCOPE) \
   && defined(IS_HDR_CSP))
 > = GAMESCOPE_SDR_ON_HDR_NITS;
@@ -694,6 +756,7 @@ uniform float _WAVEFORM_ALPHA
   ui_min      = 0.f;
   ui_max      = 100.f;
   ui_step     = 0.5f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = DEFAULT_ALPHA_LEVEL;
 
 static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3u;
@@ -777,6 +840,7 @@ uniform float2 _WAVEFORM_SIZE
   ui_min      =  50.f;
   ui_max      = 100.f;
   ui_step     =   0.1f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
 uniform bool _WAVEFORM_SHOW_MIN_NITS_LINE
@@ -785,6 +849,7 @@ uniform bool _WAVEFORM_SHOW_MIN_NITS_LINE
   ui_label    = "show the minimum nits line";
   ui_tooltip  = "Show a horizontal line where the minimum nits is on the waveform."
            "\n" "The line is invisible when the minimum nits hits 0 nits.";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
 uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
@@ -793,8 +858,10 @@ uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
   ui_label    = "show the maximum nits line";
   ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
            "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
-#endif //IS_COMPUTE_CAPABLE_API
+
+#endif //defined(IS_COMPUTE_CAPABLE_API) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
 
 // highlight a certain nit range
