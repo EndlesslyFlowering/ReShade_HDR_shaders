@@ -109,15 +109,15 @@ static const float2 BUFFER_SIZE_MINUS_1_FLOAT = float2(BUFFER_WIDTH_MINUS_1_FLOA
 // See also https://www.reddit.com/r/gamedev/comments/2j17wk/a_slightly_faster_bufferless_vertex_shader_trick/
 void VS_PostProcess
 (
-  in  uint   VertexID : SV_VertexID,
-  out float4 Position : SV_Position,
-  out float2 TexCoord : TEXCOORD0
+  in  uint   VertexID  : SV_VertexID,
+  out float4 Position  : SV_Position,
+  out float2 Tex_Coord : TEXCOORD0
 )
 {
-	TexCoord.x = (VertexID == 2) ? 2.f : 0.f;
-	TexCoord.y = (VertexID == 1) ? 2.f : 0.f;
+  Tex_Coord.x = (VertexID == 2) ? 2.f : 0.f;
+  Tex_Coord.y = (VertexID == 1) ? 2.f : 0.f;
 
-	Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(Tex_Coord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 }
 
 void VS_PostProcessWithoutTexCoord
@@ -126,11 +126,11 @@ void VS_PostProcessWithoutTexCoord
   out float4 Position : SV_Position
 )
 {
-  float2 texCoord;
-  texCoord.x = (VertexID == 2) ? 2.f : 0.f;
-  texCoord.y = (VertexID == 1) ? 2.f : 0.f;
+  float2 tex_coord;
+  tex_coord.x = (VertexID == 2) ? 2.f : 0.f;
+  tex_coord.y = (VertexID == 1) ? 2.f : 0.f;
 
-  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
+  Position = float4(tex_coord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 }
 
 #define YES 1
