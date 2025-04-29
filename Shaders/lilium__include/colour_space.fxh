@@ -3457,7 +3457,7 @@ namespace Csp
       float3 OkLab(const float3 OkLch)
       {
         float2 ab;
-        sincos(OkLch[2], ab[0], ab[1]);
+        sincos(OkLch[2], ab[1], ab[0]);
 
         ab *= OkLch.y;
 
@@ -4023,7 +4023,7 @@ namespace Csp
         float i_ab = PI_2 * Hsv.x;
 
         float2 ab;
-        sincos(i_ab, ab[0], ab[1]);
+        sincos(i_ab, ab[1], ab[0]);
 
         float2 cusp = Csp::OkLab::FindCusp(ab);
 
@@ -4103,7 +4103,7 @@ namespace Csp
 
         L = Csp::OkLab::ToeInv(Hsl.z);
 
-        sincos(i_ab, ab[0], ab[1]);
+        sincos(i_ab, ab[1], ab[0]);
 
         float3 cs = Csp::OkLab::GetCs(float3(L, ab));
 
@@ -4427,7 +4427,7 @@ namespace Csp
       )
       {
         float2 UVStarPrime;
-        sincos(LCH[2], UVStarPrime[0], UVStarPrime[1]);
+        sincos(LCH[2], UVStarPrime[1], UVStarPrime[0]);
 
         UVStarPrime *= LCH[1];
 
@@ -4470,7 +4470,7 @@ namespace Csp
                   , 0.8322850678616855);
 
         float2 UVStarPrime;
-        sincos(H, UVStarPrime[0], UVStarPrime[1]);
+        sincos(H, UVStarPrime[1], UVStarPrime[0]);
 
         UVStarPrime *= M;
 
