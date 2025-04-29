@@ -1248,92 +1248,41 @@ namespace Csp
 
     namespace ExtendedSrgbSCurveTo
     {
-      //#define X_sRGB_1 1.19417654368084505707
-      //#define X_sRGB_x 0.039815307380813555
-      //#define X_sRGB_y_adjust 1.21290538811
       // extended sRGB gamma including above 1 and below -1
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
+      #define EXTENDED_SRGB_S_CURVE_TO_LINEAR(T)                                                                  \
+        T Linear(T C)                                                                                             \
+        {                                                                                                         \
+          const T absC  = abs(C);                                                                                 \
+          const T signC = sign(C);                                                                                \
+                                                                                                                  \
+          return                                                                                                  \
+            absC > 1.f      ? signC * ((1.055f * pow(absC - 0.940277040f, (1.f / 2.4f)) - 0.055f) + 0.728929638f) \
+          : absC > 0.04045f ? signC * pow((absC + 0.055f) / 1.055f, 2.4f)                                         \
+          :                   C / 12.92f;                                                                         \
+        }
 
-        [branch]
-        if (absC > 1.f)
-        {
-          return signC * ((1.055f * pow(absC - 0.940277040004730224609375f, (1.f / 2.4f)) - 0.055f) + 0.728929579257965087890625f);
-        }
-        else
-        [branch]
-        if (absC > 0.04045f)
-        {
-          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-        }
-        else
-        {
-          return C / 12.92f;
-        }
-      }
-      //{
-      //  if (C < -X_sRGB_1)
-      //    return
-      //      -1.055f * (pow(-C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) + 0.055f;
-      //  else if (C < -0.04045f)
-      //    return
-      //      -pow((-C + 0.055f) / 1.055f, 2.4f);
-      //  else if (C <= 0.04045f)
-      //    return
-      //      C / 12.92f;
-      //  else if (C <= X_sRGB_1)
-      //    return
-      //      pow((C + 0.055f) / 1.055f, 2.4f);
-      //  else
-      //    return
-      //      1.055f * (pow(C - X_sRGB_1 + X_sRGB_x, (1.f / 2.4f)) + X_sRGB_y_adjust) - 0.055f;
-      //}
-
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedSrgbSCurveTo::Linear(Colour.b));
-      }
+      EXTENDED_SRGB_S_CURVE_TO_LINEAR(float)
+      EXTENDED_SRGB_S_CURVE_TO_LINEAR(float3)
     } //ExtendedSrgbSCurveTo
 
 
     namespace ExtendedSrgbLinearTo
     {
-      //#define X_sRGB_1 1.19417654368084505707
-      //#define X_sRGB_x 0.039815307380813555
-      //#define X_sRGB_y_adjust 1.21290538811
       // extended sRGB gamma including above 1 and below -1
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
+      #define EXTENDED_SRGB_LINEAR_TO_LINEAR(T)                           \
+        T Linear(const T C)                                               \
+        {                                                                 \
+          const T absC  = abs(C);                                         \
+          const T signC = sign(C);                                        \
+                                                                          \
+          return                                                          \
+            absC > 1.f      ? C                                           \
+          : absC > 0.04045f ? signC * pow((absC + 0.055f) / 1.055f, 2.4f) \
+          :                   C / 12.92f;                                 \
+        }
 
-        [branch]
-        if (absC > 1.f)
-        {
-          return C;
-        }
-        else
-        [branch]
-        if (absC > 0.04045f)
-        {
-          return signC * pow((absC + 0.055f) / 1.055f, 2.4f);
-        }
-        else
-        {
-          return C / 12.92f;
-        }
-      }
-
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedSrgbLinearTo::Linear(Colour.b));
-      }
+      EXTENDED_SRGB_LINEAR_TO_LINEAR(float)
+      EXTENDED_SRGB_LINEAR_TO_LINEAR(float3)
     } //ExtendedSrgbLinearTo
 
 
@@ -1377,49 +1326,29 @@ namespace Csp
       #define SrgbPhi     asfloat(0x414EC578) // 12.92321
       #define SrgbXDivPhi asfloat(0x3B4739A5) //  0.003039935
 
-      float Linear(float C)
-      {
-        [branch]
-        if (C <= SrgbX)
-        {
-          return C / SrgbPhi;
+      #define SRGB_ACCURATE_TO_LINEAR(T)                          \
+        T Linear(const T C)                                       \
+        {                                                         \
+          return C <= SrgbX ? C / SrgbPhi                         \
+                            : pow(((C + 0.055f) / 1.055f), 2.4f); \
         }
-        else
-        {
-          return pow(((C + 0.055f) / 1.055f), 2.4f);
-        }
-      }
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::SrgbAccurateTo::Linear(Colour.r),
-                      Csp::Trc::SrgbAccurateTo::Linear(Colour.g),
-                      Csp::Trc::SrgbAccurateTo::Linear(Colour.b));
-      }
+      SRGB_ACCURATE_TO_LINEAR(float)
+      SRGB_ACCURATE_TO_LINEAR(float3)
     } //SrgbAccurateTo
 
 
     namespace LinearTo
     {
-      float SrgbAccurate(float C)
-      {
-        [branch]
-        if (C <= SrgbXDivPhi)
-        {
-          return C * SrgbPhi;
+      #define LINEAR_TO_SRGB_ACCURATE(T)                                    \
+        T SrgbAccurate(const T C)                                           \
+        {                                                                   \
+          return C <= SrgbXDivPhi ? C * SrgbPhi                             \
+                                  : 1.055f * pow(C, (1.f / 2.4f)) - 0.055f; \
         }
-        else
-        {
-          return 1.055f * pow(C, (1.f / 2.4f)) - 0.055f;
-        }
-      }
 
-      float3 SrgbAccurate(float3 Colour)
-      {
-        return float3(Csp::Trc::LinearTo::SrgbAccurate(Colour.r),
-                      Csp::Trc::LinearTo::SrgbAccurate(Colour.g),
-                      Csp::Trc::LinearTo::SrgbAccurate(Colour.b));
-      }
+      LINEAR_TO_SRGB_ACCURATE(float)
+      LINEAR_TO_SRGB_ACCURATE(float3)
     } //LinearTo
 
 
@@ -1485,153 +1414,75 @@ namespace Csp
 
     namespace ExtendedGamma22SCurveTo
     {
-      //#define X_22_1 1.20237927370128566986
-      //#define X_22_x 0.0370133892172524
-      //#define X_22_y_adjust 1.5f - pow(X_22_x, Csp::Trc::ApplyGamma22)
       // extended gamma 2.2 including above 1 and below 0
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
-
-        [branch]
-        if (absC <= 1.f)
-        {
-          return signC * pow(absC, 2.2f);
+      #define EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(T)                                     \
+        T Linear(const T C)                                                              \
+        {                                                                                \
+          const T absC  = abs(C);                                                        \
+          const T signC = sign(C);                                                       \
+                                                                                         \
+          return                                                                         \
+            absC <= 1.f ? signC * pow(absC, 2.2f)                                        \
+                        : signC * (pow(absC - 0.944479882f, 1.f / 2.2f) + 0.731282770f); \
         }
-        else
-        {
-          return signC * (pow(absC - 0.944479882717132568359375f, 1.f / 2.2f) + 0.731282770633697509765625f);
-        }
-      }
-      //{
-      //  if (C < -X_22_1)
-      //    return
-      //      -(pow(-C - X_22_1 + X_22_x, 1.f / 2.2f) + X_22_y_adjust);
-      //  else if (C < 0)
-      //    return
-      //      -pow(-C, 2.2f);
-      //  else if (C <= X_22_1)
-      //    return
-      //      pow(C, 2.2f);
-      //  else
-      //    return
-      //      (pow(C - X_22_1 + X_22_x, Csp::Trc::ApplyGamma22) + X_22_y_adjust);
-      //}
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma22SCurveTo::Linear(Colour.b));
-      }
+        EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(float)
+        EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(float3)
     } //ExtendedGamma22SCurveTo
 
 
     namespace ExtendedGamma22LinearTo
     {
-      //#define X_22_1 1.20237927370128566986
-      //#define X_22_x 0.0370133892172524
-      //#define X_22_y_adjust 1.5f - pow(X_22_x, Csp::Trc::ApplyGamma22)
       // extended gamma 2.2 including above 1 and below 0
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
-
-        [branch]
-        if (absC <= 1.f)
-        {
-          return signC * pow(absC, 2.2f);
+      #define EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(T)   \
+        T Linear(const T C)                           \
+        {                                             \
+          const T absC  = abs(C);                     \
+          const T signC = sign(C);                    \
+                                                      \
+          return absC < 1.f ? signC * pow(absC, 2.2f) \
+                            : C;                      \
         }
-        else
-        {
-          return C;
-        }
-      }
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma22LinearTo::Linear(Colour.b));
-      }
+      EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float)
+      EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float3)
     } //ExtendedGamma22LinearTo
 
 
     namespace ExtendedGamma24SCurveTo
     {
-      //#define X_24_1 1.1840535873752085849
-      //#define X_24_x 0.033138075
-      //#define X_24_y_adjust 1.5f - pow(X_24_x, 1.f / 2.4f)
       // extended gamma 2.4 including above 1 and below 0
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
-
-        [branch]
-        if (absC <= 1.f)
-        {
-          return signC * pow(absC, 2.4f);
+      #define EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(T)                                     \
+        T Linear(const T C)                                                              \
+        {                                                                                \
+          const T absC  = abs(C);                                                        \
+          const T signC = sign(C);                                                       \
+                                                                                         \
+          return                                                                         \
+            absC <= 1.f ? signC * pow(absC, 2.4f)                                        \
+                        : signC * (pow(absC - 0.950292885f, 1.f / 2.4f) + 0.713687002f); \
         }
-        else
-        {
-          return signC * (pow(absC - 0.950292885303497314453125f, 1.f / 2.4f) + 0.71368694305419921875f);
-        }
-      }
-      //{
-      //  if (C < -X_24_1)
-      //    return
-      //      -(pow(-C - X_24_1 + X_24_x, 1.f / 2.4f) + X_24_y_adjust);
-      //  else if (C < 0)
-      //    return
-      //      -pow(-C, 2.4f);
-      //  else if (C <= X_24_1)
-      //    return
-      //      pow(C, 2.4f);
-      //  else
-      //    return
-      //      (pow(C - X_24_1 + X_24_x, 1.f / 2.4f) + X_24_y_adjust);
-      //}
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma24SCurveTo::Linear(Colour.b));
-      }
+      EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(float)
+      EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(float3)
     } //ExtendedGamma24SCurveTo
 
 
     namespace ExtendedGamma24LinearTo
     {
-      //#define X_24_1 1.1840535873752085849
-      //#define X_24_x 0.033138075
-      //#define X_24_y_adjust 1.5f - pow(X_24_x, 1.f / 2.4f)
       // extended gamma 2.4 including above 1 and below 0
-      float Linear(float C)
-      {
-        static const float absC  = abs(C);
-        static const float signC = sign(C);
-
-        [branch]
-        if (absC <= 1.f)
-        {
-          return signC * pow(absC, 2.4f);
+      #define EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(T)   \
+        T Linear(const T C)                           \
+        {                                             \
+          const T absC  = abs(C);                     \
+          const T signC = sign(C);                    \
+                                                      \
+          return absC < 1.f ? signC * pow(absC, 2.4f) \
+                            : C;                      \
         }
-        else
-        {
-          return C;
-        }
-      }
 
-      float3 Linear(float3 Colour)
-      {
-        return float3(Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.r),
-                      Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.g),
-                      Csp::Trc::ExtendedGamma24LinearTo::Linear(Colour.b));
-      }
+      EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(float)
+      EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(float3)
     } //ExtendedGamma24LinearTo
 
 
