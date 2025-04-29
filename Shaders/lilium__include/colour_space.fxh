@@ -1246,6 +1246,27 @@ namespace Csp
     } //LinearTo
 
 
+    namespace ExtendedSrgbRollOffToLinearTo
+    {
+      // extended sRGB gamma including above 1 and below -1
+      #define EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                                          \
+        T Linear(const T C)                                                                                          \
+        {                                                                                                            \
+          const T absC  = abs(C);                                                                                    \
+          const T signC = sign(C);                                                                                   \
+                                                                                                                     \
+          return                                                                                                     \
+            absC > 1.24438285f ? C + (signC * 0.0720067024f)                                                         \
+          : absC > 1.f         ? signC * ((1.055f * pow(absC - 0.940277040f, (1.f / 2.4f)) - 0.055f) + 0.728929638f) \
+          : absC > 0.04045f    ? signC * pow((absC + 0.055f) / 1.055f, 2.4f)                                         \
+          :                      C / 12.92f;                                                                         \
+        }
+
+      EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
+      EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
+    } //ExtendedSrgbRollOffToLinearTo
+
+
     namespace ExtendedSrgbSCurveTo
     {
       // extended sRGB gamma including above 1 and below -1
@@ -1412,6 +1433,26 @@ namespace Csp
 //    } //LinearTo
 
 
+    namespace ExtendedGamma22RollOffToLinearTo
+    {
+      // extended gamma 2.2 including above 1 and below -1
+      #define EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                \
+        T Linear(const T C)                                                                    \
+        {                                                                                      \
+          const T absC  = abs(C);                                                              \
+          const T signC = sign(C);                                                             \
+                                                                                               \
+          return                                                                               \
+            absC > 1.23562705f ? C + (signC * 0.0663648843)                                    \
+          : absC > 1.f         ? signC * (pow(absC - 0.944479882f, 1.f / 2.2f) + 0.731282770f) \
+          :                      signC * pow(absC, 2.2f);                                      \
+        }
+
+      EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
+      EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
+    } //ExtendedGamma22RollOffToLinearTo
+
+
     namespace ExtendedGamma22SCurveTo
     {
       // extended gamma 2.2 including above 1 and below 0
@@ -1447,6 +1488,26 @@ namespace Csp
       EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float)
       EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float3)
     } //ExtendedGamma22LinearTo
+
+
+    namespace ExtendedGamma24RollOffToLinearTo
+    {
+      // extended sRGB gamma including above 1 and below -1
+      #define EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                \
+        T Linear(const T C)                                                                    \
+        {                                                                                      \
+          const T absC  = abs(C);                                                              \
+          const T signC = sign(C);                                                             \
+                                                                                               \
+          return                                                                               \
+            absC > 1.22295093f ? C + (signC * 0.0726261138)                                    \
+          : absC > 1.f         ? signC * (pow(absC - 0.950292885f, 1.f / 2.4f) + 0.713687002f) \
+          :                      signC * pow(absC, 2.4f);                                      \
+        }
+
+      EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
+      EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
+    } //ExtendedGamma24RollOffToLinearTo
 
 
     namespace ExtendedGamma24SCurveTo
