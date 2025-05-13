@@ -1648,6 +1648,10 @@ namespace Csp
       PQ_TO_LINEAR(float3)
 
       // (EOTF) takes PQ values as input
+      // outputs as 1 = 10000 nits
+      PQ_TO_LINEAR(float4)
+
+      // (EOTF) takes PQ values as input
       // outputs nits
       #define PQ_TO_NITS(T)                 \
         T Nits(T E_)                        \
@@ -1667,6 +1671,10 @@ namespace Csp
       // (EOTF) takes PQ values as input
       // outputs nits
       PQ_TO_NITS(float3)
+
+      // (EOTF) takes PQ values as input
+      // outputs nits
+      PQ_TO_NITS(float4)
 
     } //PqTo
 
@@ -1700,6 +1708,9 @@ namespace Csp
       // (inverse EOTF) takes normalised to 10000 nits values as input
       LINEAR_TO_PQ(float3)
 
+      // (inverse EOTF) takes normalised to 10000 nits values as input
+      LINEAR_TO_PQ(float4)
+
     } //LinearTo
 
 
@@ -1723,7 +1734,10 @@ namespace Csp
 
       // (OETF) takes nits as input
       NITS_TO_PQ(float3)
-    }
+
+      // (OETF) takes nits as input
+      NITS_TO_PQ(float4)
+    } //NitsTo
 
 
     static const float HLG_a = 0.17883277;
