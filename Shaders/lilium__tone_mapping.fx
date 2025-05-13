@@ -360,34 +360,41 @@ uniform float TEST_S
 // Vertex shader generating a triangle covering the entire screen.
 // Calculate values only "once" (3 times because it's 3 vertices)
 // for the pixel shader.
-void VS_PrepareToneMapping(
+void VS_PrepareToneMapping
+(
   in                  uint   VertexID : SV_VertexID,
-  out                 float4 Position : SV_Position,
-  out                 float2 TexCoord : TEXCOORD0,
+  out                 float4 Position : SV_Position
+#if (SHOW_ADAPTIVE_MAX_NITS == YES \
+  && defined(IS_COMPUTE_CAPABLE_API))
+                                                   ,
+  out                 float2 TexCoord : TEXCOORD0
+#endif
+#if (__RESHADE_PERFORMANCE_MODE__ == 0)
+                                                 ,
   out nointerpolation float4 TmParms0 : TmParms0,
-  out nointerpolation float3 TmParms1 : TmParms1)
+  out nointerpolation float3 TmParms1 : TmParms1
+#endif
+)
 {
+#if (SHOW_ADAPTIVE_MAX_NITS == NO)
+  float2 TexCoord;
+#endif
+
   TexCoord.x = (VertexID == 2) ? 2.f
                                : 0.f;
   TexCoord.y = (VertexID == 1) ? 2.f
                                : 0.f;
   Position = float4(TexCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
 
+#if (__RESHADE_PERFORMANCE_MODE__ == 0)
   TmParms0 = 0.f;
   TmParms1 = 0.f;
 
-#define usedMaxNits TmParms0.x
+#define UsedMaxNits TmParms0.x
 
-//  if (Ui::Tm::Global::Mode == TM_MODE_STATIC)
-//  {
-    usedMaxNits = Ui::Tm::StaticMode::InputLuminanceMax;
-//  }
-//  else
-//  {
-//    usedMaxNits = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_NITS);
-//  }
+  float localUsedMaxNits;
 
-  usedMaxNits = max(usedMaxNits, Ui::Tm::Global::TargetLuminance);
+  GetUsedMaxNits(localUsedMaxNits);
 
   [branch]
   if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
@@ -395,33 +402,32 @@ void VS_PrepareToneMapping(
 
 #define Bt2390SrcMinPq              TmParms0.y
 #define Bt2390SrcMaxPq              TmParms0.z
-#define Bt2390SrcMinMaxPq           TmParms0.yz
 #define Bt2390SrcMaxPqMinusSrcMinPq TmParms0.w
 #define Bt2390MinLum                TmParms1.x
 #define Bt2390MaxLum                TmParms1.y
-#define Bt2390MinMaxLum             TmParms1.xy
 #define Bt2390KneeStart             TmParms1.z
 
-    // source min brightness (Lb) in PQ
-    // source max brightness (Lw) in PQ
-    Bt2390SrcMinMaxPq = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::OldBlackPoint,
-                                                    usedMaxNits));
+    float bt2390SrcMinPq;
+    float bt2390SrcMaxPq;
+    float bt2390SrcMaxPqMinusSrcMinPq;
+    float bt2390MinLum;
+    float bt2390MaxLum;
+    float bt2390KneeStart;
 
-    // target min brightness (Lmin) in PQ
-    // target max brightness (Lmax) in PQ
-    float2 tgtMinMaxPQ = Csp::Trc::NitsTo::Pq(float2(Ui::Tm::Bt2390::NewBlackPoint,
-                                                     Ui::Tm::Global::TargetLuminance));
+    GetTmoParamsBt2390(localUsedMaxNits,
+                       bt2390SrcMinPq,
+                       bt2390SrcMaxPq,
+                       bt2390SrcMaxPqMinusSrcMinPq,
+                       bt2390MinLum,
+                       bt2390MaxLum,
+                       bt2390KneeStart);
 
-    // this is needed often so precalculate it
-    Bt2390SrcMaxPqMinusSrcMinPq = Bt2390SrcMaxPq - Bt2390SrcMinPq;
-
-    Bt2390MinMaxLum = (tgtMinMaxPQ - Bt2390SrcMinPq) / Bt2390SrcMaxPqMinusSrcMinPq;
-
-    // knee start (KS)
-    Bt2390KneeStart = 1.5f
-                    * Bt2390MaxLum
-                    - Ui::Tm::Bt2390::KneeOffset;
-
+    Bt2390SrcMinPq              = bt2390SrcMinPq;
+    Bt2390SrcMaxPq              = bt2390SrcMaxPq;
+    Bt2390SrcMaxPqMinusSrcMinPq = bt2390SrcMaxPqMinusSrcMinPq;
+    Bt2390MinLum                = bt2390MinLum;
+    Bt2390MaxLum                = bt2390MaxLum;
+    Bt2390KneeStart             = bt2390KneeStart;
   }
   else
   [branch]
@@ -431,27 +437,74 @@ void VS_PrepareToneMapping(
 #define ExpCompressShoulderStartInPq                         TmParms0.y
 #define ExpCompressTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
 
-    const float shoulderStartInPq =
-      Csp::Trc::NitsTo::Pq(Ui::Tm::ExpCompress::ShoulderStart
-                         / 100.f
-                         * Ui::Tm::Global::TargetLuminance);
+    float expCompressShoulderStartInPq;
+    float expCompressTargetLuminanceInPqMinusShoulderStartInPq;
 
-    ExpCompressTargetLuminanceInPqMinusShoulderStartInPq =
-      Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
-    - shoulderStartInPq;
+    GetTmoParamsExpCompress(localUsedMaxNits,
+                            expCompressShoulderStartInPq,
+                            expCompressTargetLuminanceInPqMinusShoulderStartInPq);
 
-    ExpCompressShoulderStartInPq = shoulderStartInPq;
+    ExpCompressShoulderStartInPq                         = expCompressShoulderStartInPq;
+    ExpCompressTargetLuminanceInPqMinusShoulderStartInPq = expCompressTargetLuminanceInPqMinusShoulderStartInPq;
   }
+
+  UsedMaxNits = localUsedMaxNits;
+
+#endif //__RESHADE_PERFORMANCE_MODE__ == 0
 }
 
 
-void PS_ToneMapping(
+void PS_ToneMapping
+(
   in                  float4 Position : SV_Position,
+#if (SHOW_ADAPTIVE_MAX_NITS == YES \
+  && defined(IS_COMPUTE_CAPABLE_API))
   in                  float2 TexCoord : TEXCOORD0,
+#endif
+#if (__RESHADE_PERFORMANCE_MODE__ == 0)
   in  nointerpolation float4 TmParms0 : TmParms0,
   in  nointerpolation float3 TmParms1 : TmParms1,
-  out                 float4 Output   : SV_Target0)
+#endif
+  out                 float4 Output   : SV_Target0
+)
 {
+#if (__RESHADE_PERFORMANCE_MODE__ == 1)
+
+  static float UsedMaxNits;
+
+  GetUsedMaxNits(UsedMaxNits);
+
+  static float Bt2390SrcMinPq;
+  static float Bt2390SrcMaxPq;
+  static float Bt2390SrcMaxPqMinusSrcMinPq;
+  static float Bt2390MinLum;
+  static float Bt2390MaxLum;
+  static float Bt2390KneeStart;
+
+  static float ExpCompressShoulderStartInPq;
+  static float ExpCompressTargetLuminanceInPqMinusShoulderStartInPq;
+
+  [branch]
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
+  {
+    GetTmoParamsBt2390(UsedMaxNits,
+                       Bt2390SrcMinPq,
+                       Bt2390SrcMaxPq,
+                       Bt2390SrcMaxPqMinusSrcMinPq,
+                       Bt2390MinLum,
+                       Bt2390MaxLum,
+                       Bt2390KneeStart);
+  }
+  [branch]
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_EXP_COMPRESS)
+  {
+    GetTmoParamsExpCompress(UsedMaxNits,
+                            ExpCompressShoulderStartInPq,
+                            ExpCompressTargetLuminanceInPqMinusShoulderStartInPq);
+  }
+
+#endif
+
   float4 inputColour = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 hdr = inputColour.rgb;
@@ -461,7 +514,7 @@ void PS_ToneMapping(
     case TM_METHOD_BT2446A:
     {
       Tmos::Bt2446A(hdr,
-                    usedMaxNits,
+                    UsedMaxNits,
                     Ui::Tm::Global::TargetLuminance);
     }
     break;
@@ -491,11 +544,11 @@ void PS_ToneMapping(
     case TM_METHOD_BT2446A_MOD1:
     {
       //move test parameters to vertex shader if this ever gets released
-      float testH = clamp(TEST_H + usedMaxNits,                      0.f, 10000.f);
+      float testH = clamp(TEST_H + UsedMaxNits,                     0.f, 10000.f);
       float testS = clamp(TEST_S + Ui::Tm::Global::TargetLuminance, 0.f, 10000.f);
 
       Tmos::Bt2446A_MOD1(hdr,
-                         usedMaxNits,
+                         UsedMaxNits,
                          Ui::Tm::Global::TargetLuminance,
                          Ui::Tm::Bt2446A::LumaPostAdjust,
                          Ui::Tm::Bt2446A::GamutCompression,

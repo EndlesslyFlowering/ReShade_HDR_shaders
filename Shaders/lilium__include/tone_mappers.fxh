@@ -5,6 +5,77 @@
   && defined(IS_HDR_CSP))
 
 
+void GetUsedMaxNits
+(
+  out float UsedMaxNits
+)
+{
+  UsedMaxNits = max(Ui::Tm::StaticMode::InputLuminanceMax, Ui::Tm::Global::TargetLuminance);
+
+  return;
+}
+
+void GetTmoParamsBt2390
+(
+  in  float UsedMaxNits,
+  out float SrcMinPq,
+  out float SrcMaxPq,
+  out float SrcMaxPqMinusSrcMinPq,
+  out float MinLum,
+  out float MaxLum,
+  out float KneeStart
+)
+{
+  // source min brightness (Lb) in PQ
+  // source max brightness (Lw) in PQ
+  // target min brightness (Lmin) in PQ
+  // target max brightness (Lmax) in PQ
+  float4 SrcMinMaxPqTgtMinMaxPq = Csp::Trc::NitsTo::Pq(float4(Ui::Tm::Bt2390::OldBlackPoint,
+                                                              UsedMaxNits,
+                                                              Ui::Tm::Bt2390::NewBlackPoint,
+                                                              Ui::Tm::Global::TargetLuminance));
+
+  SrcMinPq = SrcMinMaxPqTgtMinMaxPq[0];
+  SrcMaxPq = SrcMinMaxPqTgtMinMaxPq[1];
+
+  // this is needed often so precalculate it
+  SrcMaxPqMinusSrcMinPq = SrcMaxPq
+                        - SrcMinPq;
+
+  float2 minMaxLum = (SrcMinMaxPqTgtMinMaxPq.zw - SrcMinPq)
+                   / SrcMaxPqMinusSrcMinPq;
+
+  MinLum = minMaxLum[0];
+  MaxLum = minMaxLum[1];
+
+  // knee start (KS)
+  KneeStart = 1.5f
+            * MaxLum
+            - Ui::Tm::Bt2390::KneeOffset;
+
+  return;
+}
+
+void GetTmoParamsExpCompress
+(
+  in  float UsedMaxNits,
+  out float ShoulderStartInPq,
+  out float TargetLuminanceInPqMinusShoulderStartInPq
+)
+{
+  float shoulderStart = Ui::Tm::ExpCompress::ShoulderStart
+                      / 100.f
+                      * Ui::Tm::Global::TargetLuminance
+                      / 10000.f;
+
+  ShoulderStartInPq = Csp::Trc::LinearTo::Pq(shoulderStart);
+
+  TargetLuminanceInPqMinusShoulderStartInPq =
+    Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
+  - ShoulderStartInPq;
+
+  return;
+}
 
 
 HDR10_TO_LINEAR_LUT()
