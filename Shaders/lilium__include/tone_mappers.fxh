@@ -474,14 +474,14 @@ namespace Tmos
   }
 
 
-  namespace Dice
+  namespace ExpCompress
   {
-#define DICE_PRO_MODE_YRGB   0
-#define DICE_PRO_MODE_MAXCLL 1
-#define DICE_PRO_MODE_RGB    2
+#define EXP_COMPRESS_PRO_MODE_YRGB   0
+#define EXP_COMPRESS_PRO_MODE_MAXCLL 1
+#define EXP_COMPRESS_PRO_MODE_RGB    2
 
     // Applies exponential "Photographic" luminance compression
-    float RangeCompress
+    float ExponentialCompression
     (
       const float X
     )
@@ -496,8 +496,8 @@ namespace Tmos
       const float TargetLuminanceInPqMinusShoulderStartInPq
     )
     {
-      return RangeCompress((Channel - ShoulderStartInPq)
-                         / TargetLuminanceInPqMinusShoulderStartInPq)
+      return ExponentialCompression((Channel - ShoulderStartInPq)
+                                  / TargetLuminanceInPqMinusShoulderStartInPq)
            * TargetLuminanceInPqMinusShoulderStartInPq
            + ShoulderStartInPq;
 
@@ -521,7 +521,7 @@ namespace Tmos
     {
       // YRGB method copied from BT.2390
       BRANCH()
-      if (ProcessingMode == DICE_PRO_MODE_YRGB)
+      if (ProcessingMode == EXP_COMPRESS_PRO_MODE_YRGB)
       {
         //HDR10
         float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
@@ -560,7 +560,7 @@ namespace Tmos
       }
       else
       BRANCH()
-      if (ProcessingMode == DICE_PRO_MODE_MAXCLL)
+      if (ProcessingMode == EXP_COMPRESS_PRO_MODE_MAXCLL)
       {
         //scRGB
         float3 Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
@@ -607,7 +607,7 @@ namespace Tmos
           return;
         }
       }
-      else //if (ProcessingMode == DICE_PRO_MODE_RGB)
+      else //if (ProcessingMode == EXP_COMPRESS_PRO_MODE_RGB)
       {
         //scRGB
         float3 Rgb = ConditionallyConvertScRgbToHdr10(Colour);

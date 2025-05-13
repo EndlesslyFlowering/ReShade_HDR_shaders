@@ -53,13 +53,13 @@ namespace Ui
                  "\n" "  It is designed for tone mapping 1000 nits to 100 nits originally"
                  "\n" "  and therefore can't handle compressing brightness differences that are too high."
                  "\n" "  Like 10000 nits to 800 nits. As it's trying to compress the whole brightness range."
-                 "\n" "Dice:"
+                 "\n" "Exponential Compression:"
                  "\n" "  Works similarly to BT.2390."
                  "\n" "  The compression curve is slightly different and it's a bit faster.";
         ui_type     = "combo";
         ui_items    = "BT.2390 EETF\0"
                       "BT.2446 Method A\0"
-                      "Dice\0"
+                      "Exponential Compression\0"
       #ifdef BT2446A_MOD1_ENABLE
                       "BT.2446A mod1\0"
       #endif
@@ -68,7 +68,7 @@ namespace Ui
 
 #define TM_METHOD_BT2390       0
 #define TM_METHOD_BT2446A      1
-#define TM_METHOD_DICE         2
+#define TM_METHOD_EXP_COMPRESS 2
 #define TM_METHOD_BT2446A_MOD1 3
 
 //#ifdef IS_COMPUTE_CAPABLE_API
@@ -182,11 +182,11 @@ static const uint Mode = 0;
       > = 0.5f;
     } //Bt2390
 
-    namespace Dice
+    namespace ExpCompress
     {
-      uniform uint ProcessingModeDice
+      uniform uint ProcessingModeExpCompress
       <
-        ui_category = "Dice";
+        ui_category = "Exponential Compression";
         ui_label    = "processing mode";
         ui_tooltip  = "YRGB:"
                  "\n" "        + produces consistent luminance levels (the ideal)"
@@ -208,7 +208,7 @@ static const uint Mode = 0;
 
       uniform float ShoulderStart
       <
-        ui_category = "Dice";
+        ui_category = "Exponential Compression";
         ui_label    = "shoulder start";
         ui_tooltip  = "Set this to where the brightness compression curve starts."
                  "\n" "In % of the target brightness."
@@ -234,7 +234,7 @@ static const uint Mode = 0;
 //        ui_items    = "BT.2020\0"
 //                      "AP0_D65\0";
 //      > = 0;
-    } //Dice
+    } //Exponential Compression
 
 #if 0
     namespace AdaptiveMode
@@ -425,22 +425,22 @@ void VS_PrepareToneMapping(
   }
   else
   [branch]
-  if (Ui::Tm::Global::TmMethod == TM_METHOD_DICE)
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_EXP_COMPRESS)
   {
 
-#define DiceShoulderStartInPq                         TmParms0.y
-#define DiceTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
+#define ExpCompressShoulderStartInPq                         TmParms0.y
+#define ExpCompressTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
 
     const float shoulderStartInPq =
-      Csp::Trc::NitsTo::Pq(Ui::Tm::Dice::ShoulderStart
+      Csp::Trc::NitsTo::Pq(Ui::Tm::ExpCompress::ShoulderStart
                          / 100.f
                          * Ui::Tm::Global::TargetLuminance);
 
-    DiceTargetLuminanceInPqMinusShoulderStartInPq =
+    ExpCompressTargetLuminanceInPqMinusShoulderStartInPq =
       Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
     - shoulderStartInPq;
 
-    DiceShoulderStartInPq = shoulderStartInPq;
+    ExpCompressShoulderStartInPq = shoulderStartInPq;
   }
 }
 
@@ -477,12 +477,12 @@ void PS_ToneMapping(
                          Bt2390KneeStart);
     }
     break;
-    case TM_METHOD_DICE:
+    case TM_METHOD_EXP_COMPRESS:
     {
-      Tmos::Dice::ToneMapper(hdr,
-                             Ui::Tm::Dice::ProcessingModeDice,
-                             DiceShoulderStartInPq,
-                             DiceTargetLuminanceInPqMinusShoulderStartInPq);
+      Tmos::ExpCompress::ToneMapper(hdr,
+                                    Ui::Tm::ExpCompress::ProcessingModeExpCompress,
+                                    ExpCompressShoulderStartInPq,
+                                    ExpCompressTargetLuminanceInPqMinusShoulderStartInPq);
     }
     break;
 
