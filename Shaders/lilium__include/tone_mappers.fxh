@@ -111,35 +111,43 @@ namespace Tmos
     Colour = ConditionallyLineariseHdr10Temp(Colour);
 
     // adjust the max of 1 according to max nits
-    Colour *= (10000.f / MaxNits);
+    Colour *= 10000.f / MaxNits;
 
-    // get luminance
-    float yHdr = GetLuminance(Colour);
+    // get luminance (YHDR)
     //clamp to avoid invalid numbers
-    yHdr = max(yHdr, 1e-20);
+    const float yHdr = max(GetLuminance(Colour), 1e-20);
     //Y'HDR
-    yHdr = pow(yHdr, 1.f / 2.4f);
+    const float y_Hdr = pow(yHdr, 1.f / 2.4f);
 
     //Y'p
-    const float yP = log(1.f + (pHdr - 1.f) * yHdr)
-                   / log(pHdr);
+    const float y_P = log(1.f + (pHdr - 1.f) * y_Hdr)
+                    / log(pHdr);
 
-    // tone mapping step 2
     //Y'c
-    const float yC = yP <= 0.7399f ? 1.0770f * yP
-                   : yP >= 0.9909f ? (0.5000f * yP) + 0.5000f
-                                   : (-1.1510f * (yP * yP)) + (2.7811f * yP) - 0.6302f;
+    const float y_C0 = 1.0770f * y_P;
+
+    const float y_C1 = -1.1510f * (y_P * y_P)
+                     +  2.7811f * y_P
+                     -  0.6302f;
+
+    const float y_C2 = 0.5000f * y_P
+                     + 0.5000f;
+
+    const float y_C = y_P <= 0.7399f ? y_C0
+                    : y_P >= 0.9909f ? y_C2
+                    :                  y_C1;
 
     //Y'SDR
-    const float ySdr = (pow(pSdr, yC) - 1.f)
-                     / (pSdr - 1.f);
+    const float y_Sdr = (pow(pSdr, y_C) - 1.f)
+                      / (pSdr - 1.f);
 
-    const float2 ySdrYHdr = pow(float2(ySdr, yHdr), 2.4f);
+    //YSDR
+    const float ySdr = pow(y_Sdr, 2.4f);
 
-    Colour *= (ySdrYHdr[0] / ySdrYHdr[1]);
+    Colour *= ySdr / yHdr;
 
     // adjust to TargetNits
-    Colour *= (TargetNits / 10000.f);
+    Colour *= TargetNits / 10000.f;
 
     //scRGB
     Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
