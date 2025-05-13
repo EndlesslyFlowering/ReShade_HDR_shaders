@@ -77,6 +77,33 @@ void GetTmoParamsExpCompress
   return;
 }
 
+void GetTmoParamsBt2446A
+(
+  in  float UsedMaxNits,
+  out float PreAdjust,
+  out float PostAdjust,
+  out float PSdr,
+  out float PSdrMinus1Inverse,
+  out float PHdrMinus1,
+  out float LnPHdrInverse
+)
+{
+  const float targetLuminance = Ui::Tm::Global::TargetLuminance;
+
+  PreAdjust  = 10000.f / UsedMaxNits;
+  PostAdjust = targetLuminance / 10000.f;
+
+  //pSDR and pHDR
+  float2 pSdrHdr = 1.f + 32.f * pow(float2(targetLuminance, UsedMaxNits) / 10000.f, 1.f / 2.4f);
+
+  PSdr              = pSdrHdr[0];
+  PSdrMinus1Inverse = 1.f / (pSdrHdr[0] - 1.f);
+  PHdrMinus1        = pSdrHdr[1] - 1.f;
+  LnPHdrInverse     = 1.f / log(pSdrHdr[1]);
+
+  return;
+}
+
 
 HDR10_TO_LINEAR_LUT()
 
@@ -96,22 +123,21 @@ namespace Tmos
   void Bt2446A
   (
     inout       float3 Colour,
-          const float  MaxNits,
-          const float  TargetNits
+          const float  PreAdjust,
+          const float  PostAdjust,
+          const float  PSdr,
+          const float  PSdrMinus1Inverse,
+          const float  PHdrMinus1,
+          const float  LnPHdrInverse
   )
   {
-    //pSDR and pHDR
-    static const float2 pSdrHdr = 1.f + 32.f * pow(float2(TargetNits, MaxNits) / 10000.f, 1.f / 2.4f);
-#define pSdr pSdrHdr[0]
-#define pHdr pSdrHdr[1]
-
     //scRGB
     Colour = ConditionallyNormaliseScRgb(Colour);
     //HDR10
     Colour = ConditionallyLineariseHdr10Temp(Colour);
 
     // adjust the max of 1 according to max nits
-    Colour *= 10000.f / MaxNits;
+    Colour *= PreAdjust;
 
     // get luminance (YHDR)
     //clamp to avoid invalid numbers
@@ -120,8 +146,8 @@ namespace Tmos
     const float y_Hdr = pow(yHdr, 1.f / 2.4f);
 
     //Y'p
-    const float y_P = log(1.f + (pHdr - 1.f) * y_Hdr)
-                    / log(pHdr);
+    const float y_P = log(1.f + (PHdrMinus1) * y_Hdr)
+                    * LnPHdrInverse;
 
     //Y'c
     const float y_C0 = 1.0770f * y_P;
@@ -138,16 +164,13 @@ namespace Tmos
                     :                  y_C1;
 
     //Y'SDR
-    const float y_Sdr = (pow(pSdr, y_C) - 1.f)
-                      / (pSdr - 1.f);
+    const float y_Sdr = (pow(PSdr, y_C) - 1.f)
+                      * PSdrMinus1Inverse;
 
     //YSDR
     const float ySdr = pow(y_Sdr, 2.4f);
 
-    Colour *= ySdr / yHdr;
-
-    // adjust to TargetNits
-    Colour *= TargetNits / 10000.f;
+    Colour *= ySdr / yHdr * PostAdjust;
 
     //scRGB
     Colour = ConditionallyConvertNormalisedBt709ToScRgb(Colour);
@@ -155,8 +178,6 @@ namespace Tmos
     Colour = ConditionallyConvertNormalisedBt2020ToHdr10(Colour);
 
     return;
-#undef pSdr
-#undef pHdr
   }
 
   float3 Bt2446A_MOD1(

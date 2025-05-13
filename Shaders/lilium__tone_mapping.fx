@@ -372,7 +372,7 @@ void VS_PrepareToneMapping
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
                                                  ,
   out nointerpolation float4 TmParms0 : TmParms0,
-  out nointerpolation float3 TmParms1 : TmParms1
+  out nointerpolation float2 TmParms1 : TmParms1
 #endif
 )
 {
@@ -390,22 +390,20 @@ void VS_PrepareToneMapping
   TmParms0 = 0.f;
   TmParms1 = 0.f;
 
-#define UsedMaxNits TmParms0.x
+  float usedMaxNits;
 
-  float localUsedMaxNits;
-
-  GetUsedMaxNits(localUsedMaxNits);
+  GetUsedMaxNits(usedMaxNits);
 
   [branch]
   if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
   {
 
-#define Bt2390SrcMinPq              TmParms0.y
-#define Bt2390SrcMaxPq              TmParms0.z
-#define Bt2390SrcMaxPqMinusSrcMinPq TmParms0.w
-#define Bt2390MinLum                TmParms1.x
-#define Bt2390MaxLum                TmParms1.y
-#define Bt2390KneeStart             TmParms1.z
+#define Bt2390SrcMinPq              TmParms0.x
+#define Bt2390SrcMaxPq              TmParms0.y
+#define Bt2390SrcMaxPqMinusSrcMinPq TmParms0.z
+#define Bt2390MinLum                TmParms0.w
+#define Bt2390MaxLum                TmParms1.x
+#define Bt2390KneeStart             TmParms1.y
 
     float bt2390SrcMinPq;
     float bt2390SrcMaxPq;
@@ -414,7 +412,7 @@ void VS_PrepareToneMapping
     float bt2390MaxLum;
     float bt2390KneeStart;
 
-    GetTmoParamsBt2390(localUsedMaxNits,
+    GetTmoParamsBt2390(usedMaxNits,
                        bt2390SrcMinPq,
                        bt2390SrcMaxPq,
                        bt2390SrcMaxPqMinusSrcMinPq,
@@ -434,21 +432,53 @@ void VS_PrepareToneMapping
   if (Ui::Tm::Global::TmMethod == TM_METHOD_EXP_COMPRESS)
   {
 
-#define ExpCompressShoulderStartInPq                         TmParms0.y
-#define ExpCompressTargetLuminanceInPqMinusShoulderStartInPq TmParms0.z
+#define ExpCompressShoulderStartInPq                         TmParms0.x
+#define ExpCompressTargetLuminanceInPqMinusShoulderStartInPq TmParms0.y
 
     float expCompressShoulderStartInPq;
     float expCompressTargetLuminanceInPqMinusShoulderStartInPq;
 
-    GetTmoParamsExpCompress(localUsedMaxNits,
+    GetTmoParamsExpCompress(usedMaxNits,
                             expCompressShoulderStartInPq,
                             expCompressTargetLuminanceInPqMinusShoulderStartInPq);
 
     ExpCompressShoulderStartInPq                         = expCompressShoulderStartInPq;
     ExpCompressTargetLuminanceInPqMinusShoulderStartInPq = expCompressTargetLuminanceInPqMinusShoulderStartInPq;
   }
+  else
+  [branch]
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
+  {
 
-  UsedMaxNits = localUsedMaxNits;
+#define Bt2446APreAdjust         TmParms0.x
+#define Bt2446APostAdjust        TmParms0.y
+#define Bt2446APSdr              TmParms0.z
+#define Bt2446APSdrMinus1Inverse TmParms0.w
+#define Bt2446APHdrMinus1        TmParms1.x
+#define Bt2446ALnPHdrInverse     TmParms1.y
+
+    float bt2446APreAdjust;
+    float bt2446APostAdjust;
+    float bt2446APSdr;
+    float bt2446APSdrMinus1Inverse;
+    float bt2446APHdrMinus1;
+    float bt2446ALnPHdrInverse;
+
+    GetTmoParamsBt2446A(usedMaxNits,
+                        bt2446APreAdjust,
+                        bt2446APostAdjust,
+                        bt2446APSdr,
+                        bt2446APSdrMinus1Inverse,
+                        bt2446APHdrMinus1,
+                        bt2446ALnPHdrInverse);
+
+    Bt2446APreAdjust         = bt2446APreAdjust;
+    Bt2446APostAdjust        = bt2446APostAdjust;
+    Bt2446APSdr              = bt2446APSdr;
+    Bt2446APSdrMinus1Inverse = bt2446APSdrMinus1Inverse;
+    Bt2446APHdrMinus1        = bt2446APHdrMinus1;
+    Bt2446ALnPHdrInverse     = bt2446ALnPHdrInverse;
+  }
 
 #endif //__RESHADE_PERFORMANCE_MODE__ == 0
 }
@@ -463,7 +493,7 @@ void PS_ToneMapping
 #endif
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
   in  nointerpolation float4 TmParms0 : TmParms0,
-  in  nointerpolation float3 TmParms1 : TmParms1,
+  in  nointerpolation float2 TmParms1 : TmParms1,
 #endif
   out                 float4 Output   : SV_Target0
 )
@@ -484,6 +514,13 @@ void PS_ToneMapping
   static float ExpCompressShoulderStartInPq;
   static float ExpCompressTargetLuminanceInPqMinusShoulderStartInPq;
 
+  static float Bt2446APreAdjust;
+  static float Bt2446APostAdjust;
+  static float Bt2446APSdr;
+  static float Bt2446APSdrMinus1Inverse;
+  static float Bt2446APHdrMinus1;
+  static float Bt2446ALnPHdrInverse;
+
   [branch]
   if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2390)
   {
@@ -502,6 +539,17 @@ void PS_ToneMapping
                             ExpCompressShoulderStartInPq,
                             ExpCompressTargetLuminanceInPqMinusShoulderStartInPq);
   }
+  [branch]
+  if (Ui::Tm::Global::TmMethod == TM_METHOD_BT2446A)
+  {
+    GetTmoParamsBt2446A(UsedMaxNits,
+                        Bt2446APreAdjust,
+                        Bt2446APostAdjust,
+                        Bt2446APSdr,
+                        Bt2446APSdrMinus1Inverse,
+                        Bt2446APHdrMinus1,
+                        Bt2446ALnPHdrInverse);
+  }
 
 #endif
 
@@ -514,8 +562,12 @@ void PS_ToneMapping
     case TM_METHOD_BT2446A:
     {
       Tmos::Bt2446A(hdr,
-                    UsedMaxNits,
-                    Ui::Tm::Global::TargetLuminance);
+                    Bt2446APreAdjust,
+                    Bt2446APostAdjust,
+                    Bt2446APSdr,
+                    Bt2446APSdrMinus1Inverse,
+                    Bt2446APHdrMinus1,
+                    Bt2446ALnPHdrInverse);
     }
     break;
     case TM_METHOD_BT2390:
