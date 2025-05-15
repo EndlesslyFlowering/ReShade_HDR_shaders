@@ -214,6 +214,8 @@ void PS_HdrBlackFloorFix
   [branch]
   if (!Ui::HdrBlackFloorFix::Lowering::LoweringEnable)
   {
+    // needed here
+    Output = 0.f;
     discard;
   }
 
