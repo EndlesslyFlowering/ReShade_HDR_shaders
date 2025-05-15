@@ -10,8 +10,27 @@
 #endif
 
 
-#if (defined(IS_COMPUTE_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+#endif
+
 
 #if 0
   #include "lilium__include/HDR_black_floor_fix.fxh"
@@ -64,6 +83,7 @@ namespace Ui
                       "BT.2446A mod1\0"
       #endif
                       ;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define TM_METHOD_BT2390       0
@@ -84,6 +104,7 @@ namespace Ui
         ui_type     = "combo";
         ui_items    = "static\0"
                       "adaptive\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #else
@@ -104,6 +125,7 @@ static const uint Mode = 0;
         ui_min      = 0.f;
         ui_max      = 10000.f;
         ui_step     = 5.f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 600.f;
     } //Global
 
@@ -119,6 +141,7 @@ static const uint Mode = 0;
         ui_min      = 0.f;
         ui_max      = 10000.f;
         ui_step     = 5.f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 10000.f;
     } //StaticMode
 
@@ -144,6 +167,7 @@ static const uint Mode = 0;
         ui_items    = "YRGB\0"
                       "maxCLL\0"
                       "RGB\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
       uniform float OldBlackPoint
@@ -155,6 +179,7 @@ static const uint Mode = 0;
         ui_min      = 0.f;
         ui_max      = 0.5f;
         ui_step     = 0.000001f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
 
       uniform float NewBlackPoint
@@ -166,6 +191,7 @@ static const uint Mode = 0;
         ui_min      = -0.1f;
         ui_max      = 0.1f;
         ui_step     = 0.0001f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
 
       uniform float KneeOffset
@@ -179,6 +205,7 @@ static const uint Mode = 0;
         ui_min      = 0.5f;
         ui_max      = 1.0f;
         ui_step     = 0.001f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.5f;
     } //Bt2390
 
@@ -204,6 +231,7 @@ static const uint Mode = 0;
         ui_items    = "YRGB\0"
                       "maxCLL\0"
                       "RGB\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
       uniform float ShoulderStart
@@ -220,6 +248,7 @@ static const uint Mode = 0;
         ui_min      = 10.f;
         ui_max      = 50.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 25.f;
 
 //      uniform uint WorkingColourSpace
@@ -250,6 +279,7 @@ static const uint Mode = 0;
         ui_min      = 0.f;
         ui_max      = 10000.f;
         ui_step     = 10.f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 10000.f;
 
       uniform float TimeToAdapt
@@ -261,6 +291,7 @@ static const uint Mode = 0;
         ui_min      = 0.5f;
         ui_max      = 3.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 1.0f;
 
       uniform float FinalAdaptStart
@@ -276,6 +307,7 @@ static const uint Mode = 0;
         ui_min      = 80.f;
         ui_max      = 99.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 95.f;
 
       uniform float FinalAdaptSteps
@@ -287,6 +319,7 @@ static const uint Mode = 0;
         ui_min      = 1.f;
         ui_max      = 10.f;
         ui_step     = 0.05f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 7.5f;
 
       uniform float FinalAdaptSpeed
@@ -298,6 +331,7 @@ static const uint Mode = 0;
         ui_min      = 1.f;
         ui_max      = 10.f;
         ui_step     = 0.05f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 7.5f;
     } //AdaptiveMode
 #endif
@@ -317,6 +351,7 @@ uniform float TEST_H
   ui_min      = -10000.f;
   ui_max      =  10000.f;
   ui_step     =  10.f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0.f;
 
 uniform float TEST_S
@@ -327,6 +362,7 @@ uniform float TEST_S
   ui_min      = -10000.f;
   ui_max      =  10000.f;
   ui_step     =  10.f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0.f;
 #endif
 
@@ -857,7 +893,7 @@ technique lilium__tone_mapping
   }
 }
 
-#else //is hdr API and hdr colour space
+#else //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 ERROR_STUFF
 
@@ -867,4 +903,4 @@ technique lilium__tone_mapping
 >
 VS_ERROR
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

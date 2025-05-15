@@ -1,8 +1,26 @@
 #include "lilium__include/inverse_tone_mappers.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+#endif
 
 
 //#include "lilium__include/draw_text_fix.fxh"
@@ -38,6 +56,7 @@ namespace Ui
                       "Dice inverse\0"
 #endif
                       ;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define ITM_METHOD_BT2446A          0
@@ -55,6 +74,7 @@ namespace Ui
                       "linear (scRGB)\0"
                       "linear with SDR black floor emulation (scRGB)\0"
                       "sRGB\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define CONTENT_TRC_GAMMA_22                    0
@@ -77,6 +97,7 @@ namespace Ui
                       "linear\0"
                       "apply gamma\0"
                       "clamp\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR 0
@@ -94,6 +115,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 10000.f;
         ui_step     = 10.f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 600.f;
     }
 
@@ -108,6 +130,7 @@ namespace Ui
         ui_type     = "combo";
         ui_items    = "luminance (looks more natural)\0"
                       "YCbCr-like (looks like the original)\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
       uniform float Bt2446AInputBrightness
@@ -128,6 +151,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 1200.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 100.f;
 
       uniform float Bt2446AMaxInputBrightness
@@ -151,6 +175,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 1200.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 100.f;
 
       //uniform bool BT2446A_AUTO_REF_WHITE
@@ -167,16 +192,18 @@ namespace Ui
         ui_min      = -0.4f;
         ui_max      =  0.6f;
         ui_step     =  0.005f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
 
       uniform float GammaOut
       <
         ui_category = "BT.2446 Method A";
-           ui_label = "gamma adjustment after inverse tone mapping";
-            ui_type = "drag";
-             ui_min = -1.f;
-             ui_max =  1.f;
-            ui_step =  0.005f;
+        ui_label    = "gamma adjustment after inverse tone mapping";
+        ui_type     = "drag";
+        ui_min      = -1.f;
+        ui_max      =  1.f;
+        ui_step     =  0.005f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
     }
 
@@ -199,6 +226,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 1200.f;
         ui_step     = 0.01f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 100.f;
 
       uniform float Alpha
@@ -210,6 +238,7 @@ namespace Ui
         ui_min      = 0.f;
         ui_max      = 0.33f;
         ui_step     = 0.001f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0.33f;
 
       //uniform float K1
@@ -261,6 +290,7 @@ namespace Ui
         ui_min      = 1.f;
         ui_max      = 400.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 100.f;
 
       uniform float ShoulderStart
@@ -273,6 +303,7 @@ namespace Ui
         ui_min      = 0.1f;
         ui_max      = 100.f;
         ui_step     = 0.1f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 50.f;
     }
 #endif //ENABLE_DICE
@@ -502,7 +533,7 @@ technique lilium__inverse_tone_mapping
   }
 }
 
-#else //is hdr API and hdr colour space
+#else //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 ERROR_STUFF
 
@@ -512,4 +543,4 @@ technique lilium__inverse_tone_mapping
 >
 VS_ERROR
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

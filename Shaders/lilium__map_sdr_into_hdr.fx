@@ -1,8 +1,26 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+#endif
 
 
 uniform uint INPUT_TRC
@@ -16,6 +34,7 @@ uniform uint INPUT_TRC
                 "linear with SDR black floor emulation (scRGB)\0"
                 "sRGB\0"
                 "PQ\0";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0;
 
 #undef TRC_PQ
@@ -41,6 +60,7 @@ uniform uint OVERBRIGHT_HANDLING
                 "linear\0"
                 "apply gamma\0"
                 "clamp\0";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0;
 
 #define OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR 0
@@ -58,6 +78,7 @@ uniform float SDR_WHITEPOINT_NITS
   ui_min     = 1.f;
   ui_max     = 300.f;
   ui_step    = 1.f;
+  hidden     = HIDDEN_OPTION_HDR_CSP;
 > = 80.f;
 
 uniform bool ENABLE_GAMMA_ADJUST
@@ -74,12 +95,14 @@ uniform float GAMMA_ADJUST
   ui_min     = -1.f;
   ui_max     =  1.f;
   ui_step    =  0.001f;
+  hidden     = HIDDEN_OPTION_HDR_CSP;
 > = 0.f;
 
 uniform bool ENABLE_CLAMPING
 <
   ui_category = "clamping";
   ui_label    = "enable clamping";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = false;
 
 uniform float CLAMP_NEGATIVE_TO
@@ -90,6 +113,7 @@ uniform float CLAMP_NEGATIVE_TO
   ui_min      = -125.f;
   ui_max      = 0.f;
   ui_step     = 0.1f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = -125.f;
 
 uniform float CLAMP_POSITIVE_TO
@@ -100,6 +124,7 @@ uniform float CLAMP_POSITIVE_TO
   ui_min      = 1.f;
   ui_max      = 125.f;
   ui_step     = 0.1f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 125.f;
 
 
@@ -324,7 +349,7 @@ technique lilium__map_SDR_into_HDR
   }
 }
 
-#else //is hdr API and hdr colour space
+#else //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 ERROR_STUFF
 
@@ -334,4 +359,4 @@ technique lilium__map_SDR_into_HDR
 >
 VS_ERROR
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

@@ -1,8 +1,10 @@
 #pragma once
 
 
-#if (defined(IS_COMPUTE_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 
 void GetUsedMaxNits
@@ -384,6 +386,8 @@ namespace Tmos
         float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]);
+#else // fallback for shader permutations
+        float y1 = 0.f;
 #endif
         //E1
         float y2 = EetfE1(Csp::Trc::LinearTo::Pq(y1),
@@ -436,13 +440,14 @@ namespace Tmos
         //scRGB
         float3 Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
 
-        float m1;
-        float m1Pq;
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        m1   = MAXRGB(Rgb);
-        m1Pq = Csp::Trc::LinearTo::Pq(m1);
+        float m1   = MAXRGB(Rgb);
+        float m1Pq = Csp::Trc::LinearTo::Pq(m1);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        m1Pq = MAXRGB(Rgb);
+        float m1Pq = MAXRGB(Rgb);
+#else // fallback for shader permutations
+        float m1   = 0.f;
+        float m1Pq = 0.f;
 #endif
 
         //E1
@@ -486,7 +491,7 @@ namespace Tmos
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         //more performant than to linearise maxCll1Pq
-        m1 = MAXRGB(Rgb);
+        float m1 = MAXRGB(Rgb);
 #endif
 
         Rgb *= m2 / m1;
@@ -630,6 +635,8 @@ namespace Tmos
         float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::Bt2020ToXYZ[1]);
+#else // fallback for shader permutations
+        float y1 = 0.f;
 #endif
 
         float y2 = Csp::Trc::LinearTo::Pq(y1);
@@ -665,13 +672,14 @@ namespace Tmos
         //scRGB
         float3 Rgb = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
 
-        float m1;
-        float m2;
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        m1 = MAXRGB(Rgb);
-        m2 = Csp::Trc::LinearTo::Pq(m1);
+        float m1 = MAXRGB(Rgb);
+        float m2 = Csp::Trc::LinearTo::Pq(m1);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        m2 = MAXRGB(Rgb);
+        float m2 = MAXRGB(Rgb);
+#else // fallback for shader permutations
+        float m1 = 0.f;
+        float m2 = 0.f;
 #endif
 
         [branch]
@@ -693,7 +701,7 @@ namespace Tmos
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
           //more performant than to linearise maxCll1Pq
-          m1 = MAXRGB(Rgb);
+          float m1 = MAXRGB(Rgb);
 #endif
 
           Rgb *= m2 / m1;
@@ -759,4 +767,4 @@ namespace Tmos
 
 }
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

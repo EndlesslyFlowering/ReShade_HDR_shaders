@@ -3,8 +3,10 @@
 #include "colour_space.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && defined(IS_HDR_CSP))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 namespace Itmos
 {
@@ -634,4 +636,4 @@ namespace Itmos
 
 }
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

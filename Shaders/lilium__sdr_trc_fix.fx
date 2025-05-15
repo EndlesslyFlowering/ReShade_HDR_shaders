@@ -6,7 +6,24 @@
 // - implement vertex shader for optimisation ?
 // - add namespace for UI
 
-#if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+#if (ACTUAL_COLOUR_SPACE == CSP_SRGB \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+    #define HIDDEN_OPTION_SDR_CSP false
+  #else
+    #define HIDDEN_OPTION_SDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_SDR_CSP false
+
+#endif
+
 
 uniform uint INPUT_TRC
 <
@@ -14,6 +31,7 @@ uniform uint INPUT_TRC
   ui_type  = "combo";
   ui_items = "power Gamma\0"
              "sRGB\0";
+  hidden   = HIDDEN_OPTION_SDR_CSP;
 > = 0;
 
 uniform uint TARGET_TRC
@@ -22,6 +40,7 @@ uniform uint TARGET_TRC
   ui_type  = "combo";
   ui_items = "sRGB\0"
              "power Gamma\0";
+  hidden   = HIDDEN_OPTION_SDR_CSP;
 > = 0;
 
 uniform float INPUT_POWER_GAMMA
@@ -31,6 +50,7 @@ uniform float INPUT_POWER_GAMMA
   ui_min   = 1.f;
   ui_max   = 3.f;
   ui_step  = 0.01f;
+  hidden   = HIDDEN_OPTION_SDR_CSP;
 > = 2.2f;
 
 uniform float TARGET_POWER_GAMMA
@@ -40,12 +60,14 @@ uniform float TARGET_POWER_GAMMA
   ui_min   = 1.f;
   ui_max   = 3.f;
   ui_step  = 0.01f;
+  hidden   = HIDDEN_OPTION_SDR_CSP;
 > = 2.2f;
 
 uniform bool USE_BT1886
 <
   ui_category = "BT.1886";
   ui_label    = "use BT.1886 for blackpoint correction";
+  hidden      = HIDDEN_OPTION_SDR_CSP;
 > = false;
 
 uniform float BT1886_TARGET_WHITEPOINT
@@ -56,6 +78,7 @@ uniform float BT1886_TARGET_WHITEPOINT
   ui_min      = 1.f;
   ui_max      = 1000.f;
   ui_step     = 0.5f;
+  hidden      = HIDDEN_OPTION_SDR_CSP;
 > = 100.f;
 
 uniform float BT1886_TARGET_BLACKPOINT
@@ -66,6 +89,7 @@ uniform float BT1886_TARGET_BLACKPOINT
   ui_min      = 0.f;
   ui_max      = 1.f;
   ui_step     = 0.0001f;
+  hidden      = HIDDEN_OPTION_SDR_CSP;
 > = 0.f;
 
 
@@ -144,4 +168,4 @@ technique lilium__sdr_trc_fix
   }
 }
 
-#endif //is SDR colour space
+#endif //(ACTUAL_COLOUR_SPACE == CSP_SRGB || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))

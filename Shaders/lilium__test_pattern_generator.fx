@@ -1,9 +1,26 @@
 #include "lilium__include/colour_space.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-   || ACTUAL_COLOUR_SPACE == CSP_HDR10))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+#endif
 
 
 #if (BUFFER_WIDTH > BUFFER_HEIGHT)
@@ -19,6 +36,7 @@ uniform float2 TEST_AREA_SIZE
   ui_min      = 0.f;
   ui_max      = MAX_TEST_AREA_SIZE;
   ui_step     = 1.f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = float2(100.f, 100.f);
 
 precise uniform float3 TEST_THINGY_BG_COLOUR
@@ -28,6 +46,7 @@ precise uniform float3 TEST_THINGY_BG_COLOUR
   ui_min      = -10000.f;
   ui_max      =  10000.f;
   ui_step     =      0.000001f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0.f;
 
 #define TESTY_MODE_RGB_BT709     0
@@ -53,6 +72,7 @@ uniform uint TPG_MODE
                 "+Inf (0x7F800000) on R (else is 0)\0"
                 "-Inf (0xFF800000) on G (else is 0)\0"
                 " NaN (0xFFFFFFFF) on B (else is 0)\0";
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = TESTY_MODE_RGB_BT709;
 
 precise uniform float3 TPG_RGB
@@ -62,6 +82,7 @@ precise uniform float3 TPG_RGB
   ui_min      = -10000.f;
   ui_max      =  10000.f;
   ui_step     =      0.000001f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 80.f;
 
 precise uniform float2 TPG_xy
@@ -74,6 +95,7 @@ precise uniform float2 TPG_xy
   ui_min      = 0.f;
   ui_max      = 1.f;
   ui_step     = 0.000001f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0.f;
 
 precise uniform float TPG_Y
@@ -84,6 +106,7 @@ precise uniform float TPG_Y
   ui_min      =     0.f;
   ui_max      = 10000.f;
   ui_step     =     0.000001f;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 80.f;
 
 precise uniform uint3 TPG_AS_FLOAT
@@ -93,6 +116,7 @@ precise uniform uint3 TPG_AS_FLOAT
   ui_min      = 0u;
   ui_max      = UINT_MAX;
   ui_step     = 1u;
+  hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0u;
 
 
@@ -279,7 +303,7 @@ technique lilium__test_pattern_generator
 }
 
 
-#else //is hdr API and hdr colour space
+#else //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 ERROR_STUFF
 
@@ -289,4 +313,4 @@ technique lilium__test_pattern_generator
 >
 VS_ERROR
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

@@ -24,17 +24,6 @@
 #include "cas_helpers.fxh"
 
 
-#if (__RESHADE_PERFORMANCE_MODE__ == 0)
-uniform int CAS_ABOUT
-<
-  ui_category = "About CAS";
-  ui_label    = " ";
-  ui_type     = "radio";
-  ui_text     = "AMD FidelityFX Contrast Adaptive Sharpening 1.1"
-           "\n" "FidelityFX Contrast Adaptive Sharpening (CAS) is a low overhead adaptive sharpening algorithm with optional up-sampling."
-                "The technique is developed by Timothy Lottes (creator of FXAA) and was created to provide natural sharpness without artifacts.";
->;
-#endif
 
 uniform bool SHARPEN_ONLY
 <

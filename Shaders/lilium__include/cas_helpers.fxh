@@ -28,9 +28,13 @@ float3 PrepareForProcessing
 
   return FetchFromHdr10ToLinearLUT(Colour);
 
-#else
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
   return DECODE_SDR(Colour);
+
+#else // fallback for shader permutations
+
+  return 0.f;
 
 #endif
 }
@@ -49,9 +53,13 @@ float3 PrepareForOutput
 
   return Csp::Trc::LinearTo::Pq(Colour);
 
-#else
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
   return ENCODE_SDR(Colour);
+
+#else // fallback for shader permutations
+
+  return 0.f;
 
 #endif
 }

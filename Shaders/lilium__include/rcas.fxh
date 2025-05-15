@@ -187,7 +187,7 @@ void PrepareForProcessing
     H = DECODE_SDR(H);
   }
 
-#else
+#elif (ACTUAL_COLOUR_SPACE != CSP_SCRGB) // fallback for shader permutations
 
   B = 0.f;
   D = 0.f;
@@ -232,7 +232,7 @@ float3 PrepareForOutput
     Colour = ENCODE_SDR(Colour);
   }
 
-#else
+#else // fallback for shader permutations
 
   Colour = 0.f;
 
@@ -273,7 +273,7 @@ void GetLuma
   LF = dot(F, Csp::Mat::Bt709ToXYZ[1] * 2.f);
   LH = dot(H, Csp::Mat::Bt709ToXYZ[1] * 2.f);
 
-#else
+#else // fallback for shader permutations
 
   LB = 0.f;
   LD = 0.f;

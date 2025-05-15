@@ -1,9 +1,10 @@
 #include "lilium__include/hdr_black_floor_fix.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-   || ACTUAL_COLOUR_SPACE == CSP_HDR10))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 
 void GetParams
@@ -19,9 +20,12 @@ void GetParams
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 80.f;
     OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 80.f;
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
     OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 10000.f;
     OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 10000.f;
+#else
+    OutG22EmuWhitePointNormalised = 0.f;
+    OutGAWhitePointNormalised     = 0.f;
 #endif
 
 
@@ -140,11 +144,16 @@ void PS_HdrBlackFloorFix
   co.trc  = TRC_LINEAR_80;
   co.prim = PRIM_BT709;
 
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   co.trc         = TRC_PQ;
   co.prim        = PRIM_BT2020;
   co.isUntouched = true;
+
+#else
+
+  co.trc  = TRC_LINEAR_NORMALISED;
+  co.prim = PRIM_BT709;
 
 #endif
 
@@ -195,8 +204,10 @@ void PS_HdrBlackFloorFix
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     co = CO::ConvertCspTo::ScRgb(co);
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
     co = CO::ConvertCspTo::Hdr10(co);
+#else
+    co.RGB = 0.f;
 #endif
   }
   else
@@ -222,7 +233,7 @@ technique lilium__hdr_black_floor_fix
   }
 }
 
-#else //is hdr API and hdr colour space
+#else //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
 
 ERROR_STUFF
 
@@ -232,4 +243,4 @@ technique lilium__hdr_black_floor_fix
 >
 VS_ERROR
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))

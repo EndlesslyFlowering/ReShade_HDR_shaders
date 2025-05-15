@@ -5,9 +5,26 @@
 #include "colour_space.fxh"
 
 
-#if (defined(IS_ANALYSIS_CAPABLE_API) \
-  && (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
-   || ACTUAL_COLOUR_SPACE == CSP_HDR10))
+#if (defined(IS_ANALYSIS_CAPABLE_API)    \
+  && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB  \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10) \
+   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
+
+
+#ifdef MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL
+
+  #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+    || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #define HIDDEN_OPTION_HDR_CSP false
+  #else
+    #define HIDDEN_OPTION_HDR_CSP true
+  #endif
+
+#else
+
+  #define HIDDEN_OPTION_HDR_CSP false
+
+#endif
 
 
 // TODO:
@@ -25,6 +42,7 @@ namespace Ui
         ui_category = "SDR black floor emulation";
         ui_label    = "enable SDR black floor emulation";
         ui_tooltip  = "This emulates how the black floor looks on an SDR display using gamma 2.2.";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = false;
 
       uniform uint G22EmuProcessingColourSpace
@@ -38,6 +56,7 @@ namespace Ui
         ui_items    = "BT.709\0"
                       "DCI-P3\0"
                       "BT.2020\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define G22_EMU_CSP_BT709  0
@@ -54,6 +73,7 @@ namespace Ui
         ui_min      = 10.f;
         ui_max      = 400.f;
         ui_step     = 0.5f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 80.f;
 
       uniform bool G22EmuOnlyLowerBlackLevels
@@ -62,6 +82,7 @@ namespace Ui
         ui_label    = "only lower black levels";
         ui_tooltip  = "The gamma 2.2 emulation lowers black levels and slightly raises hightlights."
                  "\n" "This option only enables the lowering of black levels.";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = false;
     }
 
@@ -71,6 +92,7 @@ namespace Ui
       <
         ui_category = "gamma adjustment";
         ui_label    = "enable gamma adjustment";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = false;
 
       uniform uint GAProcessingColourSpace
@@ -84,6 +106,7 @@ namespace Ui
         ui_items    = "BT.709\0"
                       "DCI-P3\0"
                       "BT.2020\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define GA_CSP_BT709  0
@@ -98,6 +121,7 @@ namespace Ui
         ui_min      = 0.5f;
         ui_max      = 1.5f;
         ui_step     = 0.001f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 1.f;
 
       uniform float GAWhitePoint
@@ -110,6 +134,7 @@ namespace Ui
         ui_min      = 10.f;
         ui_max      = 400.f;
         ui_step     = 0.5f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 80.f;
     }
 
@@ -119,6 +144,7 @@ namespace Ui
       <
         ui_category = "black floor lowering";
         ui_label    = "enable black floor lowering";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = false;
 
       uniform uint ProcessingMode
@@ -132,6 +158,7 @@ namespace Ui
         ui_items    = "YRGB\0"
                       "RGB in PQ\0"
                       "RGB\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
       > = 0;
 
 #define PRO_MODE_YRGB      0
@@ -147,6 +174,7 @@ namespace Ui
         ui_min       = 0.f;
         ui_max       = 0.5f;
         ui_step      = 0.0000001f;
+        hidden       = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
 
       uniform float RollOffStoppingPoint
@@ -160,6 +188,7 @@ namespace Ui
         ui_min       = 1.f;
         ui_max       = 50.f;
         ui_step      = 0.01f;
+        hidden       = HIDDEN_OPTION_HDR_CSP;
       > = 10.f;
 
       uniform float NewBlackPoint
@@ -173,6 +202,7 @@ namespace Ui
         ui_min       = -0.1f;
         ui_max       = 0.1f;
         ui_step      = 0.0000001f;
+        hidden       = HIDDEN_OPTION_HDR_CSP;
       > = 0.f;
     }
   }
@@ -382,7 +412,7 @@ void LowerBlackFloor
 
       CO = CO::ConvertCspTo::ScRgb(CO);
 
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       CO::ColourObject CO_org;
 
@@ -397,6 +427,10 @@ void LowerBlackFloor
       {
         CO = CO::ConvertPrimariesTo::Bt2020(CO);
       }
+
+#else // fallback for shader permutations
+
+      CO.RGB = 0.f;
 
 #endif
 
@@ -437,15 +471,20 @@ void LowerBlackFloor
 
         return;
       }
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       CO = CO::ConvertTrcTo::Pq(CO);
 
       return;
 
+#else // fallback for shader permutations
+
+      CO.RGB = 0.f;
+
 #endif
     }
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE != CSP_HDR10) // fallback for shader permutations
     break;
 #endif
     // RGB in PQ mode
@@ -567,9 +606,15 @@ void LowerBlackFloor
 
         return;
       }
-#else //(ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       CO = CO::ConvertTrcTo::Pq(CO);
+
+      return;
+
+#else // fallback for shader permutations
+
+      CO.RGB = 0.f;
 
       return;
 
@@ -586,4 +631,4 @@ void LowerBlackFloor
   }
 }
 
-#endif //is hdr API and hdr colour space
+#endif //(defined(IS_ANALYSIS_CAPABLE_API) && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)))
