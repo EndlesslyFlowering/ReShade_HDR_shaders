@@ -69,8 +69,10 @@ uniform float BT1886_TARGET_BLACKPOINT
 > = 0.f;
 
 
-float3 Bt1886(
-  const float3 LinearColour)
+float3 Bt1886
+(
+  const float3 LinearColour
+)
 {
   float3 V = pow(LinearColour, 1.f / 2.4f);
 
@@ -90,14 +92,17 @@ float3 Bt1886(
 }
 
 
-void PS_SdrTrcFix(
+void PS_SdrTrcFix
+(
   in  float4 Position : SV_Position,
-  out float4 Output   : SV_Target0)
+  out float4 Output   : SV_Target0
+)
 {
   const float4 input = tex2Dfetch(SamplerBackBuffer, int2(Position.xy));
 
   float3 fixedGamma = input.rgb;
 
+  BRANCH()
   if (INPUT_TRC == 0)
   {
     fixedGamma = pow(fixedGamma, INPUT_POWER_GAMMA);
@@ -107,11 +112,13 @@ void PS_SdrTrcFix(
     fixedGamma = Csp::Trc::SrgbTo::Linear(fixedGamma);
   }
 
+  BRANCH()
   if (USE_BT1886)
   {
     fixedGamma = Bt1886(fixedGamma);
   }
 
+  BRANCH()
   if (TARGET_TRC == 0)
   {
     fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
