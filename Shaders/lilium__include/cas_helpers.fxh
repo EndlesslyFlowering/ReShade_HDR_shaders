@@ -210,6 +210,11 @@ void PSGetPixels
   out       SPixelsToProcess Ptp
 )
 {
+  // Load a collection of samples in a 3x3 neighorhood, where e is the current pixel.
+  // a b c
+  // d e f
+  // g h i
+
   Ptp.e = tex2Dfetch(SamplerBackBuffer,   Position   ).rgb;
 
   const int4 abPosition = Position.xyxy + int4(-1, -1,  0, -1);
