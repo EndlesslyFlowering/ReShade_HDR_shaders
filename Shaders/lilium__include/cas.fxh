@@ -24,15 +24,6 @@
 #include "cas_helpers.fxh"
 
 
-
-uniform bool SHARPEN_ONLY
-<
-  ui_label   = "sharpen only path";
-  ui_tooltip = "If unchecked will use the upscale path of CAS."
-          "\n" "Which does processing a little different."
-          "\n" "But does not do any upscaling at all!";
-> = true;
-
 uniform float SHARPEN_AMOUNT
 <
   ui_label   = "sharpness amount";
@@ -91,95 +82,6 @@ float3 CasSharpenOnly
   float3 rcpWeight = rcp(4.f * weight + 1.f);
 
   float3 output = saturate(((b + d + f + h) * weight + e) * rcpWeight);
-
-  return PrepareForOutput(output);
-}
-
-
-float3 CasSharpenAndUpscale
-(
-  const SPixelsToProcess Ptp,
-  const float            Peak
-)
-{
-  //  a b c d
-  //  e f g h
-  //  i j k l
-  //  m n o p
-  // Working these 4 results.
-  //  +-----+-----+
-  //  |     |     |
-  //  |  f..|..g  |
-  //  |  .  |  .  |
-  //  +-----+-----+
-  //  |  .  |  .  |
-  //  |  j..|..k  |
-  //  |     |     |
-  //  +-----+-----+
-
-  static const float3 a = Ptp.a;
-  static const float3 b = Ptp.b;
-  static const float3 c = Ptp.c;
-  static const float3 e = Ptp.d;
-  static const float3 f = Ptp.e;
-  static const float3 g = Ptp.f;
-  static const float3 i = Ptp.h;
-  static const float3 j = Ptp.i;
-  static const float3 k = Ptp.g;
-
-
-  // Soft min and max.
-  // These are 2.0x bigger (factored out the extra multiply).
-  //  a b c             b
-  //  e f g * 0.5  +  e f g * 0.5  [F]
-  //  i j k             j
-  float3 minRgb = MIN3(MIN3(b, e, f), g, j);
-  float3 mxfRgb = MAX3(MAX3(b, e, f), g, j);
-
-  minRgb += MIN3(MIN3(minRgb, a, c), i, k);
-  mxfRgb += MAX3(MAX3(mxfRgb, a, c), i, k);
-
-  // Smooth minimum distance to signal limit divided by smooth max.
-  float3 rcpMfRgb = rcp(mxfRgb);
-
-  // Shaping amount of sharpening.
-  float3 ampfRgb = sqrt(saturate(min(minRgb, 2.f - mxfRgb) * rcpMfRgb));
-
-  // Filter shape.
-  //  0 w 0
-  //  w 1 w
-  //  0 w 0
-
-  float3 wfRgb = ampfRgb * Peak;
-
-  // Thin edges to hide bilinear interpolation (helps diagonals).
-  static const float thinB = 1.f / 32.f;
-
-  float s = rcp(thinB + mxfRgb.g - minRgb.g);
-
-  // Final weighting.
-  //    b c
-  //  e f g h
-  //  i j k l
-  //    n o
-  //  _____  _____  _____  _____
-  //         fs        gt
-  //
-  //  _____  _____  _____  _____
-  //  fs      s gt  fs  t     gt
-  //         ju        kv
-  //  _____  _____  _____  _____
-  //         fs        gt
-  //  ju      u kv  ju  v     kv
-  //  _____  _____  _____  _____
-  //
-  //         ju        kv
-
-  float3 wfRgb_x_s = wfRgb * s;
-
-  float3 rcpWeight = rcp(4.f * wfRgb_x_s + s);
-
-  float3 output = saturate(((b + e + g + j) * wfRgb_x_s.g + (f * s)) * rcpWeight);
 
   return PrepareForOutput(output);
 }

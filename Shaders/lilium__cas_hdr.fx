@@ -15,15 +15,7 @@ void PS_Cas
 
   PSGetPixels(int2(Position.xy), ptp);
 
-  BRANCH()
-  if (SHARPEN_ONLY)
-  {
-    Output.rgb = CasSharpenOnly(ptp, Peak);
-  }
-  else
-  {
-    Output.rgb = CasSharpenAndUpscale(ptp, Peak);
-  }
+  Output.rgb = CasSharpenOnly(ptp, Peak);
 
   Output.a = 0.f;
 
