@@ -86,6 +86,32 @@
 HDR10_TO_LINEAR_LUT()
 
 
+uniform uint RCAS_MODE
+<
+  ui_label   = "RCAS mode";
+  ui_tooltip = "to do the sharpening:"
+          "\n" " - luminance uses the relative luminance of linearised RGB values"
+          "\n" " - linear uses linearised RGB values"
+          "\n" " - RGB (linear) uses linearised RGB values"
+          "\n" " - RGB (shaped) and original use \"in-gamma\" RGB values"
+          "\n"
+          "\n" "for the noise removal calculation:"
+          "\n" " - luminance uses the already calculated relative luminance"
+          "\n" " - linear uses the relative luminance"
+          "\n" " - gamma uses luma"
+          "\n" " - original uses an approximated luma";
+  ui_type    = "combo";
+  ui_items   = "luminance\0"
+               "RGB (linear)\0"
+               "RGB (shaped)\0"
+               "original\0";
+> = 0u;
+
+#define RCAS_MODE_LUMINANCE  0u
+#define RCAS_MODE_RGB_LINEAR 1u
+#define RCAS_MODE_RGB_SHAPED 2u
+#define RCAS_MODE_ORIGINAL   3u
+
 uniform float SHARPEN_AMOUNT
 <
   ui_label   = "sharpness amount";
@@ -96,41 +122,16 @@ uniform float SHARPEN_AMOUNT
   ui_step    = 0.001f;
 > = 0.5f;
 
-uniform uint RCAS_MODE
-<
-  ui_label   = "mode";
-  ui_tooltip = "to do the sharpening:"
-          "\n" " - linear uses linearised RGB values"
-          "\n" " - gamma and original use in-gamma RGB values"
-          "\n"
-          "\n" "for the noise removal calculation:"
-          "\n" " - linear uses the relative luminance"
-          "\n" " - gamma uses luma"
-          "\n" " - original uses an approximated luma";
-  ui_type    = "combo";
-  ui_items   = "linear\0"
-               "gamma\0"
-               "original\0";
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-> = 0;
-#else
-> = 1;
-#endif
-
-#define RCAS_MODE_LINEAR   0
-#define RCAS_MODE_GAMMA    1
-#define RCAS_MODE_ORIGINAL 2
-
-uniform bool ENABLE_NOISE_REMOVAL
+uniform bool NOISE_REMOVAL_ENABLE
 <
   ui_label   = "enable noise removal";
-  ui_tooltip = "Suppresses ringing and halos a bit."
+  ui_tooltip = "Makes high frequency detail look less oversharpened and suppresses ringing and halos a bit."
           "\n" "Can also remove film grain and other noise!";
   ui_type    = "radio";
 > = true;
 
 
-void PrepareForProcessing
+void Preprocess_RGB
 (
   inout float3 B,
   inout float3 D,
@@ -147,14 +148,8 @@ void PrepareForProcessing
   F = Csp::Mat::ScRgbTo::Bt2020Normalised(F);
   H = Csp::Mat::ScRgbTo::Bt2020Normalised(H);
 
-  B = saturate(B);
-  D = saturate(D);
-  E = saturate(E);
-  F = saturate(F);
-  H = saturate(H);
-
   BRANCH()
-  if (RCAS_MODE != RCAS_MODE_LINEAR)
+  if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
   {
     B = Csp::Trc::LinearTo::Pq(B);
     D = Csp::Trc::LinearTo::Pq(D);
@@ -163,29 +158,60 @@ void PrepareForProcessing
     H = Csp::Trc::LinearTo::Pq(H);
   }
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
+
+  return;
+}
+
+float3 Process_RGB_For_Output
+(
+  float3 RGB
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
   BRANCH()
-  if (RCAS_MODE == RCAS_MODE_LINEAR)
+  if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
   {
-    B = FetchFromHdr10ToLinearLUT(B);
-    D = FetchFromHdr10ToLinearLUT(D);
-    E = FetchFromHdr10ToLinearLUT(E);
-    F = FetchFromHdr10ToLinearLUT(F);
-    H = FetchFromHdr10ToLinearLUT(H);
+    RGB = Csp::Trc::PqTo::Linear(RGB);
   }
+
+  RGB = Csp::Mat::Bt2020NormalisedTo::ScRgb(RGB);
+
+#endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
+
+  return RGB;
+}
+
+void Get_Luminance
+(
+  in    float3 B,
+  in    float3 D,
+  inout float3 E,
+  in    float3 F,
+  in    float3 H,
+  out   float  B_lum,
+  out   float  D_lum,
+  out   float  E_lum,
+  out   float  F_lum,
+  out   float  H_lum
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  B = FetchFromHdr10ToLinearLUT(B);
+  D = FetchFromHdr10ToLinearLUT(D);
+  E = FetchFromHdr10ToLinearLUT(E);
+  F = FetchFromHdr10ToLinearLUT(F);
+  H = FetchFromHdr10ToLinearLUT(H);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  BRANCH()
-  if (RCAS_MODE == RCAS_MODE_LINEAR)
-  {
-    B = DECODE_SDR(B);
-    D = DECODE_SDR(D);
-    E = DECODE_SDR(E);
-    F = DECODE_SDR(F);
-    H = DECODE_SDR(H);
-  }
+  B = DECODE_SDR(B);
+  D = DECODE_SDR(D);
+  E = DECODE_SDR(E);
+  F = DECODE_SDR(F);
+  H = DECODE_SDR(H);
 
 #elif (ACTUAL_COLOUR_SPACE != CSP_SCRGB) // fallback for shader permutations
 
@@ -195,91 +221,127 @@ void PrepareForProcessing
   F = 0.f;
   H = 0.f;
 
-#endif
+#endif // ACTUAL_COLOUR_SPACE == CSP_HDR10
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  B_lum = dot(B, Csp::Mat::ScRgbToXYZ[1]);
+  D_lum = dot(D, Csp::Mat::ScRgbToXYZ[1]);
+  E_lum = dot(E, Csp::Mat::ScRgbToXYZ[1]);
+  F_lum = dot(F, Csp::Mat::ScRgbToXYZ[1]);
+  H_lum = dot(H, Csp::Mat::ScRgbToXYZ[1]);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  B_lum = dot(B, Csp::Mat::Bt2020ToXYZ[1]);
+  D_lum = dot(D, Csp::Mat::Bt2020ToXYZ[1]);
+  E_lum = dot(E, Csp::Mat::Bt2020ToXYZ[1]);
+  F_lum = dot(F, Csp::Mat::Bt2020ToXYZ[1]);
+  H_lum = dot(H, Csp::Mat::Bt2020ToXYZ[1]);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  B_lum = dot(B, Csp::Mat::Bt709ToXYZ[1]);
+  D_lum = dot(D, Csp::Mat::Bt709ToXYZ[1]);
+  E_lum = dot(E, Csp::Mat::Bt709ToXYZ[1]);
+  F_lum = dot(F, Csp::Mat::Bt709ToXYZ[1]);
+  H_lum = dot(H, Csp::Mat::Bt709ToXYZ[1]);
+
+#else // fallback for shader permutations
+
+  B_lum = 0.f;
+  D_lum = 0.f;
+  E_lum = 0.f;
+  F_lum = 0.f;
+  H_lum = 0.f;
+
+#endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
 
   return;
 }
 
-
-float3 PrepareForOutput
-(
-  float3 Colour
-)
-{
-#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-  BRANCH()
-  if (RCAS_MODE != RCAS_MODE_LINEAR)
-  {
-    Colour = Csp::Trc::PqTo::Linear(Colour);
-  }
-
-  Colour = Csp::Mat::Bt2020NormalisedTo::ScRgb(Colour);
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-  BRANCH()
-  if (RCAS_MODE == RCAS_MODE_LINEAR)
-  {
-    Colour = Csp::Trc::LinearTo::Pq(Colour);
-  }
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-  BRANCH()
-  if (RCAS_MODE == RCAS_MODE_LINEAR)
-  {
-    Colour = ENCODE_SDR(Colour);
-  }
-
-#else // fallback for shader permutations
-
-  Colour = 0.f;
-
-#endif
-
-  return Colour;
-}
-
-
-void GetLuma
+void Get_Luma
 (
   const float3 B,
   const float3 D,
   const float3 E,
   const float3 F,
   const float3 H,
-  inout float  LB,
-  inout float  LD,
-  inout float  LE,
-  inout float  LF,
-  inout float  LH
+  out   float  B_luma,
+  out   float  D_luma,
+  out   float  E_luma,
+  out   float  F_luma,
+  out   float  H_luma
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  LB = dot(B, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  LD = dot(D, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  LE = dot(E, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  LF = dot(F, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  LH = dot(H, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  B_luma = dot(B, Csp::Mat::Bt2020ToXYZ[1]);
+  D_luma = dot(D, Csp::Mat::Bt2020ToXYZ[1]);
+  E_luma = dot(E, Csp::Mat::Bt2020ToXYZ[1]);
+  F_luma = dot(F, Csp::Mat::Bt2020ToXYZ[1]);
+  H_luma = dot(H, Csp::Mat::Bt2020ToXYZ[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  LB = dot(B, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  LD = dot(D, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  LE = dot(E, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  LF = dot(F, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  LH = dot(H, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  B_luma = dot(B, Csp::Mat::Bt709ToXYZ[1]);
+  D_luma = dot(D, Csp::Mat::Bt709ToXYZ[1]);
+  E_luma = dot(E, Csp::Mat::Bt709ToXYZ[1]);
+  F_luma = dot(F, Csp::Mat::Bt709ToXYZ[1]);
+  H_luma = dot(H, Csp::Mat::Bt709ToXYZ[1]);
 
 #else // fallback for shader permutations
 
-  LB = 0.f;
-  LD = 0.f;
-  LE = 0.f;
-  LF = 0.f;
-  LH = 0.f;
+  B_luma = 0.f;
+  D_luma = 0.f;
+  E_luma = 0.f;
+  F_luma = 0.f;
+  H_luma = 0.f;
+
+#endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB || ACTUAL_COLOUR_SPACE == CSP_HDR10
+
+  return;
+}
+
+void Get_Luma_2x
+(
+  const float3 B,
+  const float3 D,
+  const float3 E,
+  const float3 F,
+  const float3 H,
+  out   float  B_luma_2x,
+  out   float  D_luma_2x,
+  out   float  E_luma_2x,
+  out   float  F_luma_2x,
+  out   float  H_luma_2x
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
+  || ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  B_luma_2x = dot(B, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  D_luma_2x = dot(D, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  E_luma_2x = dot(E, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  F_luma_2x = dot(F, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  H_luma_2x = dot(H, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  B_luma_2x = dot(B, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  D_luma_2x = dot(D, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  E_luma_2x = dot(E, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  F_luma_2x = dot(F, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  H_luma_2x = dot(H, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+
+#else // fallback for shader permutations
+
+  B_luma_2x = 0.f;
+  D_luma_2x = 0.f;
+  E_luma_2x = 0.f;
+  F_luma_2x = 0.f;
+  H_luma_2x = 0.f;
 
 #endif
 
@@ -297,90 +359,165 @@ float3 RCas
   //    b
   //  d e f
   //    h
-  int4 bdPosition = Position.xyxy + int4(0, -1, -1,  0);
-  int4 fhPosition = Position.xyxy + int4(1,  0,  0,  1);
 
-  bdPosition = clamp(bdPosition, int4(0, 0, 0, 0), int4(BUFFER_SIZE_MINUS_1_INT, BUFFER_SIZE_MINUS_1_INT));
-  fhPosition = clamp(fhPosition, int4(0, 0, 0, 0), int4(BUFFER_SIZE_MINUS_1_INT, BUFFER_SIZE_MINUS_1_INT));
+  float3 e = tex2Dfetch(SamplerBackBuffer,    Position).rgb;
 
-  float3 b = tex2Dfetch(SamplerBackBuffer, bdPosition.xy).rgb;
-  float3 d = tex2Dfetch(SamplerBackBuffer, bdPosition.zw).rgb;
-  float3 e = tex2Dfetch(SamplerBackBuffer,   Position).rgb;
-  float3 f = tex2Dfetch(SamplerBackBuffer, fhPosition.xy).rgb;
-  float3 h = tex2Dfetch(SamplerBackBuffer, fhPosition.zw).rgb;
+  int4 bd_position;
+  bd_position = Position.xyxy + int4(0, -1, -1,  0);
+  bd_position = clamp(bd_position, int4(0, 0, 0, 0), int4(BUFFER_SIZE_MINUS_1_INT, BUFFER_SIZE_MINUS_1_INT));
 
-  PrepareForProcessing(b, d, e, f, h);
+  float3 d = tex2Dfetch(SamplerBackBuffer, bd_position.zw).rgb;
+  float3 b = tex2Dfetch(SamplerBackBuffer, bd_position.xy).rgb;
 
-  // Min and max of ring.
-  float3 min4Rgb = MIN4(b, d, f, h);
-  float3 max4Rgb = MAX4(b, d, f, h);
+  int4 fh_position;
+  fh_position = Position.xyxy + int4(1,  0,  0,  1);
+  fh_position = clamp(fh_position, int4(0, 0, 0, 0), int4(BUFFER_SIZE_MINUS_1_INT, BUFFER_SIZE_MINUS_1_INT));
+
+  float3 f = tex2Dfetch(SamplerBackBuffer, fh_position.xy).rgb;
+  float3 h = tex2Dfetch(SamplerBackBuffer, fh_position.zw).rgb;
 
   // Immediate constants for peak range.
-  static const float2 peakC = float2(1.f, -4.f);
+  static const float2 peak_c = float2(1.f, -4.f);
 
-  // Limiters, these need to be high precision RCPs.
-  float3 hitMinRgb = min4Rgb
-                   * rcp(4.f * max4Rgb);
+  float lobe_local;
 
-  float3 hitMaxRgb = (peakC.x - max4Rgb)
-                   * rcp(4.f * min4Rgb + peakC.y);
+  float b_lum, d_lum, e_lum, f_lum, h_lum;
 
-  float3 lobeRgb = max(-hitMinRgb, hitMaxRgb);
+  BRANCH()
+  if (RCAS_MODE == RCAS_MODE_LUMINANCE)
+  {
+    Get_Luminance(b,     d,     e,     f,     h,
+                  b_lum, d_lum, e_lum, f_lum, h_lum);
+
+    // min and max of ring.
+    float lum_min4 = MIN4(b_lum, d_lum, f_lum, h_lum);
+    float lum_max4 = MAX4(b_lum, d_lum, f_lum, h_lum);
+
+    // 0.99 found through testing -> see my latest desmos or https://www.desmos.com/calculator/ewttak3abi
+    // anything higher than 0.99 makes the sharpening curve too flat
+    // this helps reducing massive overshoot that would happen otherwise
+    // normal CAS applies a limiter too so that there is no overshoot
+    float lum_max4_limited = min(lum_max4, 0.99f);
+
+    // limiters, these need to be high precision RCPs.
+    float lum_min_hit = lum_min4
+                      * rcp(4.f * lum_max4_limited);
+
+    float lum_max_hit = (peak_c[0] - lum_max4_limited)
+                      * rcp(4.f * lum_min4 + peak_c[1]);
+
+    lobe_local = max(-lum_min_hit, lum_max_hit);
+  }
+  else
+  {
+    Preprocess_RGB(b, d, e, f, h);
+
+    // min and max of ring.
+    float3 rgb_min4 = MIN4(b, d, f, h);
+    float3 rgb_max4 = MAX4(b, d, f, h);
+
+    float3 rgb_max4_limited = min(rgb_max4, 0.99f);
+
+    // limiters, these need to be high precision RCPs.
+    float3 rgb_min_hit = rgb_min4
+                       * rcp(4.f * rgb_max4_limited);
+
+    float3 rgb_max_hit = (peak_c[0] - rgb_max4_limited)
+                       * rcp(4.f * rgb_min4 + peak_c[1]);
+
+    float3 rgb_lobe = max(-rgb_min_hit, rgb_max_hit);
+
+    lobe_local = MAXRGB(rgb_lobe);
+  }
+
 
 // This is set at the limit of providing unnatural results for sharpening.
 //0.25f - (1.f / 16.f)
 #define FSR_RCAS_LIMIT 0.1875f
 
   float lobe = max(float(-FSR_RCAS_LIMIT),
-                   min(MAXRGB(lobeRgb), 0.f)) * Sharpness;
+                   min(lobe_local, 0.f)) * Sharpness;
 
   // Apply noise removal.
   BRANCH()
-  if (ENABLE_NOISE_REMOVAL)
+  if (NOISE_REMOVAL_ENABLE)
   {
-    // Luma times 2.
-    float bL;
-    float dL;
-    float eL;
-    float fL;
-    float hL;
+    // Luminance/Luma times 2.
+    float b_luma_2x;
+    float d_luma_2x;
+    float e_luma_2x;
+    float f_luma_2x;
+    float h_luma_2x;
 
     BRANCH()
-    if (RCAS_MODE != RCAS_MODE_ORIGINAL) //RCAS_MODE == RCAS_MODE_LINEAR || RCAS_MODE == RCAS_MODE_GAMMA
+    if (RCAS_MODE == RCAS_MODE_LUMINANCE)
     {
-      GetLuma(b,  d,  e,  f,  h,
-              bL, dL, eL, fL, hL);
+      b_luma_2x = b_lum * 2.f;
+      d_luma_2x = d_lum * 2.f;
+      e_luma_2x = e_lum * 2.f;
+      f_luma_2x = f_lum * 2.f;
+      h_luma_2x = h_lum * 2.f;
+    }
+    else
+    BRANCH()
+    if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
+    {
+      Get_Luma_2x(b,         d,         e,         f,         h,
+                  b_luma_2x, d_luma_2x, e_luma_2x, f_luma_2x, h_luma_2x);
     }
     else //if (RCAS_MODE == RCAS_MODE_ORIGINAL)
     {
-      bL = b.b * 0.5f + (b.r * 0.5f + b.g);
-      dL = d.b * 0.5f + (d.r * 0.5f + d.g);
-      eL = e.b * 0.5f + (e.r * 0.5f + e.g);
-      fL = f.b * 0.5f + (f.r * 0.5f + f.g);
-      hL = h.b * 0.5f + (h.r * 0.5f + h.g);
+      b_luma_2x = b.b * 0.5f + (b.r * 0.5f + b.g);
+      d_luma_2x = d.b * 0.5f + (d.r * 0.5f + d.g);
+      e_luma_2x = e.b * 0.5f + (e.r * 0.5f + e.g);
+      f_luma_2x = f.b * 0.5f + (f.r * 0.5f + f.g);
+      h_luma_2x = h.b * 0.5f + (h.r * 0.5f + h.g);
     }
 
     // Noise detection.
-    float nz = 0.25f * bL
-             + 0.25f * dL
-             + 0.25f * fL
-             + 0.25f * hL
-             - eL;
+    float nz = 0.25f * b_luma_2x
+             + 0.25f * d_luma_2x
+             + 0.25f * f_luma_2x
+             + 0.25f * h_luma_2x
+             - e_luma_2x;
 
-    float maxL = MAX3(MAX3(bL, dL, eL), fL, hL);
-    float minL = MIN3(MIN3(bL, dL, eL), fL, hL);
+    float luma_2x_max = MAX3(MAX3(b_luma_2x, d_luma_2x, e_luma_2x), f_luma_2x, h_luma_2x);
+    float luma_2x_min = MIN3(MIN3(b_luma_2x, d_luma_2x, e_luma_2x), f_luma_2x, h_luma_2x);
 
-    nz = saturate(abs(nz) * rcp(maxL - minL));
+    nz = saturate(abs(nz) * rcp(luma_2x_max - luma_2x_min));
     nz = -0.5f * nz + 1.f;
 
     lobe *= nz;
   }
 
   // Resolve, which needs the medium precision rcp approximation to avoid visible tonality changes.
-  float  rcpL = rcp(4.f * lobe + 1.f);
-  float3 pix  = ((b + d + h + f) * lobe + e) * rcpL;
+  float rcp_l = rcp(4.f * lobe + 1.f);
 
-  pix = PrepareForOutput(pix);
+  float3 pix;
+
+  BRANCH()
+  if (RCAS_MODE == RCAS_MODE_LUMINANCE)
+  {
+    float lum_pix = ((b_lum + d_lum + h_lum + f_lum) * lobe + e_lum) * rcp_l;
+
+    pix = max(lum_pix / e_lum, 0.f) * e;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+    pix = Csp::Trc::LinearTo::Pq(pix);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+    pix = ENCODE_SDR(pix);
+
+#endif
+  }
+  else
+  {
+    pix = max(((b + d + h + f) * lobe + e) * rcp_l, 0.f);
+
+    pix = Process_RGB_For_Output(pix);
+  }
 
   return pix;
 }
