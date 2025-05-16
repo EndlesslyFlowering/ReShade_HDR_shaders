@@ -1744,57 +1744,69 @@ namespace Csp
     static const float HLG_b = 0.28466892; // = 1 - 4 * HLG_a
     static const float HLG_c = 0.55991072952956202016; //0.55991072952956202016 = 0.5 - HLG_a * ln(4 * HLG_a)
 
-    // Rec. ITU-R BT.2100-2 Table 5
+    // Rec. ITU-R BT.2100-3 Table 5
     namespace HlgTo
     {
-      // Rec. ITU-R BT.2100-2 Table 5 (end)
-      // (EOTF) takes HLG values as input
-      float Linear(float X)
-      {
-        if (X <= 0.5f)
-        {
-          return (X * X) / 3.f;
+      // Rec. ITU-R BT.2100-3 Table 5 (end)
+      // (inverse OETF) takes HLG values as input
+      #define HLG_TO_LINEAR(T)                           \
+        T Linear(T X)                                    \
+        {                                                \
+          T e_lower = (X * X)                            \
+                    / 3.f;                               \
+                                                         \
+          T e_upper = (exp((X - HLG_c) / HLG_a) + HLG_b) \
+                    / 12.f;                              \
+                                                         \
+          /* E */                                        \
+          return X <= 0.5f ? e_lower                     \
+                           : e_upper;                    \
         }
-        else
-        {
-          return (exp((X - HLG_c) / HLG_a) + HLG_b) / 12.f;
-        }
-      }
 
-      // (EOTF) takes HLG values as input
-      float3 Linear(float3 Rgb)
-      {
-        return float3(Csp::Trc::HlgTo::Linear(Rgb.r),
-                      Csp::Trc::HlgTo::Linear(Rgb.g),
-                      Csp::Trc::HlgTo::Linear(Rgb.b));
-      }
+      // (inverse OETF) takes HLG values as input
+      HLG_TO_LINEAR(float)
+
+      // (inverse OETF) takes HLG values as input
+      HLG_TO_LINEAR(float2)
+
+      // (inverse OETF) takes HLG values as input
+      HLG_TO_LINEAR(float3)
+
+      // (inverse OETF) takes HLG values as input
+      HLG_TO_LINEAR(float4)
     } //HlgTo
 
 
-    namespace LinearTo
+    namespace Linear_To
     {
       // Rec. ITU-R BT.2100-2 Table 5
-      // (inverse EOTF) takes normalised to 1000 nits values as input
-      float Hlg(float E)
-      {
-        if (E <= (1.f / 12.f))
-        {
-          return sqrt(3.f * E);
+      // (OETF) takes normalised to 1000 nits values as input
+      #define LINEAR_TO_HLG(T)                 \
+        T Hlg(T E)                             \
+        {                                      \
+          /* E' */                             \
+          T e__lower = sqrt(3.f * E);          \
+                                               \
+          T e__upper = HLG_a                   \
+                     * log(12.f * E - HLG_b)   \
+                     + HLG_c;                  \
+                                               \
+          return E <= (1.f / 12.f) ? e__lower  \
+                                   : e__upper; \
         }
-        else
-        {
-          return HLG_a * log(12.f * E - HLG_b) + HLG_c;
-        }
-      }
 
-      // (inverse EOTF) takes normalised to 1000 nits values as input
-      float3 Hlg(float3 E)
-      {
-        return float3(Csp::Trc::LinearTo::Hlg(E.r),
-                      Csp::Trc::LinearTo::Hlg(E.g),
-                      Csp::Trc::LinearTo::Hlg(E.b));
-      }
-    } //LinearTo
+      // (OETF) takes normalised to 1000 nits values as input
+      LINEAR_TO_HLG(float)
+
+      // (OETF) takes normalised to 1000 nits values as input
+      LINEAR_TO_HLG(float2)
+
+      // (OETF) takes normalised to 1000 nits values as input
+      LINEAR_TO_HLG(float3)
+
+      // (OETF) takes normalised to 1000 nits values as input
+      LINEAR_TO_HLG(float4)
+    } //Linear_To
 
 
     namespace NitsTo
