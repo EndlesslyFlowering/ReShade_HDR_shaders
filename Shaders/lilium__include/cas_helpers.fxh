@@ -14,15 +14,14 @@ float2 GetEfhiCoords
 }
 
 
-float3 PrepareForProcessing
+float3 RgbModePrepareForProcessing
 (
-  float3 Colour
+  const float3 Colour
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Colour = Csp::Mat::ScRgbTo::Bt2020Normalised(Colour);
-  return saturate(Colour);
+  return Csp::Mat::ScRgbTo::Bt2020Normalised(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -39,10 +38,9 @@ float3 PrepareForProcessing
 #endif
 }
 
-
-float3 PrepareForOutput
+float3 RgbModePrepareForOutput
 (
-  float3 Colour
+  const float3 Colour
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
@@ -64,6 +62,22 @@ float3 PrepareForOutput
 #endif
 }
 
+float3 LuminanceModePrepareForOutput
+(
+  const float3 Colour
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  return Csp::Trc::LinearTo::Pq(Colour);
+
+#else
+
+  return Colour;
+
+#endif
+}
+
 
 struct SPixelsToProcess
 {
@@ -77,6 +91,89 @@ struct SPixelsToProcess
   float3 h;
   float3 i;
 };
+
+struct SLumianceOfPixels
+{
+  float aLum;
+  float bLum;
+  float cLum;
+  float dLum;
+  float eLum;
+  float fLum;
+  float gLum;
+  float hLum;
+  float iLum;
+};
+
+
+void GetLuminance
+(
+  inout SPixelsToProcess  Ptp,
+  out   SLumianceOfPixels Lop
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  Lop.aLum = dot(Ptp.a, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.bLum = dot(Ptp.b, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.cLum = dot(Ptp.c, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.dLum = dot(Ptp.d, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.fLum = dot(Ptp.f, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.gLum = dot(Ptp.g, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.hLum = dot(Ptp.h, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.iLum = dot(Ptp.i, Csp::Mat::ScRgbToXYZ[1]);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  float3 aRgb  = FetchFromHdr10ToLinearLUT(Ptp.a);
+  float3 bRgb  = FetchFromHdr10ToLinearLUT(Ptp.b);
+  float3 cRgb  = FetchFromHdr10ToLinearLUT(Ptp.c);
+  float3 dRgb  = FetchFromHdr10ToLinearLUT(Ptp.d);
+         Ptp.e = FetchFromHdr10ToLinearLUT(Ptp.e);
+  float3 fRgb  = FetchFromHdr10ToLinearLUT(Ptp.f);
+  float3 gRgb  = FetchFromHdr10ToLinearLUT(Ptp.g);
+  float3 hRgb  = FetchFromHdr10ToLinearLUT(Ptp.h);
+  float3 iRgb  = FetchFromHdr10ToLinearLUT(Ptp.i);
+
+  Lop.aLum = dot(aRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.bLum = dot(bRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.cLum = dot(cRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.dLum = dot(dRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.fLum = dot(fRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.gLum = dot(gRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.hLum = dot(hRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.iLum = dot(iRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  Lop.aLum = dot(Ptp.a, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.bLum = dot(Ptp.b, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.cLum = dot(Ptp.c, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.dLum = dot(Ptp.d, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.fLum = dot(Ptp.f, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.gLum = dot(Ptp.g, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.hLum = dot(Ptp.h, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.iLum = dot(Ptp.i, Csp::Mat::Bt709ToXYZ[1]);
+
+#else // fallback for shader permutations
+
+  Lop.aLum = 0.f;
+  Lop.bLum = 0.f;
+  Lop.cLum = 0.f;
+  Lop.dLum = 0.f;
+  Lop.eLum = 0.f;
+  Lop.fLum = 0.f;
+  Lop.gLum = 0.f;
+  Lop.hLum = 0.f;
+  Lop.iLum = 0.f;
+
+#endif
+
+  return;
+}
 
 
 // for compute shader
@@ -114,39 +211,26 @@ void PSGetPixels
 )
 {
   Ptp.e = tex2Dfetch(SamplerBackBuffer,   Position   ).rgb;
-  Ptp.e = PrepareForProcessing(Ptp.e);
 
   const int4 abPosition = Position.xyxy + int4(-1, -1,  0, -1);
 
   Ptp.a = tex2Dfetch(SamplerBackBuffer, abPosition.xy).rgb;
-  Ptp.a = PrepareForProcessing(Ptp.a);
-
   Ptp.b = tex2Dfetch(SamplerBackBuffer, abPosition.zw).rgb;
-  Ptp.b = PrepareForProcessing(Ptp.b);
 
   const int4 cdPosition = Position.xyxy + int4( 1, -1, -1,  0);
 
   Ptp.c = tex2Dfetch(SamplerBackBuffer, cdPosition.xy).rgb;
-  Ptp.c = PrepareForProcessing(Ptp.c);
-
   Ptp.d = tex2Dfetch(SamplerBackBuffer, cdPosition.zw).rgb;
-  Ptp.d = PrepareForProcessing(Ptp.d);
 
   const int4 fgPosition = Position.xyxy + int4( 1,  0, -1,  1);
 
   Ptp.f = tex2Dfetch(SamplerBackBuffer, fgPosition.xy).rgb;
-  Ptp.f = PrepareForProcessing(Ptp.f);
-
   Ptp.g = tex2Dfetch(SamplerBackBuffer, fgPosition.zw).rgb;
-  Ptp.g = PrepareForProcessing(Ptp.g);
 
   const int4 hiPosition = Position.xyxy + int4( 0,  1,  1,  1);
 
   Ptp.h = tex2Dfetch(SamplerBackBuffer, hiPosition.xy).rgb;
-  Ptp.h = PrepareForProcessing(Ptp.h);
-
   Ptp.i = tex2Dfetch(SamplerBackBuffer, hiPosition.zw).rgb;
-  Ptp.i = PrepareForProcessing(Ptp.i);
 
   return;
 }

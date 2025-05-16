@@ -24,6 +24,12 @@
 #include "cas_helpers.fxh"
 
 
+uniform bool CAS_LUMINANCE_MODE
+<
+  ui_label   = "use luminance mode";
+  ui_tooltip = "uses the relative luminance instead linear RGB values to do the sharpening";
+> = true;
+
 uniform float SHARPEN_AMOUNT
 <
   ui_label   = "sharpness amount";
@@ -36,52 +42,103 @@ uniform float SHARPEN_AMOUNT
 
 float3 CasSharpenOnly
 (
-  const SPixelsToProcess Ptp,
+        SPixelsToProcess Ptp,
   const float            Peak
 )
 {
-  // Load a collection of samples in a 3x3 neighorhood, where e is the current pixel.
-  // a b c
-  // d e f
-  // g h i
+  float3 output;
 
-  static const float3 a = Ptp.a;
-  static const float3 b = Ptp.b;
-  static const float3 c = Ptp.c;
-  static const float3 d = Ptp.d;
-  static const float3 e = Ptp.e;
-  static const float3 f = Ptp.f;
-  static const float3 g = Ptp.g;
-  static const float3 h = Ptp.h;
-  static const float3 i = Ptp.i;
+  BRANCH()
+  if (CAS_LUMINANCE_MODE)
+  {
+    SLumianceOfPixels lop;
 
-  // Soft min and max.
-  //  a b c             b
-  //  d e f * 0.5  +  d e f * 0.5
-  //  g h i             h
-  // These are 2.0x bigger (factored out the extra multiply).
-  float3 minRgb = MIN3(MIN3(d, e, f), b, h);
-  float3 maxRgb = MAX3(MAX3(d, e, f), b, h);
+    GetLuminance(Ptp, lop);
 
-  minRgb += MIN3(MIN3(minRgb, a, c), g, i);
-  maxRgb += MAX3(MAX3(maxRgb, a, c), g, i);
+    static const float aLum = lop.aLum;
+    static const float bLum = lop.bLum;
+    static const float cLum = lop.cLum;
+    static const float dLum = lop.dLum;
+    static const float eLum = lop.eLum;
+    static const float fLum = lop.fLum;
+    static const float gLum = lop.gLum;
+    static const float hLum = lop.hLum;
+    static const float iLum = lop.iLum;
 
-  // Smooth minimum distance to signal limit divided by smooth max.
-  float3 rcpMaxRgb = rcp(maxRgb);
+    // Soft min and max.
+    //  a b c             b
+    //  d e f * 0.5  +  d e f * 0.5
+    //  g h i             h
+    // These are 2.0x bigger (factored out the extra multiply).
+    float minLum = MIN3(MIN3(dLum, eLum, fLum), bLum, hLum);
+    float maxLum = MAX3(MAX3(dLum, eLum, fLum), bLum, hLum);
 
-  // Shaping amount of sharpening.
-  float3 amplifyRgb = sqrt(saturate(min(minRgb, 2.f - maxRgb) * rcpMaxRgb));
+    minLum += MIN3(MIN3(minLum, aLum, cLum), gLum, iLum);
+    maxLum += MAX3(MAX3(maxLum, aLum, cLum), gLum, iLum);
 
-  // Filter shape.
-  //  0 w 0
-  //  w 1 w
-  //  0 w 0
+    // Smooth minimum distance to signal limit divided by smooth max.
+    float rcpMaxLum = rcp(maxLum);
 
-  float3 weight = amplifyRgb * Peak;
+    // Shaping amount of sharpening.
+    float amplifyLum = sqrt(saturate(min(minLum, 2.f - maxLum) * rcpMaxLum));
 
-  float3 rcpWeight = rcp(4.f * weight + 1.f);
+    // Filter shape.
+    //  0 w 0
+    //  w 1 w
+    //  0 w 0
 
-  float3 output = saturate(((b + d + f + h) * weight + e) * rcpWeight);
+    float weight = amplifyLum * Peak;
 
-  return PrepareForOutput(output);
+    float rcpWeight = rcp(4.f * weight + 1.f);
+
+    float outputLum = ((bLum + dLum + fLum + hLum) * weight + eLum) * rcpWeight;
+
+    output = max(outputLum / eLum, 0.f) * Ptp.e;
+
+    output = LuminanceModePrepareForOutput(output);
+  }
+  else
+  {
+    static const float3 a = RgbModePrepareForProcessing(Ptp.a);
+    static const float3 b = RgbModePrepareForProcessing(Ptp.b);
+    static const float3 c = RgbModePrepareForProcessing(Ptp.c);
+    static const float3 d = RgbModePrepareForProcessing(Ptp.d);
+    static const float3 e = RgbModePrepareForProcessing(Ptp.e);
+    static const float3 f = RgbModePrepareForProcessing(Ptp.f);
+    static const float3 g = RgbModePrepareForProcessing(Ptp.g);
+    static const float3 h = RgbModePrepareForProcessing(Ptp.h);
+    static const float3 i = RgbModePrepareForProcessing(Ptp.i);
+
+    // Soft min and max.
+    //  a b c             b
+    //  d e f * 0.5  +  d e f * 0.5
+    //  g h i             h
+    // These are 2.0x bigger (factored out the extra multiply).
+    float3 minRgb = MIN3(MIN3(d, e, f), b, h);
+    float3 maxRgb = MAX3(MAX3(d, e, f), b, h);
+
+    minRgb += MIN3(MIN3(minRgb, a, c), g, i);
+    maxRgb += MAX3(MAX3(maxRgb, a, c), g, i);
+
+    // Smooth minimum distance to signal limit divided by smooth max.
+    float3 rcpMaxRgb = rcp(maxRgb);
+
+    // Shaping amount of sharpening.
+    float3 amplifyRgb = sqrt(saturate(min(minRgb, 2.f - maxRgb) * rcpMaxRgb));
+
+    // Filter shape.
+    //  0 w 0
+    //  w 1 w
+    //  0 w 0
+
+    float3 weight = amplifyRgb * Peak;
+
+    float3 rcpWeight = rcp(4.f * weight + 1.f);
+
+    output = max(((b + d + f + h) * weight + e) * rcpWeight, 0.f);
+
+    output = RgbModePrepareForOutput(output);
+  }
+
+  return output;
 }
