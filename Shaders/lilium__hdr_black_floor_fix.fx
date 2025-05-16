@@ -115,19 +115,21 @@ void PS_HdrBlackFloorFix
 {
 #if (__RESHADE_PERFORMANCE_MODE__ == 1)
 
-  float rollOffStoppingPoint;
-  float oldBlackPoint;
-  float rollOffMinusOldBlackPoint;
-  float minLum;
-  float g22EmuWhitePointNormalised;
-  float gaWhitePointNormalised;
+  static float params[6];
 
-  GetParams(rollOffStoppingPoint,
-            oldBlackPoint,
-            rollOffMinusOldBlackPoint,
-            minLum,
-            g22EmuWhitePointNormalised,
-            gaWhitePointNormalised);
+  GetParams(params[0],
+            params[1],
+            params[2],
+            params[3],
+            params[4],
+            params[5]);
+
+  static const float rollOffStoppingPoint       = params[0];
+  static const float oldBlackPoint              = params[1];
+  static const float rollOffMinusOldBlackPoint  = params[2];
+  static const float minLum                     = params[3];
+  static const float g22EmuWhitePointNormalised = params[4];
+  static const float gaWhitePointNormalised     = params[5];
 
 #endif
 
