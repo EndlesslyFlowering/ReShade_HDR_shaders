@@ -1776,6 +1776,14 @@ namespace Csp
       HLG_TO_LINEAR(float4)
     } //HlgTo
 
+    float HLG_Gamma
+    (
+      const float LW
+    )
+    {
+      return 1.2f + 0.42f * log10(LW / 1000.f);
+    }
+
 
     namespace Linear_To
     {
