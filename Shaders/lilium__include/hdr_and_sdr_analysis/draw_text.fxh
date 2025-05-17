@@ -1728,7 +1728,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
                        : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
                                                                          : 1.f;
 
-        [flatten]
+        FLATTEN()
         if (SHOW_GAMUTS)
         {
           vertexOffset.y += GAMUT_PERCENTAGES_LINES;
