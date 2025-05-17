@@ -189,14 +189,14 @@ void Draw_Cie_Lines
   const float2 Stop
 )
 {
-  const float2 diff = abs(Start - Stop);
+  const float2 xy_diff = abs(Start - Stop);
 
-  const bool diff_x_greater = diff.x > diff.y;
+  const bool x_diff_is_greater = xy_diff.x > xy_diff.y;
 
   float4 start_stop;
 
   [flatten]
-  if (diff_x_greater)
+  if (x_diff_is_greater)
   {
     start_stop = Start.x < Stop.x ? float4(Start, Stop) : float4(Stop, Start);
   }
@@ -214,14 +214,11 @@ void Draw_Cie_Lines
 
 
   const float2 start_encoded_floor = floor(start_encoded);
-  const float2 stop_encoded_floor  = floor(stop_encoded);
-
-  const float2 start_encoded_ceil = ceil(start_encoded);
-  const float2 stop_encoded_ceil  = ceil(stop_encoded);
+  const float2 stop_encoded_ceil   =  ceil(stop_encoded);
 
 
   [branch]
-  if (diff_x_greater)
+  if (x_diff_is_greater)
   {
     [loop]
     for (float x = start_encoded_floor.x - 1.f; x <= stop_encoded_ceil.x + 1.f; x = x + 1.f)
@@ -250,8 +247,10 @@ void Draw_Cie_Lines
 
         float2 xy = float2(x, y);
 
-        float grey = lerp(0.f, 1.f, fract);
+        //avoid invalid numbers
+        float grey = saturate(fract);
 
+        [branch]
         if (grey > 0.f)
         {
           float grey_encoded = sqrt(grey);
@@ -264,6 +263,7 @@ void Draw_Cie_Lines
 
           float current_value = tex2Dfetch(StorageCieOverlay, xy_as_int).x;
 
+          [branch]
           if (grey_encoded > current_value)
           {
             tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
@@ -301,8 +301,10 @@ void Draw_Cie_Lines
 
         float2 xy = float2(x, y);
 
-        float grey = lerp(0.f, 1.f, fract);
+        //avoid invalid numbers
+        float grey = saturate(fract);
 
+        [branch]
         if (grey > 0.f)
         {
           float grey_encoded = sqrt(grey);
@@ -315,6 +317,7 @@ void Draw_Cie_Lines
 
           float current_value = tex2Dfetch(StorageCieOverlay, xy_as_int).x;
 
+          [branch]
           if (grey_encoded > current_value)
           {
             tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
