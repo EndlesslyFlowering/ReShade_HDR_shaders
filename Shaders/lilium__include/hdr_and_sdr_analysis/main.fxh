@@ -608,11 +608,17 @@ storage2D
 #define COORDS_SHOW_PERCENTAGE_INVALID int(19 + SHOW_VALUES_X_OFFSET)
 
 
+#define UNROLLING_BE_GONE_VARIABLES_COUNT 1
+#define UNROLLING_BE_GONE_VARIABLES_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
+#define UNROLLING_BE_GONE_VARIABLES_Y_OFFSET 0
+#define COORDS_UNROLLING_BE_GONE             int(UNROLLING_BE_GONE_VARIABLES_X_OFFSET)
+
+
 #ifdef IS_COMPUTE_CAPABLE_API
 
 // luminance waveform variables
 #define LUMINANCE_WAVEFORM_VARIABLES_COUNT 4
-#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET (SHOW_VALUES_COUNT + SHOW_VALUES_X_OFFSET)
+#define LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET (UNROLLING_BE_GONE_VARIABLES_COUNT + UNROLLING_BE_GONE_VARIABLES_X_OFFSET)
 #define LUMINANCE_WAVEFORM_VARIABLES_Y_OFFSET 0
 #define COORDS_WAVEFORM_LAST_SIZE_X           int(    LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
 #define COORDS_WAVEFORM_LAST_SIZE_Y           int(1 + LUMINANCE_WAVEFORM_VARIABLES_X_OFFSET)
@@ -1054,6 +1060,9 @@ void CopyShowValues()
 
 void CS_Finalise()
 {
+  const float unrolling_be_gone_float = tex1Dfetch(StorageConsolidated, COORDS_UNROLLING_BE_GONE);
+  const uint  unrolling_be_gone_uint  = uint(unrolling_be_gone_float);
+  const int   unrolling_be_gone_int   = int(unrolling_be_gone_float);
 
   FinaliseMaxAvgMinNits();
 
@@ -1061,7 +1070,9 @@ void CS_Finalise()
   FinaliseGamutCounter();
 #endif
 
-  RenderWaveformScale();
+  RenderWaveformScale(unrolling_be_gone_float,
+                      unrolling_be_gone_uint,
+                      unrolling_be_gone_int);
 
   DrawCieOutlines();
 

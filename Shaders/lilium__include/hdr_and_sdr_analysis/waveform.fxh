@@ -326,17 +326,10 @@ namespace Waveform
                 ActiveBorderSize + ActiveFontSpacer + ActiveFrameSize + YOffset);
   } //GetNitsOffset
 
-// workaround so that the driver shader compiler doesn't
-// unroll the loops and it taking 14 minutes or longer
-#if ((!defined(API_IS_D3D11) && !defined(API_IS_D3D12)) \
-  || ((defined(API_IS_D3D11) || defined(API_IS_D3D12)) && (BUFFER_WIDTH >= 1600 || BUFFER_HEIGHT >= 900) && __RESHADE_PERFORMANCE_MODE__ == 0))
-
-  #define NO_WORKAROUND_NEEDED
-
-#endif
 
   void DrawCharToScale
   (
+    const int    Unrolling_Be_Gone_Int,
     const uint2  Char,
     const float2 CharDim,
     const int2   Pos,
@@ -358,17 +351,11 @@ namespace Waveform
     int2 currentOffset = int2(0, 0);
 
     [loop]
-    while (currentOffset.x < floorCharDim.x)
+    while (currentOffset.x < (floorCharDim.x + Unrolling_Be_Gone_Int))
     {
-#ifndef NO_WORKAROUND_NEEDED
-      currentOffset.x += floor(FRAMETIME / 100000.f + 0.1f);
-#endif
       [loop]
-      while (currentOffset.y < floorCharDim.y)
+      while (currentOffset.y < (floorCharDim.y + Unrolling_Be_Gone_Int))
       {
-#ifndef NO_WORKAROUND_NEEDED
-        currentOffset.y += floor(FRAMETIME / 100000.f);
-#endif
         float2 currentSamplePos = charFetchPos
                                 + float2(currentOffset)
                                 * (min(CHAR_DIM_FLOAT / CharDim, 2.f))
@@ -631,7 +618,12 @@ void RenderWaveform
 }
 
 
-void RenderWaveformScale()
+void RenderWaveformScale
+(
+  const float Unrolling_Be_Gone_Float,
+  const uint  Unrolling_Be_Gone_Uint,
+  const int   Unrolling_Be_Gone_Int
+)
 {
   [branch]
   if (tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X)           != _WAVEFORM_SIZE.x
@@ -644,10 +636,10 @@ void RenderWaveformScale()
   {
     //make background all black
     [loop]
-    for (int x = 0; x < TEXTURE_WAVEFORM_SCALE_WIDTH; x++)
+    for (int x = 0; x < (TEXTURE_WAVEFORM_SCALE_WIDTH + Unrolling_Be_Gone_Int); x++)
     {
       [loop]
-      for (int y = 0; y < TEXTURE_WAVEFORM_SCALE_HEIGHT; y++)
+      for (int y = 0; y < (TEXTURE_WAVEFORM_SCALE_HEIGHT + Unrolling_Be_Gone_Int); y++)
       {
         tex2Dstore(StorageWaveformScale, int2(x, y), float4(0.f, 0.f, 0.f, 0.f));
       }
@@ -662,7 +654,7 @@ void RenderWaveformScale()
     int2 nitsOffsets[16];
 
     [loop]
-    for (uint i = 0u; i < 16u; i++)
+    for (uint i = 0u; i < (16u + Unrolling_Be_Gone_Uint); i++)
     {
       nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
     }
@@ -751,7 +743,7 @@ void RenderWaveformScale()
     static const uint charListsCount = 16;
 
     [loop]
-    for (uint i = 0u; i < charListsCount; i++)
+    for (uint i = 0u; i < (charListsCount + Unrolling_Be_Gone_Uint); i++)
     {
       uint2 currentNumber;
 
@@ -763,7 +755,7 @@ void RenderWaveformScale()
 
 
       [loop]
-      for (int j = 0u; j < 8u; j++)
+      for (int j = 0u; j < (8u + Unrolling_Be_Gone_Uint); j++)
       {
         const int minj6 = min(j, 6);
         const int minj5 = min(j, 5);
@@ -929,7 +921,8 @@ void RenderWaveformScale()
         if (needsDrawing
          && (-(j - 7) >= currentCharOffset))
         {
-          Waveform::DrawCharToScale(currentNumber,
+          Waveform::DrawCharToScale(Unrolling_Be_Gone_Int,
+                                    currentNumber,
                                     waveDat.charDimensions,
                                     currentTextOffset,
                                     charOffsets[j + currentCharOffset]);
@@ -945,7 +938,7 @@ void RenderWaveformScale()
     int2 nitsOffsets[14];
 
     [loop]
-    for (uint i = 0u; i < 14u; i++)
+    for (uint i = 0u; i < (14u + Unrolling_Be_Gone_Uint); i++)
     {
       nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
     }
@@ -1024,7 +1017,7 @@ void RenderWaveformScale()
     charDims.y = waveDat.charDimensions.y;
 
     [loop]
-    for (uint i = 0; i < charListsCount; i++)
+    for (uint i = 0; i < (charListsCount + Unrolling_Be_Gone_Uint); i++)
     {
       uint2 currentNumber;
 
@@ -1033,7 +1026,7 @@ void RenderWaveformScale()
       int currentCharOffset;
 
       [loop]
-      for (int j = 0; j < 7; j++)
+      for (int j = 0; j < (7 + Unrolling_Be_Gone_Int); j++)
       {
         const int minj5 = min(j, 5);
         const int minj4 = min(j, 4);
@@ -1182,7 +1175,8 @@ void RenderWaveformScale()
         [branch]
         if (-(j - 7) > currentCharOffset)
         {
-          Waveform::DrawCharToScale(currentNumber,
+          Waveform::DrawCharToScale(Unrolling_Be_Gone_Int,
+                                    currentNumber,
                                     charDims,
                                     currentTextOffset,
                                     charOffsets[j + currentCharOffset]);
@@ -1194,7 +1188,7 @@ void RenderWaveformScale()
 
     // draw the frame, ticks and horizontal lines
     [loop]
-    for (int y = 0; y < waveDat.endXY.y; y++)
+    for (int y = 0; y < (waveDat.endXY.y + Unrolling_Be_Gone_Int); y++)
     {
       int2 curPos = waveDat.offsetToFrame
                   + int2(0, y);
@@ -1212,7 +1206,7 @@ void RenderWaveformScale()
        || y >= waveDat.lowerFrameStart)
       {
         [loop]
-        for (int x = 0; x < waveDat.endXY.x; x++)
+        for (int x = 0; x < (waveDat.endXY.x + Unrolling_Be_Gone_Int); x++)
         {
           int2 curXPos = int2(curPos.x + x,
                               curPos.y);
@@ -1223,7 +1217,7 @@ void RenderWaveformScale()
       else
       {
         [loop]
-        for (int x = 0; x < waveDat.frameSize; x++)
+        for (int x = 0; x < (waveDat.frameSize + Unrolling_Be_Gone_Int); x++)
         {
           int2 curLeftPos  = int2(curPos.x + x,
                                   curPos.y);
@@ -1260,7 +1254,7 @@ void RenderWaveformScale()
 #endif
       {
         [loop]
-        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.frameSize); x++)
+        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.frameSize + Unrolling_Be_Gone_Int); x++)
         {
           int2 curTickPos = int2(x,
                                  curPos.y);
@@ -1347,7 +1341,7 @@ void RenderWaveformScale()
 #endif
       {
         [loop]
-        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.endXY.x); x++)
+        for (int x = waveDat.tickXOffset; x < (waveDat.tickXOffset + waveDat.endXY.x + Unrolling_Be_Gone_Int); x++)
         {
           int2 curTickPos = int2(x,
                                  curPos.y);

@@ -1255,8 +1255,17 @@ void CS_MakeOverlayBgAndWaveformScaleRedraw()
 {
   tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X, 0.f);
   tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,    0.f);
+  tex1Dstore(StorageConsolidated, COORDS_UNROLLING_BE_GONE,    0.f);
 
-  DrawText();
+  memoryBarrier();
+
+  const float unrolling_be_gone_float = tex1Dfetch(StorageConsolidated, COORDS_UNROLLING_BE_GONE);
+  const uint  unrolling_be_gone_uint  = uint(unrolling_be_gone_float);
+  const int   unrolling_be_gone_int   = int(unrolling_be_gone_float);
+
+  DrawText(unrolling_be_gone_uint,
+           unrolling_be_gone_int);
+
   return;
 }
 

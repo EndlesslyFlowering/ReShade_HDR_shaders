@@ -183,7 +183,11 @@ uint GetNumberAboveZero
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
-void DrawText()
+void DrawText
+(
+  const uint  Unrolling_Be_Gone_Uint,
+  const int   Unrolling_Be_Gone_Int
+)
 {
 #ifdef IS_HDR_CSP
 
@@ -678,11 +682,11 @@ void DrawText()
 
 
   [loop]
-  for (uint i = 0; i < COUNT_CHAR_LISTS; i++)
+  for (uint i = 0u; i < (COUNT_CHAR_LISTS + Unrolling_Be_Gone_Uint); i++)
   {
 
     [loop]
-    for (uint j = 0; j < arraySizes[i]; j++)
+    for (uint j = 0u; j < (arraySizes[i] + Unrolling_Be_Gone_Uint); j++)
     {
 
       uint2 currentChar;
@@ -823,10 +827,10 @@ void DrawText()
         const uint2 currentCharOffset = currentChar
                                       * CHAR_DIM_UINT;
         [loop]
-        for (int x = 0; x < CHAR_DIM_UINT.x; x++)
+        for (int x = 0; x < (int(CHAR_DIM_UINT.x) + Unrolling_Be_Gone_Int); x++)
         {
           [loop]
-          for (int y = 0; y < CHAR_DIM_UINT.y; y++)
+          for (int y = 0; y < (int(CHAR_DIM_UINT.y) + Unrolling_Be_Gone_Int); y++)
           {
             const int2 xy = int2(x, y);
 
