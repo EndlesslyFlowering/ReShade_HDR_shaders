@@ -217,38 +217,46 @@ void Draw_Cie_Lines
   const float2 stop_encoded_ceil   =  ceil(stop_encoded);
 
 
+  #define PLUS_MINUS 2.f
+
   [branch]
   if (x_diff_is_greater)
   {
     [loop]
-    for (float x = start_encoded_floor.x - 1.f; x <= stop_encoded_ceil.x + 1.f; x = x + 1.f)
+    for (float x = start_encoded_floor.x - PLUS_MINUS; x <= (stop_encoded_ceil.x + PLUS_MINUS); x = x + 1.f)
     {
       float y_correct = m * x + b;
       float y_floor   = floor(y_correct);
       float y_ceil    =  ceil(y_correct);
 
-      //optimise this
-      float x_fract_start = (start_encoded.x - x) * 0.5f;
-      float x_fract_stop  = (x - stop_encoded.x)  * 0.5f;
-      float x_fract = (x_fract_start >= 1.f || x_fract_stop >= 1.f) ? 1.f
-                    : (x_fract_start >  0.f && x_fract_start < 1.f) ? x_fract_start
-                    : (x_fract_stop  >  0.f && x_fract_stop  < 1.f) ? x_fract_stop
-                    :                                                 0.f;
+      float2 xy_correct = float2(x, y_correct);
+
+      bool x_is_under = x < start_encoded.x;
+      bool x_is_over  = x >  stop_encoded.x;
 
       [loop]
-      for (float y = y_floor - 1.f; y <= y_ceil + 1.f; y = y + 1.f)
+      for (float y = y_floor - PLUS_MINUS; y <= (y_ceil + PLUS_MINUS); y = y + 1.f)
       {
-        float y_fract = abs(y_correct - y) * 0.5f;
-
-        //optimise this
-        float fract = y_fract < 1.f ? 1.f - y_fract - x_fract
-                    : x_fract < 1.f ? 1.f - x_fract
-                    :                 0.f;
-
         float2 xy = float2(x, y);
 
+        float fract = distance(xy_correct, xy);
+
+        [branch]
+        if (x_is_under)
+        {
+          fract = max(fract, distance(start_encoded, xy));
+        }
+        else
+        [branch]
+        if (x_is_over)
+        {
+          fract = max(fract, distance(stop_encoded, xy));
+        }
+
         //avoid invalid numbers
-        float grey = saturate(fract);
+        fract = saturate(fract * 0.5f);
+
+        float grey = lerp(1.f, 0.f, fract);
 
         [branch]
         if (grey > 0.f)
@@ -275,34 +283,40 @@ void Draw_Cie_Lines
   else
   {
     [loop]
-    for (float y = start_encoded_floor.y - 1.f; y <= stop_encoded_ceil.y + 1.f; y = y + 1.f)
+    for (float y = start_encoded_floor.y - PLUS_MINUS; y <= (stop_encoded_ceil.y + PLUS_MINUS); y = y + 1.f)
     {
       float x_correct = (y - b) / m;
       float x_floor   = floor(x_correct);
       float x_ceil    =  ceil(x_correct);
 
-      //optimise this
-      float y_fract_start = (start_encoded.y - y) * 0.5f;
-      float y_fract_stop  = (y - stop_encoded.y)  * 0.5f;
-      float y_fract = (y_fract_start >= 1.f || y_fract_stop >= 1.f) ? 1.f
-                    : (y_fract_start >  0.f && y_fract_start < 1.f) ? y_fract_start
-                    : (y_fract_stop  >  0.f && y_fract_stop  < 1.f) ? y_fract_stop
-                    :                                                 0.f;
+      float2 xy_correct = float2(x_correct, y);
+
+      bool y_is_under = y < start_encoded.y;
+      bool y_is_over  = y >  stop_encoded.y;
 
       [loop]
-      for (float x = x_floor - 1.f; x <= x_ceil + 1.f; x = x + 1.f)
+      for (float x = x_floor - PLUS_MINUS; x <= (x_ceil + PLUS_MINUS); x = x + 1.f)
       {
-        float x_fract = abs(x_correct - x) * 0.5f;
-
-        //optimise this
-        float fract = x_fract < 1.f ? 1.f - x_fract - y_fract
-                    : y_fract < 1.f ? 1.f - y_fract
-                    :                 0.f;
-
         float2 xy = float2(x, y);
 
+        float fract = distance(xy_correct, xy);
+
+        [branch]
+        if (y_is_under)
+        {
+          fract = max(fract, distance(start_encoded, xy));
+        }
+        else
+        [branch]
+        if (y_is_over)
+        {
+          fract = max(fract, distance(stop_encoded, xy));
+        }
+
         //avoid invalid numbers
-        float grey = saturate(fract);
+        fract = saturate(fract * 0.5f);
+
+        float grey = lerp(1.f, 0.f, fract);
 
         [branch]
         if (grey > 0.f)
