@@ -874,7 +874,7 @@ float3 MergeOverlay
 
 #include "luminance.fxh"
 #ifdef IS_HDR_CSP
-  #include "csp.fxh"
+  #include "gamut.fxh"
 #endif
 #ifdef IS_COMPUTE_CAPABLE_API
   #include "cie.fxh"
