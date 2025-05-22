@@ -315,6 +315,136 @@ float4 CalcNitsAndCll
   return float4(curRgb, curPixelNits);
 }
 
+float Calc_Nits_Normalised
+(
+  const float3 Pixel
+)
+{
+  float3 rgb;
+  float  nits;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  nits = dot(Csp::Mat::ScRgbToXYZ[1], Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  rgb = FetchFromHdr10ToLinearLUT(Pixel);
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  rgb = Csp::Trc::HlgTo::Linear(Pixel);
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
+
+  rgb = Pixel / 100.f;
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  rgb = DECODE_SDR(Pixel);
+
+  nits = dot(Csp::Mat::Bt709ToXYZ[1], rgb);
+
+#else
+
+  nits = 0.f;
+
+#endif //ACTUAL_COLOUR_SPACE ==
+
+  return nits;
+}
+
+float3 Calc_Cll_Normalised
+(
+  const float3 Pixel
+)
+{
+  float3 cll;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  cll = Csp::Mat::ScRgbTo::Bt2020Normalised(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  cll = FetchFromHdr10ToLinearLUT(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  cll = Csp::Trc::HlgTo::Linear(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
+
+  cll = Pixel / 100.f;
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  cll = DECODE_SDR(Pixel);
+
+#else
+
+  cll = 0.f;
+
+#endif //ACTUAL_COLOUR_SPACE ==
+
+  return cll;
+}
+
+float4 Calc_Nits_And_Cll_Normalised
+(
+  const float3 Pixel
+)
+{
+  float3 cll;
+  float  nits;
+
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+  nits = dot(Csp::Mat::ScRgbToXYZ[1], Pixel);
+
+  cll = Csp::Mat::ScRgbTo::Bt2020Normalised(Pixel);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+
+  cll = FetchFromHdr10ToLinearLUT(Pixel);
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
+
+  cll = Csp::Trc::HlgTo::Linear(Pixel);
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
+
+  cll = Pixel / 100.f;
+
+  nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+  cll = DECODE_SDR(Pixel);
+
+  nits = dot(Csp::Mat::Bt709ToXYZ[1], cll);
+
+#else
+
+  cll = 0.f;
+
+  nits = 0.f;
+
+#endif //ACTUAL_COLOUR_SPACE ==
+
+  return float4(cll, nits);
+}
+
 
 #ifdef IS_COMPUTE_CAPABLE_API
 
