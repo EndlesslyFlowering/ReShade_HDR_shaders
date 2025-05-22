@@ -25,12 +25,6 @@ sampler2D<float> SamplerGamuts
 };
 
 
-#if (__VENDOR__ == 0x1002)
-  #define TIMES_100 100.0001f
-#else
-  #define TIMES_100 100.f
-#endif
-
 void FinaliseGamutCounter()
 {
 

@@ -872,6 +872,15 @@ float3 MergeOverlay
 }
 
 
+#if (__VENDOR__ == 0x1002)
+  #define TIMES_100 100.0001f
+  #define   DIV_100 99.99999f
+#else
+  #define TIMES_100 100.f
+  #define   DIV_100 100.f
+#endif
+
+
 #include "luminance.fxh"
 #ifdef IS_HDR_CSP
   #include "gamut.fxh"
