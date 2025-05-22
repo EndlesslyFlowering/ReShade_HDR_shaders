@@ -900,8 +900,7 @@ void CS_GetNitNumbers
   }
 
 #ifdef IS_FLOAT_HDR_CSP
-  static /*const*/ uint minus0 = uint(0x80000000); //massaging the ReShade compiler...
-  static const bool isMinus0 = asuint(nits) == minus0;
+  static const bool isMinus0 = asuint(nits) == uint(0x80000000);
 
   static const uint negSignPos =  nits <= -1000.f  ? 5
                                :  nits <=  -100.f  ? 4
