@@ -369,13 +369,12 @@ void CS_ResetMinNits
 
 #ifdef IS_FLOAT_HDR_CSP
   groupshared  int4 GroupMax;
-  groupshared  int4 GroupAvg;
   groupshared  int4 GroupMin;
 #else
   groupshared uint4 GroupMax;
-  groupshared uint4 GroupAvg;
   groupshared uint4 GroupMin;
 #endif
+groupshared uint4 GroupAvg;
 void CS_GetMaxAvgMinNits
 (
   uint3 GID  : SV_GroupID,
@@ -422,7 +421,7 @@ void CS_GetMaxAvgMinNits
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
 
-        const float4 curNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, curFetchPos).rgb);
+        float4 curNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, curFetchPos).rgb);
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
   && defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
@@ -451,6 +450,12 @@ void CS_GetMaxAvgMinNits
           threadMaxNits = max(curNits, threadMaxNits);
           threadMinNits = min(curNits, threadMinNits);
 
+#ifdef IS_FLOAT_HDR_CSP
+
+          curNits.w = max(curNits.w, 0.f);
+
+#endif
+
           threadAvgNits += curNits;
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
@@ -475,8 +480,6 @@ void CS_GetMaxAvgMinNits
     threadMaxNitsAsInt = threadMaxNitsIsNegative ? threadMaxNitsAsIntNegativeCorrected
                                                  : threadMaxNitsAsInt;
 
-    const int4 threadAvgNitsAsInt = int4(threadAvgNits * 1000.f + 0.5f); //same as (threadAvgNits + 0.0005f) * 1000.f
-
     int4 threadMinNitsAsInt = asint(threadMinNits);
 
     static const bool4 threadMinNitsIsNegative = threadMinNitsAsInt & int(0x80000000);
@@ -487,19 +490,17 @@ void CS_GetMaxAvgMinNits
                                                  : threadMinNitsAsInt;
 #else
     const uint4 threadMaxNitsAsUint = asuint(threadMaxNits);
-    const uint4 threadAvgNitsAsUint = uint4(threadAvgNits * 1000.f + 0.5f); //same as (threadAvgNits + 0.0005f) * 1000.f
     const uint4 threadMinNitsAsUint = asuint(threadMinNits);
 #endif
+
+    const uint4 thread_avg_nits_uint = uint4(threadAvgNits * 1000.f + 0.5f); //same as (threadAvgNits + 0.0005f) * 1000.f
 
 #ifdef IS_FLOAT_HDR_CSP
     atomicMax(GroupMax.w, threadMaxNitsAsInt.w);
     atomicMax(GroupMax.r, threadMaxNitsAsInt.r);
     atomicMax(GroupMax.g, threadMaxNitsAsInt.g);
     atomicMax(GroupMax.b, threadMaxNitsAsInt.b);
-    atomicAdd(GroupAvg.w, threadAvgNitsAsInt.w);
-    atomicAdd(GroupAvg.r, threadAvgNitsAsInt.r);
-    atomicAdd(GroupAvg.g, threadAvgNitsAsInt.g);
-    atomicAdd(GroupAvg.b, threadAvgNitsAsInt.b);
+
     atomicMin(GroupMin.w, threadMinNitsAsInt.w);
     atomicMin(GroupMin.r, threadMinNitsAsInt.r);
     atomicMin(GroupMin.g, threadMinNitsAsInt.g);
@@ -509,15 +510,17 @@ void CS_GetMaxAvgMinNits
     atomicMax(GroupMax.r, threadMaxNitsAsUint.r);
     atomicMax(GroupMax.g, threadMaxNitsAsUint.g);
     atomicMax(GroupMax.b, threadMaxNitsAsUint.b);
-    atomicAdd(GroupAvg.w, threadAvgNitsAsUint.w);
-    atomicAdd(GroupAvg.r, threadAvgNitsAsUint.r);
-    atomicAdd(GroupAvg.g, threadAvgNitsAsUint.g);
-    atomicAdd(GroupAvg.b, threadAvgNitsAsUint.b);
+
     atomicMin(GroupMin.w, threadMinNitsAsUint.w);
     atomicMin(GroupMin.r, threadMinNitsAsUint.r);
     atomicMin(GroupMin.g, threadMinNitsAsUint.g);
     atomicMin(GroupMin.b, threadMinNitsAsUint.b);
 #endif
+
+    atomicAdd(GroupAvg.w, thread_avg_nits_uint.w);
+    atomicAdd(GroupAvg.r, thread_avg_nits_uint.r);
+    atomicAdd(GroupAvg.g, thread_avg_nits_uint.g);
+    atomicAdd(GroupAvg.b, thread_avg_nits_uint.b);
 
     barrier();
 
@@ -527,11 +530,7 @@ void CS_GetMaxAvgMinNits
                                 / 1000.f
                                 / float(WAVE64_THREAD_SIZE);
 
-#ifdef IS_FLOAT_HDR_CSP
-      const  int4 groupAvgNitsInt  =  int4(groupAvgNits * 1000.f + 0.5f);
-#else
-      const uint4 groupAvgNitsUint = uint4(groupAvgNits * 1000.f + 0.5f);
-#endif
+      const uint4 group_avg_nits_uint = uint4(groupAvgNits * 1000.f + 0.5f);
 
       const int2 averageStorePosW = int2(GID.xy % uint2(AVG_NITS_WIDTH, AVG_NITS_HEIGHT));
       const int2 averageStorePosR = averageStorePosW + int2(AVG_NITS_WIDTH,     0);
@@ -543,17 +542,10 @@ void CS_GetMaxAvgMinNits
       atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_G,    GroupMax.g);
       atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MAX_B,    GroupMax.b);
 
-#ifdef IS_FLOAT_HDR_CSP
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosW, groupAvgNitsInt.w);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosR, groupAvgNitsInt.r);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosG, groupAvgNitsInt.g);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosB, groupAvgNitsInt.b);
-#else
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosW, groupAvgNitsUint.w);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosR, groupAvgNitsUint.r);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosG, groupAvgNitsUint.g);
-      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosB, groupAvgNitsUint.b);
-#endif
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosW, group_avg_nits_uint.w);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosR, group_avg_nits_uint.r);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosG, group_avg_nits_uint.g);
+      atomicAdd(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, averageStorePosB, group_avg_nits_uint.b);
 
       atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_NITS, GroupMin.w);
       atomicMin(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_MIN_R,    GroupMin.r);
@@ -707,7 +699,11 @@ void PS_GetMaxAvgMinNits
       const float curNits = tex2Dfetch(SamplerNitsValues, xy);
 
       maxNits  = max(curNits, maxNits);
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      avgNits += max(curNits, 0.f);
+#else
       avgNits += curNits;
+#endif
       minNits  = min(curNits, minNits);
     }
   }
