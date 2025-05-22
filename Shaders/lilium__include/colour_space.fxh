@@ -38,11 +38,15 @@
 #endif
 
 
-texture TextureBackBuffer : COLOR;
+texture2D TextureBackBuffer : COLOR;
 
-sampler SamplerBackBuffer
+sampler2D SamplerBackBuffer
 {
   Texture = TextureBackBuffer;
+
+	MagFilter = POINT;
+	MinFilter = POINT;
+	MipFilter = POINT;
 };
 
 
