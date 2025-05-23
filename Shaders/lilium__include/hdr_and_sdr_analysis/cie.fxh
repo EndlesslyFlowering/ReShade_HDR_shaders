@@ -569,7 +569,7 @@ void DrawCieOutlines()
       BRANCH()
       if (_CIE_SHOW_GAMUT_OUTLINE_POINTERS)
       {
-        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32)
+        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32u)
       }
 
 
@@ -584,7 +584,7 @@ void DrawCieOutlines()
         [forcecase]
         switch(i)
         {
-          case 0:
+          case 0u:
           {
             coordsArray[0] = primBt709R;
             coordsArray[1] = primBt709G;
@@ -593,7 +593,7 @@ void DrawCieOutlines()
             needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
           }
           break;
-          case 1:
+          case 1u:
           {
             coordsArray[0] = primDciP3R;
             coordsArray[1] = primDciP3G;
@@ -602,7 +602,7 @@ void DrawCieOutlines()
             needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
           }
           break;
-          default: //case 2:
+          default: //case 2u:
           {
             coordsArray[0] = primBt2020R;
             coordsArray[1] = primBt2020G;
@@ -616,7 +616,7 @@ void DrawCieOutlines()
         [branch]
         if (needsDrawing)
         {
-          DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
+          DRAW_COORDS_FROM_ARRAY(coordsArray, 3u)
         }
       }
 #else
@@ -630,7 +630,7 @@ void DrawCieOutlines()
       BRANCH()
       if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
       {
-        DRAW_COORDS_FROM_ARRAY(coordsArray, 3)
+        DRAW_COORDS_FROM_ARRAY(coordsArray, 3u)
       }
 #endif
 
