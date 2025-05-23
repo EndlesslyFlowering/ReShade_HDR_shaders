@@ -964,144 +964,113 @@ void CS_GetNitNumbers
 
 #endif
 
+  precise uint store_value;
+
   switch(GTID.x)
   {
 #ifdef IS_HDR_CSP
     case 0:
     {
-      precise uint _00;
-
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 5)
       {
-        _00 = _minus.x;
+        store_value = _minus.x;
       }
       else
+#endif //IS_FLOAT_HDR_CSP
       {
-#endif
-        _00 = GetNumberAboveZero(_5th(nits));
-#ifdef IS_FLOAT_HDR_CSP
+        store_value = GetNumberAboveZero(_5th(nits));
       }
-#endif
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _00);
     }
     break;
     case 1:
     {
-      precise uint _01;
-
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 4)
       {
-        _01 = _minus.x;
+        store_value = _minus.x;
       }
       else
+#endif //IS_FLOAT_HDR_CSP
       {
-#endif
-        _01 = GetNumberAboveZero(_4th(nits));
-#ifdef IS_FLOAT_HDR_CSP
+        store_value = GetNumberAboveZero(_4th(nits));
       }
-#endif
 
-      if (GID.y == 3 && _01 == 9u)
-        _01 = 1u;
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _01);
+      if (GID.y == 3 && store_value == 9u)
+      {
+        store_value = 1u;
+      }
     }
     break;
-#endif
+#endif //IS_HDR_CSP
     case CASE2:
     {
-      precise uint _02;
-
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 3)
       {
-        _02 = _minus.x;
+        store_value = _minus.x;
       }
       else
+#endif //IS_FLOAT_HDR_CSP
       {
-#endif
-        _02 = GetNumberAboveZero(_3rd(nits));
-#ifdef IS_FLOAT_HDR_CSP
+        store_value = GetNumberAboveZero(_3rd(nits));
       }
-#endif
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _02);
     }
     break;
     case CASE3:
     {
-      precise uint _03;
-
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 2)
       {
-        _03 = _minus.x;
+        store_value = _minus.x;
       }
       else
+#endif //IS_FLOAT_HDR_CSP
       {
-#endif
-        _03 = GetNumberAboveZero(_2nd(nits));
-#ifdef IS_FLOAT_HDR_CSP
+        store_value = GetNumberAboveZero(_2nd(nits));
       }
-#endif
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _03);
     }
     break;
     case CASE4:
     {
-      precise const uint _04 = _1st(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _04);
+      store_value = _1st(nits);
     }
     break;
     case CASE5:
     {
-      precise const uint _05 = d1st(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _05);
+      store_value = d1st(nits);
     }
     break;
     case CASE6:
     {
-      precise const uint _06 = d2nd(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _06);
+      store_value = d2nd(nits);
     }
     break;
     case CASE7:
     {
-      precise const uint _07 = d3rd(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _07);
+      store_value = d3rd(nits);
     }
     break;
     case CASE8:
     {
-      precise const uint _08 = d4th(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _08);
+      store_value = d4th(nits);
     }
     break;
     case CASE9:
     {
-      precise const uint _09 = d5th(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _09);
+      store_value = d5th(nits);
     }
     break;
     default:
     {
-      precise const uint _10 = d6th(nits);
-
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _10);
+      store_value = d6th(nits);
     }
     break;
   }
 
+  tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, store_value);
+
+  return;
 }
 
 #ifdef IS_HDR_CSP
@@ -1116,45 +1085,45 @@ void CS_GetGamutNumbers
 
   const float curGamutCounter = tex1Dfetch(SamplerConsolidated, COORDS_SHOW_PERCENTAGE_BT709 + GID.y);
 
+  precise uint store_value;
+
   switch(DTID.x)
   {
     case 0:
     {
-      precise const uint _00 = GetNumberAboveZero(_3rd(curGamutCounter));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _00);
+      store_value = GetNumberAboveZero(_3rd(curGamutCounter));
     }
     break;
     case 1:
     {
-      precise const uint _01 = GetNumberAboveZero(_2nd(curGamutCounter));
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _01);
+      store_value = GetNumberAboveZero(_2nd(curGamutCounter));
     }
     break;
     case 2:
     {
-      precise const uint _02 = _1st(curGamutCounter);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _02);
+      store_value = _1st(curGamutCounter);
     }
     break;
     case 3:
     {
-      precise const uint _03 = d1st(curGamutCounter);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _03);
+      store_value = d1st(curGamutCounter);
     }
     break;
     case 4:
     {
-      precise const uint _04 = d2nd(curGamutCounter);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _04);
+      store_value = d2nd(curGamutCounter);
     }
     break;
     default:
     {
-      precise const uint _05 = _d3rd(curGamutCounter);
-      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, _05);
+      store_value = _d3rd(curGamutCounter);
     }
     break;
   }
+
+  tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, storePos, store_value);
+
+  return;
 }
 #endif //IS_HDR_CSP
 
