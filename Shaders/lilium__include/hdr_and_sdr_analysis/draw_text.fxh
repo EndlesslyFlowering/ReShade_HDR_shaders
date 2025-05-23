@@ -1603,13 +1603,21 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
                           _max.maxLines * CharSize.y);
 
       [flatten]
+#ifdef IS_HDR_CSP
       if (VertexID % 3u == 1u)
+#else
+      if (VertexID == 1u)
+#endif
       {
         pos.x = -pos.x;
       }
       else
       [flatten]
+#ifdef IS_HDR_CSP
       if (VertexID % 3u == 2u)
+#else
+      if (VertexID == 2u)
+#endif
       {
         pos.y = -pos.y;
       }
@@ -1635,7 +1643,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
       const uint localVertexID = textBlockVertexID % 6u;
 
-      uint currentTextBlockID = textBlockVertexID / 6u;
+      const uint currentTextBlockID = textBlockVertexID / 6u;
 
       float2 vertexOffset = (float2)0;
 
