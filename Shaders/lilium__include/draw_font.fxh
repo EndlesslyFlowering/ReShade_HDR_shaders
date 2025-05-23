@@ -54,11 +54,11 @@
 #define TEXT_BLOCK_FETCH_OFFSET_NITS_CURSOR          float2( 0, 7)
 
 #ifdef IS_HDR_CSP
-  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(50, 1) //       "|nits        |red (CLL)   |green (CLL) |blue (CLL)"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(48, 1) //       "|nits        |CLL red     |CLL green   |CLL blue"
   #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(49, 3) //    "max|     .      |     .      |     .      |     ."
   #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(52, 1) // "cursor|     .      |     .      |     .      |     ."
 #else
-  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(47, 1) //       "|nits       |red (CLL)  |green (CLL)|blue (CLL)"
+  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(45, 1) //       "|nits       |CLL red    |CLL green  |CLL blue"
   #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(51, 3) //    "max|   .      %|   .      %|   .      %|   .      %"
   #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(54, 1) // "cursor|   .      %|   .      %|   .      %|   .      %"
 #endif

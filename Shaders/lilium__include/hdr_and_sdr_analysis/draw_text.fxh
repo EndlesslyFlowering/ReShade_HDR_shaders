@@ -250,48 +250,48 @@ void DrawText
 #ifdef IS_HDR_CSP
 
   //8
-  #define SPACES_NITS    _space, _space, _space, _space, _space, _space, _space, _space
-  //4
-  #define SPACES_RED     _space, _space, _space
-  //2
-  #define SPACES_GREEN() _space,
+  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space, _space
+  //5
+  #define SPACES_RED   _space, _space, _space, _space, _space
+  //3
+  #define SPACES_GREEN _space, _space, _space
 
   #define SPACES_NITS_COUNT  8
-  #define SPACES_RED_COUNT   3
-  #define SPACES_GREEN_COUNT 1
+  #define SPACES_RED_COUNT   5
+  #define SPACES_GREEN_COUNT 3
 
 #else
 
   //7
-  #define SPACES_NITS    _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space
+  //4
+  #define SPACES_RED   _space, _space, _space, _space
   //2
-  #define SPACES_RED     _space, _space
-  //0
-  #define SPACES_GREEN()
+  #define SPACES_GREEN _space, _space
 
   #define SPACES_NITS_COUNT  7
-  #define SPACES_RED_COUNT   2
-  #define SPACES_GREEN_COUNT 0
+  #define SPACES_RED_COUNT   4
+  #define SPACES_GREEN_COUNT 2
 
 #endif
 
-#define CHARS_CLL_IN_BRACKETS _space, _roundBracketOpen, _C, _L, _L, _roundBracketClose
+#define CHARS_CLL _C, _L, _L, _space
 
-#define CHARS_COUNT_CLL_IN_BRACKETS 6
+#define CHARS_COUNT_CLL 4
 
-#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB (1 + 4                               + SPACES_NITS_COUNT  \
-                                          + 1 + 3 + CHARS_COUNT_CLL_IN_BRACKETS + SPACES_RED_COUNT   \
-                                          + 1 + 5 + CHARS_COUNT_CLL_IN_BRACKETS + SPACES_GREEN_COUNT \
-                                          + 1 + 4 + CHARS_COUNT_CLL_IN_BRACKETS)
+#define ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB (1 + 4                   + SPACES_NITS_COUNT  \
+                                          + 1 + CHARS_COUNT_CLL + 3 + SPACES_RED_COUNT   \
+                                          + 1 + CHARS_COUNT_CLL + 5 + SPACES_GREEN_COUNT \
+                                          + 1 + CHARS_COUNT_CLL + 4)
 
   static const uint2 charListTextNitsRGBOffset = uint2(0, 3);
 
   static const uint2 charListTextNitsRGB[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB] =
   {
-    _verticalLine, _n, _i, _t, _s,                             SPACES_NITS,
-    _verticalLine, _r, _e, _d,         CHARS_CLL_IN_BRACKETS,  SPACES_RED,
-    _verticalLine, _g, _r, _e, _e, _n, CHARS_CLL_IN_BRACKETS,  SPACES_GREEN()
-    _verticalLine, _b, _l, _u, _e,     CHARS_CLL_IN_BRACKETS,
+    _verticalLine, _n, _i, _t, _s,                SPACES_NITS,
+    _verticalLine, CHARS_CLL, _r, _e, _d,         SPACES_RED,
+    _verticalLine, CHARS_CLL, _g, _r, _e, _e, _n, SPACES_GREEN,
+    _verticalLine, CHARS_CLL, _b, _l, _u, _e,
   };
 
 
@@ -394,8 +394,8 @@ void DrawText
     _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
-#define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB                                       \
-  (6                                                                               \
+#define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB                                             \
+  (6                                                                                     \
  + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
  + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
  + 1 + SPACES_PRE_DOT_COUNT + 1 + SPACES_AFTER_DOT_COUNT            + SDR_PERCENT_COUNT  \
@@ -1681,7 +1681,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 
         vertexOffset.y = 0.f;
       }
-      //nits|red(CLL)|green(CLL)|blue(CLL)
+      //nits|CLL red|CLL green|CLL blue
       else if (currentTextBlockID == 1
             && (_SHOW_NITS_VALUES || _SHOW_NITS_FROM_CURSOR))
       {
