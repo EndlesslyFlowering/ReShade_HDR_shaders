@@ -1152,7 +1152,7 @@ float2 GetuvFromXYZForDiagram
 void GenerateCieDiagram
 (
   const float3 XYZ,
-  const uint2  GTIDXY
+  const uint   GID
 )
 {
   float2 coords;
@@ -1182,7 +1182,10 @@ void GenerateCieDiagram
 
   encodedCoords.y = int(renderSizeMinus1.y) - encodedCoords.y;
 
-  const uint u2 = GTIDXY.x + GTIDXY.y + 1u;
+  // faster, probably due to atomic add being group local
+  // instead of group thread id "local" which is not local
+  // so better cache hits?
+  const uint u2 = (GID % 15u) + 1u;
 
   atomicAdd(StorageCieCounter, int3(encodedCoords, u2), 1u);
 
@@ -1205,20 +1208,20 @@ void CS_GetMaxCieCounter
       tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX, 0);
     }
 
-    memoryBarrier();
+    const bool is_gtid_00 = all(GTID.xy == 0);
+
+    [branch]
+    if (is_gtid_00)
+    {
+      GroupMaxCie = 0u;
+    }
+
+    barrier();
 
     //worth to do performance wise
     [branch]
     if (DTID.x < (_CIE_DIAGRAM_TYPE == CIE_1931 ? CIE_XY_WIDTH_UINT : CIE_UV_WIDTH_UINT))
     {
-      [branch]
-      if (all(GTID.xy == 0))
-      {
-        GroupMaxCie = 0u;
-      }
-
-      groupMemoryBarrier();
-
       static const int2 DTIDAsInt = int2(DTID.xy);
 
                                        //needs to be storage for d3d11
@@ -1245,7 +1248,7 @@ void CS_GetMaxCieCounter
       tex3Dstore(StorageCieCounter, int3(DTIDAsInt, 0), cieCurrent);
 
       [branch]
-      if (all(GTID.xy == 0))
+      if (is_gtid_00)
       {
 #ifdef IS_FLOAT_HDR_CSP
         atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_CIE_COUNTER_MAX, int(GroupMaxCie));
