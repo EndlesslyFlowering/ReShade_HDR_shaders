@@ -1027,23 +1027,37 @@ void PS_ComposeCieDiagram
       rgb = rgb * Y + Outline[0];
 
 #ifdef IS_HDR_CSP
-      float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(rgb);
+      #define K_WEIGHTS Csp::Ycbcr::K_Bt2020
+      #define PB_NB_ENC Csp::Ycbcr::PB_NB_Bt2020_g2_enc
+      #define PR_NR_ENC Csp::Ycbcr::PR_NR_Bt2020_g2_enc
 #else
-      float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt709(rgb);
+      #define K_WEIGHTS Csp::Ycbcr::K_Bt709
+      #define PB_NB_ENC Csp::Ycbcr::PB_NB_Bt709_g2_enc
+      #define PR_NR_ENC Csp::Ycbcr::PR_NR_Bt709_g2_enc
 #endif
+      float3 yccrccbc;
 
-      ycbcr[0] = sqrt(ycbcr[0]);
+      // RGB->Y->Y'c
+      yccrccbc[0] = sqrt(dot(rgb.rgb, K_WEIGHTS));
 
-      ycbcr.yz += (127.f / 255.f);
+      // RB->R'B'->C'rcC'bc
+      yccrccbc.yz  = sqrt(rgb.rb) - yccrccbc[0];
+      yccrccbc.yz *= yccrccbc.yz <= 0.f ? float2(PR_NR_ENC[1], PB_NB_ENC[1])
+                                        : float2(PR_NR_ENC[0], PB_NB_ENC[0]);
 
-      Out = float4(ycbcr, 1.f);
-//      Out = float4(sqrt(rgb), 1.f);
+#undef K_WEIGHTS
+#undef PB_NB_ENC
+#undef PR_NR_ENC
+
+      yccrccbc.yz += (127.f / 255.f);
+
+      Out = float4(yccrccbc, 1.f);
     }
     else
     [branch] //flatten?
     if (Outline[1] != 0.f)
     {
-      Out = float4(sqrt(Outline[0]), (127.f / 255.f), (127.f / 255.f), Outline[1]);
+      Out = float4(sqrt(Outline[0]), (127.f / 255.f).xx, Outline[1]);
     }
   }
 

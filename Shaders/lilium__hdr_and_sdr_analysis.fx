@@ -1198,32 +1198,58 @@ void PS_HdrAnalysis
       int2 cieFetchCoords = int2(pureCoordAsInt.x,
                                  pureCoordAsInt.y - CieDiagramSize.y);
 
-      float4 cieYcbcr = tex2Dfetch(SamplerCieFinal, cieFetchCoords);
+      float4 cie_yccrccbc = tex2Dfetch(SamplerCieFinal, cieFetchCoords);
 
       [branch]
-      if (cieYcbcr.a > 0.f)
+      if (cie_yccrccbc.a > 0.f)
       {
-        // using gamma 2 as intermediate gamma space
-        cieYcbcr.x *= cieYcbcr.x;
-
-        cieYcbcr.yz -= (127.f / 255.f);
+        cie_yccrccbc.yz -= (127.f / 255.f);
 
 #ifdef IS_HDR_CSP
-        float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt2020(cieYcbcr.xyz), cieYcbcr.a);
+        #define PB_NB_DEC    Csp::Ycbcr::PB_NB_Bt2020_g2_dec
+        #define PR_NR_DEC    Csp::Ycbcr::PR_NR_Bt2020_g2_dec
+        #define K_WEIGHTS_RB Csp::Ycbcr::K_Bt2020.rb
+        #define K_WEIGHT_GI  Csp::Ycbcr::K_Bt2020G_inverse
 #else
-        float4 cieColour = float4(Csp::Ycbcr::YcbcrTo::RgbBt709(cieYcbcr.xyz), cieYcbcr.a);
+        #define PB_NB_DEC    Csp::Ycbcr::PB_NB_Bt709_g2_dec
+        #define PR_NR_DEC    Csp::Ycbcr::PR_NR_Bt709_g2_dec
+        #define K_WEIGHTS_RB Csp::Ycbcr::K_Bt709.rb
+        #define K_WEIGHT_GI  Csp::Ycbcr::K_Bt709G_inverse
 #endif
 
+        float3 cie_colour;
+
+        float2 mul = cie_yccrccbc.yz <= 0.f ? float2(PR_NR_DEC[1], PB_NB_DEC[1])
+                                            : float2(PR_NR_DEC[0], PB_NB_DEC[0]);
+
+        // C'rcC'bc->R'B'
+        cie_colour.rb = mad(cie_yccrccbc.yz, mul, cie_yccrccbc[0]);
+
+        // R'B'->RB
+        cie_colour.rb *= cie_colour.rb;
+
+        // Y'c->Y
+        cie_yccrccbc[0] *= cie_yccrccbc[0];
+
+        // G
+        cie_colour.g = (cie_yccrccbc[0]
+                      - dot(cie_colour.rb, K_WEIGHTS_RB))
+                     * K_WEIGHT_GI;
+
+#undef PB_NB_DEC
+#undef PR_NR_DEC
+#undef K_WEIGHTS_RB
+#undef K_WEIGHT_GI
 
       //FIX THIS
 #ifdef IS_HDR_CSP
-        cieColour.rgb = Csp::Mat::Bt2020To::Bt709(cieColour.rgb);
+        cie_colour.rgb = Csp::Mat::Bt2020To::Bt709(cie_colour.rgb);
 #endif
 
         Output.rgb = MergeOverlay(Output.rgb,
-                                  cieColour.rgb,
+                                  cie_colour.rgb,
                                   _CIE_DIAGRAM_BRIGHTNESS,
-                                  cieColour.a);
+                                  cie_yccrccbc.a);
       }
     }
   }
