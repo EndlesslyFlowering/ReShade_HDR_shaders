@@ -687,13 +687,15 @@ uniform uint _WAVEFORM_MODE
   ui_type     = "combo";
   ui_items    = "luminance\0"
                 "maxCLL\0"
+                "RGB combined\0"
                 "RGB individiually\0";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = 0;
 
 #define WAVEFORM_MODE_LUMINANCE        0
 #define WAVEFORM_MODE_MAX_CLL          1
-#define WAVEFORM_MODE_RGB_INDIVIDUALLY 2
+#define WAVEFORM_MODE_RGB_COMBINED     2
+#define WAVEFORM_MODE_RGB_INDIVIDUALLY 3
 
 #if (defined(IS_HDR_CSP) \
   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
@@ -759,36 +761,39 @@ uniform float _WAVEFORM_ALPHA
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = DEFAULT_ALPHA_LEVEL;
 
-static const uint TEXTURE_WAVEFORM_WIDTH = uint(BUFFER_WIDTH_FLOAT / 6.f) * 3u;
+#define TEXTURE_WAVEFORM_WIDTH  (BUFFER_WIDTH  / 2)
 
-#ifdef IS_HDR_CSP
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 512;
+    #define TEXTURE_WAVEFORM_HEIGHT  512
   #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 768;
-  #elif (BUFFER_HEIGHT <= (1024 * 5 / 2) \
-      || defined(IS_HDR10_LIKE_CSP))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 1024;
+    #define TEXTURE_WAVEFORM_HEIGHT  768
+  #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
+    #define TEXTURE_WAVEFORM_HEIGHT 1024
   #elif (BUFFER_HEIGHT <= (1536 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 1536;
+    #define TEXTURE_WAVEFORM_HEIGHT 1536
   #elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 2048;
+    #define TEXTURE_WAVEFORM_HEIGHT 2048
   #elif (BUFFER_HEIGHT <= (3072 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 3072;
+    #define TEXTURE_WAVEFORM_HEIGHT 3072
   #else //(BUFFER_HEIGHT <= (4096 * 5 / 2))
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 4096;
+    #define TEXTURE_WAVEFORM_HEIGHT 4096
+  #endif
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  #if (BUFFER_HEIGHT <= (512 * 5 / 2))
+    #define TEXTURE_WAVEFORM_HEIGHT  512
+  #else //(BUFFER_HEIGHT <= (1024 * 5 / 2))
+    #define TEXTURE_WAVEFORM_HEIGHT 1024
   #endif
 #else
   #if (BUFFER_COLOR_BIT_DEPTH == 10)
     #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-      static const uint TEXTURE_WAVEFORM_HEIGHT = 512;
-    #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
-      static const uint TEXTURE_WAVEFORM_HEIGHT = 768;
+      #define TEXTURE_WAVEFORM_HEIGHT  512
     #else //(BUFFER_HEIGHT <= (1024 * 5 / 2))
-      static const uint TEXTURE_WAVEFORM_HEIGHT = 1024;
+      #define TEXTURE_WAVEFORM_HEIGHT 1024
     #endif
   #else
-    static const uint TEXTURE_WAVEFORM_HEIGHT = 256;
+    #define TEXTURE_WAVEFORM_HEIGHT 256
   #endif
 #endif
 
@@ -1232,16 +1237,33 @@ void PS_HdrAnalysis
       // get fetch coords
       int2 currentFetchCoords = pureCoordAsInt.xy - WaveformTextureDisplayAreaBegin;
 
-      float4 currentPixelToDisplay =
+      float4 waveform_yccrccbc =
         tex2Dfetch(SamplerWaveformFinal, currentFetchCoords);
 
-      // using gamma 2 as intermediate gamma space
-      currentPixelToDisplay.rgb *= currentPixelToDisplay.rgb;
+      waveform_yccrccbc.yz -= (127.f / 255.f);
 
-      float alpha = max(currentPixelToDisplay.a, _WAVEFORM_ALPHA / 100.f);
+      float3 waveform_colour;
+
+      float2 mul = waveform_yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_dec[1], Csp::Ycbcr::PB_NB_Bt709_g2_dec[1])
+                                               : float2(Csp::Ycbcr::PR_NR_Bt709_g2_dec[0], Csp::Ycbcr::PB_NB_Bt709_g2_dec[0]);
+
+      waveform_colour.rb = mad(waveform_yccrccbc.yz,
+                               mul,
+                               waveform_yccrccbc[0]);
+
+      waveform_colour.rb *= waveform_colour.rb;
+
+      waveform_yccrccbc[0] *= waveform_yccrccbc[0];
+
+      // for green subtract the luminance of red and blue from the luminance and then divide by KBT709.g to get green
+      waveform_colour.g = (waveform_yccrccbc[0]
+                         - dot(waveform_colour.rb, Csp::Ycbcr::K_Bt709.rb))
+                        * Csp::Ycbcr::K_Bt709G_inverse;
+
+      float alpha = max(waveform_yccrccbc.a, _WAVEFORM_ALPHA / 100.f);
 
       Output.rgb = MergeOverlay(Output.rgb,
-                                currentPixelToDisplay.rgb,
+                                waveform_colour,
                                 _WAVEFORM_BRIGHTNESS,
                                 alpha);
     }
@@ -1308,13 +1330,12 @@ technique lilium__hdr_and_sdr_analysis
 
 #ifdef IS_COMPUTE_CAPABLE_API
 //Waveform
-  pass PS_ClearWaveformTexture
+  pass Clear_Texture_Waveform
   {
-    VertexShader       = VS_Clear;
-     PixelShader       = PS_Clear;
-    RenderTarget       = TextureWaveform;
-    ClearRenderTargets = true;
-    VertexCount        = 1;
+    ComputeShader = CS_Clear_Texture_Waveform<WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y, 1>;
+    DispatchSizeX = TEXTURE_WAVEFORM_COUNTER_DISPATCH_X;
+    DispatchSizeY = TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y;
+    DispatchSizeZ = 3;
   }
 
 //Luminance Values
@@ -1341,10 +1362,10 @@ technique lilium__hdr_and_sdr_analysis
 #endif
   pass ClearCieCurrentTexture
   {
-    ComputeShader = CS_ClearTextureCieCounter<WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y, 16>;
+    ComputeShader = CS_ClearTextureCieCounter<WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y, 1>;
     DispatchSizeX = CLEAR_TEXTURE_CIE_COUNTER_DISPATCH;
     DispatchSizeY = CLEAR_TEXTURE_CIE_COUNTER_DISPATCH;
-    DispatchSizeZ = 1;
+    DispatchSizeZ = 16;
   }
 #endif
 
@@ -1428,6 +1449,13 @@ technique lilium__hdr_and_sdr_analysis
     ComputeShader = CS_RenderWaveformAndGenerateCieDiagram <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
     DispatchSizeX = WAVE64_DISPATCH_X;
     DispatchSizeY = WAVE64_DISPATCH_Y;
+  }
+
+  pass Get_Max_Waveform_Value
+  {
+    ComputeShader = CS_Get_Max_Waveform_Value <WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y>;
+    DispatchSizeX = TEXTURE_WAVEFORM_COUNTER_DISPATCH_X;
+    DispatchSizeY = TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y;
   }
 
   pass CS_GetMaxCieCounter

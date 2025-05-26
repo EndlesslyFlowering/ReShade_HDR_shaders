@@ -402,11 +402,11 @@
 
 
 #if defined(IS_FLOAT_HDR_CSP)
-  #define NEEDED_HEIGHT 14
+  #define NEEDED_HEIGHT 15
 #elif defined(IS_HDR_CSP)
-  #define NEEDED_HEIGHT 12
+  #define NEEDED_HEIGHT 13
 #else
-  #define NEEDED_HEIGHT  9
+  #define NEEDED_HEIGHT 10
 #endif
 
 #if (AVG_NITS_WIDTH >= NITS_NUMBERS_COUNT)
@@ -416,7 +416,7 @@
 #endif
 
 
-//lowest is 9 so only one check needed, since there are only a max of 14 values
+//lowest is 9 so only one check needed, since there are only a max of 15 values
 #if (AVG_NITS_HEIGHT >= NEEDED_HEIGHT)
   #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (NEEDED_WIDTH * NITS_NUMBERS_COLUMNS + 1)
   #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
@@ -439,7 +439,8 @@ static const int2 POS_MIN_B    = int2(POS_STORE_X + (7u / AVG_NITS_HEIGHT), (7u 
 
 #ifndef IS_HDR_CSP
 
-  static const int2 POS_CIE_COUNTER_MAX = int2(POS_STORE_X + (8u / AVG_NITS_HEIGHT), (8u % AVG_NITS_HEIGHT));
+  static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (8u / AVG_NITS_HEIGHT), (8u % AVG_NITS_HEIGHT));
+  static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (9u / AVG_NITS_HEIGHT), (9u % AVG_NITS_HEIGHT));
 
 #else
 
@@ -449,14 +450,16 @@ static const int2 POS_MIN_B    = int2(POS_STORE_X + (7u / AVG_NITS_HEIGHT), (7u 
 
   #ifndef IS_FLOAT_HDR_CSP
 
-    static const int2 POS_CIE_COUNTER_MAX = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
+    static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
+    static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
 
   #else
 
     static const int2 POS_AP0_PERCENTAGE     = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
     static const int2 POS_INVALID_PERCENTAGE = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
 
-    static const int2 POS_CIE_COUNTER_MAX    = int2(POS_STORE_X + (13u / AVG_NITS_HEIGHT), (13u % AVG_NITS_HEIGHT));
+    static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (13u / AVG_NITS_HEIGHT), (13u % AVG_NITS_HEIGHT));
+    static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (14u / AVG_NITS_HEIGHT), (14u % AVG_NITS_HEIGHT));
 
   #endif
 

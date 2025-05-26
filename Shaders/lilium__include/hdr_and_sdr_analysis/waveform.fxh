@@ -28,7 +28,7 @@ static const uint TEXTURE_WAVEFORM_SCALE_WIDTH = TEXTURE_WAVEFORM_WIDTH
 #endif
 
 static const uint TEXTURE_WAVEFORM_SCALE_HEIGHT = TEXTURE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
-                                                + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_WAVEFORM_SCALE_FRAME + 0.5f)
+                                                + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_WAVEFORM_SCALE_FRAME + 0.5f) * 2u
                                                 + (TEXTURE_WAVEFORM_SCALE_BORDER * 2)
                                                 + (TEXTURE_WAVEFORM_SCALE_FRAME  * 2);
 
@@ -37,6 +37,22 @@ static const float TEXTURE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_WAVEFORM_SCALE_WID
 
 static const float TEXTURE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_WAVEFORM_SCALE_HEIGHT - 1.f)
                                                    / float(TEXTURE_WAVEFORM_HEIGHT  - 1);
+
+
+#if (TEXTURE_WAVEFORM_WIDTH % WAVE64_THREAD_SIZE_X == 0)
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X)
+#else
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X + 1)
+
+  #define GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK
+#endif
+#if (TEXTURE_WAVEFORM_HEIGHT % WAVE64_THREAD_SIZE_Y == 0)
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y (TEXTURE_WAVEFORM_HEIGHT / WAVE64_THREAD_SIZE_Y)
+#else
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y (TEXTURE_WAVEFORM_HEIGHT / WAVE64_THREAD_SIZE_Y + 1)
+
+  #define GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK
+#endif
 
 
 texture2D TextureWaveformScale
@@ -60,22 +76,23 @@ storage2D<float4> StorageWaveformScale
 };
 
 
-texture2D TextureWaveform
+texture3D TextureWaveform
 <
   pooled = true;
 >
 {
   Width  = TEXTURE_WAVEFORM_WIDTH;
   Height = TEXTURE_WAVEFORM_HEIGHT;
-  Format = RGB10A2;
+  Depth  = 3;
+  Format = R32U;
 };
 
-sampler2D<float4> SamplerWaveform
+sampler3D<uint> SamplerWaveform
 {
   Texture = TextureWaveform;
 };
 
-storage2D<float4> StorageWaveform
+storage3D<uint> StorageWaveform
 {
   Texture = TextureWaveform;
 };
@@ -275,7 +292,7 @@ namespace Waveform
 #endif
 
     waveDat.waveformArea =
-      int2(uint(TEXTURE_WAVEFORM_WIDTH * waveformScaleFactorXY.x * 3.f) / 3u,
+      int2(uint(TEXTURE_WAVEFORM_WIDTH * waveformScaleFactorXY.x),
 #ifdef IS_HDR_CSP
            waveDat.tickPoints[15]
 #else
@@ -402,219 +419,227 @@ namespace Waveform
 
 void RenderWaveform
 (
-  const int2 FetchPos
+  const int2 Fetch_Pos
 )
 {
-#ifdef IS_HDR_CSP
-  static const float2 waveformSizeFactor = _WAVEFORM_SIZE / 100.f;
-#else
-  static const float2 waveformSizeFactor = float2(_WAVEFORM_SIZE.x / 100.f, 1.f);
-#endif
-
-  static const float2 coordFactors = float2(TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR, float(TEXTURE_WAVEFORM_USED_HEIGHT))
-                                   * waveformSizeFactor;
+  const float3 pixel = tex2Dfetch(SamplerBackBuffer, Fetch_Pos).rgb;
 
   BRANCH()
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
-    float pixelNits = CalcNits(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
+    float pixel_nits_encoded;
 
-    float pixelEncoded = 0.f;
-
-#ifdef IS_HDR_CSP
-    pixelEncoded = Csp::Trc::NitsTo::Pq(pixelNits);
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    pixelEncoded = ENCODE_SDR(pixelNits / 100.f);
-#endif
-
-    const int2 coords = float2(float(FetchPos.x)
-                             * coordFactors.x,
-                               (float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                              - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
-                             * waveformSizeFactor.y + 0.5f);
-
-    const float waveformEncoded = 1.f
-                                - (ceil(float(coords.y)
-                                      / waveformSizeFactor.y)
-                                 / float(TEXTURE_WAVEFORM_USED_HEIGHT));
-
-    float3 waveformColour = 0.f;
+    float pixel_nits = Calc_Nits_Normalised(pixel);
 
 #ifdef IS_HDR_CSP
-      waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(waveformEncoded));
+
+    pixel_nits_encoded = Csp::Trc::LinearTo::Pq(pixel_nits);
+
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    waveformColour = WaveformRgbValues(ENCODE_SDR(waveformEncoded));
+
+    pixel_nits_encoded = ENCODE_SDR(pixel_nits);
+
 #endif
-    waveformColour = sqrt(waveformColour);
 
-    tex2Dstore(StorageWaveform,
-               coords,
-               float4(waveformColour, 1.f));
+    int coord_x = float(Fetch_Pos.x)
+                * 0.5f;
 
-    return;
+    int coord_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                - pixel_nits_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                + 0.5f;
+
+    atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
   }
   else
   BRANCH()
   if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
   {
-    float pixelCll;
-    float pixelEncoded;
-
-    float3 pixel = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
+    float pixel_max_cll_encoded;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixelOpticalBt2020 = CalcCll(pixel);
+    float3 pixel_cll = Calc_Cll_Normalised(pixel);
 
-    pixelCll = MAXRGB(pixelOpticalBt2020);
+    pixel_max_cll_encoded = Csp::Trc::LinearTo::Pq(MAXRGB(pixel_cll));
 
-    pixelEncoded = Csp::Trc::NitsTo::Pq(pixelCll);
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+    || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-
-    pixelEncoded = MAXRGB(pixel);
-
-    pixelCll = FetchFromHdr10ToLinearLUT(pixelEncoded) * 10000.f;
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-    pixelEncoded = MAXRGB(pixel);
-
-    pixelCll = DECODE_SDR(pixelEncoded) * 100.f;
+    //this is more performant to do
+    pixel_max_cll_encoded = MAXRGB(pixel);
 
 #endif
 
-    const int2 coords = float2(float(FetchPos.x)
-                             * coordFactors.x,
-                               (float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                              - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
-                             * waveformSizeFactor.y + 0.5f);
+    int coord_x = float(Fetch_Pos.x)
+                * 0.5f;
 
-    const float waveformEncoded = 1.f
-                                - (ceil(float(coords.y)
-                                      / waveformSizeFactor.y)
-                                 / float(TEXTURE_WAVEFORM_USED_HEIGHT));
+    int coord_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                - pixel_max_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                + 0.5f;
 
-    float3 waveformColour = 0.f;
+    atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+  }
+  else
+  BRANCH()
+  if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+  {
+    float3 pixel_cll_encoded;
 
-#ifdef IS_HDR_CSP
-    waveformColour = WaveformRgbValues(Csp::Trc::PqTo::Nits(waveformEncoded));
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-    waveformColour = WaveformRgbValues(ENCODE_SDR(waveformEncoded));
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+
+    float3 pixel_cll = Calc_Cll_Normalised(pixel);
+
+    pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
+
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+    || ACTUAL_COLOUR_SPACE == CSP_SRGB)
+
+    //this is more performant to do
+    pixel_cll_encoded = pixel;
+
 #endif
-    waveformColour = sqrt(waveformColour);
 
-    tex2Dstore(StorageWaveform,
-               coords,
-               float4(waveformColour, 1.f));
+    int coord_x = float(Fetch_Pos.x)
+                * 0.5f;
 
-    return;
+    int3 coords_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                  - pixel_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                  + 0.5f;
+
+    atomicAdd(StorageWaveform, int3(coord_x, coords_y.r, 0), 1u);
+    atomicAdd(StorageWaveform, int3(coord_x, coords_y.g, 1), 1u);
+    atomicAdd(StorageWaveform, int3(coord_x, coords_y.b, 2), 1u);
   }
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
   {
-    float3 pixelEncoded;
-    float3 pixelRgb;
-    float3 waveformColour;
+    float3 pixel_cll_encoded;
 
-    float waveformColourRG;
-    float waveformColourBG;
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-#ifdef IS_HDR_CSP
+    float3 pixel_cll = Calc_Cll_Normalised(pixel);
 
-    #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-
-      pixelRgb = CalcCll(tex2Dfetch(SamplerBackBuffer, FetchPos).rgb);
-
-      pixelEncoded = Csp::Trc::NitsTo::Pq(pixelRgb);
+    pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
 
     //this is more performant to do
-    #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+    || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-      pixelEncoded = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
-
-      pixelRgb = CalcCll(pixelEncoded);
-
-    #endif
-
-    waveformColour  = pixelRgb - 100.f;
-    waveformColour  = max(waveformColour, 0.f);
-    waveformColour += 600.f;
-    waveformColour /= 10500.f;
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
-
-    //this is more performant to do
-    pixelEncoded = tex2Dfetch(SamplerBackBuffer, FetchPos).rgb;
-
-    pixelRgb = DECODE_SDR(pixelEncoded);
-
-    waveformColour  = pixelRgb - 0.1f;
-    waveformColour  = max(waveformColour, 0.f);
-    waveformColour += 0.1f;
+    pixel_cll_encoded = pixel;
 
 #endif
 
-    waveformColour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
-    waveformColour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
+    float x_normalised = float(Fetch_Pos.x)
+                       / BUFFER_WIDTH_MINUS_1_FLOAT;
 
-    waveformColourRG = (waveformColour.r - 1.f) * Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1];
-    waveformColourBG = (waveformColour.b - 1.f) * Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1];
+    const uint waveform_width_div3 = uint(TEXTURE_WAVEFORM_WIDTH) / 3u;
 
-    waveformColour = floor(waveformColour
-                         * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                         * waveformSizeFactor.y)
-                   / waveformSizeFactor.y
-                   / float(TEXTURE_WAVEFORM_USED_HEIGHT);
+    int3 coords_x;
 
-    waveformColourRG = floor(waveformColourRG
-                           * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                           * waveformSizeFactor.y)
-                     / waveformSizeFactor.y
-                     / float(TEXTURE_WAVEFORM_USED_HEIGHT);
+    coords_x.r = x_normalised * float(waveform_width_div3);
 
-    waveformColourBG = floor(waveformColourBG
-                           * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                           * waveformSizeFactor.y)
-                     / waveformSizeFactor.y
-                     / float(TEXTURE_WAVEFORM_USED_HEIGHT);
+    coords_x.g = coords_x.r + waveform_width_div3;
+    coords_x.b = coords_x.g + waveform_width_div3;
 
-    waveformColour = sqrt(waveformColour);
+    int3 coords_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                  - pixel_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
+                  + 0.5f;
 
-    waveformColourRG = sqrt(waveformColourRG);
-    waveformColourBG = sqrt(waveformColourBG);
-
-    float normalisedX = float(FetchPos.x)
-                      / BUFFER_WIDTH_MINUS_1_FLOAT;
-
-    Waveform::SWaveformData waveDat = Waveform::GetData();
-
-    static const uint currentWaveformWidth = waveDat.waveformArea.x;
-
-    static const uint textureWaveformWidthDiv3 = currentWaveformWidth / 3u;
-
-    int xCoord0 = normalisedX * float(textureWaveformWidthDiv3 - 1u);
-
-    int xCoord1 = xCoord0 + textureWaveformWidthDiv3;
-    int xCoord2 = xCoord1 + textureWaveformWidthDiv3;
-
-    int3 yCoords = (float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                  - pixelEncoded * float(TEXTURE_WAVEFORM_USED_HEIGHT))
-                 * waveformSizeFactor.y + 0.5f;
-
-    tex2Dstore(StorageWaveform,
-               int2(xCoord0, yCoords[0]),
-               float4(waveformColour.r, waveformColourRG, 0.f, 1.f));
-
-    tex2Dstore(StorageWaveform,
-               int2(xCoord1, yCoords[1]),
-               float4(0.f, waveformColour.g, 0.f, 1.f));
-
-    tex2Dstore(StorageWaveform,
-               int2(xCoord2, yCoords[2]),
-               float4(0.f, waveformColourBG, waveformColour.b, 1.f));
-
-    return;
+    atomicAdd(StorageWaveform, int3(coords_x.r, coords_y.r, 0), 1u);
+    atomicAdd(StorageWaveform, int3(coords_x.g, coords_y.g, 0), 1u);
+    atomicAdd(StorageWaveform, int3(coords_x.b, coords_y.b, 0), 1u);
   }
+
+  return;
+}
+
+
+groupshared uint Group_Max;
+void CS_Get_Max_Waveform_Value
+(
+  uint3 GTID : SV_GroupThreadID,
+  uint3 DTID : SV_DispatchThreadID
+)
+{
+  BRANCH()
+  if (_SHOW_WAVEFORM)
+  {
+    const bool is_dtid_00 = all(DTID.xy == 0u);
+
+    [branch]
+    if (is_dtid_00)
+    {
+      tex2Dstore(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX, 0);
+    }
+
+    const bool is_gtid_00 = all(GTID.xy == 0u);
+
+    [branch]
+    if (is_gtid_00)
+    {
+      Group_Max = 0u;
+    }
+
+    barrier();
+
+    // worth to do performance wise
+#if (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK) \
+  && defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
+
+    const bool is_active_area = all(DTID.xy < uint2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_HEIGHT));
+
+#elif (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK))
+
+    const bool is_active_area = DTID.x < uint(TEXTURE_WAVEFORM_WIDTH);
+
+#elif (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
+
+    const bool is_active_area = DTID.y < uint(TEXTURE_WAVEFORM_HEIGHT);
+
+#endif
+
+#if (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK) \
+  || defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
+    [branch]
+    if (is_active_area)
+#endif
+    {
+      static const int2 dtid_as_int = int2(DTID.xy);
+
+      BRANCH()
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
+       || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
+       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+      {
+        uint local_value = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 0));
+
+        atomicMax(Group_Max, local_value);
+      }
+      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+      {
+        uint3 local_waveform;
+
+        local_waveform.r = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 0));
+        local_waveform.g = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 1));
+        local_waveform.b = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 2));
+
+        atomicMax(Group_Max, MAXRGB(local_waveform));
+      }
+
+      groupMemoryBarrier();
+
+      [branch]
+      if (is_gtid_00)
+      {
+#ifdef IS_FLOAT_HDR_CSP
+        atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX, int(Group_Max));
+#else
+        atomicMax(StorageMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX, Group_Max);
+#endif
+      }
+    }
+  }
+
+  return;
 }
 
 
@@ -1190,8 +1215,7 @@ void RenderWaveformScale
       int2 curPos = waveDat.offsetToFrame
                   + int2(0, y);
 
-      float curGrey = lerp(0.5f, 0.4f, (float(y + WAVEDAT_CUTOFF_OFFSET) / float(waveDat.endYminus1 + WAVEDAT_CUTOFF_OFFSET)));
-      curGrey = pow(curGrey, 2.2f);
+      float curGrey = lerp(0.23f, 0.13f, (float(y + WAVEDAT_CUTOFF_OFFSET) / float(waveDat.endYminus1 + WAVEDAT_CUTOFF_OFFSET)));
       // using gamma 2 as intermediate gamma space
       curGrey = sqrt(curGrey);
 
@@ -1399,9 +1423,11 @@ void VS_PrepareRenderWaveformToScale
                                                 ,
   out nointerpolation int    WaveDat3 : WaveDat3
 #endif
+                                                ,
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
-                                                ,
+  out nointerpolation float2 WaveDat4 : WaveDat4
+#else
   out nointerpolation float  WaveDat4 : WaveDat4
 #endif
 )
@@ -1426,6 +1452,7 @@ void VS_PrepareRenderWaveformToScale
 #define MaxBLineY    WaveDat2.b
 #define GLinePartX   WaveDat1.w
 #define BLinePartX   WaveDat2.w
+#define Waveform_Max WaveDat4.x
 
   WaveDat0    =  0;
   MinRLineY   =  INT_MAX;
@@ -1436,13 +1463,12 @@ void VS_PrepareRenderWaveformToScale
   MaxBLineY   = -INT_MAX;
   GLinePartX  = -INT_MAX;
   BLinePartX  = -INT_MAX;
+  WaveDat4    = 0.f;
 
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
 
-  #define WaveformSizeYFactor WaveDat4
-
-  WaveformSizeYFactor = 0.f;
+  #define WaveformSizeYFactor WaveDat4.y
 #endif
 
 #ifdef IS_HDR_CSP
@@ -1503,7 +1529,8 @@ void VS_PrepareRenderWaveformToScale
       }
       else
       BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
+       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
       {
         const float minCll = tex1Dfetch(SamplerConsolidated, COORDS_MIN_CLL_VALUE);
 
@@ -1583,7 +1610,8 @@ void VS_PrepareRenderWaveformToScale
       }
       else
       BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
+       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
       {
         const float maxCll = tex1Dfetch(SamplerConsolidated, COORDS_MAX_CLL_VALUE);
 
@@ -1656,6 +1684,10 @@ void VS_PrepareRenderWaveformToScale
     WaveformSizeYFactor  = 1.f / WaveformSizeYFactor;
 
 #endif
+
+    float waveform_max = (float)tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX);
+
+    Waveform_Max = waveform_max;
   }
 }
 
@@ -1670,6 +1702,8 @@ void PS_RenderWaveformToScale
 #endif
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
+  in  nointerpolation float2 WaveDat4 : WaveDat4,
+#else
   in  nointerpolation float  WaveDat4 : WaveDat4,
 #endif
   out                 float4 Out      : SV_Target0
@@ -1686,7 +1720,9 @@ void PS_RenderWaveformToScale
 
     const int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
 
-    float2 scaleColour = tex2Dfetch(SamplerWaveformScale, scaleCoords).rg;
+    float2 scale_colour = tex2Dfetch(SamplerWaveformScale, scaleCoords).xy;
+
+    float4 yccrccbc_out = float4(scale_colour.x, (127.f / 255.f).xx, scale_colour.y);
 
     [branch]
     if (all(waveformCoords >= 0)
@@ -1735,7 +1771,7 @@ void PS_RenderWaveformToScale
       if (waveformCoords.y == minLineY)
 #endif
       {
-        Out = float4(1.f, 1.f, 1.f, 1.f);
+        Out = float4(1.f, (127.f / 255.f).xx, 1.f);
         return;
       }
       else
@@ -1747,7 +1783,18 @@ void PS_RenderWaveformToScale
       if (waveformCoords.y == maxLineY)
 #endif
       {
-        Out = float4(1.f, 1.f, 0.f, 1.f);
+        float3 temp_out = float3(1.f, 1.f, 0.f);
+
+        temp_out[0] = sqrt(dot(temp_out, Csp::Ycbcr::K_Bt709));
+
+        temp_out.yz = sqrt(temp_out.rb) - temp_out[0];
+
+        temp_out.yz *= temp_out.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
+                                          : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
+
+        temp_out.yz += (127.f / 255.f);
+
+        Out = float4(temp_out, 1.f);
         return;
       }
       else
@@ -1787,54 +1834,190 @@ void PS_RenderWaveformToScale
         const bool showMinLineActive = waveformCoordsSTEMinLine && _WAVEFORM_SHOW_MIN_NITS_LINE;
 
         [branch]
-        if (( showMaxLineActive            &&  showMinLineActive)
-         || (!_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinLineActive)
-         || ( showMaxLineActive            && !_WAVEFORM_SHOW_MIN_NITS_LINE)
-         || (!_WAVEFORM_SHOW_MAX_NITS_LINE && !_WAVEFORM_SHOW_MIN_NITS_LINE))
+        if ((( showMaxLineActive            &&  showMinLineActive)
+          || (!_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinLineActive)
+          || ( showMaxLineActive            && !_WAVEFORM_SHOW_MIN_NITS_LINE)
+          || (!_WAVEFORM_SHOW_MAX_NITS_LINE && !_WAVEFORM_SHOW_MIN_NITS_LINE)))
         {
-          int2 waveformFetchCoords;
+          int2 waveform_fetch_coords = waveformCoords;
 
-          waveformFetchCoords.x = waveformCoords.x;
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
 
-          waveformFetchCoords.y = int(float(waveformCoords.y + WaveformCutoffOffset)
-                                          * WaveformSizeYFactor);
+          waveform_fetch_coords.x = float(waveform_fetch_coords.x)
+                                  / float(WaveformActiveArea.x)
+                                  * float(TEXTURE_WAVEFORM_WIDTH);
+
+          waveform_fetch_coords.y = float(waveform_fetch_coords.y)
+                                  * WaveformSizeYFactor;
+
 #else
-          waveformFetchCoords.y = waveformCoords.y + WaveformCutoffOffset;
+
+          waveform_fetch_coords = float2(waveform_fetch_coords)
+                                / float2(WaveformActiveArea.x, WaveformActiveArea.y)
+                                * float2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_USED_HEIGHT - WaveformCutoffOffset);
+
+          waveform_fetch_coords.y += WaveformCutoffOffset;
+
 #endif
 
-          // using gamma 2 as intermediate gamma space
-          scaleColour.r *= scaleColour.r;
+          BRANCH()
+          if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
+           || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+          {
+            uint waveform_current = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 0));
 
-          float4 waveformColour = tex2Dfetch(SamplerWaveform, waveformFetchCoords);
-          // using gamma 2 as intermediate gamma space
-          waveformColour.rgb *= waveformColour.rgb;
+            [branch]
+            if (waveform_current > 0u)
+            {
+              float waveform_colour = float(waveform_current)
+                                    / Waveform_Max;
 
-          float4 colourOut = scaleColour.rrrg
-                           + waveformColour;
+              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
 
-          // using gamma 2 as intermediate gamma space
-          colourOut.rgb = sqrt(colourOut.rgb);
+              waveform_colour = max(pow(waveform_colour, 1.f / 1.25f), 0.f);
 
-          Out = colourOut;
-          return;
-        }
-        else
-        {
-          Out = scaleColour.rrrg;
-          return;
+              static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
+
+              waveform_colour += plus_value;
+
+              float waveform_out = scale_colour
+                                 + waveform_colour;
+
+              float yc = sqrt(waveform_out);
+
+              yccrccbc_out[0] = yc;
+              yccrccbc_out.a  = 1.f;
+            }
+          }
+          else
+          BRANCH()
+          if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+          {
+            uint3 waveform_current;
+
+            waveform_current.r = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 0));
+            waveform_current.g = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 1));
+            waveform_current.b = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 2));
+
+            const bool3 waveform_current_above_0 = waveform_current.rgb > 0u;
+
+            [branch]
+            if (any(waveform_current_above_0))
+            {
+              float3 waveform_colour = float3(waveform_current.rgb)
+                                     / Waveform_Max;
+
+              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
+
+              float waveform_luminance = dot(Csp::Mat::Bt709ToXYZ[1], waveform_colour);
+
+              waveform_colour *= pow(waveform_luminance, 1.f / 1.1f)
+                               / waveform_luminance;
+
+              static const float3 plus_values = (1.f / float(255u * 255u)) * 1.05f;
+
+              waveform_colour += waveform_current_above_0 ? plus_values
+                                                          : 0.f;
+
+              float3 colour_out = saturate(waveform_colour + scale_colour.xxx);
+
+              float3 yccrccbc;
+
+              yccrccbc[0] = sqrt(dot(colour_out, Csp::Ycbcr::K_Bt709));
+
+              yccrccbc.yz = sqrt(colour_out.rb) - yccrccbc[0];
+
+              yccrccbc.yz *= yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
+                                                : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
+
+              yccrccbc.yz += (127.f / 255.f);
+
+              yccrccbc_out = float4(yccrccbc, 1.f);
+            }
+          }
+          else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+          {
+            uint waveform_current = tex3Dfetch(SamplerWaveform, uint3(waveform_fetch_coords, 0));
+
+            [branch]
+            if (waveform_current > 0u)
+            {
+              float waveform_colour_channel = float(waveform_current)
+                                            / Waveform_Max;
+
+              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
+
+              waveform_colour_channel = pow(waveform_colour_channel, 1.f / 1.25f);
+
+              static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
+
+              waveform_colour_channel += plus_value;
+
+              float3 waveform_colour = (float3)0.f;
+              [branch]
+              if (isRPart)
+              {
+                waveform_colour.r  = waveform_colour_channel;
+                waveform_colour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
+                waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1]);
+                waveform_colour    = saturate(waveform_colour);
+              }
+              else
+              [branch]
+              if (isGPart)
+              {
+                waveform_colour.g = waveform_colour_channel;
+              }
+              else
+              {
+                waveform_colour.b  = waveform_colour_channel;
+                waveform_colour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
+                waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1]);
+                waveform_colour    = saturate(waveform_colour);
+              }
+
+
+              float3 colour_out = saturate(waveform_colour + scale_colour.xxx);
+
+              float3 yccrccbc;
+
+              yccrccbc[0] = sqrt(dot(colour_out, Csp::Ycbcr::K_Bt709));
+
+              yccrccbc.yz = sqrt(colour_out.rb) - yccrccbc[0];
+
+              yccrccbc.yz *= yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
+                                                : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
+
+              yccrccbc.yz += (127.f / 255.f);
+
+              yccrccbc_out = float4(yccrccbc, 1.f);
+            }
+          }
         }
       }
     }
-    else
-    {
-      Out = scaleColour.rrrg;
-      return;
-    }
+
+    Out = yccrccbc_out;
+    return;
   }
   else
   {
     discard;
   }
+}
+
+
+void CS_Clear_Texture_Waveform
+(
+  uint3 DTID : SV_DispatchThreadID
+)
+{
+  BRANCH()
+  if (_SHOW_WAVEFORM)
+  {
+    tex3Dstore(StorageWaveform, DTID, 0u);
+  }
+
+  return;
 }
