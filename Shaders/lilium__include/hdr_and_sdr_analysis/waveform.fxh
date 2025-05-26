@@ -15,7 +15,7 @@ static const uint TEXTURE_WAVEFORM_SCALE_FRAME  = TEXTURE_WAVEFORM_BUFFER_FACTOR
 //  clamp(uint(round(TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
 
 static const uint TEXTURE_WAVEFORM_SCALE_WIDTH = TEXTURE_WAVEFORM_WIDTH
-                                               + (CHAR_DIM_FLOAT.x * 8) //8 chars for 10000.00
+                                               + (CHAR_DIM_UINT.x * 8u) //8 chars for 10000.00
                                                + uint(CHAR_DIM_FLOAT.x / 2.f + 0.5f)
                                                + (TEXTURE_WAVEFORM_SCALE_BORDER * 2)
                                                + (TEXTURE_WAVEFORM_SCALE_FRAME  * 3);
@@ -139,7 +139,7 @@ namespace Waveform
   #define WAVEFORM_SCALE_FACTOR_CLAMP_MAX 1.f.xx
 #endif
 
-    float2 waveformScaleFactorXY = clamp(_WAVEFORM_SIZE / 100.f, 0.5f, 1.f);
+    float2 waveformScaleFactorXY = clamp(_WAVEFORM_SIZE / DIV_100, 0.5f, 1.f);
 
     const float waveformScaleFactor =
       (waveformScaleFactorXY.x + waveformScaleFactorXY.y) / 2.f;
@@ -340,11 +340,11 @@ namespace Waveform
 
     const int2 currentDrawPos = Pos + int2(CharCount * CharDim.x, 0);
 
-
     const float charDimFactor = CharDim.x / CHAR_DIM_FLOAT.x;
 
     const float screenPixelRange = Msdf::GetScreenPixelRange(charDimFactor);
 
+    const float2 char_dim_factor = min(CHAR_DIM_FLOAT / CharDim, 2.f);
 
     const int2 floorCharDim = floor(CharDim);
 
@@ -358,7 +358,7 @@ namespace Waveform
       {
         float2 currentSamplePos = charFetchPos
                                 + float2(currentOffset)
-                                * (min(CHAR_DIM_FLOAT / CharDim, 2.f))
+                                * char_dim_factor
                                 + 0.5f;
 
         float2 fract = frac(currentSamplePos);
@@ -928,9 +928,6 @@ void RenderWaveformScale
                                     charOffsets[j + currentCharOffset]);
         }
       }
-
-
-
     }
 
 #else
@@ -1470,7 +1467,7 @@ void VS_PrepareRenderWaveformToScale
     WaveformCutoffOffset = WAVEDAT_CUTOFF_OFFSET;
 #endif
 
-    float waveformSizeY = _WAVEFORM_SIZE.y / 100.f;
+    float waveformSizeY = _WAVEFORM_SIZE.y / DIV_100;
 
 #ifndef IS_HDR_CSP
     waveformSizeY += 3.f - (1.f - waveformSizeY) * 6.f;
