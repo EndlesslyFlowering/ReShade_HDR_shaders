@@ -595,14 +595,8 @@ namespace Itmos
       float  MaxNits,
       float  ShoulderStart)
     {
-
       float3x3 RgbToLms  = Ictcp::Bt2020ToLms;
       float3x3 LmsToRgb  = Ictcp::LmsToBt2020;
-      float3   K_factors = Ycbcr::KBt2020;
-      float    KR_helper = Ycbcr::KrBt2020;
-      float    KB_helper = Ycbcr::KbBt2020;
-      float2   KG_helper = Ycbcr::KgBt2020;
-
 
       float3 LMS = mul(RgbToLms, Input);
 
