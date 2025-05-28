@@ -4675,7 +4675,8 @@ namespace Csp
 }
 
 
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
   #define HDR10_TO_LINEAR_LUT()                                    \
     texture1D TextureHdr10ToLinearLUT                              \
