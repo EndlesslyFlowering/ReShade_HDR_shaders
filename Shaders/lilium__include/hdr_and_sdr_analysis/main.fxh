@@ -1157,11 +1157,11 @@ void PS_Finalise
 #ifdef IS_FLOAT_HDR_CSP
     [branch]
     if (id != COORDS_SHOW_PERCENTAGE_INVALID)
-    {
 #endif
+    {
       Output = float4(tex2Dfetch(SamplerConsolidated, int2(id, 0)), 0.f, 0.f, 0.f);
-#ifdef IS_FLOAT_HDR_CSP
     }
+#ifdef IS_FLOAT_HDR_CSP
     else
     {
       const float percentageBt709  = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_BT709,  0));
