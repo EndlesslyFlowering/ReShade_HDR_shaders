@@ -704,7 +704,7 @@ texture2D TextureTransfer
   pooled = true;
 >
 {
-  Width  = 9;
+  Width  = CONSOLIDATED_TEXTURE_WIDTH;
   Height = 1;
   Format = R32F;
 };
