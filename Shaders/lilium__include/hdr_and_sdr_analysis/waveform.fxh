@@ -1508,7 +1508,7 @@ void VS_PrepareRenderWaveformToScale
 #endif
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MIN_NITS_LINE)
+    if (_SHOW_WAVEFORM)
     {
       BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
@@ -1586,11 +1586,7 @@ void VS_PrepareRenderWaveformToScale
                                  );
         }
       }
-    }
 
-    BRANCH()
-    if (_WAVEFORM_SHOW_MAX_NITS_LINE)
-    {
       BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
       {
@@ -1764,24 +1760,28 @@ void PS_RenderWaveformToScale
       }
 
       [branch]
+      if (_WAVEFORM_SHOW_MIN_NITS_LINE
 #ifdef IS_QHD_OR_HIGHER_RES
-      if (waveformCoords.y == minLineY
-       || waveformCoords.y == minLineY - 1)
+       && (waveformCoords.y == minLineY
+        || waveformCoords.y == minLineY - 1)
 #else
-      if (waveformCoords.y == minLineY)
+       && waveformCoords.y == minLineY
 #endif
+      )
       {
         Out = float4(1.f, (127.f / 255.f).xx, 1.f);
         return;
       }
       else
       [branch]
+      if (_WAVEFORM_SHOW_MAX_NITS_LINE
 #ifdef IS_QHD_OR_HIGHER_RES
-      if (waveformCoords.y == maxLineY
-       || waveformCoords.y == maxLineY + 1)
+       && (waveformCoords.y == maxLineY
+        || waveformCoords.y == maxLineY + 1)
 #else
-      if (waveformCoords.y == maxLineY)
+       && waveformCoords.y == maxLineY
 #endif
+      )
       {
         float3 temp_out = float3(1.f, 1.f, 0.f);
 
@@ -1830,14 +1830,11 @@ void PS_RenderWaveformToScale
           }
         }
 
-        const bool showMaxLineActive = waveformCoordsGTEMaxLine && _WAVEFORM_SHOW_MAX_NITS_LINE;
-        const bool showMinLineActive = waveformCoordsSTEMinLine && _WAVEFORM_SHOW_MIN_NITS_LINE;
+        yccrccbc_out.a = 1.f;
 
         [branch]
-        if ((( showMaxLineActive            &&  showMinLineActive)
-          || (!_WAVEFORM_SHOW_MAX_NITS_LINE &&  showMinLineActive)
-          || ( showMaxLineActive            && !_WAVEFORM_SHOW_MIN_NITS_LINE)
-          || (!_WAVEFORM_SHOW_MAX_NITS_LINE && !_WAVEFORM_SHOW_MIN_NITS_LINE)))
+        if (waveformCoordsGTEMaxLine
+         && waveformCoordsSTEMinLine)
         {
           int2 waveform_fetch_coords = waveformCoords;
 
@@ -1887,7 +1884,6 @@ void PS_RenderWaveformToScale
               float yc = sqrt(waveform_out);
 
               yccrccbc_out[0] = yc;
-              yccrccbc_out.a  = 1.f;
             }
           }
           else
@@ -1933,7 +1929,7 @@ void PS_RenderWaveformToScale
 
               yccrccbc.yz += (127.f / 255.f);
 
-              yccrccbc_out = float4(yccrccbc, 1.f);
+              yccrccbc_out.xyz = yccrccbc;
             }
           }
           else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
@@ -1991,7 +1987,7 @@ void PS_RenderWaveformToScale
 
               yccrccbc.yz += (127.f / 255.f);
 
-              yccrccbc_out = float4(yccrccbc, 1.f);
+              yccrccbc_out.xyz = yccrccbc;
             }
           }
         }
