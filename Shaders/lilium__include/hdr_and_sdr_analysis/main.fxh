@@ -1144,6 +1144,8 @@ void PS_Finalise
   out float4 Output   : SV_Target0
 )
 {
+  Output = 0.f;
+
   float frametimeCounter = tex2Dfetch(SamplerConsolidated, int2(COORDS_UPDATE_OVERLAY_PERCENTAGES, 0));
 
   // only update every 1/2 of a second
