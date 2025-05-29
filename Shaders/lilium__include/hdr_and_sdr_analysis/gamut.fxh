@@ -203,7 +203,11 @@ void PS_CalcGamuts
      && pixel.b > SMALLEST_UINT10)
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+    #ifdef IS_COMPUTE_CAPABLE_API
       const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
+    #else
+      const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+    #endif
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
       const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
@@ -218,7 +222,11 @@ void PS_CalcGamuts
 #else
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  #ifdef IS_COMPUTE_CAPABLE_API
     const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
+  #else
+    const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+  #endif
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
     const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
