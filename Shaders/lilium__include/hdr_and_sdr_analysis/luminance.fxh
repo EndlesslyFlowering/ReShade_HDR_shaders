@@ -193,7 +193,11 @@ float CalcNits
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #ifdef IS_COMPUTE_CAPABLE_API
+    curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #else
+    curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  #endif
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
@@ -241,7 +245,11 @@ float3 CalcCll
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #ifdef IS_COMPUTE_CAPABLE_API
+    curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #else
+    curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
@@ -282,7 +290,11 @@ float4 CalcNitsAndCll
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #ifdef IS_COMPUTE_CAPABLE_API
+    curRgb = FetchFromHdr10ToLinearLUT(Pixel) * 10000.f;
+  #else
+    curRgb = Csp::Trc::PqTo::Nits(Pixel);
+  #endif
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
@@ -329,7 +341,11 @@ float Calc_Nits_Normalised
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  rgb = FetchFromHdr10ToLinearLUT(Pixel);
+  #ifdef IS_COMPUTE_CAPABLE_API
+    rgb = FetchFromHdr10ToLinearLUT(Pixel);
+  #else
+    rgb = Csp::Trc::PqTo::Linear(Pixel);
+  #endif
 
   nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
 
@@ -373,7 +389,11 @@ float3 Calc_Cll_Normalised
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  cll = FetchFromHdr10ToLinearLUT(Pixel);
+  #ifdef IS_COMPUTE_CAPABLE_API
+    cll = FetchFromHdr10ToLinearLUT(Pixel);
+  #else
+    cll = Csp::Trc::PqTo::Linear(Pixel);
+  #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
@@ -412,7 +432,11 @@ float4 Calc_Nits_And_Cll_Normalised
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  cll = FetchFromHdr10ToLinearLUT(Pixel);
+  #ifdef IS_COMPUTE_CAPABLE_API
+    cll = FetchFromHdr10ToLinearLUT(Pixel);
+  #else
+    cll = Csp::Trc::PqTo::Linear(Pixel);
+  #endif
 
   nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
 
