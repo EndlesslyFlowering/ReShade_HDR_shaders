@@ -826,7 +826,7 @@ void PS_GetMaxAvgMinNits
       int2 xy = int2(x + INTERMEDIATE_X_0 * id.x,
                      y + INTERMEDIATE_Y_0 * id.y);
 
-      const float curNits = tex2Dfetch(SamplerNitsValues, xy);
+      const float curNits = CalcNits(tex2Dfetch(SamplerBackBuffer, xy).rgb);
 
       maxNits  = max(curNits, maxNits);
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
