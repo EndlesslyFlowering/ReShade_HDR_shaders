@@ -53,14 +53,26 @@
 #define TEXT_BLOCK_FETCH_OFFSET_NITS_MAX_AVG_MIN     float2( 0, 4)
 #define TEXT_BLOCK_FETCH_OFFSET_NITS_CURSOR          float2( 0, 7)
 
-#ifdef IS_HDR_CSP
-  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(48, 1) //       "|nits        |CLL red     |CLL green   |CLL blue"
-  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(49, 3) //    "max|     .      |     .      |     .      |     ."
-  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(52, 1) // "cursor|     .      |     .      |     .      |     ."
+#ifdef IS_COMPUTE_CAPABLE_API
+  #ifdef IS_HDR_CSP
+    #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(48, 1) //       "|nits        |CLL red     |CLL green   |CLL blue"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(49, 3) //    "max|     .      |     .      |     .      |     ."
+    #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(52, 1) // "cursor|     .      |     .      |     .      |     ."
+  #else
+    #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(45, 1) //       "|nits       |CLL red    |CLL green  |CLL blue"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(51, 3) //    "max|   .      %|   .      %|   .      %|   .      %"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(54, 1) // "cursor|   .      %|   .      %|   .      %|   .      %"
+  #endif
 #else
-  #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2(45, 1) //       "|nits       |CLL red    |CLL green  |CLL blue"
-  #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(51, 3) //    "max|   .      %|   .      %|   .      %|   .      %"
-  #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(54, 1) // "cursor|   .      %|   .      %|   .      %|   .      %"
+  #ifdef IS_HDR_CSP
+    #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2( 5, 1) //       "|nits"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(10, 3) //    "max|     ."
+    #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(13, 1) // "cursor|     ."
+  #else
+    #define TEXT_BLOCK_SIZE_NITS_RGB_DESCRIPTION       float2( 5, 1) //       "|nits"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_MAX_AVG_MIN       float2(15, 3) //    "max|   .      %"
+    #define TEXT_BLOCK_SIZE_NITS_RGB_CURSOR            float2(18, 1) // "cursor|   .      %"
+  #endif
 #endif
 
 #define TEXT_BLOCK_FETCH_OFFSET_GAMUT_PERCENTAGES    float2( 0,  8)

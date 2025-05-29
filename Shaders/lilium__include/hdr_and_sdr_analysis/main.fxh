@@ -368,8 +368,13 @@
 #endif
 
 
-#define NITS_NUMBERS_COLUMNS 4
-#define NITS_NUMBERS_ROWS    4
+#ifdef IS_COMPUTE_CAPABLE_API
+  #define NITS_NUMBERS_COLUMNS 4
+#else
+  #define NITS_NUMBERS_COLUMNS 1
+#endif
+
+#define NITS_NUMBERS_ROWS 4
 
 
 #if defined(IS_HDR_CSP)
@@ -389,6 +394,8 @@
 #else
 
   #define NITS_NUMBERS_COUNT 9
+
+  #define GAMUTS_NUMBERS_ROWS 0
 
 #endif
 
@@ -417,53 +424,68 @@
 
 
 //lowest is 9 so only one check needed, since there are only a max of 15 values
-#if (AVG_NITS_HEIGHT >= NEEDED_HEIGHT)
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (NEEDED_WIDTH * NITS_NUMBERS_COLUMNS + 1)
-  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
-#else
-  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (NEEDED_WIDTH * NITS_NUMBERS_COLUMNS + 2)
-  #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 2)
-#endif
-
-#define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT AVG_NITS_HEIGHT
-
-
-static const int2 POS_MAX_NITS = int2(POS_STORE_X + (0u / AVG_NITS_HEIGHT), (0u % AVG_NITS_HEIGHT));
-static const int2 POS_MAX_R    = int2(POS_STORE_X + (1u / AVG_NITS_HEIGHT), (1u % AVG_NITS_HEIGHT));
-static const int2 POS_MAX_G    = int2(POS_STORE_X + (2u / AVG_NITS_HEIGHT), (2u % AVG_NITS_HEIGHT));
-static const int2 POS_MAX_B    = int2(POS_STORE_X + (3u / AVG_NITS_HEIGHT), (3u % AVG_NITS_HEIGHT));
-static const int2 POS_MIN_NITS = int2(POS_STORE_X + (4u / AVG_NITS_HEIGHT), (4u % AVG_NITS_HEIGHT));
-static const int2 POS_MIN_R    = int2(POS_STORE_X + (5u / AVG_NITS_HEIGHT), (5u % AVG_NITS_HEIGHT));
-static const int2 POS_MIN_G    = int2(POS_STORE_X + (6u / AVG_NITS_HEIGHT), (6u % AVG_NITS_HEIGHT));
-static const int2 POS_MIN_B    = int2(POS_STORE_X + (7u / AVG_NITS_HEIGHT), (7u % AVG_NITS_HEIGHT));
-
-#ifndef IS_HDR_CSP
-
-  static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (8u / AVG_NITS_HEIGHT), (8u % AVG_NITS_HEIGHT));
-  static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (9u / AVG_NITS_HEIGHT), (9u % AVG_NITS_HEIGHT));
-
-#else
-
-  static const int2 POS_BT709_PERCENTAGE  = int2(POS_STORE_X + ( 8u / AVG_NITS_HEIGHT), ( 8u % AVG_NITS_HEIGHT));
-  static const int2 POS_DCIP3_PERCENTAGE  = int2(POS_STORE_X + ( 9u / AVG_NITS_HEIGHT), ( 9u % AVG_NITS_HEIGHT));
-  static const int2 POS_BT2020_PERCENTAGE = int2(POS_STORE_X + (10u / AVG_NITS_HEIGHT), (10u % AVG_NITS_HEIGHT));
-
-  #ifndef IS_FLOAT_HDR_CSP
-
-    static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
-    static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
-
+#ifdef IS_COMPUTE_CAPABLE_API
+  #if (AVG_NITS_HEIGHT >= NEEDED_HEIGHT)
+    #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (NEEDED_WIDTH * NITS_NUMBERS_COLUMNS + 1)
+    #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 1)
   #else
-
-    static const int2 POS_AP0_PERCENTAGE     = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
-    static const int2 POS_INVALID_PERCENTAGE = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
-
-    static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (13u / AVG_NITS_HEIGHT), (13u % AVG_NITS_HEIGHT));
-    static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (14u / AVG_NITS_HEIGHT), (14u % AVG_NITS_HEIGHT));
-
+    #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH (NEEDED_WIDTH * NITS_NUMBERS_COLUMNS + 2)
+    #define POS_STORE_X (TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH - 2)
   #endif
 
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT AVG_NITS_HEIGHT
+#else
+  #if (NITS_NUMBERS_COUNT >= GAMUTS_NUMBERS_COUNT)
+    #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH NITS_NUMBERS_COUNT
+  #else
+    #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_WIDTH GAMUTS_NUMBERS_COUNT
+  #endif
+
+  #define TEXTURE_MAX_AVG_MIN_NITS_AND_GAMUT_COUNTER_AND_SHOW_NUMBERS_HEIGHT (NITS_NUMBERS_ROWS + GAMUTS_NUMBERS_ROWS)
 #endif
+
+
+
+#ifdef IS_COMPUTE_CAPABLE_API
+
+  static const int2 POS_MAX_NITS = int2(POS_STORE_X + (0u / AVG_NITS_HEIGHT), (0u % AVG_NITS_HEIGHT));
+  static const int2 POS_MAX_R    = int2(POS_STORE_X + (1u / AVG_NITS_HEIGHT), (1u % AVG_NITS_HEIGHT));
+  static const int2 POS_MAX_G    = int2(POS_STORE_X + (2u / AVG_NITS_HEIGHT), (2u % AVG_NITS_HEIGHT));
+  static const int2 POS_MAX_B    = int2(POS_STORE_X + (3u / AVG_NITS_HEIGHT), (3u % AVG_NITS_HEIGHT));
+  static const int2 POS_MIN_NITS = int2(POS_STORE_X + (4u / AVG_NITS_HEIGHT), (4u % AVG_NITS_HEIGHT));
+  static const int2 POS_MIN_R    = int2(POS_STORE_X + (5u / AVG_NITS_HEIGHT), (5u % AVG_NITS_HEIGHT));
+  static const int2 POS_MIN_G    = int2(POS_STORE_X + (6u / AVG_NITS_HEIGHT), (6u % AVG_NITS_HEIGHT));
+  static const int2 POS_MIN_B    = int2(POS_STORE_X + (7u / AVG_NITS_HEIGHT), (7u % AVG_NITS_HEIGHT));
+
+  #ifndef IS_HDR_CSP
+
+    static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (8u / AVG_NITS_HEIGHT), (8u % AVG_NITS_HEIGHT));
+    static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (9u / AVG_NITS_HEIGHT), (9u % AVG_NITS_HEIGHT));
+
+  #else //!IS_HDR_CSP
+
+    static const int2 POS_BT709_PERCENTAGE  = int2(POS_STORE_X + ( 8u / AVG_NITS_HEIGHT), ( 8u % AVG_NITS_HEIGHT));
+    static const int2 POS_DCIP3_PERCENTAGE  = int2(POS_STORE_X + ( 9u / AVG_NITS_HEIGHT), ( 9u % AVG_NITS_HEIGHT));
+    static const int2 POS_BT2020_PERCENTAGE = int2(POS_STORE_X + (10u / AVG_NITS_HEIGHT), (10u % AVG_NITS_HEIGHT));
+
+    #ifndef IS_FLOAT_HDR_CSP
+
+      static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
+      static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
+
+    #else //!IS_FLOAT_HDR_CSP
+
+      static const int2 POS_AP0_PERCENTAGE     = int2(POS_STORE_X + (11u / AVG_NITS_HEIGHT), (11u % AVG_NITS_HEIGHT));
+      static const int2 POS_INVALID_PERCENTAGE = int2(POS_STORE_X + (12u / AVG_NITS_HEIGHT), (12u % AVG_NITS_HEIGHT));
+
+      static const int2 POS_CIE_COUNTER_MAX      = int2(POS_STORE_X + (13u / AVG_NITS_HEIGHT), (13u % AVG_NITS_HEIGHT));
+      static const int2 POS_WAVEFORM_COUNTER_MAX = int2(POS_STORE_X + (14u / AVG_NITS_HEIGHT), (14u % AVG_NITS_HEIGHT));
+
+    #endif //!IS_FLOAT_HDR_CSP
+
+  #endif //!IS_HDR_CSP
+
+#endif //IS_COMPUTE_CAPABLE_API
 
 #if defined(IS_HDR_CSP)
 
@@ -583,11 +605,7 @@ storage2D
 #else
   #define SHOW_VALUES_COUNT 15
 #endif
-#if defined(IS_COMPUTE_CAPABLE_API)
-  #define SHOW_VALUES_X_OFFSET (GAMUT_PERCENTAGES_COUNT + GAMUT_PERCENTAGES_X_OFFSET)
-#else
-  #define SHOW_VALUES_X_OFFSET 1
-#endif
+#define SHOW_VALUES_X_OFFSET (GAMUT_PERCENTAGES_COUNT + GAMUT_PERCENTAGES_X_OFFSET)
 #define SHOW_VALUES_Y_OFFSET 0
 #define COORDS_SHOW_MAX_NITS           int(     SHOW_VALUES_X_OFFSET)
 #define COORDS_SHOW_AVG_NITS           int( 1 + SHOW_VALUES_X_OFFSET)
@@ -822,7 +840,11 @@ float3 MergeOverlay
 
     adjustFactor = OverlayBrightness / 10000.f;
 
+  #ifdef IS_COMPUTE_CAPABLE_API
     Output = FetchFromHdr10ToLinearLUT(Output);
+  #else
+    Output = Csp::Trc::PqTo::Linear(Output);
+  #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -1123,13 +1145,13 @@ void VS_PrepareFinalise
 {
   static const float positions[2] =
   {
-    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_MAX_NITS),
+    GetPositonXCoordFromRegularXCoord(COORDS_MAX_NITS_VALUE),
 #if defined(IS_FLOAT_HDR_CSP)
-    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_PERCENTAGE_INVALID + 1)
+    GetPositonXCoordFromRegularXCoord(COORDS_PERCENTAGE_INVALID + 1)
 #elif defined(IS_HDR10_LIKE_CSP)
-    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_PERCENTAGE_BT2020 + 1)
+    GetPositonXCoordFromRegularXCoord(COORDS_PERCENTAGE_BT2020 + 1)
 #else
-    GetPositonXCoordFromRegularXCoord(COORDS_SHOW_MIN_NITS + 1)
+    GetPositonXCoordFromRegularXCoord(COORDS_MIN_NITS_VALUE + 1)
 #endif
   };
 
@@ -1156,7 +1178,7 @@ void PS_Finalise
 
 #ifdef IS_FLOAT_HDR_CSP
     [branch]
-    if (id != COORDS_SHOW_PERCENTAGE_INVALID)
+    if (id != COORDS_PERCENTAGE_INVALID)
 #endif
     {
       Output = float4(tex2Dfetch(SamplerConsolidated, int2(id, 0)), 0.f, 0.f, 0.f);
@@ -1164,10 +1186,10 @@ void PS_Finalise
 #ifdef IS_FLOAT_HDR_CSP
     else
     {
-      const float percentageBt709  = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_BT709,  0));
-      const float percentageDciP3  = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_DCI_P3, 0));
-      const float percentageBt2020 = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_BT2020, 0));
-      const float percentageAp0    = tex2Dfetch(SamplerConsolidated, int2(COORDS_SHOW_PERCENTAGE_AP0,    0));
+      const float percentageBt709  = tex2Dfetch(SamplerConsolidated, int2(COORDS_PERCENTAGE_BT709,  0));
+      const float percentageDciP3  = tex2Dfetch(SamplerConsolidated, int2(COORDS_PERCENTAGE_DCI_P3, 0));
+      const float percentageBt2020 = tex2Dfetch(SamplerConsolidated, int2(COORDS_PERCENTAGE_BT2020, 0));
+      const float percentageAp0    = tex2Dfetch(SamplerConsolidated, int2(COORDS_PERCENTAGE_AP0,    0));
 
       const float percentageInvalid = TIMES_100 - (percentageBt709
                                                  + percentageDciP3

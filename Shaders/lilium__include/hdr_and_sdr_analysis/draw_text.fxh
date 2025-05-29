@@ -1163,7 +1163,7 @@ void PS_GetNumbersNits
 
   if (positionAsInt2.y < 3)
   {
-    nitsValue = tex2Dfetch(SamplerTransfer, int2(COORDS_SHOW_MAX_NITS + positionAsInt2.y, 0)).x;
+    nitsValue = tex2Dfetch(SamplerTransfer, int2(1 + positionAsInt2.y, 0)).x;
   }
   else
   {
@@ -1268,8 +1268,9 @@ void PS_GetGamutNumbers
 {
   const int2 positionAsInt2 = int2(Position.xy);
 
-  precise const float gamutCount = tex2Dfetch(SamplerTransfer,
-                                              int2(COORDS_SHOW_PERCENTAGE_BT709 - 4 + positionAsInt2.y, 0)).x;
+  const int2 fetch_coords = int2(positionAsInt2.y, 0);
+
+  precise const float gamutCount = tex2Dfetch(SamplerTransfer, fetch_coords).x;
 
   precise uint number;
 
@@ -1349,7 +1350,11 @@ float3 MergeText
 
     adjustFactor = _TEXT_BRIGHTNESS / 10000.f;
 
+  #ifdef IS_COMPUTE_CAPABLE_API
     Output = FetchFromHdr10ToLinearLUT(Output);
+  #else
+    Output = Csp::Trc::PqTo::Linear(Output);
+  #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -1446,6 +1451,8 @@ float GetMaxCharsForNitsRgbCll()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
+#ifdef IS_COMPUTE_CAPABLE_API
+
     FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
@@ -1455,6 +1462,8 @@ float GetMaxCharsForNitsRgbCll()
       maxChars -= 24.f;
 #endif
     }
+
+#endif //IS_COMPUTE_CAPABLE_API
 
     FLATTEN()
     if (!_SHOW_NITS_FROM_CURSOR)
@@ -1493,6 +1502,8 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
+#ifdef IS_COMPUTE_CAPABLE_API
+
     FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
@@ -1502,6 +1513,8 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
       ret.maxChars -= 24u;
 #endif
     }
+
+#endif //IS_COMPUTE_CAPABLE_API
 
     FLATTEN()
     if (!_SHOW_NITS_FROM_CURSOR)
@@ -1729,6 +1742,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
         if (currentTextBlockID > 0
          && currentTextBlockID < 4)
         {
+#ifdef IS_COMPUTE_CAPABLE_API
+
           [flatten]
           if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
           {
@@ -1741,6 +1756,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 #endif
             texCoordOffset.y += 5.f;
           }
+
+#endif //IS_COMPUTE_CAPABLE_API
 
           [flatten]
           if (!_SHOW_NITS_FROM_CURSOR)
@@ -1931,8 +1948,12 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 #endif
 
     static const bool drawMaxRbgOrMaxCll =
+#ifdef IS_COMPUTE_CAPABLE_API
       ((_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES && (currentNumberID % NITS_NUMBERS_PER_ROW) < (NITS_NUMBERS_COUNT * 2))
      || _SHOW_RGB_OR_CLL == SHOW_RGB_VALUES);
+#else
+     true;
+#endif
 
     bool calcOffsets = false;
 
@@ -1948,11 +1969,14 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
       uint b = a / NITS_NUMBERS_COUNT;
 
+#ifdef IS_COMPUTE_CAPABLE_API
       uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+#endif
 
       uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1u) / DOT_OFFSET_DIV;
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  &&  defined(IS_COMPUTE_CAPABLE_API))
 
       spacerOffset *= 2u;
 
@@ -1963,7 +1987,11 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
                                                : 4u;
 
+#ifdef IS_COMPUTE_CAPABLE_API
       vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
+#else
+      vertexOffset.x = float(drawOffset + a + b + dotOffset);
+#endif
 
       vertexOffset.y = float(currentNumberID / NITS_NUMBERS_PER_ROW + 2u);
     }
@@ -1982,11 +2010,14 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
       uint b = a / NITS_NUMBERS_COUNT;
 
+#ifdef IS_COMPUTE_CAPABLE_API
       uint spacerOffset = (currentNumberID / NITS_NUMBERS_COUNT) % NITS_NUMBERS_ROWS;
+#endif
 
       uint dotOffset = ((currentNumberID % NITS_NUMBERS_COUNT) + 1u) / DOT_OFFSET_DIV;
 
-#ifndef IS_HDR_CSP
+#if (!defined(IS_HDR_CSP) \
+  &&  defined(IS_COMPUTE_CAPABLE_API))
 
       spacerOffset *= 2u;
 
@@ -1997,7 +2028,11 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
                                                : 4u;
 
+#ifdef IS_COMPUTE_CAPABLE_API
       vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
+#else
+      vertexOffset.x = float(drawOffset + a + b + dotOffset);
+#endif
 
       vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
                                          : 2.f;
@@ -2251,7 +2286,11 @@ void PS_RenderNumbers
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
+  #ifdef IS_COMPUTE_CAPABLE_API
     Output.rgb = FetchFromHdr10ToLinearLUT(inputColour.rgb);
+  #else
+    Output.rgb = Csp::Trc::PqTo::Linear(inputColour.rgb);
+  #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
