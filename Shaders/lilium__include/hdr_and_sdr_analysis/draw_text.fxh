@@ -1424,7 +1424,7 @@ VertexCoordsAndTexCoords ReturnOffScreen()
   #define MAX_LINES_GAMUT 4
 #endif
 
-#define MAX_CHARS_NITS_RGB_CLL TEXT_BLOCK_SIZE_ANALYIS_HEADER.x
+#define MAX_CHARS_NITS_RGB_CLL (TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x + NITS_EXTRA_CHARS)
 
 #ifdef IS_HDR_CSP
   #define NITS_EXTRA_CHARS 6
@@ -1446,25 +1446,21 @@ float GetMaxCharsForNitsRgbCll()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
-    float textBlockSizeNitsRgbCursor = TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x;
-
     FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
 #ifdef IS_HDR_CSP
-      textBlockSizeNitsRgbCursor -= 26.f;
+      maxChars -= 26.f;
 #else
-      textBlockSizeNitsRgbCursor -= 24.f;
+      maxChars -= 24.f;
 #endif
     }
 
     FLATTEN()
     if (!_SHOW_NITS_FROM_CURSOR)
     {
-      textBlockSizeNitsRgbCursor -= 3.f;
+      maxChars -= 3.f;
     }
-
-    maxChars = max(TEXT_BLOCK_SIZE_ANALYIS_HEADER.x, textBlockSizeNitsRgbCursor + NITS_EXTRA_CHARS);
   }
 
   return maxChars;
@@ -1497,25 +1493,21 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
   if (_SHOW_NITS_VALUES
    || _SHOW_NITS_FROM_CURSOR)
   {
-    uint textOffsetNitsCursor = uint(TEXT_BLOCK_SIZE_NITS_RGB_CURSOR.x);
-
     FLATTEN()
     if (_SHOW_RGB_OR_CLL == SHOW_CLL_VALUES)
     {
 #ifdef IS_HDR_CSP
-      textOffsetNitsCursor -= 26u;
+      ret.maxChars -= 26u;
 #else
-      textOffsetNitsCursor -= 24u;
+      ret.maxChars -= 24u;
 #endif
     }
 
     FLATTEN()
     if (!_SHOW_NITS_FROM_CURSOR)
     {
-      textOffsetNitsCursor -= 3u;
+      ret.maxChars -= 3u;
     }
-
-    ret.maxChars = max(ret.maxChars, textOffsetNitsCursor + NITS_EXTRA_CHARS);
   }
 
   FLATTEN()
