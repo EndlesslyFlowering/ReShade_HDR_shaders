@@ -134,6 +134,9 @@ namespace Waveform
     #define WAVEDAT_CUTOFF_OFFSET 0
     int    tickPoints[14];
 #endif
+#ifdef IS_HDR_CSP
+    int    cutoffOffsetAt100PercentScale;
+#endif
     int    fontSpacer;
     int2   offsetToFrame;
     int2   textOffset;
@@ -247,6 +250,18 @@ namespace Waveform
     waveDat.tickPoints[13] -= waveDat.cutoffOffset;
     waveDat.tickPoints[14] -= waveDat.cutoffOffset;
     waveDat.tickPoints[15] -= waveDat.cutoffOffset;
+
+#ifdef IS_HDR_CSP
+    static const int tick_points_at_100_percent_scale[4] =
+    {
+      int(0),
+      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f)
+    };
+
+    waveDat.cutoffOffsetAt100PercentScale = tick_points_at_100_percent_scale[WAVEFORM_CUTOFF_POINT];
+#endif
 
     if (WAVEFORM_CUTOFF_POINT > 0u)
     {
@@ -1490,7 +1505,7 @@ void VS_PrepareRenderWaveformToScale
                          + waveDat.frameSize;
 
 #ifdef IS_HDR_CSP
-    WaveformCutoffOffset = WAVEDAT_CUTOFF_OFFSET;
+    WaveformCutoffOffset = waveDat.cutoffOffsetAt100PercentScale;
 #endif
 
     float waveformSizeY = _WAVEFORM_SIZE.y / DIV_100;
