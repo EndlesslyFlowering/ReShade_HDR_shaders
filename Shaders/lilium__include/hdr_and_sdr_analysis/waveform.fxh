@@ -1775,41 +1775,29 @@ void PS_RenderWaveformToScale
       }
 
       [branch]
-      if (_WAVEFORM_SHOW_MIN_NITS_LINE
+      if
+      (
+        (
+          _WAVEFORM_SHOW_MIN_NITS_LINE
 #ifdef IS_QHD_OR_HIGHER_RES
-       && (waveformCoords.y == minLineY
-        || waveformCoords.y == minLineY - 1)
+        && (waveformCoords.y == minLineY
+         || waveformCoords.y == minLineY - 1)
 #else
-       && waveformCoords.y == minLineY
+        && waveformCoords.y == minLineY
 #endif
+        )
+     || (
+          _WAVEFORM_SHOW_MAX_NITS_LINE
+#ifdef IS_QHD_OR_HIGHER_RES
+        && (waveformCoords.y == maxLineY
+         || waveformCoords.y == maxLineY + 1)
+#else
+        && waveformCoords.y == maxLineY
+#endif
+        )
       )
       {
         Out = float4(1.f, (127.f / 255.f).xx, 1.f);
-        return;
-      }
-      else
-      [branch]
-      if (_WAVEFORM_SHOW_MAX_NITS_LINE
-#ifdef IS_QHD_OR_HIGHER_RES
-       && (waveformCoords.y == maxLineY
-        || waveformCoords.y == maxLineY + 1)
-#else
-       && waveformCoords.y == maxLineY
-#endif
-      )
-      {
-        float3 temp_out = float3(1.f, 1.f, 0.f);
-
-        temp_out[0] = sqrt(dot(temp_out, Csp::Ycbcr::K_Bt709));
-
-        temp_out.yz = sqrt(temp_out.rb) - temp_out[0];
-
-        temp_out.yz *= temp_out.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
-                                          : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
-
-        temp_out.yz += (127.f / 255.f);
-
-        Out = float4(temp_out, 1.f);
         return;
       }
       else
