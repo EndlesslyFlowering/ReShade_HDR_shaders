@@ -30,7 +30,7 @@ static const float Normalisation_Factor_Inverse       =   0.0239486191f; //     
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 static const float Normalisation_Factor_Inverse       =   2.99357724f;   //     1 / (10^((1 - 1.2) / 0.42) * 1000 / 10000 * 10)
 #else
-static const float Normalisation_Factor_Inverse       =   0.f
+static const float Normalisation_Factor_Inverse       =   0.f;
 #endif
 static const float Luminance_At_Neutral_Gamma         = 334.048492f;     //          10^((1 - 1.2) / 0.42) * 1000
 static const float Max_Gain_Factor                    =  29.9357738f;    // 10000 / (10^((1 - 1.2) / 0.42) * 1000)
