@@ -1,3 +1,5 @@
+[![Discord](https://img.shields.io/discord/1161035767917850784?logo=discord&logoColor=%23fff&label=Discord&labelColor=%235865F2)](https://discord.gg/R2Bt3uptw6)
+
 # Democratisation of HDR analysis and other HDR things
 
 ## [Download](https://github.com/EndlesslyFlowering/ReShade_HDR_shaders/releases/latest)
