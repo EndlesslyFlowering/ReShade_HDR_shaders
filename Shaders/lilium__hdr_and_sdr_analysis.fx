@@ -122,7 +122,7 @@ uniform float2 NIT_PINGPONG2
   #define _SHOW_WAVEFORM                          SDR_SHOW_WAVEFORM
   #define _WAVEFORM_MODE                          SDR_WAVEFORM_MODE
   #define _WAVEFORM_TEXT_SIZE_ADJUST              SDR_WAVEFORM_TEXT_SIZE_ADJUST
-  #define _WAVEFORM_BRIGHTNESS                    SDR_WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_SCALE_BRIGHTNESS              SDR_WAVEFORM_SCALE_BRIGHTNESS
   #define _WAVEFORM_ALPHA                         SDR_WAVEFORM_ALPHA
   #define _WAVEFORM_SIZE                          SDR_WAVEFORM_SIZE
   #define _WAVEFORM_SHOW_MIN_NITS_LINE            SDR_WAVEFORM_SHOW_MIN_NITS_LINE
@@ -163,6 +163,7 @@ uniform float2 NIT_PINGPONG2
   #define _WAVEFORM_MODE                          WAVEFORM_MODE
   #define _WAVEFORM_TEXT_SIZE_ADJUST              WAVEFORM_TEXT_SIZE_ADJUST
   #define _WAVEFORM_BRIGHTNESS                    WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_SCALE_BRIGHTNESS              WAVEFORM_SCALE_BRIGHTNESS
   #define _WAVEFORM_ALPHA                         WAVEFORM_ALPHA
   #define _WAVEFORM_SIZE                          WAVEFORM_SIZE
   #define _WAVEFORM_SHOW_MIN_NITS_LINE            WAVEFORM_SHOW_MIN_NITS_LINE
@@ -726,21 +727,56 @@ uniform float _WAVEFORM_TEXT_SIZE_ADJUST
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = 1.f;
 
+
+#if (defined(IS_HDR_CSP) \
+  || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
 uniform float _WAVEFORM_BRIGHTNESS
 <
   ui_category = "Waveform";
   ui_label    = "waveform brightness";
+  ui_type     = "drag";
+  ui_units    = " nits";
+  ui_min      = 100.f;
+  ui_max      = 500.f;
+  ui_step     =  10.f;
+  hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
+#ifdef GAMESCOPE
+> = (GAMESCOPE_SDR_ON_HDR_NITS * 2.f);
+#else
+> = 200.f;
+#endif
+
+#endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
+
+uniform float WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE
+<
+  ui_category = "Waveform";
+  ui_label    = "waveform per column max/min brightness percentage";
   ui_type     = "slider";
+  ui_units    = "%%";
+  ui_min      =  20.f;
+  ui_max      = 100.f;
+  ui_step     =   1.f;
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
+> = 50.f;
+
+uniform float _WAVEFORM_SCALE_BRIGHTNESS
+<
+  ui_category = "Waveform";
+  ui_label    = "waveform scale brightness";
+  ui_type     = "drag";
 #ifdef IS_HDR_CSP
   ui_units    = " nits";
-  ui_min      = 10.f;
-  ui_max      = 250.f;
+  ui_min      =  10.f;
+  ui_max      = 500.f;
+  ui_step     =   1.f;
 #else
   ui_units    = "%%";
-  ui_min      = 10.f;
+  ui_min      =  10.f;
   ui_max      = 100.f;
+  ui_step     =   0.5f;
 #endif
-  ui_step     = 0.5f;
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 #if (defined(GAMESCOPE) \
   && defined(IS_HDR_CSP))
@@ -761,43 +797,36 @@ uniform float _WAVEFORM_ALPHA
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = DEFAULT_ALPHA_LEVEL;
 
-#define TEXTURE_WAVEFORM_WIDTH  (BUFFER_WIDTH  / 2)
+
+#define TEXTURE_WAVEFORM_WIDTH (BUFFER_WIDTH / 2)
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT  512
-  #elif (BUFFER_HEIGHT <= (768 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT  768
+    #define TEXTURE_WAVEFORM_HEIGHT  511
   #elif (BUFFER_HEIGHT <= (1024 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 1024
-  #elif (BUFFER_HEIGHT <= (1536 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 1536
+    #define TEXTURE_WAVEFORM_HEIGHT 1023
   #elif (BUFFER_HEIGHT <= (2048 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 2048
-  #elif (BUFFER_HEIGHT <= (3072 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 3072
+    #define TEXTURE_WAVEFORM_HEIGHT 2047
   #else //(BUFFER_HEIGHT <= (4096 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 4096
+    #define TEXTURE_WAVEFORM_HEIGHT 4095
   #endif
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT  512
+    #define TEXTURE_WAVEFORM_HEIGHT  511
   #else //(BUFFER_HEIGHT <= (1024 * 5 / 2))
-    #define TEXTURE_WAVEFORM_HEIGHT 1024
+    #define TEXTURE_WAVEFORM_HEIGHT 1023
   #endif
 #else
   #if (BUFFER_COLOR_BIT_DEPTH == 10)
     #if (BUFFER_HEIGHT <= (512 * 5 / 2))
-      #define TEXTURE_WAVEFORM_HEIGHT  512
+      #define TEXTURE_WAVEFORM_HEIGHT  511
     #else //(BUFFER_HEIGHT <= (1024 * 5 / 2))
-      #define TEXTURE_WAVEFORM_HEIGHT 1024
+      #define TEXTURE_WAVEFORM_HEIGHT 1023
     #endif
   #else
-    #define TEXTURE_WAVEFORM_HEIGHT 256
+    #define TEXTURE_WAVEFORM_HEIGHT 255
   #endif
 #endif
-
-static const uint TEXTURE_WAVEFORM_USED_HEIGHT = TEXTURE_WAVEFORM_HEIGHT - 1;
 
 
 static const int UGH = uint(BUFFER_HEIGHT_FLOAT * 0.35f
@@ -1004,7 +1033,12 @@ void VS_PrepareHdrAnalysis
   out nointerpolation float4 HighlightNitRange : HighlightNitRange
 #ifdef IS_COMPUTE_CAPABLE_API
                                                                   ,
-  out nointerpolation int4   DisplaySizes      : DisplaySizes
+  out nointerpolation int4   DisplaySizes      : DisplaySizes,
+  out nointerpolation int4   Waveform_Data0    : Waveform_Data0
+#ifdef IS_HDR_CSP
+                                                               ,
+  out nointerpolation int    Waveform_Data1    : Waveform_Data1
+#endif
 #endif
 )
 {
@@ -1026,9 +1060,19 @@ void VS_PrepareHdrAnalysis
   HighlightNitRange = 0.f;
 #ifdef IS_COMPUTE_CAPABLE_API
   DisplaySizes      = 0;
+  Waveform_Data0    = 0;
+#ifdef IS_HDR_CSP
+  Waveform_Data1    = 0;
+#endif
 
 #define WaveformTextureDisplayAreaBegin DisplaySizes.xy
 #define CieDiagramSize                  DisplaySizes.zw
+
+#define Waveform_Size           Waveform_Data0.xy
+#define Offset_To_Waveform_Area Waveform_Data0.zw
+#ifdef IS_HDR_CSP
+#define Waveform_Cutoff_Offset  Waveform_Data1
+#endif
 
 #endif //IS_COMPUTE_CAPABLE_API
 
@@ -1094,6 +1138,17 @@ void VS_PrepareHdrAnalysis
   if (_SHOW_WAVEFORM)
   {
     WaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
+
+    Waveform::SWaveformData waveform_data = Waveform::GetData();
+
+    Waveform_Size = waveform_data.waveformArea;
+
+    Offset_To_Waveform_Area = waveform_data.offsetToFrame
+                            + waveform_data.frameSize;
+
+#ifdef IS_HDR_CSP
+    Waveform_Cutoff_Offset = waveform_data.cutoffOffset;
+#endif
   }
 
   BRANCH()
@@ -1116,6 +1171,10 @@ void PS_HdrAnalysis
   in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
   in  nointerpolation int4   DisplaySizes      : DisplaySizes,
+  in  nointerpolation int4   Waveform_Data0    : Waveform_Data0,
+#ifdef IS_HDR_CSP
+  in  nointerpolation int    Waveform_Data1    : Waveform_Data1,
+#endif
 #endif
   out                 float4 Output            : SV_Target0
 )
@@ -1258,39 +1317,115 @@ void PS_HdrAnalysis
   if (_SHOW_WAVEFORM)
   {
     // draw the waveform in the bottom right corner
+    [branch]
     if (all(pureCoordAsInt.xy >= WaveformTextureDisplayAreaBegin))
     {
       // get fetch coords
-      int2 currentFetchCoords = pureCoordAsInt.xy - WaveformTextureDisplayAreaBegin;
+      const int2 fetch_coords = pureCoordAsInt.xy - WaveformTextureDisplayAreaBegin;
 
-      float4 waveform_yccrccbc =
-        tex2Dfetch(SamplerWaveformFinal, currentFetchCoords);
+      const int2 scale_coords = fetch_coords;
 
-      waveform_yccrccbc.yz -= (127.f / 255.f);
+      float2 scale_colour = tex2Dfetch(SamplerWaveformScale, scale_coords).xy;
+      scale_colour.x *= scale_colour.x;
 
-      float3 waveform_colour;
+      float4 waveform_final_colour = scale_colour.xxxy;
 
-      float2 mul = waveform_yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_dec[1], Csp::Ycbcr::PB_NB_Bt709_g2_dec[1])
-                                               : float2(Csp::Ycbcr::PR_NR_Bt709_g2_dec[0], Csp::Ycbcr::PB_NB_Bt709_g2_dec[0]);
+      int2 waveform_coords = fetch_coords - Offset_To_Waveform_Area;
 
-      waveform_colour.rb = mad(waveform_yccrccbc.yz,
-                               mul,
-                               waveform_yccrccbc[0]);
+      int2 waveform_size = Waveform_Size;
 
-      waveform_colour.rb *= waveform_colour.rb;
+      [branch]
+      if (all(waveform_coords >= 0)
+       && all(waveform_coords < waveform_size))
+      {
+#ifdef IS_HDR_CSP
+        FLATTEN()
+        if (WAVEFORM_CUTOFF_POINT > 0u)
+        {
+          waveform_coords.y += Waveform_Cutoff_Offset;
+          waveform_size.y   += Waveform_Cutoff_Offset;
+        }
+#endif
 
-      waveform_yccrccbc[0] *= waveform_yccrccbc[0];
+        float2 waveform_sample_coords;
 
-      // for green subtract the luminance of red and blue from the luminance and then divide by KBT709.g to get green
-      waveform_colour.g = (waveform_yccrccbc[0]
-                         - dot(waveform_colour.rb, Csp::Ycbcr::K_Bt709.rb))
-                        * Csp::Ycbcr::K_Bt709G_inverse;
+        int div_x = _WAVEFORM_SIZE.x <  66.7f ? waveform_size.x * 2
+                  : _WAVEFORM_SIZE.x < 100.f  ? (int)(uint(waveform_size.x) * 3u / 2u)
+                                              : waveform_size.x;
 
-      float alpha = max(waveform_yccrccbc.a, _WAVEFORM_ALPHA / 100.f);
+#if (!defined(IS_HDR_CSP)         \
+  && BUFFER_COLOR_BIT_DEPTH != 10 \
+  && HDR_COMPARISON_MODE_ENABLE != YES)
+
+          waveform_sample_coords = (float2(waveform_coords) + 0.5f)
+                                 / float2(div_x, waveform_size.y);
+
+#else
+
+          int div_y = _WAVEFORM_SIZE.y < 100.f ? waveform_size.y * 2
+                                               : waveform_size.y;
+
+          waveform_sample_coords = (float2(waveform_coords) + 0.5f)
+                                 / float2(div_x, div_y);
+
+#endif
+
+#ifdef IS_HDR_CSP
+        [branch]
+        if (_WAVEFORM_SIZE.y < 100.f)
+        {
+          waveform_sample_coords.y = min(waveform_sample_coords.y,
+                                         (float((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1) - 0.5f) / float(TEXTURE_WAVEFORM_HEIGHT));
+        }
+#endif
+
+        float4 waveform_yrba = tex2D(Sampler_Waveform_Colour, waveform_sample_coords);
+
+        float3 waveform_yrb = waveform_yrba.xyz;
+
+#ifdef IS_HDR_CSP
+        waveform_yrb = WAVEFORM_HDR_DECODING(waveform_yrb);
+#else
+        waveform_yrb = DECODE_SDR(waveform_yrb);
+#endif
+
+        float green_luminance = waveform_yrb[0]
+                              - dot(Csp::Mat::Bt709ToXYZ[1].rb, waveform_yrb.yz);
+
+        float green = green_luminance
+                    / Csp::Mat::Bt709ToXYZ[1].g;
+
+        float3 waveform_colour = float3(waveform_yrb[1], green, waveform_yrb[2]);
+
+#ifdef IS_HDR_CSP
+        BRANCH()
+        if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+        {
+          waveform_colour /= Csp::Mat::Bt709ToXYZ[1].g;
+        }
+        else
+        BRANCH()
+        if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY
+         && (waveform_yrb.r != waveform_yrb.g
+          && waveform_yrb.g != waveform_yrb.b))
+        {
+          waveform_colour /= Csp::Mat::Bt709ToXYZ[1];
+        }
+#endif
+
+#ifdef IS_HDR_CSP
+        waveform_colour *= _WAVEFORM_BRIGHTNESS / _WAVEFORM_SCALE_BRIGHTNESS;
+#endif
+
+        waveform_final_colour.rgb += waveform_colour;
+        waveform_final_colour.a    = saturate(waveform_final_colour.a + waveform_yrba.a);
+      }
+
+      float alpha = max(waveform_final_colour.a, _WAVEFORM_ALPHA / DIV_100);
 
       Output.rgb = MergeOverlay(Output.rgb,
-                                waveform_colour,
-                                _WAVEFORM_BRIGHTNESS,
+                                waveform_final_colour.rgb,
+                                _WAVEFORM_SCALE_BRIGHTNESS,
                                 alpha);
     }
   }
@@ -1362,6 +1497,13 @@ technique lilium__hdr_and_sdr_analysis
     DispatchSizeX = TEXTURE_WAVEFORM_COUNTER_DISPATCH_X;
     DispatchSizeY = TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y;
     DispatchSizeZ = 3;
+  }
+
+  pass PS_Reset_Texture_Waveform_Column_Max
+  {
+    VertexShader = VS_PostProcessWithoutTexCoord;
+     PixelShader = PS_Reset_Texture_Waveform_Column_Max;
+    RenderTarget = Texture_Waveform_Column_Max_Min;
   }
 
 //Luminance Values
@@ -1530,11 +1672,12 @@ technique lilium__hdr_and_sdr_analysis
 
 
 //Waveform
-  pass PS_RenderWaveformToScale
+  pass PS_Waveform_Render_Colour
   {
-    VertexShader = VS_PrepareRenderWaveformToScale;
-     PixelShader = PS_RenderWaveformToScale;
-    RenderTarget = TextureWaveformFinal;
+    VertexShader       = VS_Prepare_Waveform_Render_Colour;
+     PixelShader       = PS_Waveform_Render_Colour;
+    RenderTarget       = Texture_Waveform_Colour;
+    ClearRenderTargets = true;
   }
 
 #endif //IS_COMPUTE_CAPABLE_API

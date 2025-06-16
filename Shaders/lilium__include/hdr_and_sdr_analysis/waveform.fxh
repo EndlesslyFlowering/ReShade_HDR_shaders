@@ -27,7 +27,7 @@ static const uint TEXTURE_WAVEFORM_SCALE_WIDTH = TEXTURE_WAVEFORM_WIDTH
   #define MAX_WAVEFORM_HEIGHT_FACTOR 1
 #endif
 
-static const uint TEXTURE_WAVEFORM_SCALE_HEIGHT = TEXTURE_WAVEFORM_USED_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
+static const uint TEXTURE_WAVEFORM_SCALE_HEIGHT = TEXTURE_WAVEFORM_HEIGHT * MAX_WAVEFORM_HEIGHT_FACTOR
                                                 + uint(CHAR_DIM_FLOAT.y / 2.f - TEXTURE_WAVEFORM_SCALE_FRAME + 0.5f) * 2u
                                                 + (TEXTURE_WAVEFORM_SCALE_BORDER * 2)
                                                 + (TEXTURE_WAVEFORM_SCALE_FRAME  * 2);
@@ -43,15 +43,11 @@ static const float TEXTURE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_WAVEFORM_SCALE_HEI
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X)
 #else
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X + 1)
-
-  #define GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK
 #endif
 #if (TEXTURE_WAVEFORM_HEIGHT % WAVE64_THREAD_SIZE_Y == 0)
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y (TEXTURE_WAVEFORM_HEIGHT / WAVE64_THREAD_SIZE_Y)
 #else
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y (TEXTURE_WAVEFORM_HEIGHT / WAVE64_THREAD_SIZE_Y + 1)
-
-  #define GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK
 #endif
 
 
@@ -98,19 +94,52 @@ storage3D<uint> StorageWaveform
 };
 
 
-texture2D TextureWaveformFinal
+texture2D Texture_Waveform_Colour
 <
   pooled = true;
 >
 {
-  Width  = TEXTURE_WAVEFORM_SCALE_WIDTH;
-  Height = TEXTURE_WAVEFORM_SCALE_HEIGHT;
+  Width  = TEXTURE_WAVEFORM_WIDTH;
+  Height = TEXTURE_WAVEFORM_HEIGHT;
   Format = RGB10A2;
 };
 
-sampler2D<float4> SamplerWaveformFinal
+sampler2D<float4> Sampler_Waveform_Colour
 {
-  Texture = TextureWaveformFinal;
+  Texture = Texture_Waveform_Colour;
+
+  MagFilter = POINT;
+  MinFilter = POINT;
+  MipFilter = POINT;
+
+  AddressU = CLAMP;
+  AddressV = CLAMP;
+  AddressW = CLAMP;
+};
+
+
+texture2D Texture_Waveform_Column_Max_Min
+<
+  pooled = true;
+>
+{
+  Width  = TEXTURE_WAVEFORM_WIDTH;
+  Height = 2;
+  Format = R32I;
+};
+
+sampler2D<int> Sampler_Waveform_Column_Max_Min
+{
+  Texture = Texture_Waveform_Column_Max_Min;
+
+  AddressU = CLAMP;
+  AddressV = CLAMP;
+  AddressW = CLAMP;
+};
+
+storage2D<int> Storage_Waveform_Column_Max_Min
+{
+  Texture = Texture_Waveform_Column_Max_Min;
 };
 
 
@@ -211,26 +240,30 @@ namespace Waveform
     waveformScaleFactorXY.y *= (3.f / 3.5f);
 #endif
 
-#ifdef IS_HDR_CSP
+  const int   texture_waveform_height_scaled       = float(TEXTURE_WAVEFORM_HEIGHT) * waveformScaleFactorXY.y;
+  const float texture_waveform_height_scaled_float = texture_waveform_height_scaled;
+
+#if (defined(IS_HDR_CSP) \
+  || HDR_COMPARISON_MODE_ENABLE == YES)
 
     waveDat.tickPoints =
     {
       int(0),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 400.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 203.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq( 100.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  50.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  25.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(  10.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   5.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   2.5f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   1.f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.25f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(   0.05f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int(                                                                         float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f)
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(4000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(2000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(1000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 400.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 203.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 100.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  50.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  25.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  10.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   5.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   2.5f ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   1.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   0.25f) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   0.05f) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled
     };
 
     waveDat.cutoffOffset = waveDat.tickPoints[WAVEFORM_CUTOFF_POINT];
@@ -255,9 +288,9 @@ namespace Waveform
     static const int tick_points_at_100_percent_scale[4] =
     {
       int(0),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) + 0.5f)
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f)
     };
 
     waveDat.cutoffOffsetAt100PercentScale = tick_points_at_100_percent_scale[WAVEFORM_CUTOFF_POINT];
@@ -283,31 +316,52 @@ namespace Waveform
     waveDat.tickPoints =
     {
       int(0),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.875f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.75f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.6f   ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.5f   ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.35f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.25f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.18f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.1f   ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.05f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.025f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.01f  ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.875f ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.75f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.6f   ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.5f   ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.35f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.25f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.18f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.1f   ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.05f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.025f ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.01f  ) * texture_waveform_height_scaled_float),
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.0025f) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.0025f) * texture_waveform_height_scaled_float),
 #else
-      int((float(TEXTURE_WAVEFORM_USED_HEIGHT) - (ENCODE_SDR(0.004f ) * float(TEXTURE_WAVEFORM_USED_HEIGHT))) * waveformScaleFactorXY.y + 0.5f),
+      texture_waveform_height_scaled - int(ENCODE_SDR(0.004f ) * texture_waveform_height_scaled_float),
 #endif
-      int(                                                              float(TEXTURE_WAVEFORM_USED_HEIGHT)   * waveformScaleFactorXY.y + 0.5f)
+      texture_waveform_height_scaled
     };
 
 #endif
 
+    float waveform_area_width_float = float(TEXTURE_WAVEFORM_WIDTH) * waveformScaleFactorXY.x;
+    uint  waveform_area_width_uint;
+
+    BRANCH()
+    if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+    {
+      BRANCH()
+      if (_WAVEFORM_SIZE.x < 66.7f || _WAVEFORM_SIZE.x == 100.f)
+      {
+        waveform_area_width_uint = uint(waveform_area_width_float / 3.f) * 3u;
+      }
+      else
+      {
+        waveform_area_width_uint = uint(waveform_area_width_float / 2.f) * 2u;
+      }
+    }
+    else
+    {
+      waveform_area_width_uint = waveform_area_width_float;
+    }
+
     waveDat.waveformArea =
-      int2(uint(TEXTURE_WAVEFORM_WIDTH * waveformScaleFactorXY.x),
+      int2(waveform_area_width_uint,
 #ifdef IS_HDR_CSP
            waveDat.tickPoints[15]
 #else
@@ -432,19 +486,62 @@ namespace Waveform
 }
 
 
+groupshared int4 Group_Column_Max0;
+groupshared int4 Group_Column_Max1;
+groupshared int4 Group_Column_Max2;
+groupshared int4 Group_Column_Min0;
+groupshared int4 Group_Column_Min1;
+groupshared int4 Group_Column_Min2;
+groupshared uint Group_Max_Store_X;
 void RenderWaveform
 (
-  const int2 Fetch_Pos
+  const int2   Fetch_Pos,
+  const float3 Pixel,
+  const uint   GI,
+  const uint3  GTID
 )
 {
-  const float3 pixel = tex2Dfetch(SamplerBackBuffer, Fetch_Pos).rgb;
+  const bool waveform_size_x_is_one_fourth = _WAVEFORM_SIZE.x <  66.7f;
+  const bool waveform_size_x_is_one_third  = _WAVEFORM_SIZE.x < 100.f;
+
+  const bool is_gtid_00 = all(GTID.xy == 0u);
+
+  [branch]
+  if (is_gtid_00)
+  {
+    Group_Column_Max0 = uint(INT_MAX);
+    Group_Column_Max1 = uint(INT_MAX);
+    Group_Column_Max2 = uint(INT_MAX);
+    Group_Column_Min0 = 0u;
+    Group_Column_Min1 = 0u;
+    Group_Column_Min2 = 0u;
+    Group_Max_Store_X = 0u;
+  }
+
+  barrier();
+
+  const float column_max_min_coord_x_mul = waveform_size_x_is_one_fourth ? 2.f
+                                         : waveform_size_x_is_one_third  ? 2.66666666f
+                                         :                                 4.f;
+
+  const float coord_x_multiplier = waveform_size_x_is_one_fourth ? 0.25f
+                                 : waveform_size_x_is_one_third  ? 0.333333333f
+                                 :                                 0.5f;
+
+#ifdef IS_HDR_CSP
+  const int waveform_height_int = _WAVEFORM_SIZE.y < 100.f ? int((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
+                                                           : int(TEXTURE_WAVEFORM_HEIGHT);
+#else
+  const int waveform_height_int = int(TEXTURE_WAVEFORM_HEIGHT);
+#endif
+  const float waveform_height_float = (float)waveform_height_int;
 
   BRANCH()
   if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
   {
     float pixel_nits_encoded;
 
-    float pixel_nits = Calc_Nits_Normalised(pixel);
+    float pixel_nits = Calc_Nits_Normalised(Pixel);
 
 #ifdef IS_HDR_CSP
 
@@ -456,14 +553,44 @@ void RenderWaveform
 
 #endif
 
-    int coord_x = float(Fetch_Pos.x)
-                * 0.5f;
+    const int coord_x = float(Fetch_Pos.x)
+                      * coord_x_multiplier;
 
-    int coord_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                - pixel_nits_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                + 0.5f;
+    const int coord_y = waveform_height_int
+                      - int(pixel_nits_encoded * waveform_height_float + 0.5f);
 
-    atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
+
+    const uint index = coord_x - group_base_pos_x;
+
+    atomicMax(Group_Max_Store_X, index);
+
+    atomicMin(Group_Column_Max0[index], coord_y);
+    atomicMax(Group_Column_Min0[index], coord_y);
+
+    barrier();
+
+    [branch]
+    if (GTID.x <= Group_Max_Store_X
+     && GTID.y == 0u)
+    {
+      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+    }
+
+    [branch]
+    if
+    (
+      coord_y <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coord_y >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+    }
   }
   else
   BRANCH()
@@ -473,7 +600,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(pixel);
+    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
     pixel_max_cll_encoded = Csp::Trc::LinearTo::Pq(MAXRGB(pixel_cll));
 
@@ -481,18 +608,48 @@ void RenderWaveform
     || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
     //this is more performant to do
-    pixel_max_cll_encoded = MAXRGB(pixel);
+    pixel_max_cll_encoded = MAXRGB(Pixel);
 
 #endif
 
-    int coord_x = float(Fetch_Pos.x)
-                * 0.5f;
+    const int coord_x = float(Fetch_Pos.x)
+                      * coord_x_multiplier;
 
-    int coord_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                - pixel_max_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                + 0.5f;
+    const int coord_y = waveform_height_int
+                      - int(pixel_max_cll_encoded * waveform_height_float + 0.5f);
 
-    atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
+
+    const uint index = coord_x - group_base_pos_x;
+
+    atomicMax(Group_Max_Store_X, index);
+
+    atomicMin(Group_Column_Max0[index], coord_y);
+    atomicMax(Group_Column_Min0[index], coord_y);
+
+    barrier();
+
+    [branch]
+    if (GTID.x <= Group_Max_Store_X
+     && GTID.y == 0u)
+    {
+      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+    }
+
+    [branch]
+    if
+    (
+      coord_y <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coord_y >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+    }
   }
   else
   BRANCH()
@@ -502,7 +659,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(pixel);
+    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
     pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
 
@@ -510,20 +667,73 @@ void RenderWaveform
     || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
     //this is more performant to do
-    pixel_cll_encoded = pixel;
+    pixel_cll_encoded = Pixel;
 
 #endif
 
-    int coord_x = float(Fetch_Pos.x)
-                * 0.5f;
+    const int coord_x = float(Fetch_Pos.x)
+                      * coord_x_multiplier;
 
-    int3 coords_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                  - pixel_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                  + 0.5f;
+    const int3 coords_y = waveform_height_int
+                        - int3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
-    atomicAdd(StorageWaveform, int3(coord_x, coords_y.r, 0), 1u);
-    atomicAdd(StorageWaveform, int3(coord_x, coords_y.g, 1), 1u);
-    atomicAdd(StorageWaveform, int3(coord_x, coords_y.b, 2), 1u);
+    const int pixel_max_cll_encoded_for_max = MINRGB(coords_y);
+    const int pixel_min_cll_encoded_for_min = MAXRGB(coords_y);
+
+    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
+
+    const uint index = coord_x - group_base_pos_x;
+
+    atomicMax(Group_Max_Store_X, index);
+
+    atomicMin(Group_Column_Max0[index], pixel_max_cll_encoded_for_max);
+    atomicMax(Group_Column_Min0[index], pixel_min_cll_encoded_for_min);
+
+    barrier();
+
+    [branch]
+    if (GTID.x <= Group_Max_Store_X
+     && GTID.y == 0u)
+    {
+      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+    }
+
+    [branch]
+    if
+    (
+      coords_y.r <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.r >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coord_x, coords_y.r, 0), 1u);
+    }
+    [branch]
+    if
+    (
+      coords_y.g <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.g >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coord_x, coords_y.g, 1), 1u);
+    }
+    [branch]
+    if
+    (
+      coords_y.b <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.b >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coord_x, coords_y.b, 2), 1u);
+    }
   }
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
   {
@@ -531,7 +741,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(pixel);
+    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
     pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
 
@@ -539,29 +749,100 @@ void RenderWaveform
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-    pixel_cll_encoded = pixel;
+    pixel_cll_encoded = Pixel;
 
 #endif
 
-    float x_normalised = float(Fetch_Pos.x)
-                       / BUFFER_WIDTH_MINUS_1_FLOAT;
+    const float x_normalised = float(Fetch_Pos.x)
+                             / BUFFER_WIDTH_MINUS_1_FLOAT;
 
-    const uint waveform_width_div3 = uint(TEXTURE_WAVEFORM_WIDTH) / 3u;
+    const uint waveform_width_div3 = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_WIDTH / 6)
+                                   : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_WIDTH * 2 / 9)
+                                   :                             uint(TEXTURE_WAVEFORM_WIDTH / 3);
+
+    const float waveform_width_div3_float = float(waveform_width_div3);
 
     int3 coords_x;
 
-    coords_x.r = x_normalised * float(waveform_width_div3);
+    coords_x.r = int(x_normalised * waveform_width_div3_float);
 
     coords_x.g = coords_x.r + waveform_width_div3;
     coords_x.b = coords_x.g + waveform_width_div3;
 
-    int3 coords_y = float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                  - pixel_cll_encoded * float(TEXTURE_WAVEFORM_USED_HEIGHT)
-                  + 0.5f;
+    const int3 coords_y = waveform_height_int
+                        - int3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
-    atomicAdd(StorageWaveform, int3(coords_x.r, coords_y.r, 0), 1u);
-    atomicAdd(StorageWaveform, int3(coords_x.g, coords_y.g, 0), 1u);
-    atomicAdd(StorageWaveform, int3(coords_x.b, coords_y.b, 0), 1u);
+    const float group_base_x_normalised = float((uint(Fetch_Pos.x) / 8u) * 8u)
+                                        / BUFFER_WIDTH_MINUS_1_FLOAT;
+
+    const uint group_base_pos_x = uint(group_base_x_normalised * waveform_width_div3_float);
+
+    const uint index = coords_x.r - group_base_pos_x;
+
+    atomicMax(Group_Max_Store_X, index);
+
+    atomicMin(Group_Column_Max0[index], coords_y.r);
+    atomicMin(Group_Column_Max1[index], coords_y.g);
+    atomicMin(Group_Column_Max2[index], coords_y.b);
+
+    atomicMax(Group_Column_Min0[index], coords_y.r);
+    atomicMax(Group_Column_Min1[index], coords_y.g);
+    atomicMax(Group_Column_Min2[index], coords_y.b);
+
+    barrier();
+
+    [branch]
+    if (GTID.x <= Group_Max_Store_X
+     && GTID.y == 0u)
+    {
+      int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+
+      column_max_min_coord_x += waveform_width_div3;
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max1[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min1[GTID.x]);
+
+      column_max_min_coord_x += waveform_width_div3;
+      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max2[GTID.x]);
+      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min2[GTID.x]);
+    }
+
+    [branch]
+    if
+    (
+      coords_y.r <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.r >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coords_x.r, coords_y.r, 0), 1u);
+    }
+    [branch]
+    if
+    (
+      coords_y.g <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.g >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coords_x.g, coords_y.g, 0), 1u);
+    }
+    [branch]
+    if
+    (
+      coords_y.b <  waveform_height_int
+#ifdef IS_FLOAT_HDR_CSP
+   && coords_y.b >= 0
+#endif
+    )
+    {
+      atomicAdd(StorageWaveform, int3(coords_x.b, coords_y.b, 0), 1u);
+    }
+
   }
 
   return;
@@ -597,33 +878,26 @@ void CS_Get_Max_Waveform_Value
     barrier();
 
     // worth to do performance wise
-#if (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK) \
-  && defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
+    uint2 active_texture_size;
 
-    const bool is_active_area = all(DTID.xy < uint2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_HEIGHT));
+    active_texture_size.x = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_WIDTH / 2)
+                          : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_WIDTH * 2 / 3)
+                          :                             uint(TEXTURE_WAVEFORM_WIDTH);
 
-#elif (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK))
-
-    const bool is_active_area = DTID.x < uint(TEXTURE_WAVEFORM_WIDTH);
-
-#elif (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
-
-    const bool is_active_area = DTID.y < uint(TEXTURE_WAVEFORM_HEIGHT);
-
+#ifdef IS_HDR_CSP
+    active_texture_size.y = _WAVEFORM_SIZE.y < 100.f ? uint((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
+                                                     : uint(TEXTURE_WAVEFORM_HEIGHT);
+#else
+    active_texture_size.y = uint(TEXTURE_WAVEFORM_HEIGHT);
 #endif
 
-#if (defined(GET_MAX_WAVEFORM_VALUE_NEEDS_X_CHECK) \
-  || defined(GET_MAX_WAVEFORM_VALUE_NEEDS_Y_CHECK))
     [branch]
-    if (is_active_area)
-#endif
+    if (all(DTID.xy < active_texture_size))
     {
       static const int2 dtid_as_int = int2(DTID.xy);
 
       BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
-       || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
-       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+      if (_WAVEFORM_MODE != WAVEFORM_MODE_RGB_COMBINED)
       {
         uint local_value = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 0));
 
@@ -1398,606 +1672,360 @@ void RenderWaveformScale
 }
 
 
-int GetNitsLine
+void VS_Prepare_Waveform_Render_Colour
 (
-  const float Nits,
-  const float WaveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                  ,
-  const int   WaveDatCutoffOffset
-#endif
+  in                  uint   VertexID         : SV_VertexID,
+  out                 float4 Position         : SV_Position,
+  out nointerpolation float  Waveform_Max_Inv : Waveform_Max_Inv
 )
 {
+  Position.zw = float2(0.f, 1.f);
+
+  const float target_width = _WAVEFORM_SIZE.x <  66.7f ? float(TEXTURE_WAVEFORM_WIDTH / 2)
+                           : _WAVEFORM_SIZE.x < 100.f  ? float(TEXTURE_WAVEFORM_WIDTH * 2 / 3)
+                           :                             float(TEXTURE_WAVEFORM_WIDTH);
+
 #ifdef IS_HDR_CSP
-  float encodedNits = Csp::Trc::NitsTo::Pq(Nits);
+  const float target_height = _WAVEFORM_SIZE.y < 100.f ? float((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
+                                                       : float(TEXTURE_WAVEFORM_HEIGHT);
 #else
-  float encodedNits = ENCODE_SDR(Nits / 100.f);
+  const float target_height = float(TEXTURE_WAVEFORM_HEIGHT);
 #endif
 
-  return int((float(TEXTURE_WAVEFORM_USED_HEIGHT)
-            - (encodedNits * float(TEXTURE_WAVEFORM_USED_HEIGHT)))
-           * WaveformScaleFactorY + 0.5f)
-#ifdef IS_HDR_CSP
-       - WaveDatCutoffOffset
-#endif
-                            ;
-}
+  float2 position_xy = float2(target_width, target_height);
 
-
-// Vertex shader generating a triangle covering the entire screen.
-// Calculate values only "once" (3 times because it's 3 vertices)
-// for the pixel shader.
-void VS_PrepareRenderWaveformToScale
-(
-  in                  uint   VertexID : SV_VertexID,
-  out                 float4 Position : SV_Position,
-  out nointerpolation int4   WaveDat0 : WaveDat0,
-  out nointerpolation int4   WaveDat1 : WaveDat1,
-  out nointerpolation int4   WaveDat2 : WaveDat2
-#ifdef IS_HDR_CSP
-                                                ,
-  out nointerpolation int    WaveDat3 : WaveDat3
-#endif
-                                                ,
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-  out nointerpolation float2 WaveDat4 : WaveDat4
-#else
-  out nointerpolation float  WaveDat4 : WaveDat4
-#endif
-)
-{
-  float2 texCoord;
-  texCoord.x = (VertexID == 2) ? 2.f
-                               : 0.f;
-  texCoord.y = (VertexID == 1) ? 2.f
-                               : 0.f;
-  Position = float4(texCoord * float2(2.f, -2.f) + float2(-1.f, 1.f), 0.f, 1.f);
-
-#define WaveformActiveArea   WaveDat0.xy
-#define OffsetToWaveformArea WaveDat0.zw
-
-#define MinNitsLineY WaveDat1.x
-#define MaxNitsLineY WaveDat2.x
-#define MinRLineY    WaveDat1.r
-#define MinGLineY    WaveDat1.g
-#define MinBLineY    WaveDat1.b
-#define MaxRLineY    WaveDat2.r
-#define MaxGLineY    WaveDat2.g
-#define MaxBLineY    WaveDat2.b
-#define GLinePartX   WaveDat1.w
-#define BLinePartX   WaveDat2.w
-#define Waveform_Max WaveDat4.x
-
-  WaveDat0    =  0;
-  MinRLineY   =  INT_MAX;
-  MinGLineY   =  INT_MAX;
-  MinBLineY   =  INT_MAX;
-  MaxRLineY   = -INT_MAX;
-  MaxGLineY   = -INT_MAX;
-  MaxBLineY   = -INT_MAX;
-  GLinePartX  = -INT_MAX;
-  BLinePartX  = -INT_MAX;
-  WaveDat4    = 0.f;
-
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-
-  #define WaveformSizeYFactor WaveDat4.y
-#endif
-
-#ifdef IS_HDR_CSP
-  #define WaveformCutoffOffset WaveDat3
-
-  WaveformCutoffOffset = 0;
-#else
-  #define WaveformCutoffOffset 0
-#endif
-
-  BRANCH()
-  if (_SHOW_WAVEFORM)
+  [flatten]
+  if (VertexID == 1u)
   {
-    Waveform::SWaveformData waveDat = Waveform::GetData();
-
-    WaveformActiveArea = waveDat.waveformArea;
-
-    OffsetToWaveformArea = waveDat.offsetToFrame
-                         + waveDat.frameSize;
-
-#ifdef IS_HDR_CSP
-    WaveformCutoffOffset = waveDat.cutoffOffsetAt100PercentScale;
-#endif
-
-    float waveformSizeY = _WAVEFORM_SIZE.y / DIV_100;
-
-#ifndef IS_HDR_CSP
-    waveformSizeY += 3.f - (1.f - waveformSizeY) * 6.f;
-#endif
-
-    const float waveformScaleFactorY = clamp(waveformSizeY, WAVEFORM_SCALE_FACTOR_CLAMP_MIN, WAVEFORM_SCALE_FACTOR_CLAMP_MAX.y);
-
-#ifdef IS_HDR_CSP
-  #define MAX_NITS_LINE_CUTOFF 10000.f
-#else
-  #define MAX_NITS_LINE_CUTOFF 100.f
-#endif
-
-    BRANCH()
-    if (_SHOW_WAVEFORM)
-    {
-      BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
-      {
-        const float minNits = tex1Dfetch(SamplerConsolidated, COORDS_MIN_NITS_VALUE);
-
-        [branch]
-        if (minNits > 0.f
-         && minNits < MAX_NITS_LINE_CUTOFF)
-        {
-          MinNitsLineY = GetNitsLine(minNits,
-                                     waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                   , waveDat.cutoffOffset
-#endif
-                                    );
-        }
-      }
-      else
-      BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
-       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
-      {
-        const float minCll = tex1Dfetch(SamplerConsolidated, COORDS_MIN_CLL_VALUE);
-
-        [branch]
-        if (minCll > 0.f
-         && minCll < MAX_NITS_LINE_CUTOFF)
-        {
-          MinNitsLineY = GetNitsLine(minCll,
-                                     waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                   , waveDat.cutoffOffset
-#endif
-                                    );
-        }
-      }
-      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-      {
-        const float3 minRgb = float3(tex1Dfetch(SamplerConsolidated, COORDS_MIN_R_VALUE),
-                                     tex1Dfetch(SamplerConsolidated, COORDS_MIN_G_VALUE),
-                                     tex1Dfetch(SamplerConsolidated, COORDS_MIN_B_VALUE));
-
-        const bool3 drawMinRgbLine = minRgb > 0.f
-                                  && minRgb < MAX_NITS_LINE_CUTOFF;
-
-        [branch]
-        if (drawMinRgbLine.r)
-        {
-          MinRLineY = GetNitsLine(minRgb.r,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-        [branch]
-        if (drawMinRgbLine.g)
-        {
-          MinGLineY = GetNitsLine(minRgb.g,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-        [branch]
-        if (drawMinRgbLine.b)
-        {
-          MinBLineY = GetNitsLine(minRgb.b,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-      }
-
-      BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE)
-      {
-        const float maxNits = tex1Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
-
-        [branch]
-        if (maxNits > 0.f
-         && maxNits < MAX_NITS_LINE_CUTOFF)
-        {
-          MaxNitsLineY = GetNitsLine(maxNits,
-                                     waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                   , waveDat.cutoffOffset
-#endif
-                                    );
-        }
-      }
-      else
-      BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL
-       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
-      {
-        const float maxCll = tex1Dfetch(SamplerConsolidated, COORDS_MAX_CLL_VALUE);
-
-        [branch]
-        if (maxCll > 0.f
-         && maxCll < MAX_NITS_LINE_CUTOFF)
-        {
-          MaxNitsLineY = GetNitsLine(maxCll,
-                                     waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                   , waveDat.cutoffOffset
-#endif
-                                    );
-        }
-      }
-      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-      {
-        const float3 maxRgb = float3(tex1Dfetch(SamplerConsolidated, COORDS_MAX_R_VALUE),
-                                     tex1Dfetch(SamplerConsolidated, COORDS_MAX_G_VALUE),
-                                     tex1Dfetch(SamplerConsolidated, COORDS_MAX_B_VALUE));
-
-        const bool3 drawMaxRgbLine = maxRgb > 0.f
-                                  && maxRgb < MAX_NITS_LINE_CUTOFF;
-
-        [branch]
-        if (drawMaxRgbLine.r)
-        {
-          MaxRLineY = GetNitsLine(maxRgb.r,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-        [branch]
-        if (drawMaxRgbLine.g)
-        {
-          MaxGLineY = GetNitsLine(maxRgb.g,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-        [branch]
-        if (drawMaxRgbLine.b)
-        {
-          MaxBLineY = GetNitsLine(maxRgb.b,
-                                  waveformScaleFactorY
-#ifdef IS_HDR_CSP
-                                , waveDat.cutoffOffset
-#endif
-                                 );
-        }
-      }
-    }
-
-    BRANCH()
-    if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-    {
-      GLinePartX = uint(waveDat.waveformArea.x) / 3u;
-      BLinePartX = GLinePartX + GLinePartX;
-    }
-
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-
-    WaveformSizeYFactor  = _WAVEFORM_SIZE.y + (300.f - ((800.f / 9.f) - _WAVEFORM_SIZE.y) * 6.f);
-    WaveformSizeYFactor *= (3.f / 350.f);
-    WaveformSizeYFactor  = 1.f / WaveformSizeYFactor;
-
-#endif
-
-    float waveform_max = (float)tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX);
-
-    Waveform_Max = waveform_max;
+    position_xy.x = -position_xy.x;
   }
+  else
+  [flatten]
+  if (VertexID == 2u)
+  {
+    position_xy.y = -position_xy.y;
+  }
+
+  Position.xy = GetPositonCoordsFromRegularCoords(position_xy, float2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_HEIGHT));
+
+  Waveform_Max_Inv = 1.f
+                   / (float)tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX);
+
+  return;
 }
 
-void PS_RenderWaveformToScale
+void PS_Waveform_Render_Colour
 (
-  in                  float4 Position : SV_Position,
-  in  nointerpolation int4   WaveDat0 : WaveDat0,
-  in  nointerpolation int4   WaveDat1 : WaveDat1,
-  in  nointerpolation int4   WaveDat2 : WaveDat2,
-#ifdef IS_HDR_CSP
-  in  nointerpolation int    WaveDat3 : WaveDat3,
-#endif
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-  in  nointerpolation float2 WaveDat4 : WaveDat4,
-#else
-  in  nointerpolation float  WaveDat4 : WaveDat4,
-#endif
-  out                 float4 Out      : SV_Target0
+  in                  float4 Position         : SV_Position,
+  in  nointerpolation float  Waveform_Max_Inv : Waveform_Max_Inv,
+  out                 float4 Out              : SV_Target0
 )
 {
-  Out = 0.f;
+  Out = (float4)0.f;
 
   BRANCH()
   if (_SHOW_WAVEFORM)
   {
-    const int2 pureCoordAsInt = int2(Position.xy);
+    const int2 position_as_int = int2(Position.xy);
 
-    const int2 scaleCoords = pureCoordAsInt;
+#ifdef IS_HDR_CSP
+    const int waveform_height_int = _WAVEFORM_SIZE.y < 100.f ? int((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
+                                                             : int(TEXTURE_WAVEFORM_HEIGHT);
+#else
+    const int waveform_height_int = int(TEXTURE_WAVEFORM_HEIGHT);
+#endif
 
-    const int2 waveformCoords = pureCoordAsInt - OffsetToWaveformArea;
+    const float waveform_height_float = float(waveform_height_int);
 
-    float2 scale_colour = tex2Dfetch(SamplerWaveformScale, scaleCoords).xy;
+    const int clamp_fetch_x = _WAVEFORM_SIZE.x <  66.7f ? int(TEXTURE_WAVEFORM_WIDTH / 2 - 1)
+                            : _WAVEFORM_SIZE.x < 100.f  ? int(TEXTURE_WAVEFORM_WIDTH * 2 / 3 - 1)
+                            :                             int(TEXTURE_WAVEFORM_WIDTH - 1);
 
-    float4 yccrccbc_out = float4(scale_colour.x, (127.f / 255.f).xx, scale_colour.y);
+    const int column_max = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 0));
+          int column_min = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 1));
+
+    column_min = max(column_min, column_max);
+
+    const int pos_x_left = clamp(position_as_int.x - 1, 0, clamp_fetch_x);
+
+    const int column_max_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 0));
+          int column_min_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 1));
+
+    column_min_left = max(column_min_left, column_max_left);
+
+    const int pos_x_right = clamp(position_as_int.x + 1, 0, clamp_fetch_x);
+
+    const int column_max_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 0));
+          int column_min_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 1));
+
+    column_min_right = max(column_min_right, column_max_right);
+
+#ifdef IS_HDR_CSP
+    const int column_extra            = _WAVEFORM_SIZE.y < 100.f ? 2 : 4;
+    const int column_left_right_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
+#else
+    const int column_extra            = 2;
+    const int column_left_right_extra = 1;
+#endif
+
+    const int column_max_extra = column_max - column_extra;
+    const int column_min_extra = column_min + column_extra;
+
+    const int column_max_extra_left = column_max_left - column_left_right_extra;
+    const int column_min_extra_left = column_min_left + column_left_right_extra;
+
+    const int column_max_extra_right = column_max_right - column_left_right_extra;
+    const int column_min_extra_right = column_min_right + column_left_right_extra;
+
+
+    int  waveform_div_3 = -100;
+    bool is_red_part    = false;
+    bool is_green_part  = false;
+
+    int2 max_min_value_pos = -100;
+
+    BRANCH()
+    if (_WAVEFORM_MODE != WAVEFORM_MODE_RGB_INDIVIDUALLY)
+    {
+      // for max CLL it needs to be max of min R/G/B CLL...
+      max_min_value_pos = _WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
+                        ? int2(COORDS_MAX_NITS_VALUE, COORDS_MIN_NITS_VALUE)
+                        : int2(COORDS_MAX_CLL_VALUE,  COORDS_MIN_CLL_VALUE);
+    }
+    else
+    {
+      waveform_div_3 = _WAVEFORM_SIZE.x <  66.7f ? (TEXTURE_WAVEFORM_WIDTH / 6)
+                     : _WAVEFORM_SIZE.x < 100.f  ? (TEXTURE_WAVEFORM_WIDTH * 2 / 9)
+                     :                             (TEXTURE_WAVEFORM_WIDTH / 3);
+
+      is_red_part   = position_as_int.x < waveform_div_3;
+      is_green_part = position_as_int.x < waveform_div_3 * 2;
+
+      [flatten]
+      if (is_red_part)
+      {
+        max_min_value_pos = int2(COORDS_MAX_R_VALUE, COORDS_MIN_R_VALUE);
+      }
+      else
+      [flatten]
+      if (is_green_part)
+      {
+        max_min_value_pos = int2(COORDS_MAX_G_VALUE, COORDS_MIN_G_VALUE);
+      }
+      else
+      {
+        max_min_value_pos = int2(COORDS_MAX_B_VALUE, COORDS_MIN_B_VALUE);
+      }
+    }
+
+    const float max_value = tex1Dfetch(SamplerConsolidated, max_min_value_pos[0]);
+    const float min_value = tex1Dfetch(SamplerConsolidated, max_min_value_pos[1]);
+
+#ifdef IS_HDR_CSP
+    const float max_value_encoded = Csp::Trc::NitsTo::Pq(max_value);
+    const float min_value_encoded = Csp::Trc::NitsTo::Pq(min_value);
+#else
+    const float max_value_encoded = ENCODE_SDR(max_value / DIV_100);
+    const float min_value_encoded = ENCODE_SDR(min_value / DIV_100);
+#endif
+
+#ifdef IS_HDR_CSP
+    const int max_min_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
+#else
+    const int max_min_extra = 1;
+#endif
+
+    const int max_value_coord_y = waveform_height_int
+                                - int(max_value_encoded * waveform_height_float + 0.5f);
+
+    const int min_value_coord_y = waveform_height_int
+                                - int(min_value_encoded * waveform_height_float + 0.5f);
+
+    const int max_value_extra = max_value_coord_y - max_min_extra;
+    const int min_value_extra = min_value_coord_y + max_min_extra;
 
     [branch]
-    if (all(waveformCoords >= 0)
-     && all(waveformCoords < WaveformActiveArea))
+    if ((_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y < max_value_coord_y && position_as_int.y >= max_value_extra)
+     || (_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y > min_value_coord_y && position_as_int.y <= min_value_extra))
     {
-      static const bool isRPart = waveformCoords.x  < GLinePartX;
-      static const bool isGPart = waveformCoords.x  < BLinePartX;
-      static const bool isBPart = waveformCoords.x >= BLinePartX;
 
-      int minLineY;
-      int maxLineY;
+#define WAVEFORM_HDR_ENCODING(x) \
+          (log2(x * 10000.f + 1.f) / log2(10001.f))
+
+#define WAVEFORM_HDR_DECODING(x) \
+          ((exp2(x * log2(10001.f)) - 1.f) / 10000.f)
 
       FLATTEN()
-      if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
+      if (_WAVEFORM_MODE != WAVEFORM_MODE_RGB_COMBINED)
       {
-        minLineY = MinNitsLineY;
-        maxLineY = MaxNitsLineY;
-      }
-      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-      {
-        [flatten]
-        if (isRPart)
-        {
-          minLineY = MinRLineY;
-          maxLineY = MaxRLineY;
-        }
-        else
-        [flatten]
-        if (isGPart)
-        {
-          minLineY = MinGLineY;
-          maxLineY = MaxGLineY;
-        }
-        else
-        {
-          minLineY = MinBLineY;
-          maxLineY = MaxBLineY;
-        }
-      }
-
-      [branch]
-      if
-      (
-        (
-          _WAVEFORM_SHOW_MIN_NITS_LINE
-#ifdef IS_QHD_OR_HIGHER_RES
-        && (waveformCoords.y == minLineY
-         || waveformCoords.y == minLineY - 1)
-#else
-        && waveformCoords.y == minLineY
-#endif
-        )
-     || (
-          _WAVEFORM_SHOW_MAX_NITS_LINE
-#ifdef IS_QHD_OR_HIGHER_RES
-        && (waveformCoords.y == maxLineY
-         || waveformCoords.y == maxLineY + 1)
-#else
-        && waveformCoords.y == maxLineY
-#endif
-        )
-      )
-      {
-        Out = float4(1.f, (127.f / 255.f).xx, 1.f);
-        return;
+        Out = (float4)1.f;
       }
       else
       {
-        bool waveformCoordsGTEMaxLine;
-        bool waveformCoordsSTEMinLine;
-
-        FLATTEN()
-        if (_WAVEFORM_MODE < WAVEFORM_MODE_RGB_INDIVIDUALLY) // WAVEFORM_MODE_LUMINANCE or WAVEFORM_MODE_MAX_CLL
-        {
-          waveformCoordsGTEMaxLine = waveformCoords.y >= MaxNitsLineY;
-          waveformCoordsSTEMinLine = waveformCoords.y <= MinNitsLineY;
-        }
-        else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
-        {
-          [flatten]
-          if (isRPart)
-          {
-            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxRLineY;
-            waveformCoordsSTEMinLine = waveformCoords.y <= MinRLineY;
-          }
-          else
-          [flatten]
-          if (isGPart)
-          {
-            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxGLineY;
-            waveformCoordsSTEMinLine = waveformCoords.y <= MinGLineY;
-          }
-          else
-          {
-            waveformCoordsGTEMaxLine = waveformCoords.y >= MaxBLineY;
-            waveformCoordsSTEMinLine = waveformCoords.y <= MinBLineY;
-          }
-        }
-
-        yccrccbc_out.a = 1.f;
-
-        [branch]
-        if (waveformCoordsGTEMaxLine
-         && waveformCoordsSTEMinLine)
-        {
-          int2 waveform_fetch_coords = waveformCoords;
-
-#if (!defined(IS_HDR_CSP) \
-  && BUFFER_COLOR_BIT_DEPTH != 10)
-
-          waveform_fetch_coords.x = float(waveform_fetch_coords.x)
-                                  / float(WaveformActiveArea.x)
-                                  * float(TEXTURE_WAVEFORM_WIDTH);
-
-          waveform_fetch_coords.y = float(waveform_fetch_coords.y)
-                                  * WaveformSizeYFactor;
-
+#ifdef IS_HDR_CSP
+        Out = float4(WAVEFORM_HDR_ENCODING(Csp::Mat::Bt709ToXYZ[1].g).xxx, 1.f);
 #else
+        Out = float4(ENCODE_SDR(Csp::Mat::Bt709ToXYZ[1].g).xxx, 1.f);
+#endif
+      }
+    }
+    else
+    [branch]
+    if ((_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y
+      && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
+                                         || position_as_int.y >= column_max_extra_left
+                                         || position_as_int.y >= column_max_extra_right))
+     || (_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y
+      && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
+                                         || position_as_int.y <= column_min_extra_left
+                                         || position_as_int.y <= column_min_extra_right)))
+    {
+      float grey_out = WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE / DIV_100;
 
-          waveform_fetch_coords = float2(waveform_fetch_coords)
-                                / float2(WaveformActiveArea.x, WaveformActiveArea.y)
-                                * float2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_USED_HEIGHT - WaveformCutoffOffset);
+      BRANCH()
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+      {
+        grey_out *= Csp::Mat::Bt709ToXYZ[1].g;
+      }
 
-          waveform_fetch_coords.y += WaveformCutoffOffset;
-
+#ifdef IS_HDR_CSP
+      grey_out = WAVEFORM_HDR_ENCODING(grey_out);
+#else
+      grey_out = ENCODE_SDR(grey_out);
 #endif
 
-          BRANCH()
-          if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
-           || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      Out = float4(grey_out.xxx, 1.f);
+    }
+    else
+    {
+      BRANCH()
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
+       || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
+      {
+        uint waveform_current = tex3Dfetch(SamplerWaveform, int3(position_as_int, 0));
+
+        [branch]
+        if (waveform_current > 0u)
+        {
+          float waveform_colour = float(waveform_current)
+                                * Waveform_Max_Inv;
+
+          waveform_colour = pow(waveform_colour, 1.f / 1.5f);
+
+          static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
+
+          waveform_colour += plus_value;
+
+#ifdef IS_HDR_CSP
+          float y = WAVEFORM_HDR_ENCODING(waveform_colour);
+#else
+          float y = ENCODE_SDR(waveform_colour);
+#endif
+
+          Out = float4(y.xxx, 1.f);
+        }
+      }
+      else
+      BRANCH()
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+      {
+        uint3 waveform_current;
+
+        waveform_current.r = tex3Dfetch(SamplerWaveform, int3(position_as_int, 0));
+        waveform_current.g = tex3Dfetch(SamplerWaveform, int3(position_as_int, 1));
+        waveform_current.b = tex3Dfetch(SamplerWaveform, int3(position_as_int, 2));
+
+        const bool3 waveform_current_above_0 = waveform_current.rgb > 0u;
+
+        [branch]
+        if (any(waveform_current_above_0))
+        {
+          float3 waveform_colour = float3(waveform_current.rgb)
+                                 * Waveform_Max_Inv;
+
+          float waveform_luminance = dot(Csp::Mat::Bt709ToXYZ[1], waveform_colour);
+
+          waveform_colour *= pow(waveform_luminance, 1.f / 1.5f)
+                           / waveform_luminance;
+
+          static const float3 plus_values = (1.f / float(255u * 255u)) * 1.05f;
+
+          waveform_colour += waveform_current_above_0 ? plus_values
+                                                      : 0.f;
+
+          waveform_colour = saturate(waveform_colour);
+
+          float3 yrb;
+
+          yrb = float3(dot(waveform_colour, Csp::Mat::Bt709ToXYZ[1]), waveform_colour.rb);
+
+#ifdef IS_HDR_CSP
+          yrb = WAVEFORM_HDR_ENCODING(yrb);
+#else
+          yrb = ENCODE_SDR(yrb);
+#endif
+
+          Out = float4(yrb, 1.f);
+        }
+      }
+      else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+      {
+        uint waveform_current = tex3Dfetch(SamplerWaveform, uint3(position_as_int, 0));
+
+        [branch]
+        if (waveform_current > 0u)
+        {
+          float waveform_colour_channel = float(waveform_current)
+                                        * Waveform_Max_Inv;
+
+          waveform_colour_channel = pow(waveform_colour_channel, 1.f / 1.5f);
+
+          static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
+
+          waveform_colour_channel += plus_value;
+
+          float3 waveform_colour = (float3)0.f;
+          [branch]
+          if (is_red_part)
           {
-            uint waveform_current = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 0));
-
-            [branch]
-            if (waveform_current > 0u)
-            {
-              float waveform_colour = float(waveform_current)
-                                    / Waveform_Max;
-
-              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
-
-              waveform_colour = max(pow(waveform_colour, 1.f / 1.25f), 0.f);
-
-              static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
-
-              waveform_colour += plus_value;
-
-              float waveform_out = scale_colour
-                                 + waveform_colour;
-
-              float yc = sqrt(waveform_out);
-
-              yccrccbc_out[0] = yc;
-            }
+            waveform_colour.r  = waveform_colour_channel;
+#ifndef IS_HDR_CSP
+            waveform_colour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
+            waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1]);
+            waveform_colour    = saturate(waveform_colour);
+#endif
           }
           else
-          BRANCH()
-          if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+          [branch]
+          if (is_green_part)
           {
-            uint3 waveform_current;
-
-            waveform_current.r = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 0));
-            waveform_current.g = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 1));
-            waveform_current.b = tex3Dfetch(SamplerWaveform, int3(waveform_fetch_coords, 2));
-
-            const bool3 waveform_current_above_0 = waveform_current.rgb > 0u;
-
-            [branch]
-            if (any(waveform_current_above_0))
-            {
-              float3 waveform_colour = float3(waveform_current.rgb)
-                                     / Waveform_Max;
-
-              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
-
-              float waveform_luminance = dot(Csp::Mat::Bt709ToXYZ[1], waveform_colour);
-
-              waveform_colour *= pow(waveform_luminance, 1.f / 1.1f)
-                               / waveform_luminance;
-
-              static const float3 plus_values = (1.f / float(255u * 255u)) * 1.05f;
-
-              waveform_colour += waveform_current_above_0 ? plus_values
-                                                          : 0.f;
-
-              float3 colour_out = saturate(waveform_colour + scale_colour.xxx);
-
-              float3 yccrccbc;
-
-              yccrccbc[0] = sqrt(dot(colour_out, Csp::Ycbcr::K_Bt709));
-
-              yccrccbc.yz = sqrt(colour_out.rb) - yccrccbc[0];
-
-              yccrccbc.yz *= yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
-                                                : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
-
-              yccrccbc.yz += (127.f / 255.f);
-
-              yccrccbc_out.xyz = yccrccbc;
-            }
+            waveform_colour.g = waveform_colour_channel;
           }
-          else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
+          else
           {
-            uint waveform_current = tex3Dfetch(SamplerWaveform, uint3(waveform_fetch_coords, 0));
-
-            [branch]
-            if (waveform_current > 0u)
-            {
-              float waveform_colour_channel = float(waveform_current)
-                                            / Waveform_Max;
-
-              float scale_colour = yccrccbc_out[0] * yccrccbc_out[0];
-
-              waveform_colour_channel = pow(waveform_colour_channel, 1.f / 1.25f);
-
-              static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
-
-              waveform_colour_channel += plus_value;
-
-              float3 waveform_colour = (float3)0.f;
-              [branch]
-              if (isRPart)
-              {
-                waveform_colour.r  = waveform_colour_channel;
-                waveform_colour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
-                waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1]);
-                waveform_colour    = saturate(waveform_colour);
-              }
-              else
-              [branch]
-              if (isGPart)
-              {
-                waveform_colour.g = waveform_colour_channel;
-              }
-              else
-              {
-                waveform_colour.b  = waveform_colour_channel;
-                waveform_colour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
-                waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1]);
-                waveform_colour    = saturate(waveform_colour);
-              }
-
-
-              float3 colour_out = saturate(waveform_colour + scale_colour.xxx);
-
-              float3 yccrccbc;
-
-              yccrccbc[0] = sqrt(dot(colour_out, Csp::Ycbcr::K_Bt709));
-
-              yccrccbc.yz = sqrt(colour_out.rb) - yccrccbc[0];
-
-              yccrccbc.yz *= yccrccbc.yz <= 0.f ? float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[1], Csp::Ycbcr::PB_NB_Bt709_g2_enc[1])
-                                                : float2(Csp::Ycbcr::PR_NR_Bt709_g2_enc[0], Csp::Ycbcr::PB_NB_Bt709_g2_enc[0]);
-
-              yccrccbc.yz += (127.f / 255.f);
-
-              yccrccbc_out.xyz = yccrccbc;
-            }
+            waveform_colour.b  = waveform_colour_channel;
+#ifndef IS_HDR_CSP
+            waveform_colour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
+            waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1]);
+            waveform_colour    = saturate(waveform_colour);
+#endif
           }
+
+          float3 yrb;
+
+          yrb = float3(dot(Csp::Mat::Bt709ToXYZ[1], waveform_colour), waveform_colour.rb);
+
+#ifdef IS_HDR_CSP
+          yrb = WAVEFORM_HDR_ENCODING(yrb);
+#else
+          yrb = ENCODE_SDR(yrb);
+#endif
+
+          Out = float4(yrb, 1.f);
         }
       }
     }
 
-    Out = yccrccbc_out;
     return;
   }
   else
@@ -2019,4 +2047,15 @@ void CS_Clear_Texture_Waveform
   }
 
   return;
+}
+
+
+void PS_Reset_Texture_Waveform_Column_Max
+(
+  in  float4 Position : SV_Position,
+  out uint   Out      : SV_Target0
+)
+{
+  Out = Position.y < 1.f ? uint(INT_MAX)
+                         : 0u;
 }
