@@ -956,7 +956,8 @@ float3 MapBt709IntoCurrentCsp
 
 void CS_RenderWaveformAndGenerateCieDiagram
 (
-  uint  GID  : SV_GroupID,
+  uint3 GID  : SV_GroupID,
+  uint3 GTID : SV_GroupThreadID,
   uint3 DTID : SV_DispatchThreadID
 )
 {
@@ -989,7 +990,7 @@ void CS_RenderWaveformAndGenerateCieDiagram
     if (_SHOW_CIE
      && XYZ.y != 0.f)
     {
-      GenerateCieDiagram(XYZ, GID);
+      GenerateCieDiagram(XYZ, GID.x);
     }
 
     //ignore negative luminance and luminance being 0
