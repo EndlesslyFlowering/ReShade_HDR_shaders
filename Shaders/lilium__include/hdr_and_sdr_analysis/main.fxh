@@ -796,6 +796,19 @@ void PS_Clear()
 }
 
 
+float2 GetPositonCoordsFromRegularCoords
+(
+  const float2 RegularCoords,
+  const float2 TextureSize
+)
+{
+  float2 positionCoords = RegularCoords / TextureSize * 2.f;
+
+  return float2(positionCoords.x - 1.f,
+                1.f              - positionCoords.y);
+}
+
+
 void ExtendedReinhardTmo
 (
   inout float3 Colour,

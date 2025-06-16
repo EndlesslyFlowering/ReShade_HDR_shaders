@@ -18,18 +18,6 @@ float2 GetTexCoordsFromRegularCoords(const float2 TexCoordOffset)
   return TexCoordOffset / float2(FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT);
 }
 
-float2 GetPositonCoordsFromRegularCoords
-(
-  const float2 RegularCoords,
-  const float2 TextureSize
-)
-{
-  float2 positionCoords = RegularCoords / TextureSize * 2;
-
-  return float2(positionCoords.x - 1.f,
-                1.f              - positionCoords.y);
-}
-
 
 //extract all digits without causing float issues
 uint _6th
