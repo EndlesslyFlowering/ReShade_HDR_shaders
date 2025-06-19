@@ -361,9 +361,15 @@ void PS_InverseToneMapping(
         colour = sign(colour) * pow(abs(colour), 2.2f);
       }
       else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(colour, 2.2f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -393,9 +399,15 @@ void PS_InverseToneMapping(
         colour = sign(colour) * pow(abs(colour), 2.4f);
       }
       else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(colour, 2.4f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -455,9 +467,15 @@ void PS_InverseToneMapping(
         colour = sign_colour * pow(Csp::Trc::LinearTo::Srgb(abs_colour), 2.2f);
       }
       else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -487,14 +505,23 @@ void PS_InverseToneMapping(
         colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
       }
       else
+      BRANCH()
+      if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = Csp::Trc::SrgbTo::Linear(colour);
       }
+      else
+      {
+        colour = 0.f;
+      }
     }
     break;
     default:
-      break;
+    {
+      colour = 0.f;
+    }
+    break;
   }
 
   //colour = gamut(colour, EXPAND_GAMUT);
