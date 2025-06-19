@@ -168,9 +168,15 @@ void PS_MapSdrIntoHdr
         colour = sign(colour) * pow(abs(colour), 2.2f);
       }
       else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(colour, 2.2f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -200,9 +206,15 @@ void PS_MapSdrIntoHdr
         colour = sign(colour) * pow(abs(colour), 2.4f);
       }
       else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(colour, 2.4f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -262,9 +274,15 @@ void PS_MapSdrIntoHdr
         colour = sign_colour * pow(Csp::Trc::LinearTo::Srgb(abs_colour), 2.2f);
       }
       else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -294,9 +312,15 @@ void PS_MapSdrIntoHdr
         colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
       }
       else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
         colour = Csp::Trc::SrgbTo::Linear(colour);
+      }
+      else
+      {
+        colour = 0.f;
       }
     }
     break;
@@ -314,7 +338,10 @@ void PS_MapSdrIntoHdr
     }
     break;
     default:
-      break;
+    {
+      colour = 0.f;
+    }
+    break;
   }
 
   BRANCH()
