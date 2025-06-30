@@ -14,8 +14,8 @@ static const uint TEXTURE_WAVEFORM_SCALE_FRAME  = TEXTURE_WAVEFORM_BUFFER_FACTOR
 //static const uint TEXTURE_WAVEFORM_FONT_SIZE =
 //  clamp(uint(round(TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f)), 14, 32);
 
-static const uint TEXTURE_WAVEFORM_SCALE_WIDTH = TEXTURE_WAVEFORM_WIDTH
-                                               + (CHAR_DIM_UINT.x * 8u) //8 chars for 10000.00
+static const uint TEXTURE_WAVEFORM_SCALE_WIDTH = TEXTURE_WAVEFORM_TOTAL_WIDTH
+                                               + (CHAR_DIM_UINT.x * 2u * 8u) //8 chars for 10000.00
                                                + uint(CHAR_DIM_FLOAT.x / 2.f + 0.5f)
                                                + (TEXTURE_WAVEFORM_SCALE_BORDER * 2)
                                                + (TEXTURE_WAVEFORM_SCALE_FRAME  * 3);
@@ -38,11 +38,10 @@ static const float TEXTURE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_WAVEFORM_SCALE_WID
 static const float TEXTURE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_WAVEFORM_SCALE_HEIGHT - 1.f)
                                                    / float(TEXTURE_WAVEFORM_HEIGHT  - 1);
 
-
-#if (TEXTURE_WAVEFORM_WIDTH % WAVE64_THREAD_SIZE_X == 0)
-  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X)
+#if (TEXTURE_WAVEFORM_TOTAL_WIDTH % WAVE64_THREAD_SIZE_X == 0)
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_TOTAL_WIDTH / WAVE64_THREAD_SIZE_X)
 #else
-  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_WIDTH / WAVE64_THREAD_SIZE_X + 1)
+  #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_TOTAL_WIDTH / WAVE64_THREAD_SIZE_X + 1)
 #endif
 #if (TEXTURE_WAVEFORM_HEIGHT % WAVE64_THREAD_SIZE_Y == 0)
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y (TEXTURE_WAVEFORM_HEIGHT / WAVE64_THREAD_SIZE_Y)
@@ -72,6 +71,12 @@ storage2D<float4> StorageWaveformScale
 };
 
 
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+  #define TEXTURE_WAVEFORM_DEPTH 3
+#else
+  #define TEXTURE_WAVEFORM_DEPTH (3 * TEXTURE_WAVEFORM_DEPTH_MULTIPLIER)
+#endif
+
 texture3D TextureWaveform
 <
   pooled = true;
@@ -79,7 +84,7 @@ texture3D TextureWaveform
 {
   Width  = TEXTURE_WAVEFORM_WIDTH;
   Height = TEXTURE_WAVEFORM_HEIGHT;
-  Depth  = 3;
+  Depth  = TEXTURE_WAVEFORM_DEPTH;
   Format = R32U;
 };
 
@@ -99,7 +104,7 @@ texture2D Texture_Waveform_Colour
   pooled = true;
 >
 {
-  Width  = TEXTURE_WAVEFORM_WIDTH;
+  Width  = TEXTURE_WAVEFORM_TOTAL_WIDTH;
   Height = TEXTURE_WAVEFORM_HEIGHT;
   Format = RGB10A2;
 };
@@ -123,7 +128,7 @@ texture2D Texture_Waveform_Column_Max_Min
   pooled = true;
 >
 {
-  Width  = TEXTURE_WAVEFORM_WIDTH;
+  Width  = TEXTURE_WAVEFORM_TOTAL_WIDTH;
   Height = 2;
   Format = R32I;
 };
@@ -339,7 +344,7 @@ namespace Waveform
 
 #endif
 
-    float waveform_area_width_float = float(TEXTURE_WAVEFORM_WIDTH) * waveformScaleFactorXY.x;
+    float waveform_area_width_float = float(TEXTURE_WAVEFORM_TOTAL_WIDTH) * waveformScaleFactorXY.x;
     uint  waveform_area_width_uint;
 
     BRANCH()
@@ -532,7 +537,7 @@ void RenderWaveform
   const int waveform_height_int = _WAVEFORM_SIZE.y < 100.f ? int((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
                                                            : int(TEXTURE_WAVEFORM_HEIGHT);
 #else
-  const int waveform_height_int = int(TEXTURE_WAVEFORM_HEIGHT);
+  const int waveform_height_int = uint(TEXTURE_WAVEFORM_HEIGHT);
 #endif
   const float waveform_height_float = (float)waveform_height_int;
 
@@ -553,8 +558,8 @@ void RenderWaveform
 
 #endif
 
-    const int coord_x = float(Fetch_Pos.x)
-                      * coord_x_multiplier;
+    const uint coord_x = float(Fetch_Pos.x)
+                       * coord_x_multiplier;
 
     const int coord_y = waveform_height_int
                       - int(pixel_nits_encoded * waveform_height_float + 0.5f);
@@ -589,7 +594,21 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+      int3 store_pos;
+
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+      store_pos = int3(coord_x, coord_y, 0);
+
+#else //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+      store_pos = int3(coord_x % uint(TEXTURE_WAVEFORM_WIDTH),
+                       coord_y,
+                       coord_x / uint(TEXTURE_WAVEFORM_WIDTH));
+
+#endif //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+      atomicAdd(StorageWaveform, store_pos, 1u);
     }
   }
   else
@@ -612,8 +631,8 @@ void RenderWaveform
 
 #endif
 
-    const int coord_x = float(Fetch_Pos.x)
-                      * coord_x_multiplier;
+    const uint coord_x = float(Fetch_Pos.x)
+                       * coord_x_multiplier;
 
     const int coord_y = waveform_height_int
                       - int(pixel_max_cll_encoded * waveform_height_float + 0.5f);
@@ -648,7 +667,17 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coord_x, coord_y, 0), 1u);
+      int3 store_pos;
+
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+      store_pos = int3(coord_x, coord_y, 0);
+#else
+      store_pos = int3(coord_x % uint(TEXTURE_WAVEFORM_WIDTH),
+                       coord_y,
+                       coord_x / uint(TEXTURE_WAVEFORM_WIDTH));
+#endif
+
+      atomicAdd(StorageWaveform, store_pos, 1u);
     }
   }
   else
@@ -671,11 +700,11 @@ void RenderWaveform
 
 #endif
 
-    const int coord_x = float(Fetch_Pos.x)
-                      * coord_x_multiplier;
+    const uint coord_x = float(Fetch_Pos.x)
+                       * coord_x_multiplier;
 
-    const int3 coords_y = waveform_height_int
-                        - int3(pixel_cll_encoded * waveform_height_float + 0.5f);
+    const uint3 coords_y = waveform_height_int
+                         - uint3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
     const int pixel_max_cll_encoded_for_max = MINRGB(coords_y);
     const int pixel_min_cll_encoded_for_min = MAXRGB(coords_y);
@@ -701,6 +730,18 @@ void RenderWaveform
       atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
     }
 
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+    const int  store_pos_x = coord_x;
+    const int3 store_pos_z = int3(0, 1, 2);
+
+#else //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+    const int  store_pos_x = int(coord_x % uint(TEXTURE_WAVEFORM_WIDTH));
+    const int3 store_pos_z = int3(0, 1, 2) + int((coord_x / uint(TEXTURE_WAVEFORM_WIDTH)) * 3u);
+
+#endif //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
     [branch]
     if
     (
@@ -710,7 +751,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coord_x, coords_y.r, 0), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x, coords_y.r, store_pos_z.r), 1u);
     }
     [branch]
     if
@@ -721,7 +762,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coord_x, coords_y.g, 1), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x, coords_y.g, store_pos_z.g), 1u);
     }
     [branch]
     if
@@ -732,7 +773,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coord_x, coords_y.b, 2), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x, coords_y.b, store_pos_z.b), 1u);
     }
   }
   else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
@@ -756,15 +797,15 @@ void RenderWaveform
     const float x_normalised = float(Fetch_Pos.x)
                              / BUFFER_WIDTH_MINUS_1_FLOAT;
 
-    const uint waveform_width_div3 = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_WIDTH / 6)
-                                   : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_WIDTH * 2 / 9)
-                                   :                             uint(TEXTURE_WAVEFORM_WIDTH / 3);
+    const uint waveform_width_div3 = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_TOTAL_WIDTH / 6)
+                                   : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 9)
+                                   :                             uint(TEXTURE_WAVEFORM_TOTAL_WIDTH / 3);
 
     const float waveform_width_div3_float = float(waveform_width_div3);
 
-    int3 coords_x;
+    uint3 coords_x;
 
-    coords_x.r = int(x_normalised * waveform_width_div3_float);
+    coords_x.r = uint(x_normalised * waveform_width_div3_float);
 
     coords_x.g = coords_x.r + waveform_width_div3;
     coords_x.b = coords_x.g + waveform_width_div3;
@@ -809,6 +850,18 @@ void RenderWaveform
       atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min2[GTID.x]);
     }
 
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+    const int3 store_pos_x = coords_x;
+    const int3 store_pos_z = 0;
+
+#else // TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+    const int3 store_pos_x = int3(coords_x % uint(TEXTURE_WAVEFORM_WIDTH));
+    const int3 store_pos_z = int3(coords_x / uint(TEXTURE_WAVEFORM_WIDTH));
+
+#endif // TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
     [branch]
     if
     (
@@ -818,7 +871,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coords_x.r, coords_y.r, 0), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x.r, coords_y.r, store_pos_z.r), 1u);
     }
     [branch]
     if
@@ -829,7 +882,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coords_x.g, coords_y.g, 0), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x.g, coords_y.g, store_pos_z.g), 1u);
     }
     [branch]
     if
@@ -840,7 +893,7 @@ void RenderWaveform
 #endif
     )
     {
-      atomicAdd(StorageWaveform, int3(coords_x.b, coords_y.b, 0), 1u);
+      atomicAdd(StorageWaveform, int3(store_pos_x.b, coords_y.b, store_pos_z.b), 1u);
     }
 
   }
@@ -880,9 +933,9 @@ void CS_Get_Max_Waveform_Value
     // worth to do performance wise
     uint2 active_texture_size;
 
-    active_texture_size.x = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_WIDTH / 2)
-                          : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_WIDTH * 2 / 3)
-                          :                             uint(TEXTURE_WAVEFORM_WIDTH);
+    active_texture_size.x = _WAVEFORM_SIZE.x <  66.7f ? uint(TEXTURE_WAVEFORM_TOTAL_WIDTH / 2)
+                          : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3)
+                          :                             uint(TEXTURE_WAVEFORM_TOTAL_WIDTH);
 
 #ifdef IS_HDR_CSP
     active_texture_size.y = _WAVEFORM_SIZE.y < 100.f ? uint((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
@@ -894,22 +947,44 @@ void CS_Get_Max_Waveform_Value
     [branch]
     if (all(DTID.xy < active_texture_size))
     {
-      static const int2 dtid_as_int = int2(DTID.xy);
-
       BRANCH()
       if (_WAVEFORM_MODE != WAVEFORM_MODE_RGB_COMBINED)
       {
-        uint local_value = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 0));
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+        const int3 fetch_pos = int3(DTID.xy, 0);
+
+#else
+
+        const int3 fetch_pos = int3(DTID.x % uint(TEXTURE_WAVEFORM_WIDTH),
+                                    DTID.y,
+                                    DTID.x / uint(TEXTURE_WAVEFORM_WIDTH));
+
+#endif
+
+        uint local_value = tex3Dfetch(StorageWaveform, fetch_pos);
 
         atomicMax(Group_Max, local_value);
       }
       else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
       {
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+        const int  fetch_pos_x = DTID.x;
+        const int3 fetch_pos_z = int3(0, 1, 2);
+
+#else
+
+        const int  fetch_pos_x = int(DTID.x % uint(TEXTURE_WAVEFORM_WIDTH));
+        const int3 fetch_pos_z = int3(0, 1, 2) + int((DTID.x / uint(TEXTURE_WAVEFORM_WIDTH)) * 3u);
+
+#endif
+
         uint3 local_waveform;
 
-        local_waveform.r = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 0));
-        local_waveform.g = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 1));
-        local_waveform.b = tex3Dfetch(StorageWaveform, int3(dtid_as_int, 2));
+        local_waveform.r = tex3Dfetch(StorageWaveform, int3(fetch_pos_x, DTID.y, fetch_pos_z.r));
+        local_waveform.g = tex3Dfetch(StorageWaveform, int3(fetch_pos_x, DTID.y, fetch_pos_z.g));
+        local_waveform.b = tex3Dfetch(StorageWaveform, int3(fetch_pos_x, DTID.y, fetch_pos_z.b));
 
         atomicMax(Group_Max, MAXRGB(local_waveform));
       }
@@ -1681,9 +1756,9 @@ void VS_Prepare_Waveform_Render_Colour
 {
   Position.zw = float2(0.f, 1.f);
 
-  const float target_width = _WAVEFORM_SIZE.x <  66.7f ? float(TEXTURE_WAVEFORM_WIDTH / 2)
-                           : _WAVEFORM_SIZE.x < 100.f  ? float(TEXTURE_WAVEFORM_WIDTH * 2 / 3)
-                           :                             float(TEXTURE_WAVEFORM_WIDTH);
+  const float target_width = _WAVEFORM_SIZE.x <  66.7f ? float(TEXTURE_WAVEFORM_TOTAL_WIDTH / 2)
+                           : _WAVEFORM_SIZE.x < 100.f  ? float(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3)
+                           :                             float(TEXTURE_WAVEFORM_TOTAL_WIDTH);
 
 #ifdef IS_HDR_CSP
   const float target_height = _WAVEFORM_SIZE.y < 100.f ? float((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
@@ -1706,7 +1781,7 @@ void VS_Prepare_Waveform_Render_Colour
     position_xy.y = -position_xy.y;
   }
 
-  Position.xy = GetPositonCoordsFromRegularCoords(position_xy, float2(TEXTURE_WAVEFORM_WIDTH, TEXTURE_WAVEFORM_HEIGHT));
+  Position.xy = GetPositonCoordsFromRegularCoords(position_xy, float2(TEXTURE_WAVEFORM_TOTAL_WIDTH, TEXTURE_WAVEFORM_HEIGHT));
 
   Waveform_Max_Inv = 1.f
                    / (float)tex2Dfetch(SamplerMaxAvgMinNitsAndGamutCounterAndShowNumbers, POS_WAVEFORM_COUNTER_MAX);
@@ -1737,9 +1812,9 @@ void PS_Waveform_Render_Colour
 
     const float waveform_height_float = float(waveform_height_int);
 
-    const int clamp_fetch_x = _WAVEFORM_SIZE.x <  66.7f ? int(TEXTURE_WAVEFORM_WIDTH / 2 - 1)
-                            : _WAVEFORM_SIZE.x < 100.f  ? int(TEXTURE_WAVEFORM_WIDTH * 2 / 3 - 1)
-                            :                             int(TEXTURE_WAVEFORM_WIDTH - 1);
+    const int clamp_fetch_x = _WAVEFORM_SIZE.x <  66.7f ? int(TEXTURE_WAVEFORM_TOTAL_WIDTH / 2 - 1)
+                            : _WAVEFORM_SIZE.x < 100.f  ? int(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3 - 1)
+                            :                             int(TEXTURE_WAVEFORM_TOTAL_WIDTH - 1);
 
     const int column_max = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 0));
           int column_min = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 1));
@@ -1794,9 +1869,9 @@ void PS_Waveform_Render_Colour
     }
     else
     {
-      waveform_div_3 = _WAVEFORM_SIZE.x <  66.7f ? (TEXTURE_WAVEFORM_WIDTH / 6)
-                     : _WAVEFORM_SIZE.x < 100.f  ? (TEXTURE_WAVEFORM_WIDTH * 2 / 9)
-                     :                             (TEXTURE_WAVEFORM_WIDTH / 3);
+      waveform_div_3 = _WAVEFORM_SIZE.x <  66.7f ? int(TEXTURE_WAVEFORM_TOTAL_WIDTH / 6)
+                     : _WAVEFORM_SIZE.x < 100.f  ? int(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 9)
+                     :                             int(TEXTURE_WAVEFORM_TOTAL_WIDTH / 3);
 
       is_red_part   = position_as_int.x < waveform_div_3;
       is_green_part = position_as_int.x < waveform_div_3 * 2;
@@ -1902,7 +1977,17 @@ void PS_Waveform_Render_Colour
       if (_WAVEFORM_MODE == WAVEFORM_MODE_LUMINANCE
        || _WAVEFORM_MODE == WAVEFORM_MODE_MAX_CLL)
       {
-        uint waveform_current = tex3Dfetch(SamplerWaveform, int3(position_as_int, 0));
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+        const int3 fetch_pos = int3(position_as_int, 0);
+#else
+        const uint position_x_uint = uint(position_as_int.x);
+
+        const int3 fetch_pos = int3(position_x_uint % uint(TEXTURE_WAVEFORM_WIDTH),
+                                    position_as_int.y,
+                                    position_x_uint / uint(TEXTURE_WAVEFORM_WIDTH));
+#endif
+
+        uint waveform_current = tex3Dfetch(SamplerWaveform, fetch_pos);
 
         [branch]
         if (waveform_current > 0u)
@@ -1929,11 +2014,24 @@ void PS_Waveform_Render_Colour
       BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
       {
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+        const int  fetch_pos_x = position_as_int.x;
+        const int  fetch_pos_y = position_as_int.y;
+        const int3 fetch_pos_z = int3(0, 1, 2);
+#else
+        const uint position_x_uint = uint(position_as_int.x);
+
+        const int  fetch_pos_x = int(position_x_uint % uint(TEXTURE_WAVEFORM_WIDTH));
+        const int  fetch_pos_y = position_as_int.y;
+        const int3 fetch_pos_z = int3(0, 1, 2)
+                               + int((position_x_uint / uint(TEXTURE_WAVEFORM_WIDTH)) * 3u);
+#endif
+
         uint3 waveform_current;
 
-        waveform_current.r = tex3Dfetch(SamplerWaveform, int3(position_as_int, 0));
-        waveform_current.g = tex3Dfetch(SamplerWaveform, int3(position_as_int, 1));
-        waveform_current.b = tex3Dfetch(SamplerWaveform, int3(position_as_int, 2));
+        waveform_current.r = tex3Dfetch(SamplerWaveform, int3(fetch_pos_x, fetch_pos_y, fetch_pos_z.r));
+        waveform_current.g = tex3Dfetch(SamplerWaveform, int3(fetch_pos_x, fetch_pos_y, fetch_pos_z.g));
+        waveform_current.b = tex3Dfetch(SamplerWaveform, int3(fetch_pos_x, fetch_pos_y, fetch_pos_z.b));
 
         const bool3 waveform_current_above_0 = waveform_current.rgb > 0u;
 
@@ -1970,7 +2068,21 @@ void PS_Waveform_Render_Colour
       }
       else //if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
       {
-        uint waveform_current = tex3Dfetch(SamplerWaveform, uint3(position_as_int, 0));
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+        const int3 fetch_pos = int3(position_as_int, 0);
+
+#else //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+        const uint position_x_uint = uint(position_as_int.x);
+
+        const int3 fetch_pos = int3(position_x_uint % uint(TEXTURE_WAVEFORM_WIDTH),
+                                    position_as_int.y,
+                                    position_x_uint / uint(TEXTURE_WAVEFORM_WIDTH));
+
+#endif //TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+        uint waveform_current = tex3Dfetch(SamplerWaveform, fetch_pos);
 
         [branch]
         if (waveform_current > 0u)

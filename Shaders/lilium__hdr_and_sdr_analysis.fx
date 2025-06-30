@@ -798,7 +798,83 @@ uniform float _WAVEFORM_ALPHA
 > = DEFAULT_ALPHA_LEVEL;
 
 
-#define TEXTURE_WAVEFORM_WIDTH (BUFFER_WIDTH / 2)
+#if (BUFFER_WIDTH <= 4096)
+
+  #if ((BUFFER_WIDTH % 2) == 0)
+
+    #define TEXTURE_WAVEFORM_WIDTH (BUFFER_WIDTH / 2)
+
+  #else
+
+    #define TEXTURE_WAVEFORM_WIDTH (BUFFER_WIDTH / 2 + 1)
+
+  #endif
+
+  #define TEXTURE_WAVEFORM_TOTAL_WIDTH TEXTURE_WAVEFORM_WIDTH
+
+#else
+
+  #define TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
+
+  #if ((BUFFER_WIDTH % 2) == 0)
+
+    #if (((BUFFER_WIDTH / 2) % 2048) == 0)
+
+      #define TEXTURE_WAVEFORM_WIDTH 2048
+
+      #define TEXTURE_WAVEFORM_DEPTH_MULTIPLIER ((BUFFER_WIDTH / 2) / 2048)
+
+    #else
+
+      #define TEXTURE_WAVEFORM_WIDTH_TEMP ((BUFFER_WIDTH / 2) / ((BUFFER_WIDTH / 2) / 2048 + 1))
+
+      #define TEXTURE_WAVEFORM_DEPTH_MULTIPLIER ((BUFFER_WIDTH / 2) / TEXTURE_WAVEFORM_WIDTH_TEMP)
+
+      #if ((TEXTURE_WAVEFORM_WIDTH_TEMP * TEXTURE_WAVEFORM_DEPTH_MULTIPLIER) < (BUFFER_WIDTH / 2))
+
+        #define TEXTURE_WAVEFORM_WIDTH (TEXTURE_WAVEFORM_WIDTH_TEMP + 1)
+
+      #else
+
+        #define TEXTURE_WAVEFORM_WIDTH TEXTURE_WAVEFORM_WIDTH_TEMP
+
+      #endif
+
+    #endif
+
+  #else
+
+    #define TEXTURE_WAVEFORM_WIDTH ((BUFFER_WIDTH / 2) / ((BUFFER_WIDTH / 2) / 2048 + 1) + 1)
+
+    #define TEXTURE_WAVEFORM_DEPTH_MULTIPLIER ((BUFFER_WIDTH / 2) / TEXTURE_WAVEFORM_WIDTH) + 1
+
+  #endif
+
+  #if (((BUFFER_WIDTH / 4) * 4) == BUFFER_WIDTH)
+
+    #define TEXTURE_WAVEFORM_TOTAL_WIDTH (TEXTURE_WAVEFORM_WIDTH * TEXTURE_WAVEFORM_DEPTH_MULTIPLIER)
+
+  #else
+
+    #define TEXTURE_WAVEFORM_TOTAL_WIDTH (((BUFFER_WIDTH / 4) + 1) * 2)
+
+  #endif
+
+  #if ((TEXTURE_WAVEFORM_WIDTH * TEXTURE_WAVEFORM_DEPTH_MULTIPLIER) < (BUFFER_WIDTH / 2))
+    #error "Could not calculate proper waveform texture width!! Please report this issue (ERROR 1)!"
+  #endif
+
+  #if (((BUFFER_WIDTH / 2) * 2) == BUFFER_WIDTH)
+    #if ((TEXTURE_WAVEFORM_TOTAL_WIDTH * 2) < (BUFFER_WIDTH / 2))
+      #error "Could not calculate proper total waveform texture width!! Please report this issue (ERROR 2)!"
+    #endif
+  #else
+    #if ((TEXTURE_WAVEFORM_TOTAL_WIDTH * 2) < (BUFFER_WIDTH / 2 + 1))
+      #error "Could not calculate proper total waveform texture width!! Please report this issue (ERROR 3)!"
+    #endif
+  #endif
+
+#endif
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   #if (BUFFER_HEIGHT <= (512 * 5 / 2))
@@ -1491,12 +1567,16 @@ technique lilium__hdr_and_sdr_analysis
 
 #ifdef IS_COMPUTE_CAPABLE_API
 //Waveform
-  pass Clear_Texture_Waveform
+  pass CS_Clear_Texture_Waveform
   {
     ComputeShader = CS_Clear_Texture_Waveform<WAVE64_THREAD_SIZE_X, WAVE64_THREAD_SIZE_Y, 1>;
     DispatchSizeX = TEXTURE_WAVEFORM_COUNTER_DISPATCH_X;
     DispatchSizeY = TEXTURE_WAVEFORM_COUNTER_DISPATCH_Y;
+#ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
     DispatchSizeZ = 3;
+#else
+    DispatchSizeZ = 3 * TEXTURE_WAVEFORM_DEPTH_MULTIPLIER;
+#endif
   }
 
   pass PS_Reset_Texture_Waveform_Column_Max
