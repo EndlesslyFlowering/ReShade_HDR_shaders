@@ -14,18 +14,22 @@ void GetParams
   out float OutRollOffMinusOldBlackPoint,
   out float OutMinLum,
   out float OutG22EmuWhitePointNormalised,
-  out float OutGAWhitePointNormalised
+  out float OutGAWhitePointNormalised,
+  out float OutSrgbGammaWhitePointNormalised
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-    OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 80.f;
-    OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 80.f;
+    OutG22EmuWhitePointNormalised    = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint   / 80.f;
+    OutGAWhitePointNormalised        = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint  / 80.f;
+    OutSrgbGammaWhitePointNormalised = Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaWhitePoint / 80.f;
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    OutG22EmuWhitePointNormalised = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 10000.f;
-    OutGAWhitePointNormalised     = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 10000.f;
+    OutG22EmuWhitePointNormalised    = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 10000.f;
+    OutGAWhitePointNormalised        = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 10000.f;
+    OutSrgbGammaWhitePointNormalised = Ui::HdrBlackFloorFix::SrgbGamma::SrgbGamaWhitePoint / 10000.f;
 #else
-    OutG22EmuWhitePointNormalised = 0.f;
-    OutGAWhitePointNormalised     = 0.f;
+    OutG22EmuWhitePointNormalised    = 0.f;
+    OutGAWhitePointNormalised        = 0.f;
+    OutSrgbGammaWhitePointNormalised = 0.f;
 #endif
 
 
@@ -64,7 +68,7 @@ void VS_PrepareHdrBlackFloorFix
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
                                                      ,
   out nointerpolation float4 FuncParms0 : FuncParms0,
-  out nointerpolation float2 FuncParms1 : FuncParms1
+  out nointerpolation float3 FuncParms1 : FuncParms1
 #endif
 )
 {
@@ -88,16 +92,19 @@ void VS_PrepareHdrBlackFloorFix
 #define minLum                    FuncParms0.w
 
 // gamma 2.2 emulation
-#define g22EmuWhitePointNormalised FuncParms1.x
+#define g22EmuWhitePointNormalised    FuncParms1.x
+// sRGB gamma
+#define srgbGammaWhitePointNormalised FuncParms1.z
 // gamma adjustment
-#define gaWhitePointNormalised     FuncParms1.y
+#define gaWhitePointNormalised        FuncParms1.y
 
   GetParams(rollOffStoppingPoint,
             oldBlackPoint,
             rollOffMinusOldBlackPoint,
             minLum,
             g22EmuWhitePointNormalised,
-            gaWhitePointNormalised);
+            gaWhitePointNormalised,
+            srgbGammaWhitePointNormalised);
 
 #endif
 }
@@ -108,28 +115,30 @@ void PS_HdrBlackFloorFix
   in                  float4 Position   : SV_Position,
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
   in  nointerpolation float4 FuncParms0 : FuncParms0,
-  in  nointerpolation float2 FuncParms1 : FuncParms1,
+  in  nointerpolation float3 FuncParms1 : FuncParms1,
 #endif
   out                 float4 Output     : SV_Target0
 )
 {
 #if (__RESHADE_PERFORMANCE_MODE__ == 1)
 
-  static float params[6];
+  static float params[7];
 
   GetParams(params[0],
             params[1],
             params[2],
             params[3],
             params[4],
-            params[5]);
+            params[5],
+            params[6]);
 
-  static const float rollOffStoppingPoint       = params[0];
-  static const float oldBlackPoint              = params[1];
-  static const float rollOffMinusOldBlackPoint  = params[2];
-  static const float minLum                     = params[3];
-  static const float g22EmuWhitePointNormalised = params[4];
-  static const float gaWhitePointNormalised     = params[5];
+  static const float rollOffStoppingPoint          = params[0];
+  static const float oldBlackPoint                 = params[1];
+  static const float rollOffMinusOldBlackPoint     = params[2];
+  static const float minLum                        = params[3];
+  static const float g22EmuWhitePointNormalised    = params[4];
+  static const float gaWhitePointNormalised        = params[5];
+  static const float srgbGammaWhitePointNormalised = params[6];
 
 #endif
 
@@ -170,6 +179,15 @@ void PS_HdrBlackFloorFix
                                        g22EmuWhitePointNormalised,
                                        processingDone);
   }
+  else if ( Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaEnable
+         && Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable
+         && Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaWhitePoint == Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint)
+  {
+    // TODO: Add combo function
+    //SrgbGammaAndGammaAdjustment(co,
+                                //srgbGammaWhitePointNormalised,
+                                //processingDone);
+  }
   else
   {
     BRANCH()
@@ -178,6 +196,14 @@ void PS_HdrBlackFloorFix
       Gamma22Emulation(co,
                        g22EmuWhitePointNormalised,
                        processingDone);
+    }
+    
+    BRANCH()
+    if (Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaEnable)
+    {
+      SrgbGamma(co,
+                srgbGammaWhitePointNormalised,
+                processingDone);
     }
 
     BRANCH()
@@ -201,8 +227,11 @@ void PS_HdrBlackFloorFix
   }
 
   [branch]
-  if ((Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable || Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable)
-   && processingDone)
+  if ((  Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuEnable
+      || Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable
+      || Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaEnable
+    ) && processingDone
+  )
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     co = CO::ConvertCspTo::ScRgb(co);

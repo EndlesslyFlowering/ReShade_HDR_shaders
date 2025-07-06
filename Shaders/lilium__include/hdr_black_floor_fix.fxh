@@ -35,6 +35,48 @@ namespace Ui
 {
   namespace HdrBlackFloorFix
   {
+    namespace SrgbGamma
+    {
+      uniform bool SrgbGammaEnable
+      <
+        ui_category = "sRGB gamma emulation";
+        ui_label    = "enable sRGB gamma emulation";
+        ui_tooltip  = "This emulates how sRGB gamma looks.";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
+      > = false;
+
+      uniform float SrgbGammaWhitePoint
+      <
+        ui_category = "sRGB gamma emulation";
+        ui_label    = "processing cut off";
+        ui_tooltip  = "How much of the lower range range should be processed.";
+        ui_type     = "drag";
+        ui_units    = " nits";
+        ui_min      = 10.f;
+        ui_max      = 400.f;
+        ui_step     = 0.5f;
+        hidden      = HIDDEN_OPTION_HDR_CSP;
+      > = 80.f;
+
+      uniform uint SrgbGammaProcessingColourSpace
+      <
+        ui_category = "sRGB gamma emulation";
+        ui_label    = "processing colour space";
+        ui_tooltip  = "Using BT.709 will not push affected colours outside of BT.709."
+                 "\n" "Using DCI-P3 can push affected colours into DCI-P3."
+                 "\n" "Using BT.2020 can push affected colours into DCI-P3 and BT.2020.";
+        ui_type     = "combo";
+        ui_items    = "BT.709\0"
+                      "DCI-P3\0"
+                      "BT.2020\0";
+        hidden      = HIDDEN_OPTION_HDR_CSP;
+      > = 0;
+
+#define SRGB_GAMMA_CSP_BT709  0
+#define SRGB_GAMMA_CSP_DCI_P3 1
+#define SRGB_GAMMA_CSP_BT2020 2
+    }
+
     namespace Gamma22Emu
     {
       uniform bool G22EmuEnable
@@ -94,7 +136,7 @@ namespace Ui
         ui_label    = "enable gamma adjustment";
         hidden      = HIDDEN_OPTION_HDR_CSP;
       > = false;
-
+      
       uniform uint GAProcessingColourSpace
       <
         ui_category = "gamma adjustment";
@@ -241,6 +283,38 @@ CO::ColourObject ConvertColourForGamma22Emulation
   return CO;
 }
 
+CO::ColourObject ConvertColourForSrgbGamma
+(
+  CO::ColourObject CO
+)
+{
+#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
+  CO = CO::ConvertTrcTo::LinearNormalised(CO);
+
+  BRANCH()
+  if (Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaProcessingColourSpace == SRGB_GAMMA_CSP_BT709)
+  {
+    CO = CO::ConvertPrimariesTo::Bt709(CO);
+  }
+  else
+#endif
+  BRANCH()
+  if (Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaProcessingColourSpace == SRGB_GAMMA_CSP_DCI_P3)
+  {
+    CO = CO::ConvertPrimariesTo::DciP3(CO);
+  }
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+  else
+  BRANCH()
+  if (Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaProcessingColourSpace == SRGB_GAMMA_CSP_BT2020)
+  {
+    CO = CO::ConvertPrimariesTo::Bt2020(CO);
+  }
+#endif
+
+  return CO;
+}
+
 
 void Gamma22Emulation
 (
@@ -265,6 +339,36 @@ void Gamma22Emulation
   {
     float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), 2.2f)
                            * WhitePointNormalised;
+
+    CO.RGB = needsProcessing ? processedColour
+                             : CO.RGB;
+
+    ProcessingDone = true;
+  }
+
+  return;
+}
+
+void SrgbGamma
+(
+  inout CO::ColourObject CO,
+  const float            WhitePointNormalised,
+  inout bool             ProcessingDone
+)
+{
+  CO = ConvertColourForSrgbGamma(CO);
+
+  const float maxRange = WhitePointNormalised;
+
+  const bool3 isInProcessingRange = CO.RGB < maxRange;
+  const bool3 isAbove0            = CO.RGB > 0.f;
+
+  const bool3 needsProcessing = isInProcessingRange && isAbove0;
+
+  [branch]
+  if (any(needsProcessing))
+  {
+    float3 processedColour = pow(Csp::Trc::SrgbTo::Linear(CO.RGB / WhitePointNormalised), 1.f / 2.2f) * WhitePointNormalised;
 
     CO.RGB = needsProcessing ? processedColour
                              : CO.RGB;
