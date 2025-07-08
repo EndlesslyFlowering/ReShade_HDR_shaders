@@ -375,13 +375,21 @@ namespace Tmos
       float OneMinusKneeStart = 1.f - KneeStart;
       float OneDivOneMinusKneeStart = 1.f / OneMinusKneeStart;
       float KneeStartDivOneMinusKneeStart = KneeStart / OneMinusKneeStart;
+      
+#if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
+      float SrcMaxLinear = Csp::Trc::PqTo::Linear(SrcMaxPq) * 125.f;
+#else
+      float SrcMaxLinear = Csp::Trc::PqTo::Linear(SrcMaxPq);
+#endif
 
       BRANCH()
       if (ProcessingMode == BT2390_PRO_MODE_YRGB)
       {
-        // HDR10 & Clamp input to source max
-        float3 Rgb = min(ConditionallyLineariseHdr10Temp(Colour), \
-                         Csp::Trc::PqTo::Linear(SrcMaxPq).xxx);
+        // HDR10
+        float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
+        
+        // Clip input to maximum input luminance
+        Rgb = min(Rgb, SrcMaxLinear.xxx);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float y1 = dot(Rgb, Csp::Mat::ScRgbToXYZ[1]);
