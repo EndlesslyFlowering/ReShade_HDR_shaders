@@ -368,8 +368,13 @@ void SrgbGamma
   [branch]
   if (any(needsProcessing))
   {
-    float3 processedColour = pow(Csp::Trc::SrgbTo::Linear(CO.RGB / WhitePointNormalised), 1.f / 2.2f) * WhitePointNormalised;
-
+    float3 processedColour = Csp::Trc::SrgbTo::Linear(
+      pow(
+        CO.RGB / WhitePointNormalised,
+        1.f / 2.2f
+      )
+    ) * WhitePointNormalised;
+    
     CO.RGB = needsProcessing ? processedColour
                              : CO.RGB;
 
@@ -454,6 +459,42 @@ void Gamma22EmulationAndGammaAdjustment
 
     float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), currentPow)
                            * WhitePointNormalised;
+
+    CO.RGB = needsProcessing ? processedColour
+                             : CO.RGB;
+
+    ProcessingDone = true;
+  }
+
+  return;
+}
+
+void SrgbGammaAndGammaAdjustment
+(
+  inout CO::ColourObject CO,
+  const float            WhitePointNormalised,
+  inout bool             ProcessingDone
+)
+{
+  CO = ConvertColourForSrgbGamma(CO);
+
+  const bool3 isInProcessingRange = CO.RGB < WhitePointNormalised;
+  const bool3 isAbove0            = CO.RGB > 0.f;
+
+  const bool3 needsProcessing = isInProcessingRange && isAbove0;
+
+  [branch]
+  if (any(needsProcessing))
+  {
+    float3 processedColour = pow(
+      Csp::Trc::SrgbTo::Linear(
+        pow(
+          CO.RGB / WhitePointNormalised,
+          1.f / 2.2f
+        )
+      ),
+      Ui::HdrBlackFloorFix::GammaAdjustment::GAGamma
+    ) * WhitePointNormalised;
 
     CO.RGB = needsProcessing ? processedColour
                              : CO.RGB;

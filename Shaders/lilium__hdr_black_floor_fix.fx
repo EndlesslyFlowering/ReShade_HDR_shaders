@@ -25,7 +25,7 @@ void GetParams
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
     OutG22EmuWhitePointNormalised    = Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuWhitePoint  / 10000.f;
     OutGAWhitePointNormalised        = Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint / 10000.f;
-    OutSrgbGammaWhitePointNormalised = Ui::HdrBlackFloorFix::SrgbGamma::SrgbGamaWhitePoint / 10000.f;
+    OutSrgbGammaWhitePointNormalised = Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaWhitePoint / 10000.f;
 #else
     OutG22EmuWhitePointNormalised    = 0.f;
     OutGAWhitePointNormalised        = 0.f;
@@ -183,10 +183,9 @@ void PS_HdrBlackFloorFix
          && Ui::HdrBlackFloorFix::GammaAdjustment::GAEnable
          && Ui::HdrBlackFloorFix::SrgbGamma::SrgbGammaWhitePoint == Ui::HdrBlackFloorFix::GammaAdjustment::GAWhitePoint)
   {
-    // TODO: Add combo function
-    //SrgbGammaAndGammaAdjustment(co,
-                                //srgbGammaWhitePointNormalised,
-                                //processingDone);
+    SrgbGammaAndGammaAdjustment(co,
+                                srgbGammaWhitePointNormalised,
+                                processingDone);
   }
   else
   {
