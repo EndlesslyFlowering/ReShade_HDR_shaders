@@ -416,14 +416,14 @@ namespace Tmos
                              KneeStartDivOneMinusKneeStart,
                              MaxLum);
         }
-#if (SHOW_ADAPTIVE_MAX_NITS == NO)
-        else
-        [branch]
-        if (MinLum == 0.f)
-        {
-          discard;
-        }
-#endif
+//#if (SHOW_ADAPTIVE_MAX_NITS == NO)
+//        else
+//        [branch]
+//        if (MinLum == 0.f)
+//        {
+//          discard;
+//        }
+//#endif
         //E3+E4
         y2 = EetfE3E4(y2,
                       SrcMaxPq,
