@@ -17,8 +17,8 @@
 #pragma warning(disable : 3571) // disable warning about potentially using pow on a negative value
 
 
-#define YES 1
-#define NO  0
+#define YES 2
+#define NO  1
 
 #define I_KNOW_WHAT_I_AM_DOING 1337
 
