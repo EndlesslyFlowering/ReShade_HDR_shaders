@@ -1946,7 +1946,8 @@ void PS_Waveform_Render_Colour
     }
     else
     [branch]
-    if (((( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
+    if (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
+      && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
        || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
       && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
                                          || position_as_int.y >= column_max_extra_left
