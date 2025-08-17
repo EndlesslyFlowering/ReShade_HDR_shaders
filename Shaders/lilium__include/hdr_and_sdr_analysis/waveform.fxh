@@ -1995,22 +1995,42 @@ void PS_Waveform_Render_Colour
         [branch]
         if (waveform_current > 0u)
         {
-          float waveform_colour = float(waveform_current)
-                                * Waveform_Max_Inv;
+          float waveform_luminance = float(waveform_current)
+                                   * Waveform_Max_Inv;
 
-          waveform_colour = pow(waveform_colour, 1.f / 1.5f);
+          waveform_luminance = pow(waveform_luminance, 1.f / 1.5f);
+
+          float waveform_colour_luminance_encoded = float(waveform_height_int - position_as_int.y)
+                                                  / waveform_height_float;
+
+#ifdef IS_HDR_CSP
+          float waveform_colour_luminance = Csp::Trc::PqTo::Linear(waveform_colour_luminance_encoded)
+                                          * 10000.f;
+#else
+          float waveform_colour_luminance = DECODE_SDR(waveform_colour_luminance_encoded)
+                                          * 100.f;
+#endif
+
+          float3 waveform_colour = WaveformRgbValues(waveform_colour_luminance);
+
+          waveform_colour *= waveform_luminance
+                           / dot(waveform_colour, Csp::Mat::Bt709ToXYZ[1]);
 
           static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;
 
           waveform_colour += plus_value;
 
+          float3 yrb;
+
+          yrb = float3(dot(waveform_colour, Csp::Mat::Bt709ToXYZ[1]), waveform_colour.rb);
+
 #ifdef IS_HDR_CSP
-          float y = WAVEFORM_HDR_ENCODING(waveform_colour);
+          yrb = WAVEFORM_HDR_ENCODING(yrb);
 #else
-          float y = ENCODE_SDR(waveform_colour);
+          yrb = ENCODE_SDR(yrb);
 #endif
 
-          Out = float4(y.xxx, 1.f);
+          Out = float4(yrb, 1.f);
         }
       }
       else
