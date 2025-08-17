@@ -687,7 +687,7 @@ uniform uint _WAVEFORM_MODE
            "\n" "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
   ui_type     = "combo";
   ui_items    = "luminance\0"
-                "maxCLL\0"
+                "max CLL\0"
                 "RGB combined\0"
                 "RGB individiually\0";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
