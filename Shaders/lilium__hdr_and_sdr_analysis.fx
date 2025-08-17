@@ -737,7 +737,7 @@ uniform float _WAVEFORM_BRIGHTNESS
   ui_label    = "waveform brightness";
   ui_type     = "drag";
   ui_units    = " nits";
-  ui_min      = 100.f;
+  ui_min      =  80.f;
   ui_max      = 500.f;
   ui_step     =  10.f;
   hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
