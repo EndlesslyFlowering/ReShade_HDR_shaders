@@ -1923,6 +1923,9 @@ void PS_Waveform_Render_Colour
     if ((_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y < max_value_coord_y && position_as_int.y >= max_value_extra)
      || (_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y > min_value_coord_y && position_as_int.y <= min_value_extra))
     {
+      Out = (float4)1.f;
+
+#ifdef IS_HDR_CSP
 
 #define WAVEFORM_HDR_ENCODING(x) \
           (log2(x * 10000.f + 1.f) / log2(10001.f))
@@ -1931,18 +1934,13 @@ void PS_Waveform_Render_Colour
           ((exp2(x * log2(10001.f)) - 1.f) / 10000.f)
 
       FLATTEN()
-      if (_WAVEFORM_MODE != WAVEFORM_MODE_RGB_COMBINED)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED
+       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
       {
-        Out = (float4)1.f;
+        Out.rgb = WAVEFORM_HDR_ENCODING(Csp::Mat::Bt709ToXYZ[1].g).xxx;
       }
-      else
-      {
-#ifdef IS_HDR_CSP
-        Out = float4(WAVEFORM_HDR_ENCODING(Csp::Mat::Bt709ToXYZ[1].g).xxx, 1.f);
-#else
-        Out = float4(ENCODE_SDR(Csp::Mat::Bt709ToXYZ[1].g).xxx, 1.f);
-#endif
-      }
+
+#endif //IS_HDR_CSP
     }
     else
     [branch]
@@ -1961,7 +1959,8 @@ void PS_Waveform_Render_Colour
       float grey_out = WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE / DIV_100;
 
       BRANCH()
-      if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+      if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED
+       || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
       {
         grey_out *= Csp::Mat::Bt709ToXYZ[1].g;
       }
@@ -2124,11 +2123,9 @@ void PS_Waveform_Render_Colour
           if (is_red_part)
           {
             waveform_colour.r  = waveform_colour_channel;
-#ifndef IS_HDR_CSP
             waveform_colour.r *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][0];
             waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::Bt709ToXYZ[1][0] / Csp::Mat::Bt709ToXYZ[1][1]);
             waveform_colour    = saturate(waveform_colour);
-#endif
           }
           else
           [branch]
@@ -2139,11 +2136,9 @@ void PS_Waveform_Render_Colour
           else
           {
             waveform_colour.b  = waveform_colour_channel;
-#ifndef IS_HDR_CSP
             waveform_colour.b *= Csp::Mat::Bt709ToXYZ[1][1] / Csp::Mat::Bt709ToXYZ[1][2];
             waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::Bt709ToXYZ[1][2] / Csp::Mat::Bt709ToXYZ[1][1]);
             waveform_colour    = saturate(waveform_colour);
-#endif
           }
 
           float3 yrb;

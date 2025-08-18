@@ -1475,17 +1475,10 @@ void PS_HdrAnalysis
 
 #ifdef IS_HDR_CSP
         BRANCH()
-        if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED)
+        if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED
+         || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
         {
           waveform_colour /= Csp::Mat::Bt709ToXYZ[1].g;
-        }
-        else
-        BRANCH()
-        if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY
-         && (waveform_yrb.r != waveform_yrb.g
-          && waveform_yrb.g != waveform_yrb.b))
-        {
-          waveform_colour /= Csp::Mat::Bt709ToXYZ[1];
         }
 #endif
 
