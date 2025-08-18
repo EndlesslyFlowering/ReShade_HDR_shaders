@@ -248,8 +248,7 @@ namespace Waveform
   const int   texture_waveform_height_scaled       = float(TEXTURE_WAVEFORM_HEIGHT) * waveformScaleFactorXY.y;
   const float texture_waveform_height_scaled_float = texture_waveform_height_scaled;
 
-#if (defined(IS_HDR_CSP) \
-  || HDR_COMPARISON_MODE_ENABLE == YES)
+#ifdef IS_HDR_CSP
 
     waveDat.tickPoints =
     {

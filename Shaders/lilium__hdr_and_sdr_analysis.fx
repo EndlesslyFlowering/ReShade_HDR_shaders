@@ -1429,9 +1429,8 @@ void PS_HdrAnalysis
                   : _WAVEFORM_SIZE.x < 100.f  ? (int)(uint(waveform_size.x) * 3u / 2u)
                                               : waveform_size.x;
 
-#if (!defined(IS_HDR_CSP)         \
-  && BUFFER_COLOR_BIT_DEPTH != 10 \
-  && HDR_COMPARISON_MODE_ENABLE != YES)
+#if (!defined(IS_HDR_CSP) \
+  && BUFFER_COLOR_BIT_DEPTH != 10)
 
           waveform_sample_coords = (float2(waveform_coords) + 0.5f)
                                  / float2(div_x, waveform_size.y);
