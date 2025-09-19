@@ -1111,22 +1111,22 @@ void RenderWaveformScale
     }
 
 
-    static const uint2 charList10000_00[8] = { _1, _0, _0, _0, _0, _dot, _0, _0 };
-    static const uint2 charList_4000_00[7] = {     _4, _0, _0, _0, _dot, _0, _0 };
-    static const uint2 charList_2000_00[7] = {     _2, _0, _0, _0, _dot, _0, _0 };
-    static const uint2 charList_1000_00[7] = {     _1, _0, _0, _0, _dot, _0, _0 };
-    static const uint2 charList__400_00[6] = {         _4, _0, _0, _dot, _0, _0 };
-    static const uint2 charList__203_00[6] = {         _2, _0, _3, _dot, _0, _0 };
-    static const uint2 charList__100_00[6] = {         _1, _0, _0, _dot, _0, _0 };
-    static const uint2 charList___50_00[5] = {             _5, _0, _dot, _0, _0 };
-    static const uint2 charList___25_00[5] = {             _2, _5, _dot, _0, _0 };
-    static const uint2 charList___10_00[5] = {             _1, _0, _dot, _0, _0 };
-    static const uint2 charList____5_00[4] = {                 _5, _dot, _0, _0 };
-    static const uint2 charList____2_50[4] = {                 _2, _dot, _5, _0 };
-    static const uint2 charList____1_00[4] = {                 _1, _dot, _0, _0 };
-    static const uint2 charList____0_25[4] = {                 _0, _dot, _2, _5 };
-    static const uint2 charList____0_05[4] = {                 _0, _dot, _0, _5 };
-    static const uint2 charList____0_00[4] = {                 _0, _dot, _0, _0 };
+    static const uint2 charList10000_00[8] = { __1, __0, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 charList_4000_00[7] = {      __4, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 charList_2000_00[7] = {      __2, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 charList_1000_00[7] = {      __1, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 charList__400_00[6] = {           __4, __0, __0, __dot, __0, __0 };
+    static const uint2 charList__203_00[6] = {           __2, __0, __3, __dot, __0, __0 };
+    static const uint2 charList__100_00[6] = {           __1, __0, __0, __dot, __0, __0 };
+    static const uint2 charList___50_00[5] = {                __5, __0, __dot, __0, __0 };
+    static const uint2 charList___25_00[5] = {                __2, __5, __dot, __0, __0 };
+    static const uint2 charList___10_00[5] = {                __1, __0, __dot, __0, __0 };
+    static const uint2 charList____5_00[4] = {                     __5, __dot, __0, __0 };
+    static const uint2 charList____2_50[4] = {                     __2, __dot, __5, __0 };
+    static const uint2 charList____1_00[4] = {                     __1, __dot, __0, __0 };
+    static const uint2 charList____0_25[4] = {                     __0, __dot, __2, __5 };
+    static const uint2 charList____0_05[4] = {                     __0, __dot, __0, __5 };
+    static const uint2 charList____0_00[4] = {                     __0, __dot, __0, __0 };
 
     static const uint charListsCount = 16;
 
@@ -1374,26 +1374,26 @@ void RenderWaveformScale
     const int charOffsets[7] = {0, 1, 2, 3, 4, 5, 6};
 
 
-    static const uint2 charList100_00[7] = { _1, _0, _0, _dot, _0, _0, _percent };
-    static const uint2 charList_87_50[6] = {     _8, _7, _dot, _5, _0, _percent };
-    static const uint2 charList_75_00[6] = {     _7, _5, _dot, _0, _0, _percent };
-    static const uint2 charList_60_00[6] = {     _6, _0, _dot, _0, _0, _percent };
-    static const uint2 charList_50_00[6] = {     _5, _0, _dot, _0, _0, _percent };
-    static const uint2 charList_35_00[6] = {     _3, _5, _dot, _0, _0, _percent };
-    static const uint2 charList_25_00[6] = {     _2, _5, _dot, _0, _0, _percent };
-    static const uint2 charList_18_00[6] = {     _1, _8, _dot, _0, _0, _percent };
-    static const uint2 charList_10_00[6] = {     _1, _0, _dot, _0, _0, _percent };
-    static const uint2 charList__5_00[5] = {         _5, _dot, _0, _0, _percent };
-    static const uint2 charList__2_50[5] = {         _2, _dot, _5, _0, _percent };
-    static const uint2 charList__1_00[5] = {         _1, _dot, _0, _0, _percent };
+    static const uint2 charList100_00[7] = { __1, __0, __0, __dot, __0, __0, __percent };
+    static const uint2 charList_87_50[6] = {      __8, __7, __dot, __5, __0, __percent };
+    static const uint2 charList_75_00[6] = {      __7, __5, __dot, __0, __0, __percent };
+    static const uint2 charList_60_00[6] = {      __6, __0, __dot, __0, __0, __percent };
+    static const uint2 charList_50_00[6] = {      __5, __0, __dot, __0, __0, __percent };
+    static const uint2 charList_35_00[6] = {      __3, __5, __dot, __0, __0, __percent };
+    static const uint2 charList_25_00[6] = {      __2, __5, __dot, __0, __0, __percent };
+    static const uint2 charList_18_00[6] = {      __1, __8, __dot, __0, __0, __percent };
+    static const uint2 charList_10_00[6] = {      __1, __0, __dot, __0, __0, __percent };
+    static const uint2 charList__5_00[5] = {           __5, __dot, __0, __0, __percent };
+    static const uint2 charList__2_50[5] = {           __2, __dot, __5, __0, __percent };
+    static const uint2 charList__1_00[5] = {           __1, __dot, __0, __0, __percent };
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-    static const uint2 charList__0_25[5] = {         _0, _dot, _2, _5, _percent };
+    static const uint2 charList__0_25[5] = {           __0, __dot, __2, __5, __percent };
 #else
-    static const uint2 charList__0_40[5] = {         _0, _dot, _4, _0, _percent };
+    static const uint2 charList__0_40[5] = {           __0, __dot, __4, __0, __percent };
 #endif
-    static const uint2 charList__0_00[5] = {         _0, _dot, _0, _0, _percent };
+    static const uint2 charList__0_00[5] = {           __0, __dot, __0, __0, __percent };
 
     static const uint charListsCount = 14;
 
@@ -1554,8 +1554,8 @@ void RenderWaveformScale
           break;
         }
 
-        charDims.x = currentNumber != _percent ? waveDat.charDimensions.x
-                                               : waveDat.charDimensionXForPercent;
+        charDims.x = currentNumber != __percent ? waveDat.charDimensions.x
+                                                : waveDat.charDimensionXForPercent;
 
         [branch]
         if (-(j - 7) > currentCharOffset)

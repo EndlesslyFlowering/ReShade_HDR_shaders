@@ -181,15 +181,15 @@ void DrawText
 
   #define ARRAY_SIZE_CHAR_LIST_HEADER 20
 
-  #define CHAR_ANALYSIS _H
+  #define CHAR_ANALYSIS __H
 
   #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    #define TEXT_CSP _s, _c, _R, _G, _B
+    #define TEXT_CSP __s, __c, __R, __G, __B
 
   #else //CSP_HDR10
 
-    #define TEXT_CSP _H, _D, _R, _1, _0
+    #define TEXT_CSP __H, __D, __R, __1, __0
 
   #endif
 
@@ -205,19 +205,19 @@ void DrawText
 
   #endif
 
-  #define CHAR_ANALYSIS _S
+  #define CHAR_ANALYSIS __S
 
   #if (OVERWRITE_SDR_GAMMA == GAMMA_24)
 
-    #define TEXT_CSP _g, _a, _m, _m, _a, _2, _dot, _4
+    #define TEXT_CSP __g, __a, __m, __m, __a, __2, __dot, __4
 
   #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
 
-    #define TEXT_CSP _s, _R, _G, _B
+    #define TEXT_CSP __s, __R, __G, __B
 
   #else
 
-    #define TEXT_CSP _g, _a, _m, _m, _a, _2, _dot, _2
+    #define TEXT_CSP __g, __a, __m, __m, __a, __2, __dot, __2
 
   #endif
 
@@ -227,22 +227,22 @@ void DrawText
 
   static const uint2 charListHeader[ARRAY_SIZE_CHAR_LIST_HEADER] =
   {
-    CHAR_ANALYSIS, _D, _R, _space,
+    CHAR_ANALYSIS, __D, __R, __space,
 
-    _A, _n, _a, _l, _y, _s, _i, _s, _space,
+    __A, __n, __a, __l, __y, __s, __i, __s, __space,
 
-    _roundBracketOpen, TEXT_CSP, _roundBracketClose
+    __bracket_round_open, TEXT_CSP, __bracket_round_close
   };
 
 
 #ifdef IS_HDR_CSP
 
   //8
-  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS  __space, __space, __space, __space, __space, __space, __space, __space
   //5
-  #define SPACES_RED   _space, _space, _space, _space, _space
+  #define SPACES_RED   __space, __space, __space, __space, __space
   //3
-  #define SPACES_GREEN _space, _space, _space
+  #define SPACES_GREEN __space, __space, __space
 
   #define SPACES_NITS_COUNT  8
   #define SPACES_RED_COUNT   5
@@ -251,11 +251,11 @@ void DrawText
 #else
 
   //7
-  #define SPACES_NITS  _space, _space, _space, _space, _space, _space, _space
+  #define SPACES_NITS  __space, __space, __space, __space, __space, __space, __space
   //4
-  #define SPACES_RED   _space, _space, _space, _space
+  #define SPACES_RED   __space, __space, __space, __space
   //2
-  #define SPACES_GREEN _space, _space
+  #define SPACES_GREEN __space, __space
 
   #define SPACES_NITS_COUNT  7
   #define SPACES_RED_COUNT   4
@@ -263,7 +263,7 @@ void DrawText
 
 #endif
 
-#define CHARS_CLL _C, _L, _L, _space
+#define CHARS_CLL __C, __L, __L, __space
 
 #define CHARS_COUNT_CLL 4
 
@@ -276,19 +276,19 @@ void DrawText
 
   static const uint2 charListTextNitsRGB[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_RGB] =
   {
-    _verticalLine, _n, _i, _t, _s,                SPACES_NITS,
-    _verticalLine, CHARS_CLL, _r, _e, _d,         SPACES_RED,
-    _verticalLine, CHARS_CLL, _g, _r, _e, _e, _n, SPACES_GREEN,
-    _verticalLine, CHARS_CLL, _b, _l, _u, _e,
+    __line_vertical, __n, __i, __t, __s,                 SPACES_NITS,
+    __line_vertical, CHARS_CLL, __r, __e, __d,           SPACES_RED,
+    __line_vertical, CHARS_CLL, __g, __r, __e, __e, __n, SPACES_GREEN,
+    __line_vertical, CHARS_CLL, __b, __l, __u, __e,
   };
 
 
 #ifdef IS_HDR_CSP
 
   //5
-  #define SPACES_PRE_DOT   _space, _space, _space, _space, _space
+  #define SPACES_PRE_DOT   __space, __space, __space, __space, __space
   //6
-  #define SPACES_AFTER_DOT _space, _space, _space, _space, _space, _space
+  #define SPACES_AFTER_DOT __space, __space, __space, __space, __space, __space
 
   #define SPACES_PRE_DOT_COUNT   5
   #define SPACES_AFTER_DOT_COUNT 6
@@ -296,9 +296,9 @@ void DrawText
 #else
 
   //3
-  #define SPACES_PRE_DOT   _space, _space, _space
+  #define SPACES_PRE_DOT   __space, __space, __space
   //6
-  #define SPACES_AFTER_DOT _space, _space, _space, _space, _space, _space
+  #define SPACES_AFTER_DOT __space, __space, __space, __space, __space, __space
 
   #define SPACES_PRE_DOT_COUNT   3
   #define SPACES_AFTER_DOT_COUNT 6
@@ -317,7 +317,7 @@ void DrawText
 
 #else //IS_HDR_CSP
 
-  #define SDR_PERCENT() _percent,
+  #define SDR_PERCENT() __percent,
 
   #define SDR_PERCENT_COUNT 1
 
@@ -338,48 +338,48 @@ void DrawText
 
   static const uint2 charListMaxNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
   {
-    _m, _a, _x,
+    __m, __a, __x,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListAvgNitsRGBOffset = uint2(0, 5);
 
   static const uint2 charListAvgNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
   {
-    _a, _v, _g,
+    __a, __v, __g,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListMinNitsRGBOffset = uint2(0, 6);
 
   static const uint2 charListMinNitsRGB[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_RGB] =
   {
-    _m, _i, _n,
+    __m, __i, __n,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 #define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB                                             \
@@ -393,16 +393,16 @@ void DrawText
 
   static const uint2 charListCursorNitsRGB[ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_RGB] =
   {
-    _c, _u, _r, _s, _o, _r,
+    __c, __u, __r, __s, __o, __r,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //red
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //green
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //blue
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 
@@ -419,8 +419,8 @@ void DrawText
 
   static const uint2 charListTextNitsCll[ARRAY_SIZE_CHAR_LIST_TEXT_NITS_CLL] =
   {
-    _verticalLine, _n, _i, _t, _s, SPACES_NITS,
-    _verticalLine, _C, _L, _L
+    __line_vertical, __n, __i, __t, __s, SPACES_NITS,
+    __line_vertical, __C, __L, __L
   };
 
 #define ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL                                        \
@@ -432,36 +432,36 @@ void DrawText
 
   static const uint2 charListMaxNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
   {
-    _m, _a, _x,
+    __m, __a, __x,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListAvgNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 2);
 
   static const uint2 charListAvgNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
   {
-    _a, _v, _g,
+    __a, __v, __g,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
   static const uint2 charListMinNitsCllOffset = charListTextNitsCllBaseOffset + uint2(0, 3);
 
   static const uint2 charListMinNitsCll[ARRAY_SIZE_CHAR_LIST_MAX_AVG_MIN_NITS_CLL] =
   {
-    _m, _i, _n,
+    __m, __i, __n,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 #define ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL                                             \
@@ -473,18 +473,18 @@ void DrawText
 
   static const uint2 charListCursorNitsCll[ARRAY_SIZE_CHAR_LIST_CURSOR_NITS_CLL] =
   {
-    _c, _u, _r, _s, _o, _r,
+    __c, __u, __r, __s, __o, __r,
 
     //nits
-    _verticalLine, SPACES_PRE_DOT, _dot, SPACES_AFTER_DOT,             SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SPACES_AFTER_DOT,             SDR_PERCENT()
     //CLL
-    _verticalLine, SPACES_PRE_DOT, _dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
+    __line_vertical, SPACES_PRE_DOT, __dot, SDR_SPACES_FOR_LAST_PERCENT() SDR_PERCENT()
   };
 
 
 #ifdef IS_HDR_CSP
 
-  #define SPACES_GAMUTS _space, _space, _space, _space, _dot, _space, _space, _space
+  #define SPACES_GAMUTS __space, __space, __space, __space, __dot, __space, __space, __space
 
   static const uint2 charListGamutsBaseOffset = uint2(0, charListTextNitsCllOffset.y);
 
@@ -494,7 +494,7 @@ void DrawText
 
   static const uint2 charListGamutBt709[ARRAY_SIZE_CHAR_LIST_GAMUT_BT709] =
   {
-    _B, _T, _dot, _7, _0, _9, _colon, SPACES_GAMUTS, _percent
+    __B, __T, __dot, __7, __0, __9, __colon, SPACES_GAMUTS, __percent
   };
 
   static const uint2 charListGamutDciP3Offset = charListGamutsBaseOffset + uint2(1, 1);
@@ -503,7 +503,7 @@ void DrawText
 
   static const uint2 charListGamutDciP3[ARRAY_SIZE_CHAR_LIST_GAMUT_DCI_P3] =
   {
-    _D, _C, _I, _minus, _P, _3, _colon, SPACES_GAMUTS, _percent
+    __D, __C, __I, __minus, __P, __3, __colon, SPACES_GAMUTS, __percent
   };
 
   static const uint2 charListGamutBt2020Offset = charListGamutsBaseOffset + uint2(0, 2);
@@ -512,7 +512,7 @@ void DrawText
 
   static const uint2 charListGamutBt2020[ARRAY_SIZE_CHAR_LIST_GAMUT_BT2020] =
   {
-    _B, _T, _dot, _2, _0, _2, _0, _colon, SPACES_GAMUTS, _percent
+    __B, __T, __dot, __2, __0, __2, __0, __colon, SPACES_GAMUTS, __percent
   };
 
   static const uint2 charListGamutAp0Offset = charListGamutsBaseOffset + uint2(4, 3);
@@ -521,7 +521,7 @@ void DrawText
 
   static const uint2 charListGamutAp0[ARRAY_SIZE_CHAR_LIST_GAMUT_AP0] =
   {
-    _A, _P, _0, _colon, SPACES_GAMUTS, _percent
+    __A, __P, __0, __colon, SPACES_GAMUTS, __percent
   };
 
   static const uint2 charListGamutInvalidOffset = charListGamutsBaseOffset + uint2(0, 4);
@@ -530,7 +530,7 @@ void DrawText
 
   static const uint2 charListGamutInvalid[ARRAY_SIZE_CHAR_LIST_GAMUT_INVALID] =
   {
-    _i, _n, _v, _a, _l, _i, _d, _colon, SPACES_GAMUTS, _percent
+    __i, __n, __v, __a, __l, __i, __d, __colon, SPACES_GAMUTS, __percent
   };
 
   static const uint2 charListGamutCursorOffset = uint2(ARRAY_SIZE_CHAR_LIST_HEADER + 1,
@@ -540,7 +540,7 @@ void DrawText
 
   static const uint2 charListGamutCursor[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR] =
   {
-    _c, _u, _r, _s, _o, _r, _colon
+    __c, __u, __r, __s, __o, __r, __colon
   };
 
 
@@ -550,7 +550,7 @@ void DrawText
 
   static const uint2 charListGamutCursorTextBt709[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT709] =
   {
-    _B, _T, _dot, _7, _0, _9
+    __B, __T, __dot, __7, __0, __9
   };
 
   static const uint2 charListGamutCursorTextDciP3Offset = charListGamutCursorTextBt709Offset + uint2(0, 1);
@@ -559,7 +559,7 @@ void DrawText
 
   static const uint2 charListGamutCursorTextDciP3[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_DCI_P3] =
   {
-    _D, _C, _I, _minus, _P, _3
+    __D, __C, __I, __minus, __P, __3
   };
 
   static const uint2 charListGamutCursorTextBt2020Offset = charListGamutCursorTextBt709Offset + uint2(0, 2);
@@ -568,7 +568,7 @@ void DrawText
 
   static const uint2 charListGamutCursorTextBt2020[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_BT2020] =
   {
-    _B, _T, _dot, _2, _0, _2, _0
+    __B, __T, __dot, __2, __0, __2, __0
   };
 
   static const uint2 charListGamutCursorTextAp0Offset = charListGamutCursorTextBt709Offset + uint2(0, 3);
@@ -577,7 +577,7 @@ void DrawText
 
   static const uint2 charListGamutCursorTextAp0[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_AP0] =
   {
-    _A, _P, _0
+    __A, __P, __0
   };
 
   static const uint2 charListGamutCursorTextInvalidOffset = charListGamutCursorTextBt709Offset + uint2(0, 4);
@@ -586,7 +586,7 @@ void DrawText
 
   static const uint2 charListGamutCursorTextInvalid[ARRAY_SIZE_CHAR_LIST_GAMUT_CURSOR_TEXT_INVALID] =
   {
-    _i, _n, _v, _a, _l, _i, _d
+    __i, __n, __v, __a, __l, __i, __d
   };
 
 #endif //IS_HDR_CSP
@@ -807,7 +807,7 @@ void DrawText
       }
 
       [branch]
-      if (any(currentChar != _space))
+      if (any(currentChar != __space))
       {
         const uint2 storeOffset = (offsets[i] + uint2(j, 0))
                                 * CHAR_DIM_UINT;
@@ -962,7 +962,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 5)
       {
-        store_value = _minus.x;
+        store_value = __minus.x;
       }
       else
 #endif //IS_FLOAT_HDR_CSP
@@ -976,7 +976,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 4)
       {
-        store_value = _minus.x;
+        store_value = __minus.x;
       }
       else
 #endif //IS_FLOAT_HDR_CSP
@@ -996,7 +996,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 3)
       {
-        store_value = _minus.x;
+        store_value = __minus.x;
       }
       else
 #endif //IS_FLOAT_HDR_CSP
@@ -1010,7 +1010,7 @@ void CS_GetNitNumbers
 #ifdef IS_FLOAT_HDR_CSP
       if (negSignPos == 2)
       {
-        store_value = _minus.x;
+        store_value = __minus.x;
       }
       else
 #endif //IS_FLOAT_HDR_CSP
