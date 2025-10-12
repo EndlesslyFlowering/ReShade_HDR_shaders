@@ -113,7 +113,6 @@ uniform float2 NIT_PINGPONG2
   #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
   #define _CIE_DIAGRAM_TYPE                       SDR_CIE_DIAGRAM_TYPE
   #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_ALPHA                      SDR_CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       SDR_CIE_DIAGRAM_SIZE
   #define _CIE_SHOW_GAMUT_OUTLINE_BT709           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
   #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        SDR_CIE_SHOW_GAMUT_POINTERS_OUTLINE
@@ -153,7 +152,6 @@ uniform float2 NIT_PINGPONG2
   #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SHOW_CROSSHAIR_ON_CIE_DIAGRAM
   #define _CIE_DIAGRAM_TYPE                       CIE_DIAGRAM_TYPE
   #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_ALPHA                      CIE_DIAGRAM_ALPHA
   #define _CIE_DIAGRAM_SIZE                       CIE_DIAGRAM_SIZE
   #define _CIE_SHOW_GAMUT_OUTLINE_BT709           CIE_SHOW_GAMUT_BT709_OUTLINE
   #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        CIE_SHOW_GAMUT_POINTERS_OUTLINE
@@ -447,18 +445,6 @@ uniform float _CIE_DIAGRAM_BRIGHTNESS
 #else
 > = DEFAULT_BRIGHTNESS;
 #endif
-
-uniform float _CIE_DIAGRAM_ALPHA
-<
-  ui_category = "CIE diagram visualisation";
-  ui_label    = "CIE diagram opacity";
-  ui_type     = "slider";
-  ui_units    = "%%";
-  ui_min      = 0.f;
-  ui_max      = 100.f;
-  ui_step     = 0.5f;
-  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
-> = DEFAULT_ALPHA_LEVEL;
 
 
 #define CIE_XY_MAX float2(0.734690189f,   0.834090292f)
