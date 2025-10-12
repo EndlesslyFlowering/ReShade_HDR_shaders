@@ -675,224 +675,117 @@ void DrawCieOutlines()
 
       memoryBarrier();
 
-      static const int2 renderSizeMinus1AsInt = int2(renderSizeMinus1);
+      static const int2 render_size_minus_1_as_int = int2(renderSizeMinus1);
 
-      //putting loop here somehow made the compiler not unroll this in performance mode...
       [loop]
-      for (int y = 0; y <= (renderSizeMinus1AsInt.y + unrolling_be_gone_int); y++)
+      for (int y = 0; y <= (render_size_minus_1_as_int.y + unrolling_be_gone_int); y++)
       {
-        int coordsXLeft;
-        int coordsXRight;
+        int coord_x_left;
+        int coord_x_right;
 
+        int x_left = 0;
 
-        int xLeft = 0;
+        float value_last = -1.f;
 
-        //search from the left for the first pixel that is not 0
+        //search from the left for the first pixel that is not 0 and the highest one
         [loop]
-        while (xLeft <= (renderSizeMinus1AsInt.x + unrolling_be_gone_int))
+        while (x_left <= (render_size_minus_1_as_int.x + unrolling_be_gone_int))
         {
-          int2 xyLeft = int2(xLeft, y);
+          int2 xy_left = int2(x_left, y);
 
-          float current_pixel = tex2Dfetch(StorageCieOverlay, xyLeft).x;
+          float value_current = tex2Dfetch(StorageCieOverlay, xy_left).x;
 
-          xLeft++;
-
-          //if the first pixel is found end loop
-          if (current_pixel > 0.f)
+          //if the pixel is found end loop
+          if (value_current >  0.f
+           && value_current <= value_last)
           {
-            coordsXLeft = xLeft;
+            coord_x_left = x_left - 1;
 
             break;
           }
+
+          x_left++;
+
+          value_last = value_current;
         }
 
 
-        int xRight = renderSizeMinus1AsInt.x;
+        int x_right = render_size_minus_1_as_int.x;
 
-        //search from the right for the first pixel that is not 0
+        //search from the right for the first pixel that is not 0 and the highest one
         [loop]
-        while (xRight >= (0 + unrolling_be_gone_int))
+        while (x_right >= (0 + unrolling_be_gone_int))
         {
-          int2 xyRight = int2(xRight, y);
+          int2 xy_right = int2(x_right, y);
 
-          float current_pixel = tex2Dfetch(StorageCieOverlay, xyRight).x;
+          float value_current = tex2Dfetch(StorageCieOverlay, xy_right).x;
 
-          xRight--;
-
-          //if the first pixel is found end loop
-          if (current_pixel > 0.f)
+          //if the pixel is found end loop
+          if (value_current >  0.f
+           && value_current <= value_last)
           {
-            coordsXRight = xRight;
+            coord_x_right = x_right + 1;
 
             break;
           }
+
+          x_right--;
+
+          value_last = value_current;
         }
 
+        value_last = tex2Dfetch(StorageCieOverlay, int2(coord_x_left, y)).x;
 
-        //set alpha to 1 so that the background also gets drawn
+        float local_max = value_last;
 
-        //int left_right_diff = abs(coordsXRight - coordsXLeft);
-        //int check = clamp(left_right_diff, 3, clamp(left_right_diff / 10, 4, 10));
-        //int check = left_right_diff / 10;
-        int check = 6;
-
-        float last_value = 0.f;
-
-        bool row_has_value_at_zero           = false;
-        bool curr_row_has_been_greater_once  = false;
-        bool curr_row_has_been_smaller_once  = false;
-        bool curr_row_has_been_greater_twice = false;
+        bool row_has_value_at_zero      = false;
+        bool row_has_been_smaller_once  = false;
+        bool row_has_been_greater_twice = false;
         [loop]
-        for (int xAlpha = coordsXLeft; xAlpha <= (coordsXRight + unrolling_be_gone_int); xAlpha++)
+        for (int x_local = coord_x_left + 1; x_local <= (coord_x_right + unrolling_be_gone_int); x_local++)
         {
-          int2 xyAlpha = int2(xAlpha, y);
+          int2 xy_local = int2(x_local, y);
 
-          float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+          float value_current = tex2Dfetch(StorageCieOverlay, xy_local).x;
+
+          local_max = max(value_current, local_max);
 
           if (!row_has_value_at_zero)
           {
-            row_has_value_at_zero = current_value == 0.f;
-          }
-
-          // up
-          if (!curr_row_has_been_greater_once)
-          {
-            curr_row_has_been_greater_once = current_value > last_value;
+            row_has_value_at_zero = value_current == 0.f;
           }
 
           // up + down
-          if (!curr_row_has_been_smaller_once)
+          if (!row_has_been_smaller_once)
           {
-            curr_row_has_been_smaller_once = curr_row_has_been_greater_once
-                                          && current_value < last_value;
+            // make sure the difference is high enough to matter
+            row_has_been_smaller_once = (local_max - value_current) > 0.1f
+                                     && value_current < value_last;
           }
 
           // up + down + up
-          if (!curr_row_has_been_greater_twice)
+          if (!row_has_been_greater_twice)
           {
-            curr_row_has_been_greater_twice = curr_row_has_been_smaller_once
-                                           && current_value > last_value;
+            row_has_been_greater_twice = row_has_been_smaller_once
+                                      && value_current > value_last;
           }
 
-          last_value = current_value;
+          value_last = value_current;
         }
 
         [branch]
-        if (curr_row_has_been_greater_twice
+        if (row_has_been_greater_twice
          || row_has_value_at_zero)
         {
-          last_value = -1.f;
-
-          bool left_border_crossed  = false;
-          bool right_border_crossed = false;
-          bool lower_end_reached    = false;
-
+          //set alpha to 1 so that the background also gets drawn
           [loop]
-          for (int xAlpha = coordsXLeft; xAlpha <= (coordsXRight + unrolling_be_gone_int); xAlpha++)
+          for (int x_alpha = coord_x_left; x_alpha <= (coord_x_right + unrolling_be_gone_int); x_alpha++)
           {
-            int2 xyAlpha = int2(xAlpha, y);
+            int2 xy_local = int2(x_alpha, y);
 
-            float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
+            float value_current = tex2Dfetch(StorageCieOverlay, xy_local).x;
 
-            if (!left_border_crossed)
-            {
-              left_border_crossed = current_value < last_value;
-
-              //makes sure the brightes pixel gets an alpha of 1
-              if (left_border_crossed)
-              {
-                int2 last_pos = int2(xAlpha - 1, y);
-                float last_value = tex2Dfetch(StorageCieOverlay, last_pos).x;
-                tex2Dstore(StorageCieOverlay, last_pos, float4(last_value, 1.f, 0.f, 0.f));
-              }
-            }
-
-            if (left_border_crossed && !right_border_crossed)
-            {
-              right_border_crossed = current_value < last_value;
-
-              [flatten]
-              if (row_has_value_at_zero)
-              {
-                right_border_crossed = right_border_crossed
-                                    && (coordsXRight - xAlpha) < check;
-              }
-              else
-              {
-                if (!lower_end_reached)
-                {
-                  lower_end_reached = current_value > last_value;
-                }
-
-                right_border_crossed = right_border_crossed
-                                    && lower_end_reached;
-              }
-            }
-
-            if (left_border_crossed && !right_border_crossed)
-            {
-              tex2Dstore(StorageCieOverlay, xyAlpha, float4(current_value, 1.f, 0.f, 0.f));
-            }
-
-            last_value = current_value;
-          }
-
-          memoryBarrier();
-
-          last_value = -1.f;
-
-          left_border_crossed  = false;
-          right_border_crossed = false;
-          lower_end_reached    = false;
-
-          [loop]
-          for (int xAlpha = coordsXRight; xAlpha >= (coordsXLeft + unrolling_be_gone_int); xAlpha--)
-          {
-            int2 xyAlpha = int2(xAlpha, y);
-
-            float current_value = tex2Dfetch(StorageCieOverlay, xyAlpha).x;
-
-            if (!right_border_crossed)
-            {
-              right_border_crossed = current_value < last_value;
-
-              //makes sure the brightes pixel gets an alpha of 1
-              if (right_border_crossed)
-              {
-                int2 last_pos = int2(xAlpha + 1, y);
-                float last_value = tex2Dfetch(StorageCieOverlay, last_pos).x;
-                tex2Dstore(StorageCieOverlay, last_pos, float4(last_value, 1.f, 0.f, 0.f));
-              }
-            }
-
-            if (right_border_crossed && !left_border_crossed)
-            {
-              left_border_crossed = current_value < last_value;
-
-              [flatten]
-              if (row_has_value_at_zero)
-              {
-                left_border_crossed = left_border_crossed
-                                   && (xAlpha - coordsXLeft) < check;
-              }
-              else
-              {
-                if (!lower_end_reached)
-                {
-                  lower_end_reached = current_value > last_value;
-                }
-
-                left_border_crossed = left_border_crossed
-                                   && lower_end_reached;
-              }
-            }
-
-            if (right_border_crossed && !left_border_crossed)
-            {
-              tex2Dstore(StorageCieOverlay, xyAlpha, float4(current_value, 1.f, 0.f, 0.f));
-            }
-
-            last_value = current_value;
+            tex2Dstore(StorageCieOverlay, xy_local, float4(value_current, 1.f, 0.f, 0.f));
           }
         }
 
@@ -900,7 +793,7 @@ void DrawCieOutlines()
 //
 //        //bicubic interpolation with Mitchell-Netravali
 //        [loop]
-//        for (int x = 0; x <= renderSizeMinus1AsInt.x; x++)
+//        for (int x = 0; x <= render_size_minus_1_as_int.x; x++)
 //        {
 //          int2 xy = int2(x, y);
 //
