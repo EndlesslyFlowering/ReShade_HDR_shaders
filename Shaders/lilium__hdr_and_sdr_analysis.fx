@@ -1384,7 +1384,7 @@ void PS_HdrAnalysis
         Output.rgb = MergeOverlay(Output.rgb,
                                   cie_colour.rgb,
                                   _CIE_DIAGRAM_BRIGHTNESS,
-                                  cie_yccrccbc.a);
+                                  cie_yccrccbc.a * cie_yccrccbc.a);
       }
     }
   }

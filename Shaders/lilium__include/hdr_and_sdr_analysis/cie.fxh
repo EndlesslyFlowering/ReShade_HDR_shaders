@@ -275,7 +275,7 @@ void Draw_Cie_Lines
           [branch]
           if (grey_encoded > current_value)
           {
-            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
+            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey_encoded, 0.f, 0.f));
           }
         }
       }
@@ -335,7 +335,7 @@ void Draw_Cie_Lines
           [branch]
           if (grey_encoded > current_value)
           {
-            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey, 0.f, 0.f));
+            tex2Dstore(StorageCieOverlay, xy_as_int, float4(grey_encoded, grey_encoded, 0.f, 0.f));
           }
         }
       }
