@@ -257,7 +257,7 @@ void Draw_Cie_Lines
         //avoid invalid numbers
         fract = saturate(fract * 0.5f);
 
-        float grey = lerp(1.f, 0.f, fract);
+        float grey = 1.f - fract;
 
         [branch]
         if (grey > 0.f)
@@ -317,7 +317,7 @@ void Draw_Cie_Lines
         //avoid invalid numbers
         fract = saturate(fract * 0.5f);
 
-        float grey = lerp(1.f, 0.f, fract);
+        float grey = 1.f - fract;
 
         [branch]
         if (grey > 0.f)
@@ -548,14 +548,6 @@ void DrawCieOutlines()
 #endif
 
 
-#define DRAW_CIE_LINES(PRIM0, PRIM1)              \
-          Draw_Cie_Lines(unrolling_be_gone_float, \
-                         cieMinExtra,             \
-                         cieNormalise,            \
-                         renderSizeMinus1,        \
-                         PRIM0,                   \
-                         PRIM1)
-
 #define DRAW_COORDS_FROM_ARRAY(ARRAY_NAME, ARRAY_LENGTH)                      \
           [loop]                                                              \
           for (uint i = 0u; i < (ARRAY_LENGTH + unrolling_be_gone_uint); i++) \
@@ -563,7 +555,12 @@ void DrawCieOutlines()
             float2 coords0 = ARRAY_NAME[i];                                   \
             float2 coords1 = ARRAY_NAME[(i + 1u) % ARRAY_LENGTH];             \
                                                                               \
-            DRAW_CIE_LINES(coords0, coords1);                                 \
+            Draw_Cie_Lines(unrolling_be_gone_float,                           \
+                           cieMinExtra,                                       \
+                           cieNormalise,                                      \
+                           renderSizeMinus1,                                  \
+                           coords0,                                           \
+                           coords1);                                          \
           }
 
       BRANCH()
