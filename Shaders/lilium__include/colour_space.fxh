@@ -1097,6 +1097,7 @@ uniform int GLOBAL_INFO
   ui_label    = " ";
   ui_type     = "radio";
   ui_text     = INFO_TEXT;
+  nosave      = true;
 >;
 
 
