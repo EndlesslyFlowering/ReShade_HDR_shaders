@@ -2046,6 +2046,31 @@ namespace Csp
       return 1.2f + 0.42f * log10(LW / 1000.f);
     }
 
+    // Rec. ITU-R BT.2100-3 Table 5 (end)
+    // (OOTF) takes linear light, the white luminance (LW), the luminance and the HLG Gamma as input
+    #define HLG_OOTF_TEMPLATE(T)             \
+      T HLG_OOTF                             \
+      (                                      \
+        const T     E,                       \
+        const float Y,                       \
+        const float LW,                      \
+        const float Gamma                    \
+      )                                      \
+      {                                      \
+        return LW * pow(Y, Gamma - 1.f) * E; \
+      }
+
+    // (OOTF) takes linear light, the white luminance (LW), the luminance and the HLG Gamma as input
+    HLG_OOTF_TEMPLATE(float)
+
+    // (OOTF) takes linear light, the white luminance (LW), the luminance and the HLG Gamma as input
+    HLG_OOTF_TEMPLATE(float2)
+
+    // (OOTF) takes linear light, the white luminance (LW), the luminance and the HLG Gamma as input
+    HLG_OOTF_TEMPLATE(float3)
+
+    // (OOTF) takes linear light, the white luminance (LW), the luminance and the HLG Gamma as input
+    HLG_OOTF_TEMPLATE(float4)
 
     namespace Linear_To
     {
