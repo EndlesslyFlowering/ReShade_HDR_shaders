@@ -1872,8 +1872,8 @@ namespace Csp
     static const float PQ_c2 = 18.8515625f;       // = 2413 /  128;
     static const float PQ_c3 = 18.6875f;          // = 2392 /  128;
 
-    static const float _1_div_PQ_m1 = 6.27739477f;
-    static const float _1_div_PQ_m2 = 0.0126833133f;
+    static const float PQ_rcp_m1 = 6.27739477f;
+    static const float PQ_rcp_m2 = 0.0126833133f;
 
 
     // Rec. ITU-R BT.2100-2 Table 4
@@ -1885,7 +1885,7 @@ namespace Csp
         {                                           \
           E_ = max(E_, 0.f);                        \
                                                     \
-          T E_pow_1_div_m2 = pow(E_, _1_div_PQ_m2); \
+          T E_pow_1_div_m2 = pow(E_, PQ_rcp_m2);    \
                                                     \
           T num = max(E_pow_1_div_m2 - PQ_c1, 0.f); \
                                                     \
@@ -1894,7 +1894,7 @@ namespace Csp
           /* Y */                                   \
           return pow(num                            \
                    / den                            \
-                 , _1_div_PQ_m1);                   \
+                 , PQ_rcp_m1);                      \
         }
 
       // (EOTF) takes PQ values as input
@@ -3438,7 +3438,7 @@ namespace Csp
 
         float3 denominator    = PQ_c3 * powPqJzazbzLms - PQ_c2;
 
-        return pow(numerator / denominator, _1_div_PQ_m1);
+        return pow(numerator / denominator, PQ_rcp_m1);
       }
     } //PqJzazbzLmsTo
 
