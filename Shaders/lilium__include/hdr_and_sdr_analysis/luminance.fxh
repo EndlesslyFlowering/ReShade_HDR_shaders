@@ -201,11 +201,7 @@ float CalcNits
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
-
-  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
@@ -251,9 +247,6 @@ float3 CalcCll
     curRgb = Csp::Trc::PqTo::Nits(Pixel);
   #endif
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
@@ -298,11 +291,8 @@ float4 CalcNitsAndCll
 
   curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  curRgb = Csp::Trc::HlgTo::Nits(Pixel);
 
-  curPixelNits = dot(Csp::Mat::Bt2020ToXYZ[1], curRgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
@@ -349,12 +339,6 @@ float Calc_Nits_Normalised
 
   nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  rgb = Csp::Trc::HlgTo::Linear(Pixel);
-
-  nits = dot(Csp::Mat::Bt2020ToXYZ[1], rgb);
-
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   rgb = Pixel / 100.f;
@@ -394,10 +378,6 @@ float3 Calc_Cll_Normalised
   #else
     cll = Csp::Trc::PqTo::Linear(Pixel);
   #endif
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  cll = Csp::Trc::HlgTo::Linear(Pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
@@ -440,9 +420,7 @@ float4 Calc_Nits_And_Cll_Normalised
 
   nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
 
-  cll = Csp::Trc::HlgTo::Linear(Pixel);
 
   nits = dot(Csp::Mat::Bt2020ToXYZ[1], cll);
 

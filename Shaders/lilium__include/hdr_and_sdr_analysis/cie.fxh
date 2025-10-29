@@ -971,10 +971,6 @@ float3 GetXYZFromRgb
 
   const float3 XYZ = Csp::Mat::Bt2020To::XYZ(FetchFromHdr10ToLinearLUT(Rgb));
 
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-  const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Csp::Trc::HlgTo::Linear(Rgb));
-
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Rgb);

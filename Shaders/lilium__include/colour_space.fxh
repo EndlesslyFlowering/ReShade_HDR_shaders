@@ -4912,13 +4912,6 @@ namespace Csp
         return Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
       }
 
-      float3 Hlg(
-        const float3 Colour,
-        const float  Brightness)
-      {
-        return Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
-      }
-
       float3 Ps5(
         const float3 Colour,
         const float  Brightness)

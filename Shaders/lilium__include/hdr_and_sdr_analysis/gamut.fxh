@@ -208,8 +208,6 @@ void PS_CalcGamuts
     #else
       const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
     #endif
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-      const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
       CurGamut = GetGamut(curPixel);
     }
@@ -227,8 +225,6 @@ void PS_CalcGamuts
   #else
     const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
   #endif
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-    const float3 curPixel = Csp::Trc::HlgTo::Linear(pixel);
 #endif
     CurGamut = GetGamut(curPixel);
 
@@ -554,10 +550,6 @@ float3 CreateGamutMap
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
     output = Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(output));
-
-#elif (ACTUAL_COLOUR_SPACE == CSP_HLG)
-
-    output = Csp::Trc::NitsTo::Hlg(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
