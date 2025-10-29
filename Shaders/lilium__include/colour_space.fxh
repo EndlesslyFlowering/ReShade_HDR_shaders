@@ -2007,7 +2007,7 @@ namespace Csp
     static const float HLG_c = 0.55991072952956202016; //0.55991072952956202016 = 0.5 - HLG_a * ln(4 * HLG_a)
 
     // Rec. ITU-R BT.2100-3 Table 5
-    namespace HlgTo
+    namespace HLG_To
     {
       // Rec. ITU-R BT.2100-3 Table 5 (end)
       // (inverse OETF) takes HLG values as input
@@ -2036,7 +2036,7 @@ namespace Csp
 
       // (inverse OETF) takes HLG values as input
       HLG_TO_LINEAR(float4)
-    } //HlgTo
+    } //HLG_To
 
     float HLG_Gamma
     (
@@ -2052,7 +2052,7 @@ namespace Csp
       // Rec. ITU-R BT.2100-2 Table 5
       // (OETF) takes normalised to 1000 nits values as input
       #define LINEAR_TO_HLG(T)                 \
-        T Hlg(T E)                             \
+        T HLG(T E)                             \
         {                                      \
           /* E' */                             \
           T e__lower = sqrt(3.f * E);          \
