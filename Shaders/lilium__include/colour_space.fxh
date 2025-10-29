@@ -1168,6 +1168,15 @@ uniform int GLOBAL_INFO
 #endif
 
 
+#if (__VENDOR__ == 0x1002)
+  #define TIMES_100 100.0001f
+  #define   DIV_100 99.99999f
+#else
+  #define TIMES_100 100.f
+  #define   DIV_100 100.f
+#endif
+
+
 #define PI   3.1415927410125732421875f
 #define PI_2 6.283185482025146484375f
 
