@@ -1,6 +1,6 @@
 #pragma once
 
-#include "colour_space.fxh"
+#include "include_main.fxh"
 
 
 #if (defined(IS_ANALYSIS_CAPABLE_API)    \

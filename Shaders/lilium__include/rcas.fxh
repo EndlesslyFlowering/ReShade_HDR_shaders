@@ -80,7 +80,7 @@
 //  #define FSR_RCAS_DENOISE 1
 
 
-#include "colour_space.fxh"
+#include "include_main.fxh"
 
 
 HDR10_TO_LINEAR_LUT()

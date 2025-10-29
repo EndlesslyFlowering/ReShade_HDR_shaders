@@ -2,7 +2,7 @@
 
 #define ENABLE_COLOUR_OBJECT
 
-#include "colour_space.fxh"
+#include "include_main.fxh"
 
 
 #if (defined(IS_ANALYSIS_CAPABLE_API)    \
