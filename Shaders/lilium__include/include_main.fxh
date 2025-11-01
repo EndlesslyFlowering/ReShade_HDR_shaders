@@ -9,6 +9,7 @@
 #include "colour_space/ycbcr.fxh"
 #include "colour_space/cie_xyz_xy_uv.fxh"
 #include "colour_space/matrices.fxh"
+#include "colour_space/ipt.fxh"
 #include "colour_space/ictcp.fxh"
 #include "colour_space/jzazbz.fxh"
 #include "colour_space/oklab.fxh"
