@@ -499,20 +499,20 @@ void DrawCieOutlines()
         cieNormalise = CIE_XY_NORMALISE;
         cieSize      = CIE_XY_SIZE_FLOAT;
 
-        coordsPointersGamut = PointersGamutxy;
+        coordsPointersGamut = Pointers_Gamut_xy;
 
-        primBt709R = xyPrimaryBt709Red;
-        primBt709G = xyPrimaryBt709Green;
-        primBt709B = xyPrimaryBt709Blue;
+        primBt709R = CIE_xy_Primary_BT709_Red;
+        primBt709G = CIE_xy_Primary_BT709_Green;
+        primBt709B = CIE_xy_Primary_BT709_Blue;
 
 #ifdef IS_HDR_CSP
-        primDciP3R = xyPrimaryDciP3Red;
-        primDciP3G = xyPrimaryDciP3Green;
-        primDciP3B = xyPrimaryDciP3Blue;
+        primDciP3R = CIE_xy_Primary_DCIP3_Red;
+        primDciP3G = CIE_xy_Primary_DCIP3_Green;
+        primDciP3B = CIE_xy_Primary_DCIP3_Blue;
 
-        primBt2020R = xyPrimaryBt2020Red;
-        primBt2020G = xyPrimaryBt2020Green;
-        primBt2020B = xyPrimaryBt2020Blue;
+        primBt2020R = CIE_xy_Primary_BT2020_Red;
+        primBt2020G = CIE_xy_Primary_BT2020_Green;
+        primBt2020B = CIE_xy_Primary_BT2020_Blue;
 #endif
       }
       else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
@@ -521,20 +521,20 @@ void DrawCieOutlines()
         cieNormalise = CIE_UV_NORMALISE;
         cieSize      = CIE_UV_SIZE_FLOAT;
 
-        coordsPointersGamut = PointersGamutuv;
+        coordsPointersGamut = Pointers_Gamut_uv1976;
 
-        primBt709R = uvPrimaryBt709Red;
-        primBt709G = uvPrimaryBt709Green;
-        primBt709B = uvPrimaryBt709Blue;
+        primBt709R = CIE_uv1976_Primary_BT709_Red;
+        primBt709G = CIE_uv1976_Primary_BT709_Green;
+        primBt709B = CIE_uv1976_Primary_BT709_Blue;
 
 #ifdef IS_HDR_CSP
-        primDciP3R = uvPrimaryDciP3Red;
-        primDciP3G = uvPrimaryDciP3Green;
-        primDciP3B = uvPrimaryDciP3Blue;
+        primDciP3R = CIE_uv1976_Primary_DCIP3_Red;
+        primDciP3G = CIE_uv1976_Primary_DCIP3_Green;
+        primDciP3B = CIE_uv1976_Primary_DCIP3_Blue;
 
-        primBt2020R = uvPrimaryBt2020Red;
-        primBt2020G = uvPrimaryBt2020Green;
-        primBt2020B = uvPrimaryBt2020Blue;
+        primBt2020R = CIE_uv1976_Primary_BT2020_Red;
+        primBt2020G = CIE_uv1976_Primary_BT2020_Green;
+        primBt2020B = CIE_uv1976_Primary_BT2020_Blue;
 #endif
       }
 
@@ -663,7 +663,7 @@ void DrawCieOutlines()
         cieNormalise = CIE_UV_NORMALISE;
         cieSize      = CIE_UV_SIZE_FLOAT;
 
-        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_uv;
+        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_uv1976;
       }
 
       const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);

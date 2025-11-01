@@ -1,30 +1,30 @@
 #pragma once
 
 
-static const float2 xyPrimaryBt709Red   = float2(0.64f, 0.33f);
-static const float2 xyPrimaryBt709Green = float2(0.30f, 0.60f);
-static const float2 xyPrimaryBt709Blue  = float2(0.15f, 0.06f);
+static const float2 CIE_xy_Primary_BT709_Red    = float2(0.64f,  0.33f);
+static const float2 CIE_xy_Primary_BT709_Green  = float2(0.30f,  0.60f);
+static const float2 CIE_xy_Primary_BT709_Blue   = float2(0.15f,  0.06f);
 
-static const float2 xyPrimaryDciP3Red   = float2(0.680f, 0.320f);
-static const float2 xyPrimaryDciP3Green = float2(0.265f, 0.690f);
-static const float2 xyPrimaryDciP3Blue  = float2(0.150f, 0.060f);
+static const float2 CIE_xy_Primary_DCIP3_Red    = float2(0.680f, 0.320f);
+static const float2 CIE_xy_Primary_DCIP3_Green  = float2(0.265f, 0.690f);
+static const float2 CIE_xy_Primary_DCIP3_Blue   = float2(0.150f, 0.060f);
 
-static const float2 xyPrimaryBt2020Red   = float2(0.708f, 0.292f);
-static const float2 xyPrimaryBt2020Green = float2(0.170f, 0.797f);
-static const float2 xyPrimaryBt2020Blue  = float2(0.131f, 0.046f);
+static const float2 CIE_xy_Primary_BT2020_Red   = float2(0.708f, 0.292f);
+static const float2 CIE_xy_Primary_BT2020_Green = float2(0.170f, 0.797f);
+static const float2 CIE_xy_Primary_BT2020_Blue  = float2(0.131f, 0.046f);
 
 
-static const float2 uvPrimaryBt709Red   = float2(0.450704216f,  0.522887349f);
-static const float2 uvPrimaryBt709Green = float2(0.125f,        0.5625f);
-static const float2 uvPrimaryBt709Blue  = float2(0.175438597f,  0.157894730f);
+static const float2 CIE_uv1976_Primary_BT709_Red    = float2(0.450704216f,  0.522887349f);
+static const float2 CIE_uv1976_Primary_BT709_Green  = float2(0.125f,        0.5625f);
+static const float2 CIE_uv1976_Primary_BT709_Blue   = float2(0.175438597f,  0.157894730f);
 
-static const float2 uvPrimaryDciP3Red   = float2(0.496350377f,  0.525547444f);
-static const float2 uvPrimaryDciP3Green = float2(0.0986046493f, 0.577674388f);
-static const float2 uvPrimaryDciP3Blue  = float2(0.175438597f,  0.157894730f);
+static const float2 CIE_uv1976_Primary_DCIP3_Red    = float2(0.496350377f,  0.525547444f);
+static const float2 CIE_uv1976_Primary_DCIP3_Green  = float2(0.0986046493f, 0.577674388f);
+static const float2 CIE_uv1976_Primary_DCIP3_Blue   = float2(0.175438597f,  0.157894730f);
 
-static const float2 uvPrimaryBt2020Red   = float2(0.556603789f,  0.516509413f);
-static const float2 uvPrimaryBt2020Green = float2(0.0556282736f, 0.586796462f);
-static const float2 uvPrimaryBt2020Blue  = float2(0.159270510f,  0.125835865f);
+static const float2 CIE_uv1976_Primary_BT2020_Red   = float2(0.556603789f,  0.516509413f);
+static const float2 CIE_uv1976_Primary_BT2020_Green = float2(0.0556282736f, 0.586796462f);
+static const float2 CIE_uv1976_Primary_BT2020_Blue  = float2(0.159270510f,  0.125835865f);
 
 
 static const float2 CIE_1931_2_Degree_Standard_Observer_xy[] =
@@ -372,7 +372,7 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_xy[] =
 };
 
 
-static const float2 CIE_1931_2_Degree_Standard_Observer_uv[] =
+static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[] =
 {
   float2(0.258899688f,   0.0175654161f),
   float2(0.258778840f,   0.0175401140f),
@@ -716,7 +716,8 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_uv[] =
   float2(0.623366296f,   0.506495058f)
 };
 
-static const float2 PointersGamutxy[] =
+
+static const float2 Pointers_Gamut_xy[] =
 {
   float2(0.659f, 0.316f),
   float2(0.634f, 0.351f),
@@ -752,7 +753,8 @@ static const float2 PointersGamutxy[] =
   float2(0.508f, 0.226f)
 };
 
-static const float2 PointersGamutuv[] =
+
+static const float2 Pointers_Gamut_uv1976[] =
 {
   float2(0.481549143f,  0.519546926f),
   float2(0.426648736f,  0.531460285f),
