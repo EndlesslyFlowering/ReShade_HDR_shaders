@@ -27,7 +27,9 @@ static const float2 CIE_uv1976_Primary_BT2020_Green = float2(0.0556282736f, 0.58
 static const float2 CIE_uv1976_Primary_BT2020_Blue  = float2(0.159270510f,  0.125835865f);
 
 
-static const float2 CIE_1931_2_Degree_Standard_Observer_xy[340] =
+#define CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH 340
+
+static const float2 CIE_1931_2_Degree_Standard_Observer_xy[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH] =
 {
   float2(0.175560235f,   0.00529383681f),
   float2(0.175482526f,   0.00528633920f),
@@ -372,7 +374,7 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_xy[340] =
 };
 
 
-static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[340] =
+static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH] =
 {
   float2(0.258899688f,   0.0175654161f),
   float2(0.258778840f,   0.0175401140f),
@@ -717,7 +719,9 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[340] =
 };
 
 
-static const float2 Pointers_Gamut_xy[32] =
+#define POINTERS_GAMUT_ARRAY_LENGTH 32
+
+static const float2 Pointers_Gamut_xy[POINTERS_GAMUT_ARRAY_LENGTH] =
 {
   float2(0.659f, 0.316f),
   float2(0.634f, 0.351f),
@@ -754,7 +758,7 @@ static const float2 Pointers_Gamut_xy[32] =
 };
 
 
-static const float2 Pointers_Gamut_uv1976[32] =
+static const float2 Pointers_Gamut_uv1976[POINTERS_GAMUT_ARRAY_LENGTH] =
 {
   float2(0.481549143f,  0.519546926f),
   float2(0.426648736f,  0.531460285f),

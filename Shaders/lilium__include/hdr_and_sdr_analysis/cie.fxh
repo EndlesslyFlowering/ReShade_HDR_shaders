@@ -480,7 +480,7 @@ void DrawCieOutlines()
       float2 primBt709G;
       float2 primBt709B;
 
-      float2 coordsPointersGamut[32];
+      float2 coordsPointersGamut[POINTERS_GAMUT_ARRAY_LENGTH];
 
 #ifdef IS_HDR_CSP
       float2 primDciP3R;
@@ -566,7 +566,7 @@ void DrawCieOutlines()
       BRANCH()
       if (_CIE_SHOW_GAMUT_OUTLINE_POINTERS)
       {
-        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, 32u)
+        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, uint(POINTERS_GAMUT_ARRAY_LENGTH))
       }
 
 
@@ -646,7 +646,7 @@ void DrawCieOutlines()
       float2 cieNormalise;
       float2 cieSize;
 
-      float2 coordsSpectralLocus[340];
+      float2 coordsSpectralLocus[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH];
 
       FLATTEN()
       if (_CIE_DIAGRAM_TYPE == CIE_1931)
@@ -668,7 +668,7 @@ void DrawCieOutlines()
 
       const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
 
-      DRAW_COORDS_FROM_ARRAY(coordsSpectralLocus, 340)
+      DRAW_COORDS_FROM_ARRAY(coordsSpectralLocus, uint(CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH))
 
       memoryBarrier();
 
