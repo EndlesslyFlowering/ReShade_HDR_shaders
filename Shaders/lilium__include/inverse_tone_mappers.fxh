@@ -595,8 +595,8 @@ namespace Itmos
       float  MaxNits,
       float  ShoulderStart)
     {
-      float3x3 RgbToLms  = Ictcp::Bt2020ToLms;
-      float3x3 LmsToRgb  = Ictcp::LmsToBt2020;
+      float3x3 RgbToLms  = ICtCp::BT2020_To_ICtCp_LMS;
+      float3x3 LmsToRgb  = ICtCp::ICtCp_LMS_To_BT2020;
 
       float3 LMS = mul(RgbToLms, Input);
 
@@ -610,15 +610,15 @@ namespace Itmos
       }
       else
       {
-        float Ct1 = dot(LMS, Csp::Ictcp::PqLmsToIctcp[1]);
-        float Cp1 = dot(LMS, Csp::Ictcp::PqLmsToIctcp[2]);
+        float Ct1 = dot(LMS, Csp::ICtCp::PQ_ICtCp_LMS_To_ICtCp[1]);
+        float Cp1 = dot(LMS, Csp::ICtCp::PQ_ICtCp_LMS_To_ICtCp[2]);
 
         float I2 = LuminanceExpand(I1, MaxNits, ShoulderStart);
 
         float min_I = min(min((I1 / I2), (I2 / I1)) * 1.1f, 1.f);
 
         //to LMS
-        LMS = Csp::Ictcp::IctcpTo::Lms(float3(I2,
+        LMS = Csp::ICtCp::ICtCp_To::LMS(float3(I2,
                                               min_I * Ct1,
                                               min_I * Cp1));
         //to RGB

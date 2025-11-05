@@ -2,14 +2,14 @@
 namespace Csp
 {
 
-  namespace Ictcp
+  namespace ICtCp
   {
 
     // The matrices use higher precision rather than being rounded to 12 bit values like the Dolby spec describes.
     // This is because I only use these for internal processing.
 
-    //L'M'S'->ICtCp
-    static const float3x3 PqLmsToIctcp =
+    //L'M'S' -> ICtCp
+    static const float3x3 PQ_ICtCp_LMS_To_ICtCp =
       float3x3
       (
         0.5f,         0.5f,         0.f,
@@ -17,8 +17,8 @@ namespace Csp
         4.37806224f, -4.24553966f, -0.132522642f
       );
 
-    //ICtCp->L'M'S'
-    static const float3x3 IctcpToPqLms =
+    //ICtCp -> L'M'S'
+    static const float3x3 ICtCp_To_PQ_ICtCp_LMS =
       float3x3
       (
         1.f,  0.00860647484f,  0.111033529f,
@@ -27,8 +27,8 @@ namespace Csp
       );
 
 
-    //RGB BT.709->LMS
-    static const float3x3 Bt709ToLms =
+    //RGB BT.709 -> LMS
+    static const float3x3 BT709_To_ICtCp_LMS =
       float3x3
       (
         0.295764088f,  0.623072445f, 0.0811667516f,
@@ -36,8 +36,8 @@ namespace Csp
         0.0351022854f, 0.156589955f, 0.808302998f
       );
 
-    //scRGB->LMS
-    static const float3x3 ScRgbToLms =
+    //scRGB -> LMS
+    static const float3x3 scRGB_To_ICtCp_LMS =
       float3x3
       (
         0.00236611254f,  0.00498457951f, 0.000649333989f,
@@ -45,8 +45,8 @@ namespace Csp
         0.000280818290f, 0.00125271955f, 0.00646642409f
       );
 
-    //RGB DCI-P3->LMS
-    static const float3x3 DciP3ToLms =
+    //RGB DCI-P3 -> LMS
+    static const float3x3 DCIP3_To_ICtCp_LMS =
       float3x3
       (
         0.334494858f,  0.576365113f,  0.0891432985f,
@@ -54,8 +54,8 @@ namespace Csp
         0.0205394085f, 0.0917179808f, 0.887737870f
       );
 
-    //RGB BT.2020->LMS
-    static const float3x3 Bt2020ToLms =
+    //RGB BT.2020 -> LMS
+    static const float3x3 BT2020_To_ICtCp_LMS =
       float3x3
       (
         0.412036389f,  0.523911893f,  0.0640549808f,
@@ -64,8 +64,8 @@ namespace Csp
       );
 
 
-    //LMS->RGB BT.709
-    static const float3x3 LmsToBt709 =
+    //LMS -> RGB BT.709
+    static const float3x3 ICtCp_LMS_To_BT709 =
       float3x3
       (
          6.17353248f,   -5.32089900f,   0.147354885f,
@@ -73,8 +73,8 @@ namespace Csp
         -0.0115983877f, -0.264921456f,  1.27652633f
       );
 
-    //LMS->scRGB
-    static const float3x3 LmsToScRgb =
+    //LMS -> scRGB
+    static const float3x3 ICtCp_LMS_To_scRGB =
       float3x3
       (
          771.691589f,   -665.112365f,    18.4193611f,
@@ -82,8 +82,8 @@ namespace Csp
           -1.44979846f,  -33.1151809f,  159.565795f
       );
 
-    //LMS->RGB DCI-P3
-    static const float3x3 LmsToDciP3 =
+    //LMS -> RGB DCI-P3
+    static const float3x3 ICtCp_LMS_To_DCIP3 =
       float3x3
       (
          4.84242963f,     -3.92169165f,   0.0792524516f,
@@ -91,8 +91,8 @@ namespace Csp
         -0.000956906354f, -0.146754235f,  1.14771676f
       );
 
-    //LMS->RGB BT.2020
-    static const float3x3 LmsToBt2020 =
+    //LMS -> RGB BT.2020
+    static const float3x3 ICtCp_LMS_To_BT2020 =
       float3x3
       (
          3.43681478f,   -2.50677371f,    0.0699519291f,
@@ -100,269 +100,252 @@ namespace Csp
         -0.0257268063f, -0.0991417691f,  1.12487411f
       );
 
-    namespace IctcpTo
+    namespace ICtCp_To
     {
-      //ICtCp->L'M'S'
-      float3 PqLms(float3 Ictcp)
+      //ICtCp -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 ICtCp)
       {
-        return mul(IctcpToPqLms, Ictcp);
+        return mul(ICtCp_To_PQ_ICtCp_LMS, ICtCp);
       }
-    } //IctcpTo
+    } //ICtCp_To
 
-    namespace PqLmsTo
+    namespace PQ_ICtCp_LMS_To
     {
-      //L'M'S'->ICtCp
-      float3 Ictcp(float3 PqLms)
+      //L'M'S' -> ICtCp
+      float3 ICtCp(const float3 PQ_ICtCp_LMS)
       {
-        return mul(PqLmsToIctcp, PqLms);
+        return mul(PQ_ICtCp_LMS_To_ICtCp, PQ_ICtCp_LMS);
       }
 
-      //L'M'S'->LMS
-      float3 Lms(float3 PqLms)
+      //L'M'S' -> LMS
+      float3 LMS(const float3 PQ_ICtCp_LMS)
       {
-        return Csp::Trc::PqTo::Linear(PqLms);
+        return Csp::Trc::PqTo::Linear(PQ_ICtCp_LMS);
       }
-    } //PqLmsTo
+    } //PQ_ICtCp_LMS_To
 
-    namespace IctcpTo
+    namespace ICtCp_To
     {
-      //ICtCp->LMS
-      float3 Lms(float3 Ictcp)
+      //ICtCp -> LMS
+      float3 LMS(const float3 ICtCp)
       {
-        float3 pqLms = IctcpTo::PqLms(Ictcp);
+        float3 pq_lms = ICtCp_To::PQ_ICtCp_LMS(ICtCp);
 
         //LMS
-        return PqLmsTo::Lms(pqLms);
+        return PQ_ICtCp_LMS_To::LMS(pq_lms);
       }
-    } //IctcpTo
+    } //ICtCp_To
 
-    namespace LmsTo
+    namespace LMS_To
     {
-      //LMS->L'M'S'
-      float3 PqLms(float3 Lms)
+      //LMS -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 LMS)
       {
-        return Csp::Trc::LinearTo::Pq(Lms);
+        return Csp::Trc::LinearTo::Pq(LMS);
       }
 
-      //LMS->ICtCp
-      float3 Ictcp(float3 Lms)
+      //LMS -> ICtCp
+      float3 ICtCp(const float3 LMS)
       {
-        float3 pqLms = LmsTo::PqLms(Lms);
+        float3 pq_lms = LMS_To::PQ_ICtCp_LMS(LMS);
 
-        //ICtCp
-        return PqLmsTo::Ictcp(pqLms);
+        return PQ_ICtCp_LMS_To::ICtCp(pq_lms);
       }
 
-      //LMS->RGB BT.709
-      float3 Bt709(float3 Colour)
+      //LMS -> RGB BT.709
+      float3 BT709(const float3 RGB)
       {
-        return mul(LmsToBt709, Colour);
+        return mul(ICtCp_LMS_To_BT709, RGB);
       }
 
-      //LMS->scRGB
-      float3 ScRgb(float3 Colour)
+      //LMS -> scRGB
+      float3 scRGB(const float3 RGB)
       {
-        return mul(LmsToScRgb, Colour);
+        return mul(ICtCp_LMS_To_scRGB, RGB);
       }
 
-      //LMS->RGB DCI-P3
-      float3 DciP3(float3 Colour)
+      //LMS -> RGB DCI-P3
+      float3 DCIP3(const float3 RGB)
       {
-        return mul(LmsToDciP3, Colour);
+        return mul(ICtCp_LMS_To_DCIP3, RGB);
       }
 
-      //LMS->RGB BT.2020
-      float3 Bt2020(float3 Colour)
+      //LMS -> RGB BT.2020
+      float3 BT2020(const float3 RGB)
       {
-        return mul(LmsToBt2020, Colour);
+        return mul(ICtCp_LMS_To_BT2020, RGB);
       }
-    } //LmsTo
+    } //LMS_To
 
-    namespace PqLmsTo
+    namespace PQ_ICtCp_LMS_To
     {
-      //L'M'S'->RGB BT.709
-      float3 Bt709(float3 PqLms)
+      //L'M'S' -> RGB BT.709
+      float3 BT709(const float3 PQ_ICtCp_LMS)
       {
-        float3 lms = PqLmsTo::Lms(PqLms);
+        float3 lms = PQ_ICtCp_LMS_To::LMS(PQ_ICtCp_LMS);
 
-        //BT.709
-        return LmsTo::Bt709(lms);
+        return LMS_To::BT709(lms);
       }
 
-      //L'M'S'->scRGB
-      float3 ScRgb(float3 PqLms)
+      //L'M'S' -> scRGB
+      float3 scRGB(const float3 PQ_ICtCp_LMS)
       {
-        float3 lms = PqLmsTo::Lms(PqLms);
+        float3 lms = PQ_ICtCp_LMS_To::LMS(PQ_ICtCp_LMS);
 
-        //scRGB
-        return LmsTo::ScRgb(lms);
+        return LMS_To::scRGB(lms);
       }
 
-      //L'M'S'->RGB DCI-P3
-      float3 DciP3(float3 PqLms)
+      //L'M'S' -> RGB DCI-P3
+      float3 DCIP3(const float3 PQ_ICtCp_LMS)
       {
-        float3 lms = PqLmsTo::Lms(PqLms);
+        float3 lms = PQ_ICtCp_LMS_To::LMS(PQ_ICtCp_LMS);
 
-        //DCI-P3
-        return LmsTo::DciP3(lms);
+        return LMS_To::DCIP3(lms);
       }
 
-      //L'M'S'->RGB BT.2020
-      float3 Bt2020(float3 PqLms)
+      //L'M'S' -> RGB BT.2020
+      float3 BT2020(const float3 PQ_ICtCp_LMS)
       {
-        float3 lms = PqLmsTo::Lms(PqLms);
+        float3 lms = PQ_ICtCp_LMS_To::LMS(PQ_ICtCp_LMS);
 
-        //BT.2020
-        return LmsTo::Bt2020(lms);
+        return LMS_To::BT2020(lms);
       }
-    } //PqLmsTo
+    } //PQ_ICtCp_LMS_To
 
-    namespace IctcpTo
+    namespace ICtCp_To
     {
-      //ICtCp->RGB BT.709
-      float3 Bt709(float3 Ictcp)
+      //ICtCp -> RGB BT.709
+      float3 BT709(const float3 ICtCp)
       {
-        float3 lms = IctcpTo::Lms(Ictcp);
+        float3 lms = ICtCp_To::LMS(ICtCp);
 
-        //BT.709
-        return LmsTo::Bt709(lms);
+        return LMS_To::BT709(lms);
       }
 
-      //ICtCp->scRGB
-      float3 ScRgb(float3 Ictcp)
+      //ICtCp -> scRGB
+      float3 scRGB(const float3 ICtCp)
       {
-        float3 lms = IctcpTo::Lms(Ictcp);
+        float3 lms = ICtCp_To::LMS(ICtCp);
 
-        //scRGB
-        return LmsTo::ScRgb(lms);
+        return LMS_To::scRGB(lms);
       }
 
-      //ICtCp->RGB DCI-P3
-      float3 DciP3(float3 Ictcp)
+      //ICtCp -> RGB DCI-P3
+      float3 DCIP3(const float3 ICtCp)
       {
-        float3 lms = IctcpTo::Lms(Ictcp);
+        float3 lms = ICtCp_To::LMS(ICtCp);
 
-        //BT.709
-        return LmsTo::DciP3(lms);
+        return LMS_To::DCIP3(lms);
       }
 
-      //ICtCp->RGB BT.2020
-      float3 Bt2020(float3 Ictcp)
+      //ICtCp -> RGB BT.2020
+      float3 BT2020(const float3 ICtCp)
       {
-        float3 lms = IctcpTo::Lms(Ictcp);
+        float3 lms = ICtCp_To::LMS(ICtCp);
 
-        //BT.2020
-        return LmsTo::Bt2020(lms);
+        return LMS_To::BT2020(lms);
       }
-    } //IctcpTo
+    } //ICtCp_To
 
-    namespace Bt709To
+    namespace BT709_To
     {
-      //RGB BT.709->LMS
-      float3 Lms(float3 Colour)
+      //RGB BT.709 -> LMS
+      float3 LMS(const float3 RGB)
       {
-        return mul(Bt709ToLms, Colour);
+        return mul(BT709_To_ICtCp_LMS, RGB);
       }
 
-      //RGB BT.709->L'M'S'
-      float3 PqLms(float3 Rgb)
+      //RGB BT.709 -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 Rgb)
       {
-        float3 lms = Bt709To::Lms(Rgb);
+        float3 lms = BT709_To::LMS(Rgb);
 
-        //L'M'S'
-        return LmsTo::PqLms(lms);
+        return LMS_To::PQ_ICtCp_LMS(lms);
       }
 
-      //RGB BT.709->ICtCp
-      float3 Ictcp(float3 Rgb)
+      //RGB BT.709 -> ICtCp
+      float3 ICtCp(const float3 Rgb)
       {
-        float3 lms = Bt709To::Lms(Rgb);
+        float3 lms = BT709_To::LMS(Rgb);
 
-        //ICtCp
-        return LmsTo::Ictcp(lms);
+        return LMS_To::ICtCp(lms);
       }
-    } //Bt709To
+    } //BT709_To
 
-    namespace ScRgbTo
+    namespace scRGB_To
     {
-      //scRGB->LMS
-      float3 Lms(float3 Colour)
+      //scRGB -> LMS
+      float3 LMS(const float3 RGB)
       {
-        return mul(ScRgbToLms, Colour);
+        return mul(scRGB_To_ICtCp_LMS, RGB);
       }
 
-      //scRGB->L'M'S'
-      float3 PqLms(float3 Rgb)
+      //scRGB -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 Rgb)
       {
-        float3 lms = ScRgbTo::Lms(Rgb);
+        float3 lms = scRGB_To::LMS(Rgb);
 
-        //L'M'S'
-        return LmsTo::PqLms(lms);
+        return LMS_To::PQ_ICtCp_LMS(lms);
       }
 
-      //scRGB->ICtCp
-      float3 Ictcp(float3 Rgb)
+      //scRGB -> ICtCp
+      float3 ICtCp(const float3 Rgb)
       {
-        float3 lms = ScRgbTo::Lms(Rgb);
+        float3 lms = scRGB_To::LMS(Rgb);
 
-        //ICtCp
-        return LmsTo::Ictcp(lms);
+        return LMS_To::ICtCp(lms);
       }
-    } //ScRgbTo
+    } //scRGB_To
 
-    namespace DciP3To
+    namespace DCIP3_To
     {
-      //RGB DCI-P3->LMS
-      float3 Lms(float3 Colour)
+      //RGB DCI-P3 -> LMS
+      float3 LMS(const float3 RGB)
       {
-        return mul(DciP3ToLms, Colour);
+        return mul(DCIP3_To_ICtCp_LMS, RGB);
       }
 
-      //RGB DCI-P3->L'M'S'
-      float3 PqLms(float3 Rgb)
+      //RGB DCI-P3 -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 Rgb)
       {
-        float3 lms = DciP3To::Lms(Rgb);
+        float3 lms = DCIP3_To::LMS(Rgb);
 
-        //L'M'S'
-        return LmsTo::PqLms(lms);
+        return LMS_To::PQ_ICtCp_LMS(lms);
       }
 
-      //RGB DCI-P3->ICtCp
-      float3 Ictcp(float3 Rgb)
+      //RGB DCI-P3 -> ICtCp
+      float3 ICtCp(const float3 Rgb)
       {
-        float3 lms = DciP3To::Lms(Rgb);
+        float3 lms = DCIP3_To::LMS(Rgb);
 
-        //ICtCp
-        return LmsTo::Ictcp(lms);
+        return LMS_To::ICtCp(lms);
       }
-    } //DciP3To
+    } //DCIP3_To
 
-    namespace Bt2020To
+    namespace BT2020_To
     {
-      //RGB BT.2020->LMS
-      float3 Lms(float3 Colour)
+      //RGB BT.2020 -> LMS
+      float3 LMS(const float3 RGB)
       {
-        return mul(Bt2020ToLms, Colour);
+        return mul(BT2020_To_ICtCp_LMS, RGB);
       }
 
-      //RGB BT.2020->L'M'S'
-      float3 PqLms(float3 Rgb)
+      //RGB BT.2020 -> L'M'S'
+      float3 PQ_ICtCp_LMS(const float3 Rgb)
       {
-        float3 lms = Bt2020To::Lms(Rgb);
+        float3 lms = BT2020_To::LMS(Rgb);
 
-        //L'M'S'
-        return LmsTo::PqLms(lms);
+        return LMS_To::PQ_ICtCp_LMS(lms);
       }
 
-      //RGB BT.2020->ICtCp
-      float3 Ictcp(float3 Rgb)
+      //RGB BT.2020 -> ICtCp
+      float3 ICtCp(const float3 Rgb)
       {
-        float3 lms = Bt2020To::Lms(Rgb);
+        float3 lms = BT2020_To::LMS(Rgb);
 
-        //ICtCp
-        return LmsTo::Ictcp(lms);
+        return LMS_To::ICtCp(lms);
       }
-    } //Bt2020To
+    } //BT2020_To
 
   } //ICtCp
 
