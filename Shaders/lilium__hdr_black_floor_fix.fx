@@ -36,12 +36,12 @@ void GetParams
   BRANCH()
   if (Ui::HdrBlackFloorFix::Lowering::ProcessingMode != PRO_MODE_RGB)
   {
-    OutRollOffStoppingPoint = Csp::Trc::LinearTo::Pq(OutRollOffStoppingPoint);
+    OutRollOffStoppingPoint = Csp::Trc::Linear_To::PQ(OutRollOffStoppingPoint);
 
-    OutOldBlackPoint = Csp::Trc::LinearTo::Pq(OutOldBlackPoint);
+    OutOldBlackPoint = Csp::Trc::Linear_To::PQ(OutOldBlackPoint);
 
     newBlackPoint = sign(newBlackPoint)
-                  * Csp::Trc::LinearTo::Pq(abs(newBlackPoint));
+                  * Csp::Trc::Linear_To::PQ(abs(newBlackPoint));
   }
 
   OutRollOffMinusOldBlackPoint = OutRollOffStoppingPoint

@@ -32,7 +32,7 @@ void GetTmoParamsBt2390
   // source max brightness (Lw) in PQ
   // target min brightness (Lmin) in PQ
   // target max brightness (Lmax) in PQ
-  float4 SrcMinMaxPqTgtMinMaxPq = Csp::Trc::NitsTo::Pq(float4(Ui::Tm::Bt2390::OldBlackPoint,
+  float4 SrcMinMaxPqTgtMinMaxPq = Csp::Trc::Nits_To::PQ(float4(Ui::Tm::Bt2390::OldBlackPoint,
                                                               UsedMaxNits,
                                                               Ui::Tm::Bt2390::NewBlackPoint,
                                                               Ui::Tm::Global::TargetLuminance));
@@ -70,10 +70,10 @@ void GetTmoParamsExpCompress
                       * Ui::Tm::Global::TargetLuminance
                       / 10000.f;
 
-  ShoulderStartInPq = Csp::Trc::LinearTo::Pq(shoulderStart);
+  ShoulderStartInPq = Csp::Trc::Linear_To::PQ(shoulderStart);
 
   TargetLuminanceInPqMinusShoulderStartInPq =
-    Csp::Trc::NitsTo::Pq(Ui::Tm::Global::TargetLuminance)
+    Csp::Trc::Nits_To::PQ(Ui::Tm::Global::TargetLuminance)
   - ShoulderStartInPq;
 
   return;
@@ -390,7 +390,7 @@ namespace Tmos
         float y1 = 0.f;
 #endif
         //E1
-        float y2 = EetfE1(Csp::Trc::LinearTo::Pq(y1),
+        float y2 = EetfE1(Csp::Trc::Linear_To::PQ(y1),
                           SrcMaxPq,
                           SrcMinPq,
                           SrcMaxPqMinusSrcMinPq,
@@ -423,7 +423,7 @@ namespace Tmos
                       MinLum,
                       DisableBlackFloorAdaption);
 
-        y2 = Csp::Trc::PqTo::Linear(y2);
+        y2 = Csp::Trc::PQ_To::Linear(y2);
 
         Rgb *= y2 / y1;
 
@@ -442,7 +442,7 @@ namespace Tmos
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float m1   = MAXRGB(Rgb);
-        float m1Pq = Csp::Trc::LinearTo::Pq(m1);
+        float m1Pq = Csp::Trc::Linear_To::PQ(m1);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float m1Pq = MAXRGB(Rgb);
 #else // fallback for shader permutations
@@ -484,7 +484,7 @@ namespace Tmos
                       MinLum,
                       DisableBlackFloorAdaption);
 
-        m2 = Csp::Trc::PqTo::Linear(m2);
+        m2 = Csp::Trc::PQ_To::Linear(m2);
 
         //HDR10
         Rgb = ConditionallyLineariseHdr10Temp(Rgb);
@@ -639,7 +639,7 @@ namespace Tmos
         float y1 = 0.f;
 #endif
 
-        float y2 = Csp::Trc::LinearTo::Pq(y1);
+        float y2 = Csp::Trc::Linear_To::PQ(y1);
 
         [branch]
         if (y2 < ShoulderStartInPq)
@@ -654,7 +654,7 @@ namespace Tmos
                                  ShoulderStartInPq,
                                  TargetLuminanceInPqMinusShoulderStartInPq);
 
-          y2 = Csp::Trc::PqTo::Linear(y2);
+          y2 = Csp::Trc::PQ_To::Linear(y2);
 
           Rgb *= y2 / y1;
 
@@ -674,7 +674,7 @@ namespace Tmos
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
         float m1 = MAXRGB(Rgb);
-        float m2 = Csp::Trc::LinearTo::Pq(m1);
+        float m2 = Csp::Trc::Linear_To::PQ(m1);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float m2 = MAXRGB(Rgb);
 #else // fallback for shader permutations
@@ -694,7 +694,7 @@ namespace Tmos
                                  ShoulderStartInPq,
                                  TargetLuminanceInPqMinusShoulderStartInPq);
 
-          m2 = Csp::Trc::PqTo::Linear(m2);
+          m2 = Csp::Trc::PQ_To::Linear(m2);
 
           //HDR10
           Rgb = ConditionallyLineariseHdr10Temp(Rgb);

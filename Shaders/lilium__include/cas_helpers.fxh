@@ -49,7 +49,7 @@ float3 RgbModePrepareForOutput
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::LinearTo::Pq(Colour);
+  return Csp::Trc::Linear_To::PQ(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -69,7 +69,7 @@ float3 LuminanceModePrepareForOutput
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Trc::LinearTo::Pq(Colour);
+  return Csp::Trc::Linear_To::PQ(Colour);
 
 #else
 

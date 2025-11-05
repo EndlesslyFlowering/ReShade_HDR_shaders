@@ -566,8 +566,8 @@ void PS_InverseToneMapping(
       float targetNitsNormalised = Ui::Itm::Global::TargetBrightness / 10000.f;
       colour = Itmos::Dice::InverseToneMapper(
                  colour,
-                 Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::DiceInputBrightness),
-                 Csp::Trc::NitsTo::Pq(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
+                 Csp::Trc::Nits_To::PQ(Ui::Itm::Dice::DiceInputBrightness),
+                 Csp::Trc::Nits_To::PQ(Ui::Itm::Dice::ShoulderStart / 100.f * Ui::Itm::Dice::DiceInputBrightness));
     } break;
 
 #endif //ENABLE_DICE

@@ -203,7 +203,7 @@ void PS_HDR_Brightness_Adjustment
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  rgb_out = Csp::Trc::LinearTo::Pq(rgb_new);
+  rgb_out = Csp::Trc::Linear_To::PQ(rgb_new);
 
 #else
 

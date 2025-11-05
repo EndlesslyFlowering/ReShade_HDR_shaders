@@ -600,7 +600,7 @@ namespace Itmos
 
       float3 LMS = mul(RgbToLms, Input);
 
-      LMS = Csp::Trc::LinearTo::Pq(LMS);
+      LMS = Csp::Trc::Linear_To::PQ(LMS);
 
       float I1 = 0.5f * LMS.x + 0.5f * LMS.y;
 

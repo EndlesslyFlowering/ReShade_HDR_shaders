@@ -23,7 +23,7 @@ namespace Csp
         const float  Brightness
       )
       {
-        return Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
+        return Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
       }
 
       float3 Ps5
@@ -132,7 +132,7 @@ float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   Colour = ConditionallyConvertScRgbToNormalisedBt2020(Colour);
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
+  Colour = Csp::Trc::Linear_To::PQ(Colour);
 #endif
   return Colour;
 }
@@ -141,7 +141,7 @@ float3 ConditionallyConvertScRgbToHdr10(float3 Colour)
 float3 ConditionallyLineariseHdr10(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::PqTo::Linear(Colour);
+  Colour = Csp::Trc::PQ_To::Linear(Colour);
 #endif
   return Colour;
 }
@@ -150,7 +150,7 @@ float3 ConditionallyLineariseHdr10(float3 Colour)
 float3 ConditionallyConvertNormalisedBt2020ToHdr10(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Trc::LinearTo::Pq(Colour);
+  Colour = Csp::Trc::Linear_To::PQ(Colour);
 #endif
   return Colour;
 }
@@ -180,7 +180,7 @@ float3 ConditionallyConvertNormalisedBt2020ToScRgb(float3 Colour)
 float3 ConditionallyConvertHdr10ToScRgb(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Trc::PqTo::Linear(Colour);
+  Colour = Csp::Trc::PQ_To::Linear(Colour);
   Colour = ConditionallyConvertNormalisedBt2020ToScRgb(Colour);
 #endif
   return Colour;

@@ -151,11 +151,11 @@ void Preprocess_RGB
   BRANCH()
   if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
   {
-    B = Csp::Trc::LinearTo::Pq(B);
-    D = Csp::Trc::LinearTo::Pq(D);
-    E = Csp::Trc::LinearTo::Pq(E);
-    F = Csp::Trc::LinearTo::Pq(F);
-    H = Csp::Trc::LinearTo::Pq(H);
+    B = Csp::Trc::Linear_To::PQ(B);
+    D = Csp::Trc::Linear_To::PQ(D);
+    E = Csp::Trc::Linear_To::PQ(E);
+    F = Csp::Trc::Linear_To::PQ(F);
+    H = Csp::Trc::Linear_To::PQ(H);
   }
 
 #endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
@@ -173,7 +173,7 @@ float3 Process_RGB_For_Output
   BRANCH()
   if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
   {
-    RGB = Csp::Trc::PqTo::Linear(RGB);
+    RGB = Csp::Trc::PQ_To::Linear(RGB);
   }
 
   RGB = Csp::Mat::Bt2020NormalisedTo::ScRgb(RGB);
@@ -504,7 +504,7 @@ float3 RCas
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    pix = Csp::Trc::LinearTo::Pq(pix);
+    pix = Csp::Trc::Linear_To::PQ(pix);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

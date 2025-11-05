@@ -436,7 +436,7 @@ void LowerBlackFloor
 
       float y1 = CO::GetLuminance::LinearNormalised(CO);
 
-      float y1InPq = Csp::Trc::LinearTo::Pq(y1);
+      float y1InPq = Csp::Trc::Linear_To::PQ(y1);
 
       [branch]
       if (y1InPq <= RollOffStoppingPoint)
@@ -446,7 +446,7 @@ void LowerBlackFloor
                                       RollOffMinusOldBlackPoint,
                                       MinLum);
 
-        y2 = Csp::Trc::PqTo::Linear(y2);
+        y2 = Csp::Trc::PQ_To::Linear(y2);
 
         CO.RGB = y2 / y1 * CO.RGB;
 
@@ -502,7 +502,7 @@ void LowerBlackFloor
 
 #endif
 
-      float nitsInPq = Csp::Trc::LinearTo::Pq(nits);
+      float nitsInPq = Csp::Trc::Linear_To::PQ(nits);
 
       [branch]
       if (nitsInPq <= RollOffStoppingPoint)

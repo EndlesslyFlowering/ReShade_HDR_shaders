@@ -206,7 +206,7 @@ void PS_CalcGamuts
     #ifdef IS_COMPUTE_CAPABLE_API
       const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
     #else
-      const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+      const float3 curPixel = Csp::Trc::PQ_To::Linear(pixel);
     #endif
 #endif
       CurGamut = GetGamut(curPixel);
@@ -223,7 +223,7 @@ void PS_CalcGamuts
   #ifdef IS_COMPUTE_CAPABLE_API
     const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
   #else
-    const float3 curPixel = Csp::Trc::PqTo::Linear(pixel);
+    const float3 curPixel = Csp::Trc::PQ_To::Linear(pixel);
   #endif
 #endif
     CurGamut = GetGamut(curPixel);
@@ -549,7 +549,7 @@ float3 CreateGamutMap
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    output = Csp::Trc::NitsTo::Pq(Csp::Mat::Bt709To::Bt2020(output));
+    output = Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 

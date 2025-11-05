@@ -253,20 +253,20 @@ namespace Waveform
     waveDat.tickPoints =
     {
       int(0),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(4000.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(2000.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(1000.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 400.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 203.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq( 100.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  50.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  25.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(  10.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   5.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   2.5f ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   1.f  ) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   0.25f) * texture_waveform_height_scaled_float),
-      texture_waveform_height_scaled - int(Csp::Trc::NitsTo::Pq(   0.05f) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(4000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(2000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(1000.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ( 400.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ( 203.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ( 100.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(  50.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(  25.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(  10.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(   5.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(   2.5f ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(   1.f  ) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(   0.25f) * texture_waveform_height_scaled_float),
+      texture_waveform_height_scaled - int(Csp::Trc::Nits_To::PQ(   0.05f) * texture_waveform_height_scaled_float),
       texture_waveform_height_scaled
     };
 
@@ -292,9 +292,9 @@ namespace Waveform
     static const int tick_points_at_100_percent_scale[4] =
     {
       int(0),
-      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(4000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
-      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(2000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
-      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::NitsTo::Pq(1000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f)
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::Nits_To::PQ(4000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::Nits_To::PQ(2000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f),
+      int((float(TEXTURE_WAVEFORM_HEIGHT) - (Csp::Trc::Nits_To::PQ(1000.f) * float(TEXTURE_WAVEFORM_HEIGHT))) + 0.5f)
     };
 
     waveDat.cutoffOffsetAt100PercentScale = tick_points_at_100_percent_scale[WAVEFORM_CUTOFF_POINT];
@@ -549,7 +549,7 @@ void RenderWaveform
 
 #ifdef IS_HDR_CSP
 
-    pixel_nits_encoded = Csp::Trc::LinearTo::Pq(pixel_nits);
+    pixel_nits_encoded = Csp::Trc::Linear_To::PQ(pixel_nits);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -620,7 +620,7 @@ void RenderWaveform
 
     float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
-    pixel_max_cll_encoded = Csp::Trc::LinearTo::Pq(MAXRGB(pixel_cll));
+    pixel_max_cll_encoded = Csp::Trc::Linear_To::PQ(MAXRGB(pixel_cll));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_SRGB)
@@ -689,7 +689,7 @@ void RenderWaveform
 
     float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
-    pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
+    pixel_cll_encoded = Csp::Trc::Linear_To::PQ(pixel_cll);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
     || ACTUAL_COLOUR_SPACE == CSP_SRGB)
@@ -783,7 +783,7 @@ void RenderWaveform
 
     float3 pixel_cll = Calc_Cll_Normalised(Pixel);
 
-    pixel_cll_encoded = Csp::Trc::LinearTo::Pq(pixel_cll);
+    pixel_cll_encoded = Csp::Trc::Linear_To::PQ(pixel_cll);
 
     //this is more performant to do
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
@@ -1896,8 +1896,8 @@ void PS_Waveform_Render_Colour
     const float min_value = tex1Dfetch(SamplerConsolidated, max_min_value_pos[1]);
 
 #ifdef IS_HDR_CSP
-    const float max_value_encoded = Csp::Trc::NitsTo::Pq(max_value);
-    const float min_value_encoded = Csp::Trc::NitsTo::Pq(min_value);
+    const float max_value_encoded = Csp::Trc::Nits_To::PQ(max_value);
+    const float min_value_encoded = Csp::Trc::Nits_To::PQ(min_value);
 #else
     const float max_value_encoded = ENCODE_SDR(max_value / DIV_100);
     const float min_value_encoded = ENCODE_SDR(min_value / DIV_100);
@@ -2002,7 +2002,7 @@ void PS_Waveform_Render_Colour
                                                   / waveform_height_float;
 
 #ifdef IS_HDR_CSP
-          float waveform_colour_luminance = Csp::Trc::PqTo::Linear(waveform_colour_luminance_encoded)
+          float waveform_colour_luminance = Csp::Trc::PQ_To::Linear(waveform_colour_luminance_encoded)
                                           * 10000.f;
 #else
           float waveform_colour_luminance = DECODE_SDR(waveform_colour_luminance_encoded)

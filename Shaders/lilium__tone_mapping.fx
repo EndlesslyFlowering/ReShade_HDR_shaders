@@ -664,10 +664,10 @@ void PS_ToneMapping
   float actualMaxNits = tex2Dfetch(SamplerConsolidated, COORDS_MAX_NITS_VALUE);
 
   float avgMaxNitsInPq = tex2Dfetch(SamplerConsolidated, COORDS_AVERAGED_MAX_NITS);
-  float avgMaxNits     = Csp::Trc::PqTo::Nits(avgMaxNitsInPq);
+  float avgMaxNits     = Csp::Trc::PQ_To::Nits(avgMaxNitsInPq);
 
   float adaptiveMaxNits     = tex2Dfetch(SamplerConsolidated, COORDS_ADAPTIVE_NITS);
-  float adaptiveMaxNitsInPq = Csp::Trc::NitsTo::Pq(adaptiveMaxNits);
+  float adaptiveMaxNitsInPq = Csp::Trc::Nits_To::PQ(adaptiveMaxNits);
 
   float absDiff = abs(avgMaxNitsInPq - adaptiveMaxNitsInPq);
 
@@ -713,10 +713,10 @@ void PS_ToneMapping
 //#endif
 //
 //  static const float currentMaxNitsInPq =
-//    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_MAX_NITS_VALUE));
+//    Csp::Trc::Nits_To::PQ(tex2Dfetch(StorageConsolidated, COORDS_MAX_NITS_VALUE));
 //
 //  static const float currentAdaptiveMaxNitsInPq =
-//    Csp::Trc::NitsTo::Pq(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_NITS));
+//    Csp::Trc::Nits_To::PQ(tex2Dfetch(StorageConsolidated, COORDS_ADAPTIVE_NITS));
 //
 //  static const uint curSlot = tex2Dfetch(StorageConsolidated, COORDS_AVERAGE_MAX_NITS_CUR);
 //
@@ -766,7 +766,7 @@ void PS_ToneMapping
 //
 //  tex2Dstore(StorageConsolidated,
 //             COORDS_ADAPTIVE_NITS,
-//             min(Csp::Trc::PqTo::Nits(currentAdaptiveMaxNitsInPq + adapt),
+//             min(Csp::Trc::PQ_To::Nits(currentAdaptiveMaxNitsInPq + adapt),
 //                 Ui::Tm::AdaptiveMode::MaxNitsCap));
 //
 //}

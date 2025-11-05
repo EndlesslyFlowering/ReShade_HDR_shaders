@@ -17,7 +17,7 @@ namespace Csp
 
 
     // Rec. ITU-R BT.2100-2 Table 4
-    namespace PqTo
+    namespace PQ_To
     {
 
       #define PQ_TO_LINEAR(T)                       \
@@ -32,9 +32,7 @@ namespace Csp
           T den = PQ_c2 - PQ_c3 * E_pow_1_div_m2;   \
                                                     \
           /* Y */                                   \
-          return pow(num                            \
-                   / den                            \
-                 , PQ_rcp_m1);                      \
+          return pow(num / den, PQ_rcp_m1);         \
         }
 
       // (EOTF) takes PQ values as input
@@ -55,11 +53,11 @@ namespace Csp
 
       // (EOTF) takes PQ values as input
       // outputs nits
-      #define PQ_TO_NITS(T)                 \
-        T Nits(T E_)                        \
-        {                                   \
-          return Csp::Trc::PqTo::Linear(E_) \
-               * 10000.f;                   \
+      #define PQ_TO_NITS(T)                  \
+        T Nits(T E_)                         \
+        {                                    \
+          return Csp::Trc::PQ_To::Linear(E_) \
+               * 10000.f;                    \
         }
 
       // (EOTF) takes PQ values as input
@@ -78,14 +76,14 @@ namespace Csp
       // outputs nits
       PQ_TO_NITS(float4)
 
-    } //PqTo
+    } //PQ_To
 
 
     // Rec. ITU-R BT.2100-2 Table 4 (end)
-    namespace LinearTo
+    namespace Linear_To
     {
       #define LINEAR_TO_PQ(T)               \
-        T Pq(T Y)                           \
+        T PQ(T Y)                           \
         {                                   \
           Y = max(Y, 0.f);                  \
                                             \
@@ -96,9 +94,7 @@ namespace Csp
           T den =   1.f + PQ_c3 * Y_pow_m1; \
                                             \
           /* E' */                          \
-          return pow(num                    \
-                   / den                    \
-                 , PQ_m2);                  \
+          return pow(num / den, PQ_m2);     \
         }
 
       // (inverse EOTF) takes normalised to 10000 nits values as input
@@ -113,19 +109,19 @@ namespace Csp
       // (inverse EOTF) takes normalised to 10000 nits values as input
       LINEAR_TO_PQ(float4)
 
-    } //LinearTo
+    } //Linear_To
 
 
     // Rec. ITU-R BT.2100-2 Table 4 (end)
-    namespace NitsTo
+    namespace Nits_To
     {
       // (OETF) takes nits as input
-      #define NITS_TO_PQ(T)                 \
-        T Pq(T Fd)                          \
-        {                                   \
-          T Y = Fd / 10000.f;               \
-                                            \
-          return Csp::Trc::LinearTo::Pq(Y); \
+      #define NITS_TO_PQ(T)                  \
+        T PQ(T Fd)                           \
+        {                                    \
+          T Y = Fd / 10000.f;                \
+                                             \
+          return Csp::Trc::Linear_To::PQ(Y); \
         }
 
       // (OETF) takes nits as input
@@ -139,7 +135,7 @@ namespace Csp
 
       // (OETF) takes nits as input
       NITS_TO_PQ(float4)
-    } //NitsTo
+    } //Nits_To
 
 
     static const float HLG_a = 0.17883277;
@@ -242,34 +238,6 @@ namespace Csp
       // (OETF) takes normalised to 1000 nits values as input
       LINEAR_TO_HLG(float4)
     } //Linear_To
-
-
-    namespace NitsTo
-    {
-      // Rec. ITU-R BT.2100-2 Table 5
-      // (OETF) takes nits as input
-      float Hlg(float E)
-      {
-        E = E / 1000.f;
-
-        if (E <= (1.f / 12.f))
-        {
-          return sqrt(3.f * E);
-        }
-        else
-        {
-          return HLG_a * log(12.f * E - HLG_b) + HLG_c;
-        }
-      }
-
-      // (OETF) takes nits as input
-      float3 Hlg(float3 E)
-      {
-        return float3(Csp::Trc::NitsTo::Hlg(E.r),
-                      Csp::Trc::NitsTo::Hlg(E.g),
-                      Csp::Trc::NitsTo::Hlg(E.b));
-      }
-    }
 
   } //Trc
 

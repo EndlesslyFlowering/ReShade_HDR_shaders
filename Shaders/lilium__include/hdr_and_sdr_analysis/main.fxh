@@ -856,7 +856,7 @@ float3 MergeOverlay
   #ifdef IS_COMPUTE_CAPABLE_API
     Output = FetchFromHdr10ToLinearLUT(Output);
   #else
-    Output = Csp::Trc::PqTo::Linear(Output);
+    Output = Csp::Trc::PQ_To::Linear(Output);
   #endif
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
@@ -897,7 +897,7 @@ float3 MergeOverlay
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    Output = Csp::Trc::LinearTo::Pq(Output);
+    Output = Csp::Trc::Linear_To::PQ(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

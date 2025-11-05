@@ -120,7 +120,7 @@ namespace Csp
       //L'M'S' -> LMS
       float3 LMS(const float3 PQ_ICtCp_LMS)
       {
-        return Csp::Trc::PqTo::Linear(PQ_ICtCp_LMS);
+        return Csp::Trc::PQ_To::Linear(PQ_ICtCp_LMS);
       }
     } //PQ_ICtCp_LMS_To
 
@@ -141,7 +141,7 @@ namespace Csp
       //LMS -> L'M'S'
       float3 PQ_ICtCp_LMS(const float3 LMS)
       {
-        return Csp::Trc::LinearTo::Pq(LMS);
+        return Csp::Trc::Linear_To::PQ(LMS);
       }
 
       //LMS -> ICtCp
