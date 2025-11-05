@@ -20,7 +20,8 @@ namespace Csp
 
     static const float Jzazbz_rcp_p = 0.00746077252f;
 
-    static const float3x3 NonLinearXYAndLinearZToJzazbzLms =
+    //X'Y'Z -> Jzazbz LMS
+    static const float3x3 XY_Prime_Z_To_Jzazbz_LMS =
       float3x3
       (
          0.41478972f, 0.579999f, 0.014648f,
@@ -28,7 +29,8 @@ namespace Csp
         -0.0166008f,  0.2648f,   0.6684799f
       );
 
-    static const float3x3 JzazbzLmsToNonLinearXYAndLinearZ =
+    //Jzazbz LMS -> X'Y'Z
+    static const float3x3 Jzazbz_LMS_To_XY_Prime_Z =
       float3x3
       (
          1.92422640f,   -1.00479233f,   0.0376514047f,
@@ -36,7 +38,8 @@ namespace Csp
         -0.0909828096f, -0.312728285f,  1.52276659f
       );
 
-    static const float3x3 PqJzazbzLmsToIzazbz =
+    //Jzazbz L'M'S' -> Izazbz
+    static const float3x3 PQ_Jzazbz_LMS_To_Izazbz =
       float3x3
       (
         0.5f,       0.5f,       0.f,
@@ -44,7 +47,8 @@ namespace Csp
         0.199076f,  1.096799f, -1.295875f
       );
 
-    static const float3x3 IzazbzToPqJzazbzLms =
+    //Izazbz -> Jzazbz L'M'S'
+    static const float3x3 Izazbz_To_PQ_Jzazbz_LMS =
       float3x3
       (
         1.f,  0.138605043f,   0.0580473169f,
@@ -52,221 +56,217 @@ namespace Csp
         1.f, -0.0960192456f, -0.811891913f
       );
 
-    namespace XYZTo
+    namespace XYZ_To
     {
-      //XYZ->X'Y'Z
-      float3 NonLinearXYAndLinearZ(float3 XYZ)
+      //XYZ -> X'Y'Z
+      float3 XY_Prime_Z(const float3 XYZ)
       {
-        float2 val0 = float2(Jzazbz_b * XYZ.x,
-                             Jzazbz_g * XYZ.y);
+        float2 val_0 = float2(Jzazbz_b * XYZ.x,
+                              Jzazbz_g * XYZ.y);
 
-        float2 val1 = float2(Jzazbz_b_minus_1 * XYZ.z,
-                             Jzazbz_g_minus_1 * XYZ.x);
+        float2 val_1 = float2(Jzazbz_b_minus_1 * XYZ.z,
+                              Jzazbz_g_minus_1 * XYZ.x);
 
-        return float3(val0 - val1, XYZ.z);
+        return float3(val_0 - val_1, XYZ.z);
       }
-    } //XYZTo
+    } //XYZ_To
 
-    namespace NonLinearXYAndLinearZTo
+    namespace XY_Prime_Z_To
     {
-      //X'Y'Z->XYZ
-      float3 XYZ(float3 NonLinearXYAndLinearZ)
+      //X'Y'Z -> XYZ
+      float3 XYZ(const float3 XY_Prime_Z)
       {
-        float X = (NonLinearXYAndLinearZ.x + (Jzazbz_b_minus_1 * NonLinearXYAndLinearZ.z))
+        float X = (XY_Prime_Z.x + (Jzazbz_b_minus_1 * XY_Prime_Z.z))
                 / Jzazbz_b;
 
-        float Y = (NonLinearXYAndLinearZ.y + (Jzazbz_g_minus_1 * X))
+        float Y = (XY_Prime_Z.y + (Jzazbz_g_minus_1 * X))
                 / Jzazbz_g;
 
-        return float3(X, Y, NonLinearXYAndLinearZ.z);
+        return float3(X, Y, XY_Prime_Z.z);
       }
 
-      //X'Y'Z->LMS (Jzazbz variant)
-      float3 JzazbzLms(float3 NonLinearXYAndLinearZ)
+      //X'Y'Z -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XY_Prime_Z)
       {
-        return mul(NonLinearXYAndLinearZToJzazbzLms, NonLinearXYAndLinearZ);
+        return mul(XY_Prime_Z_To_Jzazbz_LMS, XY_Prime_Z);
       }
-    } //NonLinearXYAndLinearZTo
+    } //XY_Prime_Z_To
 
-    namespace JzazbzLmsTo
+    namespace Jzazbz_LMS_To
     {
-      //LMS (Jzazbz variant)->X'Y'Z
-      float3 NonLinearXYAndLinearZ(float3 JzazbzLms)
+      //LMS (Jzazbz variant) -> X'Y'Z
+      float3 XY_Prime_Z(const float3 Jzazbz_LMS)
       {
-        return mul(JzazbzLmsToNonLinearXYAndLinearZ, JzazbzLms);
+        return mul(Jzazbz_LMS_To_XY_Prime_Z, Jzazbz_LMS);
       }
 
-      //LMS (Jzazbz variant)->L'M'S' (Jzazbz variant)
-      float3 PqJzazbzLms(float3 JzazbzLms)
+      //LMS (Jzazbz variant) -> L'M'S' (Jzazbz variant)
+      float3 PQ_Jzazbz_LMS(const float3 Jzazbz_LMS)
       {
-        float3 powJzazbzLms = pow(JzazbzLms, PQ_m1);
+        float3 lms_pow = pow(Jzazbz_LMS, PQ_m1);
 
-        float3 numerator    = PQ_c1 + PQ_c2 * powJzazbzLms;
+        float3 num = PQ_c1 + PQ_c2 * lms_pow;
 
-        float3 denominator  = 1.f   + PQ_c3 * powJzazbzLms;
+        float3 den = 1.f   + PQ_c3 * lms_pow;
 
-        return pow(numerator / denominator, Jzazbz_p);
+        return pow(num / den, Jzazbz_p);
       }
-    } //JzazbzLmsTo
+    } //Jzazbz_LMS_To
 
-    namespace PqJzazbzLmsTo
+    namespace PQ_Jzazbz_LMS_To
     {
-      //L'M'S' (Jzazbz variant)->Izazbz
-      float3 Izazbz(float3 PqJzazbzLms)
+      //L'M'S' (Jzazbz variant) -> Izazbz
+      float3 Izazbz(const float3 PQ_Jzazbz_LMS)
       {
-        return mul(PqJzazbzLmsToIzazbz, PqJzazbzLms);
+        return mul(PQ_Jzazbz_LMS_To_Izazbz, PQ_Jzazbz_LMS);
       }
 
-      //L'M'S' (Jzazbz variant)->LMS (Jzazbz variant)
-      float3 JzazbzLms(float3 PqJzazbzLms)
+      //L'M'S' (Jzazbz variant) -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 PQ_Jzazbz_LMS)
       {
-        float3 powPqJzazbzLms = pow(PqJzazbzLms, Jzazbz_rcp_p);
+        float3 pq_lms_pow = pow(PQ_Jzazbz_LMS, Jzazbz_rcp_p);
 
-        float3 numerator      = PQ_c1 - powPqJzazbzLms;
+        float3 num = PQ_c1 - pq_lms_pow;
 
-        float3 denominator    = PQ_c3 * powPqJzazbzLms - PQ_c2;
+        float3 den = PQ_c3 * pq_lms_pow - PQ_c2;
 
-        return pow(numerator / denominator, PQ_rcp_m1);
+        return pow(num / den, PQ_rcp_m1);
       }
-    } //PqJzazbzLmsTo
+    } //PQ_Jzazbz_LMS_To
 
-    namespace IzazbzTo
+    namespace Izazbz_To
     {
-      //Izazbz->Jzazbz
-      float3 Jzazbz(float3 Izazbz)
+      //Izazbz -> Jzazbz
+      float3 Jzazbz(const float3 Izazbz)
       {
-        float numerator   = Jzazbz_d_plus_1 * Izazbz.x;
+        float num = Jzazbz_d_plus_1 * Izazbz.x;
 
-        float denominator = 1.f + (Jzazbz_d * Izazbz.x);
+        float den = 1.f + (Jzazbz_d * Izazbz.x);
 
-        float Jz = (numerator / denominator) - Jzazbz_d0;
+        //Jz
+        float jz = (num / den) - Jzazbz_d0;
 
-        return float3(Jz, Izazbz.yz);
+        return float3(jz, Izazbz.yz);
       }
 
-      //Izazbz->L'M'S' (Jzazbz variant)
-      float3 PqJzazbzLms(float3 Izazbz)
+      //Izazbz -> L'M'S' (Jzazbz variant)
+      float3 PQ_Jzazbz_LMS(const float3 Izazbz)
       {
-        return mul(IzazbzToPqJzazbzLms, Izazbz);
+        return mul(Izazbz_To_PQ_Jzazbz_LMS, Izazbz);
       }
-    } //IzazbzTo
+    } //Izazbz_To
 
-    namespace JzazbzTo
+    namespace Jzazbz_To
     {
-      //Jzazbz->Izazbz
-      float3 Izazbz(float3 Jzazbz)
+      //Jzazbz -> Izazbz
+      float3 Izazbz(const float3 Jzazbz)
       {
-        float numerator   = Jzazbz.x + Jzazbz_d0;
+        float num = Jzazbz.x + Jzazbz_d0;
 
-        float denominator = Jzazbz_d_plus_1 - (Jzazbz_d * (Jzazbz.x + Jzazbz_d0));
+        float den = Jzazbz_d_plus_1 - (Jzazbz_d * (Jzazbz.x + Jzazbz_d0));
 
-        float Iz = numerator / denominator;
+        //Iz
+        float iz = num / den;
 
-        return float3(Iz, Jzazbz.yz);
+        return float3(iz, Jzazbz.yz);
       }
-    } //JzazbzTo
+    } //Jzazbz_To
 
-    namespace XYZTo
+    namespace XYZ_To
     {
-      //XYZ->Jzazbz
-      float3 Jzazbz(float3 XYZ)
+      //XYZ -> Jzazbz
+      float3 Jzazbz(const float3 XYZ)
       {
-        float3 NonLinearXYAndLinearZ = XYZTo::NonLinearXYAndLinearZ(XYZ);
+        //X'Y'Z
+        float3 xy_prime_z = XYZ_To::XY_Prime_Z(XYZ);
 
-        float3 JzazbzLms             = NonLinearXYAndLinearZTo::JzazbzLms(NonLinearXYAndLinearZ);
+        float3 lms        = XY_Prime_Z_To::Jzazbz_LMS(xy_prime_z);
 
-        float3 PqJzazbzLms           = JzazbzLmsTo::PqJzazbzLms(JzazbzLms);
+        float3 pq_lms     = Jzazbz_LMS_To::PQ_Jzazbz_LMS(lms);
 
-        float3 Izazbz                = PqJzazbzLmsTo::Izazbz(PqJzazbzLms);
+        float3 izazbz     = PQ_Jzazbz_LMS_To::Izazbz(pq_lms);
 
-        //Jzazbz
-        return IzazbzTo::Jzazbz(Izazbz);
+        return Izazbz_To::Jzazbz(izazbz);
       }
-    } //XYZTo
+    } //XYZ_To
 
-    namespace JzazbzTo
+    namespace Jzazbz_To
     {
-      //Jzazbz->XYZ
-      float3 XYZ(float3 Jzazbz)
+      //Jzazbz -> XYZ
+      float3 XYZ(const float3 Jzazbz)
       {
-        float3 Izazbz                = JzazbzTo::Izazbz(Jzazbz);
+        float3 izazbz     = Jzazbz_To::Izazbz(Jzazbz);
 
-        float3 PqJzazbzLms           = IzazbzTo::PqJzazbzLms(Izazbz);
+        float3 pq_lms     = Izazbz_To::PQ_Jzazbz_LMS(izazbz);
 
-        float3 JzazbzLms             = PqJzazbzLmsTo::JzazbzLms(PqJzazbzLms);
+        float3 lms        = PQ_Jzazbz_LMS_To::Jzazbz_LMS(pq_lms);
 
-        float3 NonLinearXYAndLinearZ = JzazbzLmsTo::NonLinearXYAndLinearZ(JzazbzLms);
+        //X'Y'Z
+        float3 xy_prime_z = Jzazbz_LMS_To::XY_Prime_Z(lms);
 
-        //XYZ
-        return NonLinearXYAndLinearZTo::XYZ(NonLinearXYAndLinearZ);
+        return XY_Prime_Z_To::XYZ(xy_prime_z);
       }
-    } //JzazbzTo
+    } //Jzazbz_To
 
-    namespace Bt709To
+    namespace BT709_To
     {
-      //RGB BT.709->Jzazbz
-      float3 Jzazbz(float3 Rgb)
+      //RGB BT.709 -> Jzazbz
+      float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::Bt709To::XYZ(Rgb);
+        float3 XYZ = Csp::Mat::Bt709To::XYZ(RGB);
 
-        //Jzazbz
-        return XYZTo::Jzazbz(XYZ);
+        return XYZ_To::Jzazbz(XYZ);
       }
-    } //Bt709To
+    } //BT709_To
 
-    namespace DciP3To
+    namespace DCIP3_To
     {
-      //RGB DCI-P3->Jzazbz
-      float3 Jzazbz(float3 Rgb)
+      //RGB DCI-P3 -> Jzazbz
+      float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::DciP3To::XYZ(Rgb);
+        float3 XYZ = Csp::Mat::DciP3To::XYZ(RGB);
 
-        //Jzazbz
-        return XYZTo::Jzazbz(XYZ);
+        return XYZ_To::Jzazbz(XYZ);
       }
-    } //DciP3To
+    } //DCIP3_To
 
-    namespace Bt2020To
+    namespace BT2020_To
     {
-      //RGB BT.2020->Jzazbz
-      float3 Jzazbz(float3 Rgb)
+      //RGB BT.2020 -> Jzazbz
+      float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::Bt2020To::XYZ(Rgb);
+        float3 XYZ = Csp::Mat::Bt2020To::XYZ(RGB);
 
-        //Jzazbz
-        return XYZTo::Jzazbz(XYZ);
+        return XYZ_To::Jzazbz(XYZ);
       }
-    } //Bt2020To
+    } //BT2020_To
 
-    namespace JzazbzTo
+    namespace Jzazbz_To
     {
-      //Jzazbz->RGB BT.709
-      float3 Bt709(float3 Jzazbz)
+      //Jzazbz -> RGB BT.709
+      float3 BT709(const float3 Jzazbz)
       {
-        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        //RGB BT.709
-        return Csp::Mat::XYZTo::Bt709(XYZ);
+        return Csp::Mat::XYZTo::Bt709(xyz);
       }
 
-      //Jzazbz->RGB DCI-P3
-      float3 DciP3(float3 Jzazbz)
+      //Jzazbz -> RGB DCI-P3
+      float3 DCIP3(const float3 Jzazbz)
       {
-        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        //RGB DCI-P3
-        return Csp::Mat::XYZTo::DciP3(XYZ);
+        return Csp::Mat::XYZTo::DciP3(xyz);
       }
 
-      //Jzazbz->RGB BT.2020
-      float3 Bt2020(float3 Jzazbz)
+      //Jzazbz -> RGB BT.2020
+      float3 BT2020(const float3 Jzazbz)
       {
-        float3 XYZ = JzazbzTo::XYZ(Jzazbz);
+        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        //RGB BT.2020
-        return Csp::Mat::XYZTo::Bt2020(XYZ);
+        return Csp::Mat::XYZTo::Bt2020(xyz);
       }
-    } //JzazbzTo
+    } //Jzazbz_To
 
   } //Jzazbz
 
