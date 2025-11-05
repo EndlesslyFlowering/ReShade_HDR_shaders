@@ -1,10 +1,12 @@
 
+//CIE 1931 xy
 struct s_xyY
 {
   float2 xy;
   float  Y;
 };
 
+//CIE 1976 u'v'
 struct s_uvY
 {
   float2 uv;
@@ -14,10 +16,10 @@ struct s_uvY
 namespace Csp
 {
 
-  namespace CieXYZ
+  namespace CIE
   {
 
-    namespace XYZTo
+    namespace XYZ_To
     {
       s_xyY xyY(const float3 XYZ)
       {
@@ -74,9 +76,9 @@ namespace Csp
 
         return uv;
       }
-    } //XYZTo
+    } //XYZ_To
 
-    namespace xyYTo
+    namespace xyY_To
     {
       float3 XYZ(const s_xyY xyY)
       {
@@ -90,9 +92,9 @@ namespace Csp
 
         return XYZ;
       }
-    } //xyYTo
+    } //xyY_To
 
-    namespace uvYTo
+    namespace uvY_To
     {
       float3 XYZ(const s_uvY uvY)
       {
@@ -112,9 +114,9 @@ namespace Csp
 
         return XYZ;
       }
-    } //uvYTo
+    } //uvY_To
 
-    namespace xyTo
+    namespace xy_To
     {
       float3 XYZ(const float2 xy)
       {
@@ -140,9 +142,9 @@ namespace Csp
 
         return uv;
       }
-    } //xyTo
+    } //xy_To
 
-    namespace uvTo
+    namespace uv_To
     {
       float3 XYZ(const float2 uv)
       {
@@ -160,8 +162,8 @@ namespace Csp
 
         return XYZ;
       }
-    } //uvTo
+    } //uv_To
 
-  } //CieXYZ
+  } //CIE
 
 } //Csp

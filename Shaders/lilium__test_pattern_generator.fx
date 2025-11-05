@@ -228,7 +228,7 @@ void PS_Tpg
 
 #endif
 
-        precise float3 XYZ = Csp::CieXYZ::xyYTo::XYZ(xyY);
+        precise float3 XYZ = Csp::CIE::xyY_To::XYZ(xyY);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

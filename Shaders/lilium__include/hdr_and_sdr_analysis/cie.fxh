@@ -895,13 +895,13 @@ void PS_ComposeCieDiagram
       {
         float2 xy = ConvertDecodedCieDiagramCoordsToxy(decodedCoords);
 
-        XYZ = Csp::CieXYZ::xyTo::XYZ(xy);
+        XYZ = Csp::CIE::xy_To::XYZ(xy);
       }
       else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
       {
         float2 uv = ConvertDecodedCieDiagramCoordsTouv(decodedCoords);
 
-        XYZ = Csp::CieXYZ::uvTo::XYZ(uv);
+        XYZ = Csp::CIE::uv_To::XYZ(uv);
       }
 
 #ifdef IS_HDR_CSP
@@ -1007,7 +1007,7 @@ float2 GetxyFromXYZForDiagram
   const float3 XYZ
 )
 {
-  float2 xy = Csp::CieXYZ::XYZTo::xy(XYZ);
+  float2 xy = Csp::CIE::XYZ_To::xy(XYZ);
 
   //adjust for negative values
   xy -= CIE_XY_MIN_EXTRA;
@@ -1023,7 +1023,7 @@ float2 GetuvFromXYZForDiagram
   const float3 XYZ
 )
 {
-  float2 uv = Csp::CieXYZ::XYZTo::uv(XYZ);
+  float2 uv = Csp::CIE::XYZ_To::uv(XYZ);
 
   //adjust for negative values
   uv -= CIE_UV_MIN_EXTRA;
