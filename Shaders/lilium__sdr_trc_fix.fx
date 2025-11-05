@@ -133,7 +133,7 @@ void PS_SdrTrcFix
   }
   else
   {
-    fixedGamma = Csp::Trc::SrgbTo::Linear(fixedGamma);
+    fixedGamma = Csp::Trc::sRGB_To::Linear(fixedGamma);
   }
 
   BRANCH()
@@ -145,7 +145,7 @@ void PS_SdrTrcFix
   BRANCH()
   if (TARGET_TRC == 0)
   {
-    fixedGamma = Csp::Trc::LinearTo::Srgb(fixedGamma);
+    fixedGamma = Csp::Trc::Linear_To::sRGB(fixedGamma);
   }
   else
   {

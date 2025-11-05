@@ -263,7 +263,7 @@ void Gamma22Emulation
   [branch]
   if (any(needsProcessing))
   {
-    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), 2.2f)
+    float3 processedColour = pow(Csp::Trc::Linear_To::sRGB(CO.RGB / WhitePointNormalised), 2.2f)
                            * WhitePointNormalised;
 
     CO.RGB = needsProcessing ? processedColour
@@ -348,7 +348,7 @@ void Gamma22EmulationAndGammaAdjustment
     const float currentPow = 2.2f *
                              Ui::HdrBlackFloorFix::GammaAdjustment::GAGamma;
 
-    float3 processedColour = pow(Csp::Trc::LinearTo::Srgb(CO.RGB / WhitePointNormalised), currentPow)
+    float3 processedColour = pow(Csp::Trc::Linear_To::sRGB(CO.RGB / WhitePointNormalised), currentPow)
                            * WhitePointNormalised;
 
     CO.RGB = needsProcessing ? processedColour

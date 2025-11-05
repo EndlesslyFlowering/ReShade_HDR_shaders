@@ -53,10 +53,10 @@ namespace Csp
 #elif (OVERWRITE_SDR_GAMMA == GAMMA_SRGB)
 
   #define ENCODE_SDR(COLOUR) \
-            Csp::Trc::LinearTo::Srgb(COLOUR)
+            Csp::Trc::Linear_To::sRGB(COLOUR)
 
   #define DECODE_SDR(COLOUR) \
-            Csp::Trc::SrgbTo::Linear(COLOUR)
+            Csp::Trc::sRGB_To::Linear(COLOUR)
 
 #else
 

@@ -340,19 +340,19 @@ void PS_InverseToneMapping(
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
       {
-        colour = Csp::Trc::ExtendedGamma22RollOffToLinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma22_Roll_Off_To_Linear_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
-        colour = Csp::Trc::ExtendedGamma22SCurveTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma22_S_Curve_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
-        colour = Csp::Trc::ExtendedGamma22LinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma22_Linear_To::Linear(colour);
       }
       else
       BRANCH()
@@ -378,19 +378,19 @@ void PS_InverseToneMapping(
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
       {
-        colour = Csp::Trc::ExtendedGamma24RollOffToLinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma24_Roll_Off_To_Linear_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
-        colour = Csp::Trc::ExtendedGamma24SCurveTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma24_S_Curve_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
-        colour = Csp::Trc::ExtendedGamma24LinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_Gamma24_Linear_To::Linear(colour);
       }
       else
       BRANCH()
@@ -436,7 +436,7 @@ void PS_InverseToneMapping(
         float3 abs_colour  = abs(colour);
         float3 sign_colour = sign(colour);
 
-        colour = sign_colour * Csp::Trc::ExtendedGamma22RollOffToLinearTo::Linear(Csp::Trc::LinearTo::Srgb(abs_colour));
+        colour = sign_colour * Csp::Trc::Extended_Gamma22_Roll_Off_To_Linear_To::Linear(Csp::Trc::Linear_To::sRGB(abs_colour));
       }
       else
       BRANCH()
@@ -445,7 +445,7 @@ void PS_InverseToneMapping(
         float3 abs_colour  = abs(colour);
         float3 sign_colour = sign(colour);
 
-        colour = sign_colour * Csp::Trc::ExtendedGamma22SCurveTo::Linear(Csp::Trc::LinearTo::Srgb(abs_colour));
+        colour = sign_colour * Csp::Trc::Extended_Gamma22_S_Curve_To::Linear(Csp::Trc::Linear_To::sRGB(abs_colour));
       }
       else
       BRANCH()
@@ -454,7 +454,7 @@ void PS_InverseToneMapping(
         float3 absColour  = abs(colour);
         float3 signColour = sign(colour);
 
-        colour = absColour < 1.f ? signColour * pow(Csp::Trc::LinearTo::Srgb(absColour), 2.2f)
+        colour = absColour < 1.f ? signColour * pow(Csp::Trc::Linear_To::sRGB(absColour), 2.2f)
                                  : colour;
       }
       else
@@ -464,14 +464,14 @@ void PS_InverseToneMapping(
         float3 abs_colour  = abs(colour);
         float3 sign_colour = sign(colour);
 
-        colour = sign_colour * pow(Csp::Trc::LinearTo::Srgb(abs_colour), 2.2f);
+        colour = sign_colour * pow(Csp::Trc::Linear_To::sRGB(abs_colour), 2.2f);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
-        colour = pow(Csp::Trc::LinearTo::Srgb(colour), 2.2f);
+        colour = pow(Csp::Trc::Linear_To::sRGB(colour), 2.2f);
       }
       else
       {
@@ -484,32 +484,32 @@ void PS_InverseToneMapping(
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
       {
-        colour = Csp::Trc::ExtendedSrgbRollOffToLinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_sRGB_Roll_Off_To_Linear_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_S_CURVE)
       {
-        colour = Csp::Trc::ExtendedSrgbSCurveTo::Linear(colour);
+        colour = Csp::Trc::Extended_sRGB_S_Curve_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_LINEAR)
       {
-        colour = Csp::Trc::ExtendedSrgbLinearTo::Linear(colour);
+        colour = Csp::Trc::Extended_sRGB_Linear_To::Linear(colour);
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_APPLY_GAMMA)
       {
-        colour = sign(colour) * Csp::Trc::SrgbTo::Linear(abs(colour));
+        colour = sign(colour) * Csp::Trc::sRGB_To::Linear(abs(colour));
       }
       else
       BRANCH()
       if (Ui::Itm::Global::OverbrightHandling == OVERBRIGHT_HANDLING_CLAMP)
       {
         colour = saturate(colour);
-        colour = Csp::Trc::SrgbTo::Linear(colour);
+        colour = Csp::Trc::sRGB_To::Linear(colour);
       }
       else
       {

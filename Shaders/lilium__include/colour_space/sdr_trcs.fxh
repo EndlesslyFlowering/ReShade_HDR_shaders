@@ -9,7 +9,7 @@ namespace Csp
     //
     //gamma compressed->display (also linear) = EOTF -> ^(2.2)
 
-    namespace SrgbTo
+    namespace sRGB_To
     {
       // IEC 61966-2-1
       #define SRGB_TO_LINEAR(T)                                      \
@@ -21,13 +21,13 @@ namespace Csp
 
       SRGB_TO_LINEAR(float)
       SRGB_TO_LINEAR(float3)
-    } //SrgbTo
+    } //sRGB_To
 
 
-    namespace LinearTo
+    namespace Linear_To
     {
       #define LINEAR_TO_SRGB(T)                                          \
-        T Srgb(T C)                                                      \
+        T sRGB(T C)                                                      \
         {                                                                \
           return C <= 0.0031308f ? C * 12.92f                            \
                                  : 1.055f * pow(C, 1.f / 2.4f) - 0.055f; \
@@ -35,10 +35,10 @@ namespace Csp
 
       LINEAR_TO_SRGB(float)
       LINEAR_TO_SRGB(float3)
-    } //LinearTo
+    } //Linear_To
 
 
-    namespace ExtendedSrgbRollOffToLinearTo
+    namespace Extended_sRGB_Roll_Off_To_Linear_To
     {
       // extended sRGB gamma including above 1 and below -1
       #define EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                                          \
@@ -56,10 +56,10 @@ namespace Csp
 
       EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
       EXTENDED_SRGB_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
-    } //ExtendedSrgbRollOffToLinearTo
+    } //Extended_sRGB_Roll_Off_To_Linear_To
 
 
-    namespace ExtendedSrgbSCurveTo
+    namespace Extended_sRGB_S_Curve_To
     {
       // extended sRGB gamma including above 1 and below -1
       #define EXTENDED_SRGB_S_CURVE_TO_LINEAR(T)                                                                  \
@@ -76,10 +76,10 @@ namespace Csp
 
       EXTENDED_SRGB_S_CURVE_TO_LINEAR(float)
       EXTENDED_SRGB_S_CURVE_TO_LINEAR(float3)
-    } //ExtendedSrgbSCurveTo
+    } //Extended_sRGB_S_Curve_To
 
 
-    namespace ExtendedSrgbLinearTo
+    namespace Extended_sRGB_Linear_To
     {
       // extended sRGB gamma including above 1 and below -1
       #define EXTENDED_SRGB_LINEAR_TO_LINEAR(T)                           \
@@ -96,13 +96,13 @@ namespace Csp
 
       EXTENDED_SRGB_LINEAR_TO_LINEAR(float)
       EXTENDED_SRGB_LINEAR_TO_LINEAR(float3)
-    } //ExtendedSrgbLinearTo
+    } //Extended_sRGB_Linear_To
 
 
 // DO NOT USE!!!
 // it does not match the ExtendedSrgbSCurveToLinear version!
 //
-//    namespace LinearTo
+//    namespace Linear_To
 //    {
 //      float ExtendedSrgbSCurve(float C)
 //      {
@@ -125,14 +125,14 @@ namespace Csp
 //
 //      float3 ExtendedSrgbSCurve(float3 Colour)
 //      {
-//        return float3(Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.r),
-//                      Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.g),
-//                      Csp::Trc::LinearTo::ExtendedSrgbSCurve(Colour.b));
+//        return float3(Csp::Trc::Linear_To::ExtendedSrgbSCurve(Colour.r),
+//                      Csp::Trc::Linear_To::ExtendedSrgbSCurve(Colour.g),
+//                      Csp::Trc::Linear_To::ExtendedSrgbSCurve(Colour.b));
 //      }
 //    }
 
 
-    namespace SrgbAccurateTo
+    namespace sRGB_Accurate_To
     {
       // accurate sRGB with no slope discontinuity
       #define SrgbX       asfloat(0x3D20EA0B) //  0.0392857
@@ -148,13 +148,13 @@ namespace Csp
 
       SRGB_ACCURATE_TO_LINEAR(float)
       SRGB_ACCURATE_TO_LINEAR(float3)
-    } //SrgbAccurateTo
+    } //sRGB_Accurate_To
 
 
-    namespace LinearTo
+    namespace Linear_To
     {
       #define LINEAR_TO_SRGB_ACCURATE(T)                                    \
-        T SrgbAccurate(const T C)                                           \
+        T sRGB_Accurate(const T C)                                          \
         {                                                                   \
           return C <= SrgbXDivPhi ? C * SrgbPhi                             \
                                   : 1.055f * pow(C, (1.f / 2.4f)) - 0.055f; \
@@ -162,10 +162,10 @@ namespace Csp
 
       LINEAR_TO_SRGB_ACCURATE(float)
       LINEAR_TO_SRGB_ACCURATE(float3)
-    } //LinearTo
+    } //Linear_To
 
 
-//    namespace ExtendedSrgbSCurveAccurateTo
+//    namespace Extended_sRGB_S_Curve_Accurate_To
 //    {
 //      float Linear(float C)
 //      {
@@ -188,16 +188,16 @@ namespace Csp
 //
 //      float3 Linear(float3 Colour)
 //      {
-//        return float3(Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.r),
-//                      Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.g),
-//                      Csp::Trc::ExtendedSrgbSCurveAccurateTo::Linear(Colour.b));
+//        return float3(Csp::Trc::Extended_sRGB_S_Curve_Accurate_To::Linear(Colour.r),
+//                      Csp::Trc::Extended_sRGB_S_Curve_Accurate_To::Linear(Colour.g),
+//                      Csp::Trc::Extended_sRGB_S_Curve_Accurate_To::Linear(Colour.b));
 //      }
-//    } //ExtendedSrgbSCurveAccurateTo
+//    } //Extended_sRGB_S_Curve_Accurate_To
 //
 //
-//    namespace LinearTo
+//    namespace Linear_To
 //    {
-//      float ExtendedSrgbSCurveAccurate(float C)
+//      float Extended_sRGB_S_Curve_Accurate(float C)
 //      {
 //        static const float absC  = abs(C);
 //        static const float signC = sign(C);
@@ -216,16 +216,16 @@ namespace Csp
 //        }
 //      }
 //
-//      float3 ExtendedSrgbSCurveAccurate(float3 Colour)
+//      float3 Extended_sRGB_S_Curve_Accurate(float3 Colour)
 //      {
-//        return float3(Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.r),
-//                      Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.g),
-//                      Csp::Trc::LinearTo::ExtendedSrgbSCurveAccurate(Colour.b));
+//        return float3(Csp::Trc::Linear_To::Extended_sRGB_S_Curve_Accurate(Colour.r),
+//                      Csp::Trc::Linear_To::Extended_sRGB_S_Curve_Accurate(Colour.g),
+//                      Csp::Trc::Linear_To::Extended_sRGB_S_Curve_Accurate(Colour.b));
 //      }
-//    } //LinearTo
+//    } //Linear_To
 
 
-    namespace ExtendedGamma22RollOffToLinearTo
+    namespace Extended_Gamma22_Roll_Off_To_Linear_To
     {
       // extended gamma 2.2 including above 1 and below -1
       #define EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                \
@@ -242,10 +242,10 @@ namespace Csp
 
       EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
       EXTENDED_GAMMA_22_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
-    } //ExtendedGamma22RollOffToLinearTo
+    } //Extended_Gamma22_Roll_Off_To_Linear_To
 
 
-    namespace ExtendedGamma22SCurveTo
+    namespace Extended_Gamma22_S_Curve_To
     {
       // extended gamma 2.2 including above 1 and below 0
       #define EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(T)                                     \
@@ -261,10 +261,10 @@ namespace Csp
 
         EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(float)
         EXTENDED_GAMMA_22_S_CURVE_TO_LINEAR(float3)
-    } //ExtendedGamma22SCurveTo
+    } //Extended_Gamma22_S_Curve_To
 
 
-    namespace ExtendedGamma22LinearTo
+    namespace Extended_Gamma22_Linear_To
     {
       // extended gamma 2.2 including above 1 and below 0
       #define EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(T)   \
@@ -279,10 +279,10 @@ namespace Csp
 
       EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float)
       EXTENDED_GAMMA_22_LINEAR_TO_LINEAR(float3)
-    } //ExtendedGamma22LinearTo
+    } //Extended_Gamma22_Linear_To
 
 
-    namespace ExtendedGamma24RollOffToLinearTo
+    namespace Extended_Gamma24_Roll_Off_To_Linear_To
     {
       // extended sRGB gamma including above 1 and below -1
       #define EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(T)                                \
@@ -299,10 +299,10 @@ namespace Csp
 
       EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(float)
       EXTENDED_GAMMA_24_ROLL_OFF_TO_LINEAR_TO_LINEAR(float3)
-    } //ExtendedGamma24RollOffToLinearTo
+    } //Extended_Gamma24_Roll_Off_To_Linear_To
 
 
-    namespace ExtendedGamma24SCurveTo
+    namespace Extended_Gamma24_S_Curve_To
     {
       // extended gamma 2.4 including above 1 and below 0
       #define EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(T)                                     \
@@ -318,10 +318,10 @@ namespace Csp
 
       EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(float)
       EXTENDED_GAMMA_24_S_CURVE_TO_LINEAR(float3)
-    } //ExtendedGamma24SCurveTo
+    } //Extended_Gamma24_S_Curve_To
 
 
-    namespace ExtendedGamma24LinearTo
+    namespace Extended_Gamma24_Linear_To
     {
       // extended gamma 2.4 including above 1 and below 0
       #define EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(T)   \
@@ -336,7 +336,7 @@ namespace Csp
 
       EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(float)
       EXTENDED_GAMMA_24_LINEAR_TO_LINEAR(float3)
-    } //ExtendedGamma24LinearTo
+    } //Extended_Gamma24_Linear_To
 
 
     //float X_power_TRC(float C, float pow_gamma)
@@ -367,7 +367,7 @@ namespace Csp
 
 
     // gamma adjust including values above 1 and below 0
-    float ExtendedGammaAdjust(float C, float Adjust)
+    float Extended_Gamma_Adjust(float C, float Adjust)
     {
       float inverseAdjust = 1.f / Adjust;
 
@@ -385,11 +385,11 @@ namespace Csp
       }
     }
 
-    float3 ExtendedGammaAdjust(float3 Colour, float Adjust)
+    float3 Extended_Gamma_Adjust(float3 Colour, float Adjust)
     {
-      return float3(ExtendedGammaAdjust(Colour.r, Adjust),
-                    ExtendedGammaAdjust(Colour.g, Adjust),
-                    ExtendedGammaAdjust(Colour.b, Adjust));
+      return float3(Extended_Gamma_Adjust(Colour.r, Adjust),
+                    Extended_Gamma_Adjust(Colour.g, Adjust),
+                    Extended_Gamma_Adjust(Colour.b, Adjust));
     }
 
   } //Trc
