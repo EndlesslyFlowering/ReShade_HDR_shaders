@@ -1329,7 +1329,7 @@ float3 MergeText
 
     adjustFactor = _TEXT_BRIGHTNESS / 80.f;
 
-    Output = Csp::Mat::Bt709To::Bt2020(Output);
+    Output = Csp::Mat::BT709_To::BT2020(Output);
 
     // safety clamp colours outside of BT.2020
     Output = max(Output, 0.f);
@@ -1376,7 +1376,7 @@ float3 MergeText
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    Output = Csp::Mat::Bt2020To::Bt709(Output);
+    Output = Csp::Mat::BT2020_To::BT709(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 

@@ -143,19 +143,19 @@ void PS_HdrBlackFloorFix
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  co.trc  = TRC_LINEAR_80;
-  co.prim = PRIM_BT709;
+  co.trc  = CO_TRC_LINEAR_80;
+  co.prim = CO_PRIM_BT709;
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  co.trc         = TRC_PQ;
-  co.prim        = PRIM_BT2020;
+  co.trc         = CO_TRC_PQ;
+  co.prim        = CO_PRIM_BT2020;
   co.is_untouched = true;
 
 #else
 
-  co.trc  = TRC_LINEAR_NORMALISED;
-  co.prim = PRIM_BT709;
+  co.trc  = CO_TRC_LINEAR_NORMALISED;
+  co.prim = CO_PRIM_BT709;
 
 #endif
 

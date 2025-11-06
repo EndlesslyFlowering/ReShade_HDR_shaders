@@ -34,7 +34,7 @@ namespace Itmos
     float3 sdr = Input / InputNitsFactor;
 
     //YSDR
-    float ySdr = dot(sdr, Csp::Mat::Bt709ToXYZ[1]);
+    float ySdr = dot(sdr, Csp::Mat::BT709_To_XYZ[1]);
     //clamp to avoid invalid numbers
     ySdr = max(ySdr, 1e-20);
     //Y'SDR
@@ -150,7 +150,7 @@ namespace Itmos
   //
   //  //6.1.5 (inverse)
   //  //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-  //  sdr = mul(Bt2020ToXYZ, sdr);
+  //  sdr = mul(BT2020_To_XYZ, sdr);
   //  float YSdr = sdr.y;
   //  float xyz  = sdr.x + sdr.y + sdr.z;
   //  float xSdr = sdr.x /
@@ -325,7 +325,7 @@ namespace Itmos
   //
   //    hdr = float3(XHdrCorrected, YHdr, ZHdrCorrected);
   //  }
-  //  hdr = mul(XYZToBt2020, hdr);
+  //  hdr = mul(XYZ_To_BT2020, hdr);
   //
   //  //6.1.2 (inverse)
   //  //inverse crosstalk matrix from 6.1.6
@@ -362,7 +362,7 @@ namespace Itmos
     //153.7 is just under 10000 nits for Alpha == 0 and above it starts clipping
     float3 sdr = Input * SdrRelativeBrightness;
 
-    sdr = Csp::Mat::Bt709To::Bt2020(sdr);
+    sdr = Csp::Mat::BT709_To::BT2020(sdr);
 
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
@@ -376,7 +376,7 @@ namespace Itmos
 
     //6.1.5 (inverse)
     //conversion to XYZ and then Yxy -> x and y is at the end of the achromatic correction or the else case
-    sdr = Csp::Mat::Bt2020To::XYZ(sdr);
+    sdr = Csp::Mat::BT2020_To::XYZ(sdr);
     float YSdr = sdr.y;
     float xyz  = sdr.x + sdr.y + sdr.z;
     float xSdr = sdr.x
@@ -557,7 +557,7 @@ namespace Itmos
   //    hdr = float3(XHdrCorrected, YHdr, ZHdrCorrected);
   //  }
 
-    hdr = Csp::Mat::XYZTo::Bt2020(hdr);
+    hdr = Csp::Mat::XYZ_To::BT2020(hdr);
 
     //6.1.2 (inverse)
     //inverse crosstalk matrix from 6.1.6

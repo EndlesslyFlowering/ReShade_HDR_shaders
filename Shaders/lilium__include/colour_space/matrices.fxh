@@ -6,7 +6,8 @@ namespace Csp
   {
 
     //BT.709 To
-    static const float3x3 Bt709ToXYZ =
+    //BT.709 -> XYZ
+    static const float3x3 BT709_To_XYZ =
       float3x3
       (
         0.412390798f,  0.357584327f, 0.180480793f,
@@ -14,7 +15,8 @@ namespace Csp
         0.0193308182f, 0.119194783f, 0.950532138f
       );
 
-    static const float3x3 Bt709ToDciP3 =
+    //BT.709 -> DCI-P3
+    static const float3x3 BT709_To_DCIP3 =
       float3x3
       (
         0.822461962f,  0.177538037f,  0.f,
@@ -22,7 +24,8 @@ namespace Csp
         0.0170826315f, 0.0723974406f, 0.910519957f
       );
 
-    static const float3x3 Bt709ToBt2020 =
+    //BT.709 -> BT.2020
+    static const float3x3 BT709_To_BT2020 =
       float3x3
       (
         0.627403914f,  0.329283028f,  0.0433130674f,
@@ -30,7 +33,8 @@ namespace Csp
         0.0163914393f, 0.0880133062f, 0.895595252f
       );
 
-    static const float3x3 Bt709ToAp1D65 =
+    //BT.709 -> AP1 D65
+    static const float3x3 BT709_To_AP1D65 =
       float3x3
       (
         0.617028832f,  0.333867609f, 0.0491035431f,
@@ -38,7 +42,8 @@ namespace Csp
         0.0205497872f, 0.107552029f, 0.871898174f
       );
 
-    static const float3x3 Bt709ToAp0D65 =
+    //BT.709 -> AP0 D65
+    static const float3x3 BT709_To_AP0D65 =
       float3x3
       (
         0.433931618f,  0.376252382f, 0.189815968f,
@@ -46,7 +51,8 @@ namespace Csp
         0.0177500396f, 0.109447620f, 0.872802317f
       );
 
-    static const float3x3 Bt709ToAp1D60 =
+    //BT.709 -> AP1 D60 (Bradford CAT)
+    static const float3x3 BT709_To_AP1D60 =
       float3x3
       (
         0.613097429f,  0.339523136f, 0.0473794527f,
@@ -54,7 +60,8 @@ namespace Csp
         0.0206155925f, 0.109569773f, 0.869814634f
       );
 
-    static const float3x3 Bt709ToAp0D60 =
+    //BT.709 -> AP0 D60 (Bradford CAT)
+    static const float3x3 BT709_To_AP0D60 =
       float3x3
       (
         0.439632982f,  0.382988691f, 0.177378326f,
@@ -64,7 +71,8 @@ namespace Csp
 
 
     //scRGB To
-    static const float3x3 ScRgbToXYZ =
+    //scRGB -> XYZ normalised
+    static const float3x3 scRGB_To_XYZ_normalised =
       float3x3
       (
         0.00329912640f,  0.00286067463f,  0.00144384626f,
@@ -72,7 +80,8 @@ namespace Csp
         0.000154646550f, 0.000953558250f, 0.00760425720f
       );
 
-    static const float3x3 ScRgbToBt2020Normalised =
+    //scRGB -> BT.2020 normalised
+    static const float3x3 scRGB_To_BT2020_normalised =
       float3x3
       (
         0.00501923123f,  0.00263426429f,  0.000346504530f,
@@ -82,7 +91,8 @@ namespace Csp
 
 
     //DCI-P3 To
-    static const float3x3 DciP3ToXYZ =
+    //DCI-P3 -> XYZ
+    static const float3x3 DCIP3_To_XYZ =
       float3x3
       (
         0.486570954f, 0.265667706f,  0.198217287f,
@@ -90,7 +100,8 @@ namespace Csp
         0.f,          0.0451133809f, 1.04394435f
       );
 
-    static const float3x3 DciP3ToBt709 =
+    //DCI-P3 -> BT.709
+    static const float3x3 DCIP3_To_BT709 =
       float3x3
       (
          1.22494018f,   -0.224940180f,  0.f,
@@ -98,7 +109,8 @@ namespace Csp
         -0.0196375548f, -0.0786360427f, 1.09827363f
       );
 
-    static const float3x3 DciP3ToBt2020 =
+    //DCI-P3 -> BT.2020
+    static const float3x3 DCIP3_To_BT2020 =
       float3x3
       (
          0.753833055f,   0.198597371f,  0.0475695952f,
@@ -108,7 +120,8 @@ namespace Csp
 
 
     //DCI-P3 80 To
-    static const float3x3 DciP3_80ToXYZ =
+    //DCI-P3 80 -> XYZ normalised
+    static const float3x3 DCIP3_80_To_XYZ_normalised =
       float3x3
       (
         0.00389256747f, 0.00212534144f,  0.00158573826f,
@@ -116,7 +129,8 @@ namespace Csp
         0.f,            0.000360907055f, 0.00835155509f
       );
 
-    static const float3x3 DciP3_80ToBt2020Normalised =
+    //DCI-P3 80 -> BT.2020 normalised
+    static const float3x3 DCIP3_80_To_BT2020_normalised =
       float3x3
       (
          0.00603066431f,    0.00158877891f,  0.000380556768f,
@@ -126,7 +140,8 @@ namespace Csp
 
 
     //BT.2020 To
-    static const float3x3 Bt2020ToXYZ =
+    //BT.2020 -> XYZ
+    static const float3x3 BT2020_To_XYZ =
       float3x3
       (
         0.636958062f, 0.144616901f,  0.168880969f,
@@ -134,7 +149,8 @@ namespace Csp
         0.f,          0.0280726924f, 1.06098508f
       );
 
-    static const float3x3 Bt2020ToBt709 =
+    //BT.2020 -> BT.709
+    static const float3x3 BT2020_To_BT709 =
       float3x3
       (
          1.66049098f,   -0.587641119f, -0.0728498622f,
@@ -142,7 +158,8 @@ namespace Csp
         -0.0181507635f, -0.100578896f,  1.11872971f
       );
 
-    static const float3x3 Bt2020ToDciP3 =
+    //BT.2020 -> DCI-P3
+    static const float3x3 BT2020_To_DCIP3 =
       float3x3
       (
          1.34357821f,    -0.282179683f,  -0.0613985806f,
@@ -150,7 +167,8 @@ namespace Csp
          0.00282178726f, -0.0195984952f,  1.01677668f
       );
 
-    static const float3x3 Bt2020ToAp1D65 =
+    //BT.2020 -> AP1 D65
+    static const float3x3 BT2020_To_AP1D65 =
       float3x3
       (
         0.982096254f,   0.0107082454f, 0.00719551974f,
@@ -158,7 +176,8 @@ namespace Csp
         0.00490146316f, 0.0220752228f, 0.973023295f
       );
 
-    static const float3x3 Bt2020ToAp0D65 =
+    //BT.2020 -> AP0 D65
+    static const float3x3 BT2020_To_AP0D65 =
       float3x3
       (
         0.670231819f,  0.152168750f,  0.177599415f,
@@ -166,7 +185,8 @@ namespace Csp
         0.f,           0.0257770475f, 0.974222958f
       );
 
-    static const float3x3 Bt2020ToAp1D60 =
+    //BT.2020 -> AP1 D60 (Bradford CAT)
+    static const float3x3 BT2020_To_AP1D60 =
       float3x3
       (
         0.974895000f,   0.0195991080f, 0.00550591340f,
@@ -174,7 +194,8 @@ namespace Csp
         0.00479723978f, 0.0245320163f, 0.970670759f
       );
 
-    static const float3x3 Bt2020ToAp0D60 =
+    //BT.2020 -> AP0 D60 (Bradford CAT)
+    static const float3x3 BT2020_To_AP0D60 =
       float3x3
       (
          0.679085612f,    0.157700911f,  0.163213446f,
@@ -184,7 +205,8 @@ namespace Csp
 
 
     //BT.2020 normalised To
-    static const float3x3 Bt2020NormalisedToScRgb =
+    //BT.2020 normalised -> scRGB
+    static const float3x3 BT2020_normalised_To_scRGB =
       float3x3
       (
          207.561370f, -73.4551391f, -9.10623264f,
@@ -194,7 +216,8 @@ namespace Csp
 
 
     //BT.2020 80 To
-    static const float3x3 Bt2020_80ToXYZ =
+    //BT.2020 80 -> XYZ normalised
+    static const float3x3 BT2020_80_To_XYZ_normalised =
       float3x3
       (
         0.00509566441f, 0.00115693523f,  0.00135104777f,
@@ -204,7 +227,8 @@ namespace Csp
 
 
     //AP1 D65 To
-    static const float3x3 Ap1D65ToXYZ =
+    //AP1 D65 -> XYZ
+    static const float3x3 AP1D65_To_XYZ =
       float3x3
       (
          0.647507190f,   0.134379133f,   0.168569594f,
@@ -214,7 +238,8 @@ namespace Csp
 
 
     //AP0 D65 To
-    static const float3x3 Ap0D65ToXYZ =
+    //AP0 D65 -> XYZ
+    static const float3x3 AP0D65_To_XYZ =
       float3x3
       (
         0.950354814f, 0.f,           0.000101128956f,
@@ -222,7 +247,8 @@ namespace Csp
         0.f,          0.f,           1.08905780f
       );
 
-    static const float3x3 Ap0D65ToBt709 =
+    //AP0 D65 -> BT.709
+    static const float3x3 AP0D65_To_BT709 =
       float3x3
       (
          2.55248308f,   -1.12950992f,  -0.422973215f,
@@ -230,7 +256,8 @@ namespace Csp
         -0.0171310510f, -0.149861142f,  1.16699218f
       );
 
-    static const float3x3 Ap0D65ToBt2020 =
+    //AP0 D65 -> BT.2020
+    static const float3x3 AP0D65_To_BT2020 =
       float3x3
       (
          1.50937116f,    -0.261310040f,  -0.248061075f,
@@ -240,7 +267,8 @@ namespace Csp
 
 
     //AP1 D60 To
-    static const float3x3 Ap1D60ToXYZ =
+    //AP1 D60 -> XYZ
+    static const float3x3 AP1D60_To_XYZ =
       float3x3
       (
          0.662454187f,   0.134004205f,   0.156187683f,
@@ -248,7 +276,8 @@ namespace Csp
         -0.00557464966f, 0.00406073359f, 1.01033914f
       );
 
-    static const float3x3 Ap1D60ToBt709 =
+    //AP1 D60 -> BT.709 (Bradford CAT)
+    static const float3x3 AP1D60_To_BT709 =
       float3x3
       (
          1.70505094f,   -0.621792137f, -0.0832588747f,
@@ -256,7 +285,8 @@ namespace Csp
         -0.0240033566f, -0.128968968f,  1.15297234f
       );
 
-    static const float3x3 Ap1D60ToBt2020 =
+    //AP1 D60 -> BT.2020 (Bradford CAT)
+    static const float3x3 AP1D60_To_BT2020 =
       float3x3
       (
          1.02582478f,    -0.0200531911f, -0.00577155686f,
@@ -264,7 +294,8 @@ namespace Csp
         -0.00501335132f, -0.0252900719f,  1.03030347f
       );
 
-    static const float3x3 Ap1D60ToAp0D60 =
+    //AP1 D60 -> AP0 D60
+    static const float3x3 AP1D60_To_AP0D60 =
       float3x3
       (
          0.695452213f,   0.140678703f,   0.163869068f,
@@ -274,7 +305,8 @@ namespace Csp
 
 
     //AP0 D60 To
-    static const float3x3 Ap0D60ToXYZ =
+    //AP0 D60 -> XYZ
+    static const float3x3 AP0D60_To_XYZ =
       float3x3
       (
         0.952552378f, 0.f,           0.0000936786309f,
@@ -282,7 +314,8 @@ namespace Csp
         0.f,          0.f,           1.00882518f
       );
 
-    static const float3x3 Ap0D60ToBt709 =
+    //AP0 D60 -> BT.709 (Bradford CAT)
+    static const float3x3 AP0D60_To_BT709 =
       float3x3
       (
          2.52168607f,   -1.13413095f,  -0.387555211f,
@@ -290,7 +323,8 @@ namespace Csp
         -0.0153780654f, -0.152975335f,  1.16835343f
       );
 
-    static const float3x3 Ap0D60ToBt2020 =
+    //AP0 D60 -> BT.2020 (Bradford CAT)
+    static const float3x3 AP0D60_To_BT2020 =
       float3x3
       (
          1.49040949f,    -0.266170918f,  -0.224238604f,
@@ -298,7 +332,8 @@ namespace Csp
          0.00322763109f, -0.0347764752f,  1.03154885f
       );
 
-    static const float3x3 Ap0D60ToAp1D60 =
+    //AP0 D60 -> AP1 D60
+    static const float3x3 AP0D60_To_AP1D60 =
       float3x3
       (
          1.45143926f,    -0.236510753f,   -0.214928567f,
@@ -308,7 +343,8 @@ namespace Csp
 
 
     //XYZ To
-    static const float3x3 XYZToBt709 =
+    //XYZ -> BT.709
+    static const float3x3 XYZ_To_BT709 =
       float3x3
       (
          3.24096989f,   -1.53738319f,  -0.498610764f,
@@ -316,7 +352,8 @@ namespace Csp
          0.0556300804f, -0.203976958f,  1.05697154f
       );
 
-    static const float3x3 XYZToScRgb =
+    //XYZ normalised -> scRGB
+    static const float3x3 XYZ_normalised_To_scRGB =
       float3x3
       (
          0.0259277597f,   -0.0122990654f,  -0.00398888625f,
@@ -324,7 +361,8 @@ namespace Csp
          0.000445040641f, -0.00163181568f,  0.00845577195f
       );
 
-    static const float3x3 XYZToDciP3 =
+    //XYZ -> DCI-P3
+    static const float3x3 XYZ_To_DCIP3 =
       float3x3
       (
          2.49349689f,   -0.931383609f,  -0.402710795f,
@@ -332,7 +370,8 @@ namespace Csp
          0.0358458310f, -0.0761723890f,  0.956884503f
       );
 
-    static const float3x3 XYZToBt2020 =
+    //XYZ -> BT.2020
+    static const float3x3 XYZ_To_BT2020 =
       float3x3
       (
          1.71665120f,   -0.355670779f,  -0.253366291f,
@@ -340,7 +379,8 @@ namespace Csp
          0.0176398567f, -0.0427706129f,  0.942103147f
       );
 
-    static const float3x3 XYZToAp1D65 =
+    //XYZ -> AP1 D65
+    static const float3x3 XYZ_To_AP1D65 =
       float3x3
       (
          1.67890453f,   -0.332301020f,   -0.241882294f,
@@ -348,7 +388,8 @@ namespace Csp
          0.0108608892f, -0.00767592666f,  0.915794551f
       );
 
-    static const float3x3 XYZToAp0D65 =
+    //XYZ -> AP0 D65
+    static const float3x3 XYZ_To_AP0D65 =
       float3x3
       (
          1.05223858f,  0.f,         -0.0000977099625f,
@@ -357,226 +398,226 @@ namespace Csp
       );
 
 
-    namespace Bt709To
+    namespace BT709_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ(const float3 RGB)
       {
-        return mul(Bt709ToXYZ, Colour);
+        return mul(BT709_To_XYZ, RGB);
       }
 
-      float3 DciP3(float3 Colour)
+      float3 DCIP3(const float3 RGB)
       {
-        return mul(Bt709ToDciP3, Colour);
+        return mul(BT709_To_DCIP3, RGB);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 RGB)
       {
-        return mul(Bt709ToBt2020, Colour);
+        return mul(BT709_To_BT2020, RGB);
       }
 
-      float3 Ap1D65(float3 Colour)
+      float3 AP1D65(const float3 RGB)
       {
-        return mul(Bt709ToAp1D65, Colour);
+        return mul(BT709_To_AP1D65, RGB);
       }
 
-      float3 Ap0D65(float3 Colour)
+      float3 AP0D65(const float3 RGB)
       {
-        return mul(Bt709ToAp0D65, Colour);
+        return mul(BT709_To_AP0D65, RGB);
       }
 
-      float3 Ap1D60(float3 Colour)
+      float3 AP1D60(const float3 RGB)
       {
-        return mul(Bt709ToAp1D60, Colour);
+        return mul(BT709_To_AP1D60, RGB);
       }
 
-      float3 Ap0D60(float3 Colour)
+      float3 AP0D60(const float3 RGB)
       {
-        return mul(Bt709ToAp0D60, Colour);
+        return mul(BT709_To_AP0D60, RGB);
       }
-    } //Bt709To
+    } //BT709_To
 
-    namespace ScRgbTo
+    namespace scRGB_To
     {
-      float3 Bt2020Normalised(float3 Colour)
+      float3 BT2020_normalised(const float3 RGB)
       {
-        return mul(ScRgbToBt2020Normalised, Colour);
+        return mul(scRGB_To_BT2020_normalised, RGB);
       }
-    } //ScRgbTo
+    } //scRGB_To
 
-    namespace DciP3To
+    namespace DCIP3_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ(const float3 RGB)
       {
-        return mul(DciP3ToXYZ, Colour);
+        return mul(DCIP3_To_XYZ, RGB);
       }
 
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 RGB)
       {
-        return mul(DciP3ToBt709, Colour);
+        return mul(DCIP3_To_BT709, RGB);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 RGB)
       {
-        return mul(DciP3ToBt2020, Colour);
+        return mul(DCIP3_To_BT2020, RGB);
       }
-    } //DciP3To
+    } //DCIP3_To
 
-    namespace DciP3_80To
+    namespace DCIP3_80_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ_normalised(const float3 RGB)
       {
-        return mul(DciP3_80ToXYZ, Colour);
+        return mul(DCIP3_80_To_XYZ_normalised, RGB);
       }
 
-      float3 Bt2020Normalised(float3 Colour)
+      float3 BT2020_normalised(const float3 RGB)
       {
-        return mul(DciP3_80ToBt2020Normalised, Colour);
+        return mul(DCIP3_80_To_BT2020_normalised, RGB);
       }
-    } //DciP3_80To
+    } //DCIP3_80_To
 
-    namespace Bt2020To
+    namespace BT2020_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ(const float3 RGB)
       {
-        return mul(Bt2020ToXYZ, Colour);
+        return mul(BT2020_To_XYZ, RGB);
       }
 
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 RGB)
       {
-        return mul(Bt2020ToBt709, Colour);
+        return mul(BT2020_To_BT709, RGB);
       }
 
-      float3 DciP3(float3 Colour)
+      float3 DCIP3(const float3 RGB)
       {
-        return mul(Bt2020ToDciP3, Colour);
+        return mul(BT2020_To_DCIP3, RGB);
       }
 
-      float3 Ap1D65(float3 Colour)
+      float3 AP1D65(const float3 RGB)
       {
-        return mul(Bt2020ToAp1D65, Colour);
+        return mul(BT2020_To_AP1D65, RGB);
       }
 
-      float3 Ap0D65(float3 Colour)
+      float3 AP0D65(const float3 RGB)
       {
-        return mul(Bt2020ToAp0D65, Colour);
+        return mul(BT2020_To_AP0D65, RGB);
       }
 
-      float3 Ap1D60(float3 Colour)
+      float3 AP1D60(const float3 RGB)
       {
-        return mul(Bt2020ToAp1D60, Colour);
+        return mul(BT2020_To_AP1D60, RGB);
       }
 
-      float3 Ap0D60(float3 Colour)
+      float3 AP0D60(const float3 RGB)
       {
-        return mul(Bt2020ToAp0D60, Colour);
+        return mul(BT2020_To_AP0D60, RGB);
       }
-    } //Bt2020To
+    } //BT2020_To
 
-    namespace Bt2020NormalisedTo
+    namespace BT2020_normalised_To
     {
-      float3 ScRgb(float3 Colour)
+      float3 scRGB(const float3 RGB)
       {
-        return mul(Bt2020NormalisedToScRgb, Colour);
+        return mul(BT2020_normalised_To_scRGB, RGB);
       }
-    } //Bt2020NormalisedTo
+    } //BT2020_normalised_To
 
-    namespace Bt2020_80To
+    namespace BT2020_80_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ_normalised(const float3 RGB)
       {
-        return mul(Bt2020_80ToXYZ, Colour);
+        return mul(BT2020_80_To_XYZ_normalised, RGB);
       }
-    } //Bt2020NormalisedTo
+    } //BT2020_normalised_To
 
-    namespace Ap1D65To
+    namespace AP1D65_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ(const float3 RGB)
       {
-        return mul(Ap1D65ToXYZ, Colour);
+        return mul(AP1D65_To_XYZ, RGB);
       }
-    } //Ap1D65To
+    } //AP1D65_To
 
-    namespace Ap0D65To
+    namespace AP0D65_To
     {
-      float3 XYZ(float3 Colour)
+      float3 XYZ(const float3 RGB)
       {
-        return mul(Ap0D65ToXYZ, Colour);
+        return mul(AP0D65_To_XYZ, RGB);
       }
 
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 RGB)
       {
-        return mul(Ap0D65ToBt709, Colour);
+        return mul(AP0D65_To_BT709, RGB);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 RGB)
       {
-        return mul(Ap0D65ToBt2020, Colour);
+        return mul(AP0D65_To_BT2020, RGB);
       }
-    } //Ap0D65To
+    } //AP0D65_To
 
-    namespace Ap1D60To
+    namespace AP1D60_To
     {
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 RGB)
       {
-        return mul(Ap1D60ToBt709, Colour);
+        return mul(AP1D60_To_BT709, RGB);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 RGB)
       {
-        return mul(Ap1D60ToBt2020, Colour);
+        return mul(AP1D60_To_BT2020, RGB);
       }
 
-      float3 Ap0D60(float3 Colour)
+      float3 AP0D60(const float3 RGB)
       {
-        return mul(Ap1D60ToAp0D60, Colour);
+        return mul(AP1D60_To_AP0D60, RGB);
       }
-    } //Ap1D60To
+    } //AP1D60_To
 
-    namespace Ap0D60To
+    namespace AP0D60_To
     {
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 RGB)
       {
-        return mul(Ap0D60ToBt709, Colour);
+        return mul(AP0D60_To_BT709, RGB);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 RGB)
       {
-        return mul(Ap0D60ToBt2020, Colour);
+        return mul(AP0D60_To_BT2020, RGB);
       }
 
-      float3 Ap1D60(float3 Colour)
+      float3 AP1D60(const float3 RGB)
       {
-        return mul(Ap0D60ToAp1D60, Colour);
+        return mul(AP0D60_To_AP1D60, RGB);
       }
-    } //Ap0D60To
+    } //AP0D60_To
 
-    namespace XYZTo
+    namespace XYZ_To
     {
-      float3 Bt709(float3 Colour)
+      float3 BT709(const float3 XYZ)
       {
-        return mul(XYZToBt709, Colour);
+        return mul(XYZ_To_BT709, XYZ);
       }
 
-      float3 DciP3(float3 Colour)
+      float3 DCIP3(const float3 XYZ)
       {
-        return mul(XYZToDciP3, Colour);
+        return mul(XYZ_To_DCIP3, XYZ);
       }
 
-      float3 Bt2020(float3 Colour)
+      float3 BT2020(const float3 XYZ)
       {
-        return mul(XYZToBt2020, Colour);
+        return mul(XYZ_To_BT2020, XYZ);
       }
 
-      float3 Ap1D65(float3 Colour)
+      float3 AP1D65(const float3 XYZ)
       {
-        return mul(XYZToAp1D65, Colour);
+        return mul(XYZ_To_AP1D65, XYZ);
       }
 
-      float3 Ap0D65(float3 Colour)
+      float3 AP0D65(const float3 XYZ)
       {
-        return mul(XYZToAp0D65, Colour);
+        return mul(XYZ_To_AP0D65, XYZ);
       }
-    } //XYZTo
+    } //XYZ_To
 
   } //Mat
 

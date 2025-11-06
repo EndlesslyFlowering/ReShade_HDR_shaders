@@ -21,7 +21,7 @@ float3 RgbModePrepareForProcessing
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Mat::ScRgbTo::Bt2020Normalised(Colour);
+  return Csp::Mat::scRGB_To::BT2020_normalised(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -45,7 +45,7 @@ float3 RgbModePrepareForOutput
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Mat::Bt2020NormalisedTo::ScRgb(Colour);
+  return Csp::Mat::BT2020_normalised_To::scRGB(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -114,15 +114,15 @@ void GetLuminance
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Lop.aLum = dot(Ptp.a, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.bLum = dot(Ptp.b, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.cLum = dot(Ptp.c, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.dLum = dot(Ptp.d, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.eLum = dot(Ptp.e, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.fLum = dot(Ptp.f, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.gLum = dot(Ptp.g, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.hLum = dot(Ptp.h, Csp::Mat::ScRgbToXYZ[1]);
-  Lop.iLum = dot(Ptp.i, Csp::Mat::ScRgbToXYZ[1]);
+  Lop.aLum = dot(Ptp.a, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.bLum = dot(Ptp.b, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.cLum = dot(Ptp.c, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.dLum = dot(Ptp.d, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.fLum = dot(Ptp.f, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.gLum = dot(Ptp.g, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.hLum = dot(Ptp.h, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.iLum = dot(Ptp.i, Csp::Mat::scRGB_To_XYZ_normalised[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -136,27 +136,27 @@ void GetLuminance
   float3 hRgb  = FetchFromHdr10ToLinearLUT(Ptp.h);
   float3 iRgb  = FetchFromHdr10ToLinearLUT(Ptp.i);
 
-  Lop.aLum = dot(aRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.bLum = dot(bRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.cLum = dot(cRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.dLum = dot(dRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.eLum = dot(Ptp.e, Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.fLum = dot(fRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.gLum = dot(gRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.hLum = dot(hRgb,  Csp::Mat::Bt2020ToXYZ[1]);
-  Lop.iLum = dot(iRgb,  Csp::Mat::Bt2020ToXYZ[1]);
+  Lop.aLum = dot(aRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.bLum = dot(bRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.cLum = dot(cRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.dLum = dot(dRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.fLum = dot(fRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.gLum = dot(gRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.hLum = dot(hRgb,  Csp::Mat::BT2020_To_XYZ[1]);
+  Lop.iLum = dot(iRgb,  Csp::Mat::BT2020_To_XYZ[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  Lop.aLum = dot(Ptp.a, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.bLum = dot(Ptp.b, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.cLum = dot(Ptp.c, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.dLum = dot(Ptp.d, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.eLum = dot(Ptp.e, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.fLum = dot(Ptp.f, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.gLum = dot(Ptp.g, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.hLum = dot(Ptp.h, Csp::Mat::Bt709ToXYZ[1]);
-  Lop.iLum = dot(Ptp.i, Csp::Mat::Bt709ToXYZ[1]);
+  Lop.aLum = dot(Ptp.a, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.bLum = dot(Ptp.b, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.cLum = dot(Ptp.c, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.dLum = dot(Ptp.d, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.fLum = dot(Ptp.f, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.gLum = dot(Ptp.g, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.hLum = dot(Ptp.h, Csp::Mat::BT709_To_XYZ[1]);
+  Lop.iLum = dot(Ptp.i, Csp::Mat::BT709_To_XYZ[1]);
 
 #else // fallback for shader permutations
 

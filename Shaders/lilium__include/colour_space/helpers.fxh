@@ -23,7 +23,7 @@ namespace Csp
         const float  Brightness
       )
       {
-        return Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(RGB) * Brightness);
+        return Csp::Trc::Nits_To::PQ(Csp::Mat::BT709_To::BT2020(RGB) * Brightness);
       }
 
       float3 BT2020_Extended
@@ -32,7 +32,7 @@ namespace Csp
         const float  Brightness
       )
       {
-        return Csp::Mat::Bt709To::Bt2020(RGB / 100.f) * Brightness;
+        return Csp::Mat::BT709_To::BT2020(RGB / 100.f) * Brightness;
       }
 
     } //BT709_Into
@@ -74,7 +74,7 @@ float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10 \
   || ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
-  Colour = Csp::Mat::Bt709To::Bt2020(Colour);
+  Colour = Csp::Mat::BT709_To::BT2020(Colour);
 #endif
   return Colour;
 }
@@ -83,7 +83,7 @@ float3 ConditionallyConvertBt709ToBt2020(float3 Colour)
 float3 ConditionallyConvertDciP3ToBt709(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::DciP3To::Bt709(Colour);
+  Colour = Csp::Mat::DCIP3_To::BT709(Colour);
 #endif
   return Colour;
 }
@@ -92,7 +92,7 @@ float3 ConditionallyConvertDciP3ToBt709(float3 Colour)
 float3 ConditionallyConvertDciP3ToBt2020(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = Csp::Mat::DciP3To::Bt2020(Colour);
+  Colour = Csp::Mat::DCIP3_To::BT2020(Colour);
 #endif
   return Colour;
 }
@@ -101,7 +101,7 @@ float3 ConditionallyConvertDciP3ToBt2020(float3 Colour)
 float3 ConditionallyConvertBt2020ToBt709(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::Bt2020To::Bt709(Colour);
+  Colour = Csp::Mat::BT2020_To::BT709(Colour);
 #endif
   return Colour;
 }
@@ -120,7 +120,7 @@ float3 ConditionallyNormaliseScRgb(float3 Colour)
 float3 ConditionallyConvertScRgbToNormalisedBt2020(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::ScRgbTo::Bt2020Normalised(Colour);
+  Colour = Csp::Mat::scRGB_To::BT2020_normalised(Colour);
 #endif
   return Colour;
 }
@@ -169,7 +169,7 @@ float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
 float3 ConditionallyConvertNormalisedBt2020ToScRgb(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::Bt2020NormalisedTo::ScRgb(Colour);
+  Colour = Csp::Mat::BT2020_normalised_To::scRGB(Colour);
 #endif
   return Colour;
 }
@@ -190,9 +190,9 @@ float3 ConditionallyConvertHdr10ToScRgb(float3 Colour)
 float GetLuminance(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  return dot(Colour, Csp::Mat::Bt709ToXYZ[1]);
+  return dot(Colour, Csp::Mat::BT709_To_XYZ[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  return dot(Colour, Csp::Mat::Bt2020ToXYZ[1]);
+  return dot(Colour, Csp::Mat::BT2020_To_XYZ[1]);
 #else
   return 0;
 #endif

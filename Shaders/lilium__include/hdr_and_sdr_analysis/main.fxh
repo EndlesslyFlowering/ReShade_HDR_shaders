@@ -844,7 +844,7 @@ float3 MergeOverlay
 
     adjustFactor = OverlayBrightness / 80.f;
 
-    Output = Csp::Mat::Bt709To::Bt2020(Output);
+    Output = Csp::Mat::BT709_To::BT2020(Output);
 
     // safety clamp colours outside of BT.2020
     Output = max(Output, 0.f);
@@ -881,7 +881,7 @@ float3 MergeOverlay
 
 #ifdef IS_HDR_CSP
 
-    Overlay = Csp::Mat::Bt709To::Bt2020(Overlay);
+    Overlay = Csp::Mat::BT709_To::BT2020(Overlay);
 
 #endif
 
@@ -893,7 +893,7 @@ float3 MergeOverlay
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    Output = Csp::Mat::Bt2020To::Bt709(Output);
+    Output = Csp::Mat::BT2020_To::BT709(Output);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 

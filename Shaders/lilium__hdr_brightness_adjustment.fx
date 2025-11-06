@@ -36,9 +36,9 @@ static const float Luminance_At_Neutral_Gamma         = 334.048492f;     //     
 static const float Max_Gain_Factor                    =  29.9357738f;    // 10000 / (10^((1 - 1.2) / 0.42) * 1000)
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  static const float3 luminance_weights = Csp::Mat::Bt709ToXYZ[1] * Normalisation_Factor_Inverse;
+  static const float3 luminance_weights = Csp::Mat::BT709_To_XYZ[1] * Normalisation_Factor_Inverse;
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  static const float3 luminance_weights = Csp::Mat::Bt2020ToXYZ[1] * Normalisation_Factor_Inverse;
+  static const float3 luminance_weights = Csp::Mat::BT2020_To_XYZ[1] * Normalisation_Factor_Inverse;
 #else
   static const float3 luminance_weights = 0.f;
 #endif

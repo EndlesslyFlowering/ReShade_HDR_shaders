@@ -90,17 +90,17 @@ bool IsGamut
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
   #define _IS_GAMUT_BT709(Rgb)  Rgb
-  #define _IS_GAMUT_DCI_P3(Rgb) Csp::Mat::Bt709To::DciP3(Rgb)
-  #define _IS_GAMUT_BT2020(Rgb) Csp::Mat::Bt709To::Bt2020(Rgb)
-  #define _IS_GAMUT_AP0(Rgb)    Csp::Mat::Bt709To::Ap0D65(Rgb)
+  #define _IS_GAMUT_DCI_P3(Rgb) Csp::Mat::BT709_To::DCIP3(Rgb)
+  #define _IS_GAMUT_BT2020(Rgb) Csp::Mat::BT709_To::BT2020(Rgb)
+  #define _IS_GAMUT_AP0(Rgb)    Csp::Mat::BT709_To::AP0D65(Rgb)
 
 #elif (defined(IS_HDR10_LIKE_CSP) \
     || ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
-  #define _IS_GAMUT_BT709(Rgb)  Csp::Mat::Bt2020To::Bt709(Rgb)
-  #define _IS_GAMUT_DCI_P3(Rgb) Csp::Mat::Bt2020To::DciP3(Rgb)
+  #define _IS_GAMUT_BT709(Rgb)  Csp::Mat::BT2020_To::BT709(Rgb)
+  #define _IS_GAMUT_DCI_P3(Rgb) Csp::Mat::BT2020_To::DCIP3(Rgb)
   #define _IS_GAMUT_BT2020(Rgb) Rgb
-  #define _IS_GAMUT_AP0(Rgb)    Csp::Mat::Bt2020To::Ap0D65(Rgb)
+  #define _IS_GAMUT_AP0(Rgb)    Csp::Mat::BT2020_To::AP0D65(Rgb)
 
 #endif
 
@@ -549,11 +549,11 @@ float3 CreateGamutMap
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    output = Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(output));
+    output = Csp::Trc::Nits_To::PQ(Csp::Mat::BT709_To::BT2020(output));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
-    output = Csp::Mat::Bt709To::Bt2020(output / 100.f);
+    output = Csp::Mat::BT709_To::BT2020(output / 100.f);
 
 #endif
 

@@ -167,7 +167,7 @@ void PS_Tpg
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::Bt709To::Bt2020(TPG_RGB / 10000.f));
+        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::BT709_To::BT2020(TPG_RGB / 10000.f));
 
 #endif
       }
@@ -176,11 +176,11 @@ void PS_Tpg
       {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        Output.rgb = Csp::Mat::DciP3To::Bt709(TPG_RGB / 80.f);
+        Output.rgb = Csp::Mat::DCIP3_To::BT709(TPG_RGB / 80.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::DciP3To::Bt2020(TPG_RGB / 10000.f));
+        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::DCIP3_To::BT2020(TPG_RGB / 10000.f));
 
 #endif
       }
@@ -189,7 +189,7 @@ void PS_Tpg
       {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        Output.rgb = Csp::Mat::Bt2020To::Bt709(TPG_RGB / 80.f);
+        Output.rgb = Csp::Mat::BT2020_To::BT709(TPG_RGB / 80.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -202,11 +202,11 @@ void PS_Tpg
       {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        Output.rgb = Csp::Mat::Ap0D65To::Bt709(TPG_RGB / 80.f);
+        Output.rgb = Csp::Mat::AP0D65_To::BT709(TPG_RGB / 80.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::Ap0D65To::Bt2020(TPG_RGB / 10000.f));
+        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::AP0D65_To::BT2020(TPG_RGB / 10000.f));
 
 #endif
       }
@@ -232,11 +232,11 @@ void PS_Tpg
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        Output.rgb = Csp::Mat::XYZTo::Bt709(XYZ);
+        Output.rgb = Csp::Mat::XYZ_To::BT709(XYZ);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::XYZTo::Bt2020(XYZ));
+        Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::XYZ_To::BT2020(XYZ));
 
 #endif
       }
@@ -281,7 +281,7 @@ void PS_Tpg
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
     Output.rgb = TEST_THINGY_BG_COLOUR / 80.f;
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::Bt709To::Bt2020(TEST_THINGY_BG_COLOUR / 10000.f));
+    Output.rgb = Csp::Trc::Linear_To::PQ(Csp::Mat::BT709_To::BT2020(TEST_THINGY_BG_COLOUR / 10000.f));
 #endif
   }
 

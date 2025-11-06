@@ -37,14 +37,14 @@ uniform uint INPUT_TRC
   hidden      = HIDDEN_OPTION_HDR_CSP;
 > = 0;
 
-#undef TRC_PQ
+#undef CO_TRC_PQ
 
 #define TRC_GAMMA_22                    0
 #define TRC_GAMMA_24                    1
 #define TRC_LINEAR                      2
 #define TRC_LINEAR_WITH_BLACK_FLOOR_EMU 3
 #define TRC_SRGB                        4
-#define TRC_PQ                          5
+#define CO_TRC_PQ                          5
 
 uniform uint OVERBRIGHT_HANDLING
 <
@@ -138,7 +138,7 @@ void PS_MapSdrIntoHdr
 
   float3 colour = inputColour.rgb;
 
-  static const bool inputTrcIsPq = INPUT_TRC == TRC_PQ;
+  static const bool inputTrcIsPq = INPUT_TRC == CO_TRC_PQ;
 
   switch(INPUT_TRC)
   {
@@ -324,7 +324,7 @@ void PS_MapSdrIntoHdr
       }
     }
     break;
-    case TRC_PQ:
+    case CO_TRC_PQ:
     {
       //scRGB
       colour = ConditionallyLineariseHdr10(colour);
@@ -357,7 +357,7 @@ void PS_MapSdrIntoHdr
     colour = Csp::Trc::Extended_Gamma_Adjust(colour, 1.f + GAMMA_ADJUST);
   }
 
-//  if (dot(Bt709ToXYZ[1].rgb, colour) < 0.f)
+//  if (dot(BT709_To_XYZ[1].rgb, colour) < 0.f)
 //    colour = float3(0.f, 0.f, 0.f);
 
   BRANCH()

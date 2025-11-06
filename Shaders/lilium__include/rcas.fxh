@@ -142,11 +142,11 @@ void Preprocess_RGB
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  B = Csp::Mat::ScRgbTo::Bt2020Normalised(B);
-  D = Csp::Mat::ScRgbTo::Bt2020Normalised(D);
-  E = Csp::Mat::ScRgbTo::Bt2020Normalised(E);
-  F = Csp::Mat::ScRgbTo::Bt2020Normalised(F);
-  H = Csp::Mat::ScRgbTo::Bt2020Normalised(H);
+  B = Csp::Mat::scRGB_To::BT2020_normalised(B);
+  D = Csp::Mat::scRGB_To::BT2020_normalised(D);
+  E = Csp::Mat::scRGB_To::BT2020_normalised(E);
+  F = Csp::Mat::scRGB_To::BT2020_normalised(F);
+  H = Csp::Mat::scRGB_To::BT2020_normalised(H);
 
   BRANCH()
   if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
@@ -176,7 +176,7 @@ float3 Process_RGB_For_Output
     RGB = Csp::Trc::PQ_To::Linear(RGB);
   }
 
-  RGB = Csp::Mat::Bt2020NormalisedTo::ScRgb(RGB);
+  RGB = Csp::Mat::BT2020_normalised_To::scRGB(RGB);
 
 #endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
 
@@ -225,27 +225,27 @@ void Get_Luminance
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  B_lum = dot(B, Csp::Mat::ScRgbToXYZ[1]);
-  D_lum = dot(D, Csp::Mat::ScRgbToXYZ[1]);
-  E_lum = dot(E, Csp::Mat::ScRgbToXYZ[1]);
-  F_lum = dot(F, Csp::Mat::ScRgbToXYZ[1]);
-  H_lum = dot(H, Csp::Mat::ScRgbToXYZ[1]);
+  B_lum = dot(B, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  D_lum = dot(D, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  E_lum = dot(E, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  F_lum = dot(F, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  H_lum = dot(H, Csp::Mat::scRGB_To_XYZ_normalised[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  B_lum = dot(B, Csp::Mat::Bt2020ToXYZ[1]);
-  D_lum = dot(D, Csp::Mat::Bt2020ToXYZ[1]);
-  E_lum = dot(E, Csp::Mat::Bt2020ToXYZ[1]);
-  F_lum = dot(F, Csp::Mat::Bt2020ToXYZ[1]);
-  H_lum = dot(H, Csp::Mat::Bt2020ToXYZ[1]);
+  B_lum = dot(B, Csp::Mat::BT2020_To_XYZ[1]);
+  D_lum = dot(D, Csp::Mat::BT2020_To_XYZ[1]);
+  E_lum = dot(E, Csp::Mat::BT2020_To_XYZ[1]);
+  F_lum = dot(F, Csp::Mat::BT2020_To_XYZ[1]);
+  H_lum = dot(H, Csp::Mat::BT2020_To_XYZ[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  B_lum = dot(B, Csp::Mat::Bt709ToXYZ[1]);
-  D_lum = dot(D, Csp::Mat::Bt709ToXYZ[1]);
-  E_lum = dot(E, Csp::Mat::Bt709ToXYZ[1]);
-  F_lum = dot(F, Csp::Mat::Bt709ToXYZ[1]);
-  H_lum = dot(H, Csp::Mat::Bt709ToXYZ[1]);
+  B_lum = dot(B, Csp::Mat::BT709_To_XYZ[1]);
+  D_lum = dot(D, Csp::Mat::BT709_To_XYZ[1]);
+  E_lum = dot(E, Csp::Mat::BT709_To_XYZ[1]);
+  F_lum = dot(F, Csp::Mat::BT709_To_XYZ[1]);
+  H_lum = dot(H, Csp::Mat::BT709_To_XYZ[1]);
 
 #else // fallback for shader permutations
 
@@ -277,19 +277,19 @@ void Get_Luma
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  B_luma = dot(B, Csp::Mat::Bt2020ToXYZ[1]);
-  D_luma = dot(D, Csp::Mat::Bt2020ToXYZ[1]);
-  E_luma = dot(E, Csp::Mat::Bt2020ToXYZ[1]);
-  F_luma = dot(F, Csp::Mat::Bt2020ToXYZ[1]);
-  H_luma = dot(H, Csp::Mat::Bt2020ToXYZ[1]);
+  B_luma = dot(B, Csp::Mat::BT2020_To_XYZ[1]);
+  D_luma = dot(D, Csp::Mat::BT2020_To_XYZ[1]);
+  E_luma = dot(E, Csp::Mat::BT2020_To_XYZ[1]);
+  F_luma = dot(F, Csp::Mat::BT2020_To_XYZ[1]);
+  H_luma = dot(H, Csp::Mat::BT2020_To_XYZ[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  B_luma = dot(B, Csp::Mat::Bt709ToXYZ[1]);
-  D_luma = dot(D, Csp::Mat::Bt709ToXYZ[1]);
-  E_luma = dot(E, Csp::Mat::Bt709ToXYZ[1]);
-  F_luma = dot(F, Csp::Mat::Bt709ToXYZ[1]);
-  H_luma = dot(H, Csp::Mat::Bt709ToXYZ[1]);
+  B_luma = dot(B, Csp::Mat::BT709_To_XYZ[1]);
+  D_luma = dot(D, Csp::Mat::BT709_To_XYZ[1]);
+  E_luma = dot(E, Csp::Mat::BT709_To_XYZ[1]);
+  F_luma = dot(F, Csp::Mat::BT709_To_XYZ[1]);
+  H_luma = dot(H, Csp::Mat::BT709_To_XYZ[1]);
 
 #else // fallback for shader permutations
 
@@ -321,19 +321,19 @@ void Get_Luma_2x
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB \
   || ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  B_luma_2x = dot(B, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  D_luma_2x = dot(D, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  E_luma_2x = dot(E, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  F_luma_2x = dot(F, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
-  H_luma_2x = dot(H, Csp::Mat::Bt2020ToXYZ[1] * 2.f);
+  B_luma_2x = dot(B, Csp::Mat::BT2020_To_XYZ[1] * 2.f);
+  D_luma_2x = dot(D, Csp::Mat::BT2020_To_XYZ[1] * 2.f);
+  E_luma_2x = dot(E, Csp::Mat::BT2020_To_XYZ[1] * 2.f);
+  F_luma_2x = dot(F, Csp::Mat::BT2020_To_XYZ[1] * 2.f);
+  H_luma_2x = dot(H, Csp::Mat::BT2020_To_XYZ[1] * 2.f);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  B_luma_2x = dot(B, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  D_luma_2x = dot(D, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  E_luma_2x = dot(E, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  F_luma_2x = dot(F, Csp::Mat::Bt709ToXYZ[1] * 2.f);
-  H_luma_2x = dot(H, Csp::Mat::Bt709ToXYZ[1] * 2.f);
+  B_luma_2x = dot(B, Csp::Mat::BT709_To_XYZ[1] * 2.f);
+  D_luma_2x = dot(D, Csp::Mat::BT709_To_XYZ[1] * 2.f);
+  E_luma_2x = dot(E, Csp::Mat::BT709_To_XYZ[1] * 2.f);
+  F_luma_2x = dot(F, Csp::Mat::BT709_To_XYZ[1] * 2.f);
+  H_luma_2x = dot(H, Csp::Mat::BT709_To_XYZ[1] * 2.f);
 
 #else // fallback for shader permutations
 

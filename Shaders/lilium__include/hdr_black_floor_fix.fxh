@@ -419,7 +419,7 @@ void LowerBlackFloor
       CO_org = CO;
 
       BRANCH()
-      if (CO.trc == TRC_PQ)
+      if (CO.trc == CO_TRC_PQ)
       {
         CO = CO::Convert_Trc_To::Linear_Normalised(CO);
       }
@@ -495,7 +495,7 @@ void LowerBlackFloor
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       BRANCH()
-      if (CO.trc != TRC_PQ)
+      if (CO.trc != CO_TRC_PQ)
       {
         CO = CO::Convert_Csp_To::HDR10(CO);
       }
@@ -555,7 +555,7 @@ void LowerBlackFloor
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       BRANCH()
-      if (CO.trc == TRC_PQ)
+      if (CO.trc == CO_TRC_PQ)
       {
         CO = CO::Convert_Trc_To::Linear_Normalised(CO);
       }

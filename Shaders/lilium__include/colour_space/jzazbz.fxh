@@ -213,7 +213,7 @@ namespace Csp
       //RGB BT.709 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::Bt709To::XYZ(RGB);
+        float3 XYZ = Csp::Mat::BT709_To::XYZ(RGB);
 
         return XYZ_To::Jzazbz(XYZ);
       }
@@ -224,7 +224,7 @@ namespace Csp
       //RGB DCI-P3 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::DciP3To::XYZ(RGB);
+        float3 XYZ = Csp::Mat::DCIP3_To::XYZ(RGB);
 
         return XYZ_To::Jzazbz(XYZ);
       }
@@ -235,7 +235,7 @@ namespace Csp
       //RGB BT.2020 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::Bt2020To::XYZ(RGB);
+        float3 XYZ = Csp::Mat::BT2020_To::XYZ(RGB);
 
         return XYZ_To::Jzazbz(XYZ);
       }
@@ -248,7 +248,7 @@ namespace Csp
       {
         float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        return Csp::Mat::XYZTo::Bt709(xyz);
+        return Csp::Mat::XYZ_To::BT709(xyz);
       }
 
       //Jzazbz -> RGB DCI-P3
@@ -256,7 +256,7 @@ namespace Csp
       {
         float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        return Csp::Mat::XYZTo::DciP3(xyz);
+        return Csp::Mat::XYZ_To::DCIP3(xyz);
       }
 
       //Jzazbz -> RGB BT.2020
@@ -264,7 +264,7 @@ namespace Csp
       {
         float3 xyz = Jzazbz_To::XYZ(Jzazbz);
 
-        return Csp::Mat::XYZTo::Bt2020(xyz);
+        return Csp::Mat::XYZ_To::BT2020(xyz);
       }
     } //Jzazbz_To
 

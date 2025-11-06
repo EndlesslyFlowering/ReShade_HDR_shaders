@@ -41,15 +41,15 @@
             {
               case CO_PRIM_BT709:
               {
-                return dot(CO.RGB, Csp::Mat::Bt709ToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
               }
               case CO_PRIM_DCIP3:
               {
-                return dot(CO.RGB, Csp::Mat::DciP3ToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
               }
               case CO_PRIM_BT2020:
               {
-                return dot(CO.RGB, Csp::Mat::Bt2020ToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
               }
               default:
                 return 0.f;
@@ -63,15 +63,15 @@
             {
               case CO_PRIM_BT709:
               {
-                return dot(CO.RGB, Csp::Mat::ScRgbToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
               }
               case CO_PRIM_DCIP3:
               {
-                return dot(CO.RGB, Csp::Mat::DciP3_80ToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
               }
               case CO_PRIM_BT2020:
               {
-                return dot(CO.RGB, Csp::Mat::Bt2020_80ToXYZ[1]);
+                return dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
               }
               default:
                 return 0.f;
@@ -98,7 +98,7 @@
                   linearColour = Csp::Trc::PQ_To::Linear(CO.RGB);
                 }
 
-                return dot(linearColour, Csp::Mat::Bt2020ToXYZ[1]);
+                return dot(linearColour, Csp::Mat::BT2020_To_XYZ[1]);
               }
               default:
                 return 0.f;
@@ -125,15 +125,15 @@
 //            {
 //              case CO_PRIM_BT709:
 //              {
-//                return dot(CO.RGB, Csp::Mat::Bt709ToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
 //              }
 //              case CO_PRIM_DCIP3:
 //              {
-//                return dot(CO.RGB, Csp::Mat::DciP3ToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
 //              }
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(CO.RGB, Csp::Mat::Bt2020ToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
 //              }
 //              default:
 //                return 0.f;
@@ -146,15 +146,15 @@
 //            {
 //              case CO_PRIM_BT709:
 //              {
-//                return dot(CO.RGB, Csp::Mat::ScRgbToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
 //              }
 //              case CO_PRIM_DCIP3:
 //              {
-//                return dot(CO.RGB, Csp::Mat::DciP3_80ToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
 //              }
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(CO.RGB, Csp::Mat::Bt2020_80ToXYZ[1]);
+//                return dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
 //              }
 //              default:
 //                return 0.f;
@@ -167,7 +167,7 @@
 //            {
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(Csp::Trc::PQ_To::Linear(CO.RGB), Csp::Mat::Bt2020ToXYZ[1]);
+//                return dot(Csp::Trc::PQ_To::Linear(CO.RGB), Csp::Mat::BT2020_To_XYZ[1]);
 //              }
 //              default:
 //                return 0.f;
@@ -200,14 +200,14 @@
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT709(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::BT709(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
@@ -227,12 +227,12 @@
                 break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT709(CO.RGB);
               }
               break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::BT709(CO.RGB);
               }
               break;
               default:
@@ -259,7 +259,7 @@
                   CO.RGB = Csp::Trc::PQ_To::Linear(CO.RGB);
                 }
 
-                CO.RGB = Csp::Mat::Bt2020NormalisedTo::ScRgb(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_normalised_To::scRGB(CO.RGB);
               }
               break;
               default:
@@ -298,14 +298,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::BT2020(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT2020(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
@@ -328,14 +328,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::ScRgbTo::Bt2020Normalised(CO.RGB);
+                CO.RGB = Csp::Mat::scRGB_To::BT2020_normalised(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3_80To::Bt2020Normalised(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_80_To::BT2020_normalised(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
@@ -396,7 +396,7 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::DCIP3(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
@@ -408,7 +408,7 @@
               break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::DCIP3(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
@@ -426,14 +426,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::DCIP3(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
                 break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::DCIP3(CO.RGB);
               }
               break;
               default:
@@ -460,7 +460,7 @@
                   CO.RGB = Csp::Trc::PQ_To::Linear(CO.RGB);
                 }
 
-                CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::DCIP3(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
@@ -501,14 +501,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::BT2020(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT2020(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
@@ -531,12 +531,12 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::BT2020(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT2020(CO.RGB);
               }
               break;
               case CO_PRIM_BT2020:
@@ -610,12 +610,12 @@
                 break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT709(CO.RGB);
               }
               break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::BT709(CO.RGB);
               }
               break;
               default:
@@ -654,14 +654,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::DCIP3(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
                 break;
               case CO_PRIM_BT2020:
               {
-                CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_To::DCIP3(CO.RGB);
               }
               break;
               default:
@@ -700,12 +700,12 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::BT709_To::BT2020(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_To::BT2020(CO.RGB);
               }
               break;
               case CO_PRIM_BT2020:

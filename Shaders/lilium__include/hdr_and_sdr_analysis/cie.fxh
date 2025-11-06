@@ -905,9 +905,9 @@ void PS_ComposeCieDiagram
       }
 
 #ifdef IS_HDR_CSP
-      float3 rgb = Csp::Mat::XYZTo::Bt2020(XYZ);
+      float3 rgb = Csp::Mat::XYZ_To::BT2020(XYZ);
 #else
-      float3 rgb = Csp::Mat::XYZTo::Bt709(XYZ);
+      float3 rgb = Csp::Mat::XYZ_To::BT709(XYZ);
 #endif
 
       rgb = max(rgb, 0.f);
@@ -965,19 +965,19 @@ float3 GetXYZFromRgb
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  const float3 XYZ = Csp::Mat::Bt709To::XYZ(Rgb);
+  const float3 XYZ = Csp::Mat::BT709_To::XYZ(Rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  const float3 XYZ = Csp::Mat::Bt2020To::XYZ(FetchFromHdr10ToLinearLUT(Rgb));
+  const float3 XYZ = Csp::Mat::BT2020_To::XYZ(FetchFromHdr10ToLinearLUT(Rgb));
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
-  const float3 XYZ = Csp::Mat::Bt2020To::XYZ(Rgb);
+  const float3 XYZ = Csp::Mat::BT2020_To::XYZ(Rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
-  const float3 XYZ  = Csp::Mat::Bt709To::XYZ(DECODE_SDR(Rgb));
+  const float3 XYZ  = Csp::Mat::BT709_To::XYZ(DECODE_SDR(Rgb));
 
 #else
 

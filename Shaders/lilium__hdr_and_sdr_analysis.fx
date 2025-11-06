@@ -1364,7 +1364,7 @@ void PS_HdrAnalysis
 
       //FIX THIS
 #ifdef IS_HDR_CSP
-        cie_colour.rgb = Csp::Mat::Bt2020To::Bt709(cie_colour.rgb);
+        cie_colour.rgb = Csp::Mat::BT2020_To::BT709(cie_colour.rgb);
 #endif
 
         Output.rgb = MergeOverlay(Output.rgb,
@@ -1451,10 +1451,10 @@ void PS_HdrAnalysis
 #endif
 
         float green_luminance = waveform_yrb[0]
-                              - dot(Csp::Mat::Bt709ToXYZ[1].rb, waveform_yrb.yz);
+                              - dot(Csp::Mat::BT709_To_XYZ[1].rb, waveform_yrb.yz);
 
         float green = green_luminance
-                    / Csp::Mat::Bt709ToXYZ[1].g;
+                    / Csp::Mat::BT709_To_XYZ[1].g;
 
         float3 waveform_colour = float3(waveform_yrb[1], green, waveform_yrb[2]);
 
@@ -1463,7 +1463,7 @@ void PS_HdrAnalysis
         if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED
          || _WAVEFORM_MODE == WAVEFORM_MODE_RGB_INDIVIDUALLY)
         {
-          waveform_colour /= Csp::Mat::Bt709ToXYZ[1].g;
+          waveform_colour /= Csp::Mat::BT709_To_XYZ[1].g;
         }
 #endif
 
