@@ -137,7 +137,7 @@ void PS_HdrBlackFloorFix
 
   bool processingDone = false;
 
-  CO::ColourObject co;
+  CO::Colour_Object co;
 
   co.RGB = inputColour.rgb;
 
@@ -150,7 +150,7 @@ void PS_HdrBlackFloorFix
 
   co.trc         = TRC_PQ;
   co.prim        = PRIM_BT2020;
-  co.isUntouched = true;
+  co.is_untouched = true;
 
 #else
 
@@ -205,9 +205,9 @@ void PS_HdrBlackFloorFix
    && processingDone)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-    co = CO::ConvertCspTo::ScRgb(co);
+    co = CO::Convert_Csp_To::scRGB(co);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    co = CO::ConvertCspTo::Hdr10(co);
+    co = CO::Convert_Csp_To::HDR10(co);
 #else
     co.RGB = 0.f;
 #endif

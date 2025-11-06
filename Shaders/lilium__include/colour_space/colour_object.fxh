@@ -5,49 +5,49 @@
 
   namespace CO
   {
-    #define PRIM_BT709  0
-    #define PRIM_DCI_P3 1
-    #define PRIM_BT2020 2
+    #define CO_PRIM_BT709  0
+    #define CO_PRIM_DCIP3  1
+    #define CO_PRIM_BT2020 2
 
-    #define TRC_LINEAR_NORMALISED 0
-    #define TRC_LINEAR_80         1
-    #define TRC_PQ                2
+    #define CO_TRC_LINEAR_NORMALISED 0
+    #define CO_TRC_LINEAR_80         1
+    #define CO_TRC_PQ                2
 
-    struct ColourObject
+    struct Colour_Object
     {
       float3 RGB;
       uint   prim;
       uint   trc;
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-      bool   isUntouched;
+      bool   is_untouched;
 #endif
     };
 
 
-    namespace GetLuminance
+    namespace Get_Luminance
     {
-      float LinearNormalised
+      float Linear_Normalised
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 return dot(CO.RGB, Csp::Mat::Bt709ToXYZ[1]);
               }
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 return dot(CO.RGB, Csp::Mat::DciP3ToXYZ[1]);
               }
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 return dot(CO.RGB, Csp::Mat::Bt2020ToXYZ[1]);
               }
@@ -56,20 +56,20 @@
             }
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 return dot(CO.RGB, Csp::Mat::ScRgbToXYZ[1]);
               }
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 return dot(CO.RGB, Csp::Mat::DciP3_80ToXYZ[1]);
               }
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 return dot(CO.RGB, Csp::Mat::Bt2020_80ToXYZ[1]);
               }
@@ -78,17 +78,17 @@
             }
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 float3 linearColour;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-                if (CO.isUntouched)
+                if (CO.is_untouched)
                 {
                   linearColour = FetchFromHdr10ToLinearLUT(CO.RGB);
                 }
@@ -110,28 +110,28 @@
         }
       }
 
-//      float Linear80
+//      float Linear_80
 //      (
-//        ColourObject CO
+//        Colour_Object CO
 //      )
 //      {
 //        [forcecase]
 //        switch(CO.trc)
 //        {
-//          case TRC_LINEAR_NORMALISED:
+//          case CO_TRC_LINEAR_NORMALISED:
 //          {
 //            [forcecase]
 //            switch(CO.prim)
 //            {
-//              case PRIM_BT709:
+//              case CO_PRIM_BT709:
 //              {
 //                return dot(CO.RGB, Csp::Mat::Bt709ToXYZ[1]);
 //              }
-//              case PRIM_DCI_P3:
+//              case CO_PRIM_DCIP3:
 //              {
 //                return dot(CO.RGB, Csp::Mat::DciP3ToXYZ[1]);
 //              }
-//              case PRIM_BT2020:
+//              case CO_PRIM_BT2020:
 //              {
 //                return dot(CO.RGB, Csp::Mat::Bt2020ToXYZ[1]);
 //              }
@@ -139,20 +139,20 @@
 //                return 0.f;
 //            }
 //          }
-//          case TRC_LINEAR_80:
+//          case CO_TRC_LINEAR_80:
 //          {
 //            [forcecase]
 //            switch(CO.prim)
 //            {
-//              case PRIM_BT709:
+//              case CO_PRIM_BT709:
 //              {
 //                return dot(CO.RGB, Csp::Mat::ScRgbToXYZ[1]);
 //              }
-//              case PRIM_DCI_P3:
+//              case CO_PRIM_DCIP3:
 //              {
 //                return dot(CO.RGB, Csp::Mat::DciP3_80ToXYZ[1]);
 //              }
-//              case PRIM_BT2020:
+//              case CO_PRIM_BT2020:
 //              {
 //                return dot(CO.RGB, Csp::Mat::Bt2020_80ToXYZ[1]);
 //              }
@@ -160,12 +160,12 @@
 //                return 0.f;
 //            }
 //          }
-//          case TRC_PQ:
+//          case CO_TRC_PQ:
 //          {
 //            [forcecase]
 //            switch(CO.prim)
 //            {
-//              case PRIM_BT2020:
+//              case CO_PRIM_BT2020:
 //              {
 //                return dot(Csp::Trc::PQ_To::Linear(CO.RGB), Csp::Mat::Bt2020ToXYZ[1]);
 //              }
@@ -178,34 +178,34 @@
     }
 
 
-    namespace ConvertCspTo
+    namespace Convert_Csp_To
     {
-      ColourObject ScRgb
+      Colour_Object scRGB
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
 
@@ -218,19 +218,19 @@
             }
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
                 break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
               }
@@ -241,15 +241,15 @@
             }
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-                if (CO.isUntouched)
+                if (CO.is_untouched)
                 {
                   CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
                 }
@@ -273,44 +273,44 @@
             break;
         }
 
-        CO.prim = PRIM_BT709;
-        CO.trc  = TRC_LINEAR_80;
+        CO.prim = CO_PRIM_BT709;
+        CO.trc  = CO_TRC_LINEAR_80;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject Hdr10
+      Colour_Object HDR10
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
@@ -321,26 +321,26 @@
             }
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::ScRgbTo::Bt2020Normalised(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3_80To::Bt2020Normalised(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB /= 125.f;
 
@@ -353,12 +353,12 @@
             }
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
                 break;
               default:
                 CO.RGB = 0.f;
@@ -371,42 +371,42 @@
             break;
         }
 
-        CO.prim = PRIM_BT2020;
-        CO.trc  = TRC_PQ;
+        CO.prim = CO_PRIM_BT2020;
+        CO.trc  = CO_TRC_PQ;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject DciP3_80
+      Colour_Object DCIP3_80
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
 
@@ -419,19 +419,19 @@
             }
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
                 break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
               }
@@ -442,15 +442,15 @@
             }
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-                if (CO.isUntouched)
+                if (CO.is_untouched)
                 {
                   CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
                 }
@@ -476,44 +476,44 @@
             break;
         }
 
-        CO.prim = PRIM_DCI_P3;
-        CO.trc  = TRC_LINEAR_80;
+        CO.prim = CO_PRIM_DCIP3;
+        CO.trc  = CO_TRC_LINEAR_80;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject Bt2020_80
+      Colour_Object BT2020_80
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
 
                 CO.RGB *= 125.f;
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB *= 125.f;
               }
@@ -524,22 +524,22 @@
             }
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
                 break;
               default:
                 CO.RGB = 0.f;
@@ -547,15 +547,15 @@
             }
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-                if (CO.isUntouched)
+                if (CO.is_untouched)
                 {
                   CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
                 }
@@ -579,41 +579,41 @@
             break;
         }
 
-        CO.prim = PRIM_DCI_P3;
-        CO.trc  = TRC_LINEAR_80;
+        CO.prim = CO_PRIM_DCIP3;
+        CO.trc  = CO_TRC_LINEAR_80;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
     }
 
-    namespace ConvertPrimariesTo
+    namespace Convert_Primaries_To
     {
-      ColourObject Bt709
+      Colour_Object BT709
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
                 break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt709(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::Bt709(CO.RGB);
               }
@@ -629,37 +629,37 @@
             break;
         }
 
-        CO.prim = PRIM_BT709;
+        CO.prim = CO_PRIM_BT709;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject DciP3
+      Colour_Object DCIP3
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::DciP3(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
                 break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
               {
                 CO.RGB = Csp::Mat::Bt2020To::DciP3(CO.RGB);
               }
@@ -675,40 +675,40 @@
             break;
         }
 
-        CO.prim = PRIM_DCI_P3;
+        CO.prim = CO_PRIM_DCIP3;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject Bt2020
+      Colour_Object BT2020
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_80:
           {
             [forcecase]
             switch(CO.prim)
             {
-              case PRIM_BT709:
+              case CO_PRIM_BT709:
               {
                 CO.RGB = Csp::Mat::Bt709To::Bt2020(CO.RGB);
               }
               break;
-              case PRIM_DCI_P3:
+              case CO_PRIM_DCIP3:
               {
                 CO.RGB = Csp::Mat::DciP3To::Bt2020(CO.RGB);
               }
               break;
-              case PRIM_BT2020:
+              case CO_PRIM_BT2020:
                 break;
               default:
                 CO.RGB = 0.f;
@@ -721,10 +721,10 @@
             break;
         }
 
-        CO.prim = PRIM_BT2020;
+        CO.prim = CO_PRIM_BT2020;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
@@ -732,30 +732,30 @@
     }
 
 
-    namespace ConvertTrcTo
+    namespace Convert_Trc_To
     {
-      ColourObject LinearNormalised
+      Colour_Object Linear_Normalised
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
             break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
           {
             CO.RGB /= 125.f;
           }
           break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [branch]
-            if (CO.prim == PRIM_BT2020)
+            if (CO.prim == CO_PRIM_BT2020)
             {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-              if (CO.isUntouched)
+              if (CO.is_untouched)
               {
                 CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
               }
@@ -776,37 +776,37 @@
             break;
         }
 
-        CO.trc = TRC_LINEAR_NORMALISED;
+        CO.trc = CO_TRC_LINEAR_NORMALISED;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject Linear80
+      Colour_Object Linear_80
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [forcecase]
         switch(CO.trc)
         {
-          case TRC_LINEAR_NORMALISED:
+          case CO_TRC_LINEAR_NORMALISED:
           {
             CO.RGB *= 125.f;
           }
           break;
-          case TRC_LINEAR_80:
+          case CO_TRC_LINEAR_80:
             break;
-          case TRC_PQ:
+          case CO_TRC_PQ:
           {
             [branch]
-            if (CO.prim == PRIM_BT2020)
+            if (CO.prim == CO_PRIM_BT2020)
             {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-              if (CO.isUntouched)
+              if (CO.is_untouched)
               {
                 CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
               }
@@ -829,32 +829,32 @@
             break;
         }
 
-        CO.trc = TRC_LINEAR_80;
+        CO.trc = CO_TRC_LINEAR_80;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;
       }
 
-      ColourObject Pq
+      Colour_Object PQ
       (
-        ColourObject CO
+        Colour_Object CO
       )
       {
         [branch]
-        if (CO.prim == PRIM_BT2020)
+        if (CO.prim == CO_PRIM_BT2020)
         {
           [forcecase]
           switch(CO.trc)
           {
-            case TRC_LINEAR_NORMALISED:
+            case CO_TRC_LINEAR_NORMALISED:
             {
               CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
             }
             break;
-            case TRC_LINEAR_80:
+            case CO_TRC_LINEAR_80:
             {
               CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB / 125.f);
             }
@@ -869,10 +869,10 @@
           CO.RGB = 0.f;
         }
 
-        CO.trc = TRC_PQ;
+        CO.trc = CO_TRC_PQ;
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-        CO.isUntouched = false;
+        CO.is_untouched = false;
 #endif
 
         return CO;

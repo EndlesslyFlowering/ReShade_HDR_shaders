@@ -209,32 +209,32 @@ namespace Ui
 }
 
 
-CO::ColourObject ConvertColourForGamma22Emulation
+CO::Colour_Object ConvertColourForGamma22Emulation
 (
-  CO::ColourObject CO
+  CO::Colour_Object CO
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  CO = CO::ConvertTrcTo::LinearNormalised(CO);
+  CO = CO::Convert_Trc_To::Linear_Normalised(CO);
 
   BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT709)
   {
-    CO = CO::ConvertPrimariesTo::Bt709(CO);
+    CO = CO::Convert_Primaries_To::BT709(CO);
   }
   else
 #endif
   BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_DCI_P3)
   {
-    CO = CO::ConvertPrimariesTo::DciP3(CO);
+    CO = CO::Convert_Primaries_To::DCIP3(CO);
   }
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
   else
   BRANCH()
   if (Ui::HdrBlackFloorFix::Gamma22Emu::G22EmuProcessingColourSpace == G22_EMU_CSP_BT2020)
   {
-    CO = CO::ConvertPrimariesTo::Bt2020(CO);
+    CO = CO::Convert_Primaries_To::BT2020(CO);
   }
 #endif
 
@@ -244,9 +244,9 @@ CO::ColourObject ConvertColourForGamma22Emulation
 
 void Gamma22Emulation
 (
-  inout CO::ColourObject CO,
-  const float            WhitePointNormalised,
-  inout bool             ProcessingDone
+  inout CO::Colour_Object CO,
+  const float             WhitePointNormalised,
+  inout bool              ProcessingDone
 )
 {
   CO = ConvertColourForGamma22Emulation(CO);
@@ -278,31 +278,31 @@ void Gamma22Emulation
 
 void GammaAdjustment
 (
-  inout CO::ColourObject CO,
-  const float            WhitePointNormalised,
-  inout bool             ProcessingDone
+  inout CO::Colour_Object CO,
+  const float             WhitePointNormalised,
+  inout bool              ProcessingDone
 )
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  CO = CO::ConvertTrcTo::LinearNormalised(CO);
+  CO = CO::Convert_Trc_To::Linear_Normalised(CO);
 #endif
 
   BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT709)
   {
-    CO = CO::ConvertPrimariesTo::Bt709(CO);
+    CO = CO::Convert_Primaries_To::BT709(CO);
   }
   else
   BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_DCI_P3)
   {
-    CO = CO::ConvertPrimariesTo::DciP3(CO);
+    CO = CO::Convert_Primaries_To::DCIP3(CO);
   }
   else
   BRANCH()
   if (Ui::HdrBlackFloorFix::GammaAdjustment::GAProcessingColourSpace == GA_CSP_BT2020)
   {
-    CO = CO::ConvertPrimariesTo::Bt2020(CO);
+    CO = CO::Convert_Primaries_To::BT2020(CO);
   }
 
 
@@ -330,9 +330,9 @@ void GammaAdjustment
 
 void Gamma22EmulationAndGammaAdjustment
 (
-  inout CO::ColourObject CO,
-  const float            WhitePointNormalised,
-  inout bool             ProcessingDone
+  inout CO::Colour_Object CO,
+  const float             WhitePointNormalised,
+  inout bool              ProcessingDone
 )
 {
   CO = ConvertColourForGamma22Emulation(CO);
@@ -395,12 +395,12 @@ BLACK_POINT_ADAPTION(float3)
 
 void LowerBlackFloor
 (
-  inout CO::ColourObject CO,
-  const float            RollOffStoppingPoint,
-  const float            OldBlackPoint,
-  const float            RollOffMinusOldBlackPoint,
-  const float            MinLum,
-  const bool             ProcessingDone
+  inout CO::Colour_Object CO,
+  const float             RollOffStoppingPoint,
+  const float             OldBlackPoint,
+  const float             RollOffMinusOldBlackPoint,
+  const float             MinLum,
+  const bool              ProcessingDone
 )
 {
   switch(Ui::HdrBlackFloorFix::Lowering::ProcessingMode)
@@ -410,22 +410,22 @@ void LowerBlackFloor
     {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-      CO = CO::ConvertCspTo::ScRgb(CO);
+      CO = CO::Convert_Csp_To::scRGB(CO);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      CO::ColourObject CO_org;
+      CO::Colour_Object CO_org;
 
       CO_org = CO;
 
       BRANCH()
       if (CO.trc == TRC_PQ)
       {
-        CO = CO::ConvertTrcTo::LinearNormalised(CO);
+        CO = CO::Convert_Trc_To::Linear_Normalised(CO);
       }
       else
       {
-        CO = CO::ConvertPrimariesTo::Bt2020(CO);
+        CO = CO::Convert_Primaries_To::BT2020(CO);
       }
 
 #else // fallback for shader permutations
@@ -434,7 +434,7 @@ void LowerBlackFloor
 
 #endif
 
-      float y1 = CO::GetLuminance::LinearNormalised(CO);
+      float y1 = CO::Get_Luminance::Linear_Normalised(CO);
 
       float y1InPq = Csp::Trc::Linear_To::PQ(y1);
 
@@ -452,7 +452,7 @@ void LowerBlackFloor
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
         return;
 
@@ -467,13 +467,13 @@ void LowerBlackFloor
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
       else
       {
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
         return;
       }
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      CO = CO::ConvertTrcTo::Pq(CO);
+      CO = CO::Convert_Trc_To::PQ(CO);
 
       return;
 
@@ -490,14 +490,14 @@ void LowerBlackFloor
     // RGB in PQ mode
     case PRO_MODE_RGB_IN_PQ:
     {
-      float nits = CO::GetLuminance::LinearNormalised(CO);
+      float nits = CO::Get_Luminance::Linear_Normalised(CO);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
       BRANCH()
       if (CO.trc != TRC_PQ)
       {
-        CO = CO::ConvertCspTo::Hdr10(CO);
+        CO = CO::Convert_Csp_To::HDR10(CO);
       }
 
 #endif
@@ -511,7 +511,7 @@ void LowerBlackFloor
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertCspTo::Hdr10(CO);
+        CO = CO::Convert_Csp_To::HDR10(CO);
 
 #endif
 
@@ -526,7 +526,7 @@ void LowerBlackFloor
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
 #endif
         return;
@@ -541,7 +541,7 @@ void LowerBlackFloor
       {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
 #endif
 
@@ -557,24 +557,24 @@ void LowerBlackFloor
       BRANCH()
       if (CO.trc == TRC_PQ)
       {
-        CO = CO::ConvertTrcTo::LinearNormalised(CO);
+        CO = CO::Convert_Trc_To::Linear_Normalised(CO);
       }
       else
       {
-        CO = CO::ConvertPrimariesTo::Bt2020(CO);
+        CO = CO::Convert_Primaries_To::BT2020(CO);
       }
 
 #endif
 
-      float nits = CO::GetLuminance::LinearNormalised(CO);
+      float nits = CO::Get_Luminance::Linear_Normalised(CO);
 
       [branch]
       if (nits <= RollOffStoppingPoint)
       {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertTrcTo::LinearNormalised(CO);
-        CO = CO::ConvertPrimariesTo::Bt2020(CO);
+        CO = CO::Convert_Trc_To::Linear_Normalised(CO);
+        CO = CO::Convert_Primaries_To::BT2020(CO);
 
 #endif
 
@@ -587,7 +587,7 @@ void LowerBlackFloor
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
         return;
 
@@ -602,13 +602,13 @@ void LowerBlackFloor
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
       else
       {
-        CO = CO::ConvertCspTo::ScRgb(CO);
+        CO = CO::Convert_Csp_To::scRGB(CO);
 
         return;
       }
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-      CO = CO::ConvertTrcTo::Pq(CO);
+      CO = CO::Convert_Trc_To::PQ(CO);
 
       return;
 
