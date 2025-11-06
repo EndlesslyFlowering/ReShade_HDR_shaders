@@ -56,19 +56,19 @@ void PS_Filmgrain(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::Linear_To::PQ(Csp::Mat::Bt709To::Bt2020(input.rgb / 125.f)));
+  float3 ycbcr = Csp::YCbCr::RGB_To::YCbCr_BT2020(Csp::Trc::Linear_To::PQ(Csp::Mat::Bt709To::Bt2020(input.rgb / 125.f)));
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(input.rgb);
+  float3 ycbcr = Csp::YCbCr::RGB_To::YCbCr_BT2020(input.rgb);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Csp::Trc::Linear_To::PQ(input.rgb / 100.f));
+  float3 ycbcr = Csp::YCbCr::RGB_To::YCbCr_BT2020(Csp::Trc::Linear_To::PQ(input.rgb / 100.f));
 
 #else //ACTUAL_COLOUR_SPACE == CSP_SRGB
 
-  float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt709(input.rgb);
+  float3 ycbcr = Csp::YCbCr::RGB_To::YCbCr_BT709(input.rgb);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 
@@ -84,19 +84,19 @@ void PS_Filmgrain(
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  float3 rgb = Csp::Mat::Bt2020To::Bt709(Csp::Trc::PQ_To::Linear(Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr))) * 125.f;
+  float3 rgb = Csp::Mat::Bt2020To::Bt709(Csp::Trc::PQ_To::Linear(Csp::YCbCr::YCbCr_To::RGB_BT2020(ycbcr))) * 125.f;
 
 #elif defined(IS_HDR10_LIKE_CSP)
 
-  float3 rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr);
+  float3 rgb = Csp::YCbCr::YCbCr_To::RGB_BT2020(ycbcr);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_PS5)
 
-  float3 rgb = Csp::Trc::PQ_To::Linear(Csp::Ycbcr::YcbcrTo::RgbBt2020(ycbcr)) * 100.f;
+  float3 rgb = Csp::Trc::PQ_To::Linear(Csp::YCbCr::YCbCr_To::RGB_BT2020(ycbcr)) * 100.f;
 
 #else //ACTUAL_COLOUR_SPACE == CSP_SRGB
 
-  float3 rgb = Csp::Ycbcr::YcbcrTo::RgbBt709(ycbcr);
+  float3 rgb = Csp::YCbCr::YCbCr_To::RGB_BT709(ycbcr);
 
 #endif //ACTUAL_COLOUR_SPACE ==
 

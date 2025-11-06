@@ -1327,15 +1327,15 @@ void PS_HdrAnalysis
         cie_yccrccbc.yz -= (127.f / 255.f);
 
 #ifdef IS_HDR_CSP
-        #define PB_NB_DEC    Csp::Ycbcr::PB_NB_Bt2020_g2_dec
-        #define PR_NR_DEC    Csp::Ycbcr::PR_NR_Bt2020_g2_dec
-        #define K_WEIGHTS_RB Csp::Ycbcr::K_Bt2020.rb
-        #define K_WEIGHT_GI  Csp::Ycbcr::K_Bt2020G_inverse
+        #define PB_NB_DEC    Csp::YCbCr::PB_NB_BT2020_g2_dec
+        #define PR_NR_DEC    Csp::YCbCr::PR_NR_BT2020_g2_dec
+        #define K_WEIGHTS_RB Csp::YCbCr::K_BT2020.rb
+        #define K_WEIGHT_GI  Csp::YCbCr::K_BT2020G_inverse
 #else
-        #define PB_NB_DEC    Csp::Ycbcr::PB_NB_Bt709_g2_dec
-        #define PR_NR_DEC    Csp::Ycbcr::PR_NR_Bt709_g2_dec
-        #define K_WEIGHTS_RB Csp::Ycbcr::K_Bt709.rb
-        #define K_WEIGHT_GI  Csp::Ycbcr::K_Bt709G_inverse
+        #define PB_NB_DEC    Csp::YCbCr::PB_NB_BT709_g2_dec
+        #define PR_NR_DEC    Csp::YCbCr::PR_NR_BT709_g2_dec
+        #define K_WEIGHTS_RB Csp::YCbCr::K_BT709.rb
+        #define K_WEIGHT_GI  Csp::YCbCr::K_BT709G_inverse
 #endif
 
         float3 cie_colour;

@@ -917,13 +917,13 @@ void PS_ComposeCieDiagram
       rgb = rgb * Y + Outline[0];
 
 #ifdef IS_HDR_CSP
-      #define K_WEIGHTS Csp::Ycbcr::K_Bt2020
-      #define PB_NB_ENC Csp::Ycbcr::PB_NB_Bt2020_g2_enc
-      #define PR_NR_ENC Csp::Ycbcr::PR_NR_Bt2020_g2_enc
+      #define K_WEIGHTS Csp::YCbCr::K_BT2020
+      #define PB_NB_ENC Csp::YCbCr::PB_NB_BT2020_g2_enc
+      #define PR_NR_ENC Csp::YCbCr::PR_NR_BT2020_g2_enc
 #else
-      #define K_WEIGHTS Csp::Ycbcr::K_Bt709
-      #define PB_NB_ENC Csp::Ycbcr::PB_NB_Bt709_g2_enc
-      #define PR_NR_ENC Csp::Ycbcr::PR_NR_Bt709_g2_enc
+      #define K_WEIGHTS Csp::YCbCr::K_BT709
+      #define PB_NB_ENC Csp::YCbCr::PB_NB_BT709_g2_enc
+      #define PR_NR_ENC Csp::YCbCr::PR_NR_BT709_g2_enc
 #endif
       float3 yccrccbc;
 

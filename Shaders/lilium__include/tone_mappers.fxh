@@ -205,7 +205,7 @@ namespace Tmos
     Rgb = pow(Rgb, 1.f / 2.4f);
 
     //to Y'C'bC'r
-    float3 ycbcr = Csp::Ycbcr::RgbTo::YcbcrBt2020(Rgb);
+    float3 ycbcr = Csp::YCbCr::RGB_To::YCbCr_BT2020(Rgb);
 
     // tone mapping step 1
     //pHDR
@@ -248,7 +248,7 @@ namespace Tmos
     //Y'tmo
     float yTmo = ySdr - max(LumaPostAdjust * crTmo, 0.f);
 
-    Rgb = Csp::Ycbcr::YcbcrTo::RgbBt2020(float3(yTmo,
+    Rgb = Csp::YCbCr::YCbCr_To::RGB_BT2020(float3(yTmo,
                                                 cbTmo,
                                                 crTmo));
 
