@@ -5,37 +5,37 @@ namespace Csp
   namespace Map
   {
 
-    namespace Bt709Into
+    namespace BT709_Into
     {
 
-      float3 ScRgb
+      float3 scRGB
       (
-        const float3 Colour,
+        const float3 RGB,
         const float  Brightness
       )
       {
-        return Colour / 80.f * Brightness;
+        return RGB / 80.f * Brightness;
       }
 
-      float3 Hdr10
+      float3 HDR10
       (
-        const float3 Colour,
+        const float3 RGB,
         const float  Brightness
       )
       {
-        return Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(Colour) * Brightness);
+        return Csp::Trc::Nits_To::PQ(Csp::Mat::Bt709To::Bt2020(RGB) * Brightness);
       }
 
-      float3 Ps5
+      float3 BT2020_Extended
       (
-        const float3 Colour,
+        const float3 RGB,
         const float  Brightness
       )
       {
-        return Csp::Mat::Bt709To::Bt2020(Colour / 100.f) * Brightness;
+        return Csp::Mat::Bt709To::Bt2020(RGB / 100.f) * Brightness;
       }
 
-    } //Bt709Into
+    } //BT709_Into
 
   } //Map
 

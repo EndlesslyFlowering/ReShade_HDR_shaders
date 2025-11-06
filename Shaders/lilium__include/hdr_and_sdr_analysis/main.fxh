@@ -931,15 +931,15 @@ float3 MapBt709IntoCurrentCsp
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Map::Bt709Into::ScRgb(Colour, Brightness);
+  return Csp::Map::BT709_Into::scRGB(Colour, Brightness);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return Csp::Map::Bt709Into::Hdr10(Colour, Brightness);
+  return Csp::Map::BT709_Into::HDR10(Colour, Brightness);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
-  return Csp::Map::Bt709Into::Ps5(Colour, Brightness);
+  return Csp::Map::BT709_Into::BT2020_Extended(Colour, Brightness);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
