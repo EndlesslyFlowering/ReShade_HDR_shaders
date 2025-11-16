@@ -1039,10 +1039,12 @@ void RenderWaveformScale
 
 #ifdef IS_HDR_CSP
 
-    int2 nitsOffsets[16];
+    #define WAVEFORM_STRINGS_COUNT 16
+
+    int2 nitsOffsets[WAVEFORM_STRINGS_COUNT];
 
     [loop]
-    for (uint i = 0u; i < (16u + Unrolling_Be_Gone_Uint); i++)
+    for (uint i = 0u; i < (uint(WAVEFORM_STRINGS_COUNT) + Unrolling_Be_Gone_Uint); i++)
     {
       nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
     }
@@ -1065,265 +1067,254 @@ void RenderWaveformScale
     #define nits____0_00Offset nitsOffsets[15]
 
 
-    const int2 text10000_00Offset = nits10000_00Offset - waveDat.textOffset;
-    const int2 text_4000_00Offset = nits_4000_00Offset - waveDat.textOffset;
-    const int2 text_2000_00Offset = nits_2000_00Offset - waveDat.textOffset;
-    const int2 text_1000_00Offset = nits_1000_00Offset - waveDat.textOffset;
-    const int2 text__400_00Offset = nits__400_00Offset - waveDat.textOffset;
-    const int2 text__203_00Offset = nits__203_00Offset - waveDat.textOffset;
-    const int2 text__100_00Offset = nits__100_00Offset - waveDat.textOffset;
-    const int2 text___50_00Offset = nits___50_00Offset - waveDat.textOffset;
-    const int2 text___25_00Offset = nits___25_00Offset - waveDat.textOffset;
-    const int2 text___10_00Offset = nits___10_00Offset - waveDat.textOffset;
-    const int2 text____5_00Offset = nits____5_00Offset - waveDat.textOffset;
-    const int2 text____2_50Offset = nits____2_50Offset - waveDat.textOffset;
-    const int2 text____1_00Offset = nits____1_00Offset - waveDat.textOffset;
-    const int2 text____0_25Offset = nits____0_25Offset - waveDat.textOffset;
-    const int2 text____0_05Offset = nits____0_05Offset - waveDat.textOffset;
-    const int2 text____0_00Offset = nits____0_00Offset - waveDat.textOffset;
+    const int2 text_offset_10000_00 = nits10000_00Offset - waveDat.textOffset;
+    const int2 text_offset__4000_00 = nits_4000_00Offset - waveDat.textOffset;
+    const int2 text_offset__2000_00 = nits_2000_00Offset - waveDat.textOffset;
+    const int2 text_offset__1000_00 = nits_1000_00Offset - waveDat.textOffset;
+    const int2 text_offset___400_00 = nits__400_00Offset - waveDat.textOffset;
+    const int2 text_offset___203_00 = nits__203_00Offset - waveDat.textOffset;
+    const int2 text_offset___100_00 = nits__100_00Offset - waveDat.textOffset;
+    const int2 text_offset____50_00 = nits___50_00Offset - waveDat.textOffset;
+    const int2 text_offset____25_00 = nits___25_00Offset - waveDat.textOffset;
+    const int2 text_offset____10_00 = nits___10_00Offset - waveDat.textOffset;
+    const int2 text_offset_____5_00 = nits____5_00Offset - waveDat.textOffset;
+    const int2 text_offset_____2_50 = nits____2_50Offset - waveDat.textOffset;
+    const int2 text_offset_____1_00 = nits____1_00Offset - waveDat.textOffset;
+    const int2 text_offset_____0_25 = nits____0_25Offset - waveDat.textOffset;
+    const int2 text_offset_____0_05 = nits____0_05Offset - waveDat.textOffset;
+    const int2 text_offset_____0_00 = nits____0_00Offset - waveDat.textOffset;
 
-
-    int charOffsets[8];
-
-    if (WAVEFORM_CUTOFF_POINT == 0)
+    const int2 text_offsets[WAVEFORM_STRINGS_COUNT] =
     {
-      charOffsets = {
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7 };
-    }
-    else //if (WAVEFORM_CUTOFF_POINT > 0)
+      text_offset_10000_00,
+      text_offset__4000_00,
+      text_offset__2000_00,
+      text_offset__1000_00,
+      text_offset___400_00,
+      text_offset___203_00,
+      text_offset___100_00,
+      text_offset____50_00,
+      text_offset____25_00,
+      text_offset____10_00,
+      text_offset_____5_00,
+      text_offset_____2_50,
+      text_offset_____1_00,
+      text_offset_____0_25,
+      text_offset_____0_05,
+      text_offset_____0_00
+    };
+
+
+    #define CHAR_LIST_10000_00_ARRAY_SIZE 8
+    #define CHAR_LIST__4000_00_ARRAY_SIZE 7
+    #define CHAR_LIST__2000_00_ARRAY_SIZE 7
+    #define CHAR_LIST__1000_00_ARRAY_SIZE 7
+    #define CHAR_LIST___400_00_ARRAY_SIZE 6
+    #define CHAR_LIST___203_00_ARRAY_SIZE 6
+    #define CHAR_LIST___100_00_ARRAY_SIZE 6
+    #define CHAR_LIST____50_00_ARRAY_SIZE 5
+    #define CHAR_LIST____25_00_ARRAY_SIZE 5
+    #define CHAR_LIST____10_00_ARRAY_SIZE 5
+    #define CHAR_LIST_____5_00_ARRAY_SIZE 4
+    #define CHAR_LIST_____2_50_ARRAY_SIZE 4
+    #define CHAR_LIST_____1_00_ARRAY_SIZE 4
+    #define CHAR_LIST_____0_25_ARRAY_SIZE 4
+    #define CHAR_LIST_____0_05_ARRAY_SIZE 4
+    #define CHAR_LIST_____0_00_ARRAY_SIZE 4
+
+    static const uint2 char_list_10000_00[CHAR_LIST_10000_00_ARRAY_SIZE] = { __1, __0, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list__4000_00[CHAR_LIST__4000_00_ARRAY_SIZE] = {      __4, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list__2000_00[CHAR_LIST__2000_00_ARRAY_SIZE] = {      __2, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list__1000_00[CHAR_LIST__1000_00_ARRAY_SIZE] = {      __1, __0, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list___400_00[CHAR_LIST___400_00_ARRAY_SIZE] = {           __4, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list___203_00[CHAR_LIST___203_00_ARRAY_SIZE] = {           __2, __0, __3, __dot, __0, __0 };
+    static const uint2 char_list___100_00[CHAR_LIST___100_00_ARRAY_SIZE] = {           __1, __0, __0, __dot, __0, __0 };
+    static const uint2 char_list____50_00[CHAR_LIST____50_00_ARRAY_SIZE] = {                __5, __0, __dot, __0, __0 };
+    static const uint2 char_list____25_00[CHAR_LIST____25_00_ARRAY_SIZE] = {                __2, __5, __dot, __0, __0 };
+    static const uint2 char_list____10_00[CHAR_LIST____10_00_ARRAY_SIZE] = {                __1, __0, __dot, __0, __0 };
+    static const uint2 char_list_____5_00[CHAR_LIST_____5_00_ARRAY_SIZE] = {                     __5, __dot, __0, __0 };
+    static const uint2 char_list_____2_50[CHAR_LIST_____2_50_ARRAY_SIZE] = {                     __2, __dot, __5, __0 };
+    static const uint2 char_list_____1_00[CHAR_LIST_____1_00_ARRAY_SIZE] = {                     __1, __dot, __0, __0 };
+    static const uint2 char_list_____0_25[CHAR_LIST_____0_25_ARRAY_SIZE] = {                     __0, __dot, __2, __5 };
+    static const uint2 char_list_____0_05[CHAR_LIST_____0_05_ARRAY_SIZE] = {                     __0, __dot, __0, __5 };
+    static const uint2 char_list_____0_00[CHAR_LIST_____0_00_ARRAY_SIZE] = {                     __0, __dot, __0, __0 };
+
+    static const uint char_list_array_sizes[WAVEFORM_STRINGS_COUNT] =
     {
-      charOffsets = {
-        0,
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6 };
-    }
+      CHAR_LIST_10000_00_ARRAY_SIZE,
+      CHAR_LIST__4000_00_ARRAY_SIZE,
+      CHAR_LIST__2000_00_ARRAY_SIZE,
+      CHAR_LIST__1000_00_ARRAY_SIZE,
+      CHAR_LIST___400_00_ARRAY_SIZE,
+      CHAR_LIST___203_00_ARRAY_SIZE,
+      CHAR_LIST___100_00_ARRAY_SIZE,
+      CHAR_LIST____50_00_ARRAY_SIZE,
+      CHAR_LIST____25_00_ARRAY_SIZE,
+      CHAR_LIST____10_00_ARRAY_SIZE,
+      CHAR_LIST_____5_00_ARRAY_SIZE,
+      CHAR_LIST_____2_50_ARRAY_SIZE,
+      CHAR_LIST_____1_00_ARRAY_SIZE,
+      CHAR_LIST_____0_25_ARRAY_SIZE,
+      CHAR_LIST_____0_05_ARRAY_SIZE,
+      CHAR_LIST_____0_00_ARRAY_SIZE
+    };
 
 
-    static const uint2 charList10000_00[8] = { __1, __0, __0, __0, __0, __dot, __0, __0 };
-    static const uint2 charList_4000_00[7] = {      __4, __0, __0, __0, __dot, __0, __0 };
-    static const uint2 charList_2000_00[7] = {      __2, __0, __0, __0, __dot, __0, __0 };
-    static const uint2 charList_1000_00[7] = {      __1, __0, __0, __0, __dot, __0, __0 };
-    static const uint2 charList__400_00[6] = {           __4, __0, __0, __dot, __0, __0 };
-    static const uint2 charList__203_00[6] = {           __2, __0, __3, __dot, __0, __0 };
-    static const uint2 charList__100_00[6] = {           __1, __0, __0, __dot, __0, __0 };
-    static const uint2 charList___50_00[5] = {                __5, __0, __dot, __0, __0 };
-    static const uint2 charList___25_00[5] = {                __2, __5, __dot, __0, __0 };
-    static const uint2 charList___10_00[5] = {                __1, __0, __dot, __0, __0 };
-    static const uint2 charList____5_00[4] = {                     __5, __dot, __0, __0 };
-    static const uint2 charList____2_50[4] = {                     __2, __dot, __5, __0 };
-    static const uint2 charList____1_00[4] = {                     __1, __dot, __0, __0 };
-    static const uint2 charList____0_25[4] = {                     __0, __dot, __2, __5 };
-    static const uint2 charList____0_05[4] = {                     __0, __dot, __0, __5 };
-    static const uint2 charList____0_00[4] = {                     __0, __dot, __0, __0 };
+    static const int char_offsets[WAVEFORM_STRINGS_COUNT] =
+    {
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_10000_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST__4000_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST__2000_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST__1000_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST___400_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST___203_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST___100_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST____50_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST____25_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST____10_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____5_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____2_50_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____1_00_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____0_25_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____0_05_ARRAY_SIZE,
+      CHAR_LIST_10000_00_ARRAY_SIZE - CHAR_LIST_____0_00_ARRAY_SIZE
+    };
 
-    static const uint charListsCount = 16;
 
     [loop]
-    for (uint i = 0u; i < (charListsCount + Unrolling_Be_Gone_Uint); i++)
+    for (uint i = 0u; i < (uint(WAVEFORM_STRINGS_COUNT) + Unrolling_Be_Gone_Uint); i++)
     {
-      uint2 currentNumber;
+      const int2 text_offset_current = text_offsets[i];
 
-      int2 currentTextOffset;
+      const int char_offset_current = char_offsets[i];
 
-      int currentCharOffset;
-
-      bool needsDrawing = true;
-
+      bool drawing_needed = true;
 
       [loop]
-      for (int j = 0u; j < (8u + Unrolling_Be_Gone_Uint); j++)
+      for (int j = 0; j < (int(char_list_array_sizes[i]) + Unrolling_Be_Gone_Int); j++)
       {
-        const int minj6 = min(j, 6);
-        const int minj5 = min(j, 5);
-        const int minj4 = min(j, 4);
-        const int minj3 = min(j, 3);
+        uint2 char_current;
 
         [forcecase]
         switch(i)
         {
           case 0:
           {
-            currentNumber = charList10000_00[j];
+            char_current = char_list_10000_00[j];
 
-            currentTextOffset = text10000_00Offset;
-
-            currentCharOffset = 0;
-
-            needsDrawing = WAVEFORM_CUTOFF_POINT == 0;
+            drawing_needed = WAVEFORM_CUTOFF_POINT == 0;
           }
           break;
           case 1:
           {
-            currentNumber = charList_4000_00[minj6];
+            char_current = char_list__4000_00[j];
 
-            currentTextOffset = text_4000_00Offset;
-
-            currentCharOffset = 1;
-
-            needsDrawing = WAVEFORM_CUTOFF_POINT <= 1;
+            drawing_needed = WAVEFORM_CUTOFF_POINT <= 1;
           }
           break;
           case 2:
           {
-            currentNumber = charList_2000_00[minj6];
+            char_current = char_list__2000_00[j];
 
-            currentTextOffset = text_2000_00Offset;
-
-            currentCharOffset = 1;
-
-            needsDrawing = WAVEFORM_CUTOFF_POINT <= 2;
+            drawing_needed = WAVEFORM_CUTOFF_POINT <= 2;
           }
           break;
           case 3:
           {
-            currentNumber = charList_1000_00[minj6];
-
-            currentTextOffset = text_1000_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__1000_00[j];
           }
           break;
           case 4:
           {
-            currentNumber = charList__400_00[minj5];
-
-            currentTextOffset = text__400_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___400_00[j];
           }
           break;
           case 5:
           {
-            currentNumber = charList__203_00[minj5];
-
-            currentTextOffset = text__203_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___203_00[j];
           }
           break;
           case 6:
           {
-            currentNumber = charList__100_00[minj5];
-
-            currentTextOffset = text__100_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___100_00[j];
           }
           break;
           case 7:
           {
-            currentNumber = charList___50_00[minj4];
-
-            currentTextOffset = text___50_00Offset;
-
-            currentCharOffset = 3;
+            char_current = char_list____50_00[j];
           }
           break;
           case 8:
           {
-            currentNumber = charList___25_00[minj4];
-
-            currentTextOffset = text___25_00Offset;
-
-            currentCharOffset = 3;
+            char_current = char_list____25_00[j];
           }
           break;
           case 9:
           {
-            currentNumber = charList___10_00[minj4];
-
-            currentTextOffset = text___10_00Offset;
-
-            currentCharOffset = 3;
+            char_current = char_list____10_00[j];
           }
           break;
           case 10:
           {
-            currentNumber = charList____5_00[minj3];
-
-            currentTextOffset = text____5_00Offset;
-
-            currentCharOffset = 4;
+            char_current = char_list_____5_00[j];
           }
           break;
           case 11:
           {
-            currentNumber = charList____2_50[minj3];
-
-            currentTextOffset = text____2_50Offset;
-
-            currentCharOffset = 4;
+            char_current = char_list_____2_50[j];
           }
           break;
           case 12:
           {
-            currentNumber = charList____1_00[minj3];
-
-            currentTextOffset = text____1_00Offset;
-
-            currentCharOffset = 4;
+            char_current = char_list_____1_00[j];
           }
           break;
           case 13:
           {
-            currentNumber = charList____0_25[minj3];
-
-            currentTextOffset = text____0_25Offset;
-
-            currentCharOffset = 4;
+            char_current = char_list_____0_25[j];
           }
           break;
           case 14:
           {
-            currentNumber = charList____0_05[minj3];
+            char_current = char_list_____0_05[j];
 
-            currentTextOffset = text____0_05Offset;
-
-            currentCharOffset = 4;
           }
           break;
           default: //case 15:
           {
-            currentNumber = charList____0_00[minj3];
-
-            currentTextOffset = text____0_00Offset;
-
-            currentCharOffset = 4;
+            char_current = char_list_____0_00[j];
           }
           break;
         }
 
         [branch]
-        if (needsDrawing
-         && (-(j - 7) >= currentCharOffset))
+        if (drawing_needed)
         {
+          int index_current = j + char_offset_current;
+
+          [flatten]
+          if (WAVEFORM_CUTOFF_POINT != 0)
+          {
+            index_current--;
+          }
+
           Waveform::DrawCharToScale(Unrolling_Be_Gone_Int,
-                                    currentNumber,
+                                    char_current,
                                     waveDat.charDimensions,
-                                    currentTextOffset,
-                                    charOffsets[j + currentCharOffset]);
+                                    text_offset_current,
+                                    index_current);
         }
       }
     }
 
 #else
 
-    int2 nitsOffsets[14];
+    #define WAVEFORM_STRINGS_COUNT 14
+
+    int2 nitsOffsets[WAVEFORM_STRINGS_COUNT];
 
     [loop]
-    for (uint i = 0u; i < (14u + Unrolling_Be_Gone_Uint); i++)
+    for (uint i = 0u; i < (uint(WAVEFORM_STRINGS_COUNT) + Unrolling_Be_Gone_Uint); i++)
     {
       nitsOffsets[i] = Waveform::GetNitsOffset(waveDat.borderSize, waveDat.frameSize, waveDat.fontSpacer, waveDat.tickPoints[i]);
     }
@@ -1349,182 +1340,222 @@ void RenderWaveformScale
 #endif
     #define nits__0_00Offset nitsOffsets[13]
 
-    const int2 text100_00Offset = nits100_00Offset - waveDat.textOffset;
-    const int2 text_87_50Offset = nits_87_50Offset - waveDat.textOffset;
-    const int2 text_75_00Offset = nits_75_00Offset - waveDat.textOffset;
-    const int2 text_60_00Offset = nits_60_00Offset - waveDat.textOffset;
-    const int2 text_50_00Offset = nits_50_00Offset - waveDat.textOffset;
-    const int2 text_35_00Offset = nits_35_00Offset - waveDat.textOffset;
-    const int2 text_25_00Offset = nits_25_00Offset - waveDat.textOffset;
-    const int2 text_18_00Offset = nits_18_00Offset - waveDat.textOffset;
-    const int2 text_10_00Offset = nits_10_00Offset - waveDat.textOffset;
-    const int2 text__5_00Offset = nits__5_00Offset - waveDat.textOffset;
-    const int2 text__2_50Offset = nits__2_50Offset - waveDat.textOffset;
-    const int2 text__1_00Offset = nits__1_00Offset - waveDat.textOffset;
+
+    const int2 text_offset_100_00 = nits100_00Offset - waveDat.textOffset;
+    const int2 text_offset__87_50 = nits_87_50Offset - waveDat.textOffset;
+    const int2 text_offset__75_00 = nits_75_00Offset - waveDat.textOffset;
+    const int2 text_offset__60_00 = nits_60_00Offset - waveDat.textOffset;
+    const int2 text_offset__50_00 = nits_50_00Offset - waveDat.textOffset;
+    const int2 text_offset__35_00 = nits_35_00Offset - waveDat.textOffset;
+    const int2 text_offset__25_00 = nits_25_00Offset - waveDat.textOffset;
+    const int2 text_offset__18_00 = nits_18_00Offset - waveDat.textOffset;
+    const int2 text_offset__10_00 = nits_10_00Offset - waveDat.textOffset;
+    const int2 text_offset___5_00 = nits__5_00Offset - waveDat.textOffset;
+    const int2 text_offset___2_50 = nits__2_50Offset - waveDat.textOffset;
+    const int2 text_offset___1_00 = nits__1_00Offset - waveDat.textOffset;
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-    const int2 text__0_25Offset = nits__0_25Offset - waveDat.textOffset;
+    const int2 text_offset___0_25 = nits__0_25Offset - waveDat.textOffset;
 #else
-    const int2 text__0_40Offset = nits__0_40Offset - waveDat.textOffset;
+    const int2 text_offset___0_40 = nits__0_40Offset - waveDat.textOffset;
 #endif
-    const int2 text__0_00Offset = nits__0_00Offset - waveDat.textOffset;
+    const int2 text_offset___0_00 = nits__0_00Offset - waveDat.textOffset;
 
-
-    const int charOffsets[7] = {0, 1, 2, 3, 4, 5, 6};
-
-
-    static const uint2 charList100_00[7] = { __1, __0, __0, __dot, __0, __0, __percent };
-    static const uint2 charList_87_50[6] = {      __8, __7, __dot, __5, __0, __percent };
-    static const uint2 charList_75_00[6] = {      __7, __5, __dot, __0, __0, __percent };
-    static const uint2 charList_60_00[6] = {      __6, __0, __dot, __0, __0, __percent };
-    static const uint2 charList_50_00[6] = {      __5, __0, __dot, __0, __0, __percent };
-    static const uint2 charList_35_00[6] = {      __3, __5, __dot, __0, __0, __percent };
-    static const uint2 charList_25_00[6] = {      __2, __5, __dot, __0, __0, __percent };
-    static const uint2 charList_18_00[6] = {      __1, __8, __dot, __0, __0, __percent };
-    static const uint2 charList_10_00[6] = {      __1, __0, __dot, __0, __0, __percent };
-    static const uint2 charList__5_00[5] = {           __5, __dot, __0, __0, __percent };
-    static const uint2 charList__2_50[5] = {           __2, __dot, __5, __0, __percent };
-    static const uint2 charList__1_00[5] = {           __1, __dot, __0, __0, __percent };
+    const int2 text_offsets[WAVEFORM_STRINGS_COUNT] =
+    {
+      text_offset_100_00,
+      text_offset__87_50,
+      text_offset__75_00,
+      text_offset__60_00,
+      text_offset__50_00,
+      text_offset__35_00,
+      text_offset__25_00,
+      text_offset__18_00,
+      text_offset__10_00,
+      text_offset___5_00,
+      text_offset___2_50,
+      text_offset___1_00,
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-    static const uint2 charList__0_25[5] = {           __0, __dot, __2, __5, __percent };
+      text_offset___0_25,
 #else
-    static const uint2 charList__0_40[5] = {           __0, __dot, __4, __0, __percent };
+      text_offset___0_40,
 #endif
-    static const uint2 charList__0_00[5] = {           __0, __dot, __0, __0, __percent };
+      text_offset___0_00
+    };
 
-    static const uint charListsCount = 14;
 
-    float2 charDims;
+    #define CHAR_LIST_100_00_ARRAY_SIZE 7
+    #define CHAR_LIST__87_50_ARRAY_SIZE 6
+    #define CHAR_LIST__75_00_ARRAY_SIZE 6
+    #define CHAR_LIST__60_00_ARRAY_SIZE 6
+    #define CHAR_LIST__50_00_ARRAY_SIZE 6
+    #define CHAR_LIST__35_00_ARRAY_SIZE 6
+    #define CHAR_LIST__25_00_ARRAY_SIZE 6
+    #define CHAR_LIST__18_00_ARRAY_SIZE 6
+    #define CHAR_LIST__10_00_ARRAY_SIZE 6
+    #define CHAR_LIST___5_00_ARRAY_SIZE 5
+    #define CHAR_LIST___2_50_ARRAY_SIZE 5
+    #define CHAR_LIST___1_00_ARRAY_SIZE 5
+#if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+  || OVERWRITE_SDR_GAMMA == GAMMA_22    \
+  || OVERWRITE_SDR_GAMMA == GAMMA_24)
+    #define CHAR_LIST___0_25_ARRAY_SIZE 5
+#else
+    #define CHAR_LIST___0_40_ARRAY_SIZE 5
+#endif
+    #define CHAR_LIST___0_00_ARRAY_SIZE 5
 
-    charDims.y = waveDat.charDimensions.y;
+    static const uint2 char_list_100_00[CHAR_LIST_100_00_ARRAY_SIZE] = { __1, __0, __0, __dot, __0, __0, __percent };
+    static const uint2 char_list__87_50[CHAR_LIST__87_50_ARRAY_SIZE] = {      __8, __7, __dot, __5, __0, __percent };
+    static const uint2 char_list__75_00[CHAR_LIST__75_00_ARRAY_SIZE] = {      __7, __5, __dot, __0, __0, __percent };
+    static const uint2 char_list__60_00[CHAR_LIST__60_00_ARRAY_SIZE] = {      __6, __0, __dot, __0, __0, __percent };
+    static const uint2 char_list__50_00[CHAR_LIST__50_00_ARRAY_SIZE] = {      __5, __0, __dot, __0, __0, __percent };
+    static const uint2 char_list__35_00[CHAR_LIST__35_00_ARRAY_SIZE] = {      __3, __5, __dot, __0, __0, __percent };
+    static const uint2 char_list__25_00[CHAR_LIST__25_00_ARRAY_SIZE] = {      __2, __5, __dot, __0, __0, __percent };
+    static const uint2 char_list__18_00[CHAR_LIST__18_00_ARRAY_SIZE] = {      __1, __8, __dot, __0, __0, __percent };
+    static const uint2 char_list__10_00[CHAR_LIST__10_00_ARRAY_SIZE] = {      __1, __0, __dot, __0, __0, __percent };
+    static const uint2 char_list___5_00[CHAR_LIST___5_00_ARRAY_SIZE] = {           __5, __dot, __0, __0, __percent };
+    static const uint2 char_list___2_50[CHAR_LIST___2_50_ARRAY_SIZE] = {           __2, __dot, __5, __0, __percent };
+    static const uint2 char_list___1_00[CHAR_LIST___1_00_ARRAY_SIZE] = {           __1, __dot, __0, __0, __percent };
+#if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+  || OVERWRITE_SDR_GAMMA == GAMMA_22    \
+  || OVERWRITE_SDR_GAMMA == GAMMA_24)
+    static const uint2 char_list___0_25[CHAR_LIST___0_25_ARRAY_SIZE] = {           __0, __dot, __2, __5, __percent };
+#else
+    static const uint2 char_list___0_40[CHAR_LIST___0_40_ARRAY_SIZE] = {           __0, __dot, __4, __0, __percent };
+#endif
+    static const uint2 char_list___0_00[CHAR_LIST___0_00_ARRAY_SIZE] = {           __0, __dot, __0, __0, __percent };
+
+    static const uint char_list_array_sizes[WAVEFORM_STRINGS_COUNT] =
+    {
+      CHAR_LIST_100_00_ARRAY_SIZE,
+      CHAR_LIST__87_50_ARRAY_SIZE,
+      CHAR_LIST__75_00_ARRAY_SIZE,
+      CHAR_LIST__60_00_ARRAY_SIZE,
+      CHAR_LIST__50_00_ARRAY_SIZE,
+      CHAR_LIST__35_00_ARRAY_SIZE,
+      CHAR_LIST__25_00_ARRAY_SIZE,
+      CHAR_LIST__18_00_ARRAY_SIZE,
+      CHAR_LIST__10_00_ARRAY_SIZE,
+      CHAR_LIST___5_00_ARRAY_SIZE,
+      CHAR_LIST___2_50_ARRAY_SIZE,
+      CHAR_LIST___1_00_ARRAY_SIZE,
+#if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+  || OVERWRITE_SDR_GAMMA == GAMMA_22    \
+  || OVERWRITE_SDR_GAMMA == GAMMA_24)
+      CHAR_LIST___0_25_ARRAY_SIZE,
+#else
+      CHAR_LIST___0_40_ARRAY_SIZE,
+#endif
+      CHAR_LIST___0_00_ARRAY_SIZE
+    };
+
+    static const int char_offsets[WAVEFORM_STRINGS_COUNT] =
+    {
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST_100_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__87_50_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__75_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__60_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__50_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__35_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__25_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__18_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST__10_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___5_00_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___2_50_ARRAY_SIZE,
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___1_00_ARRAY_SIZE,
+#if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
+  || OVERWRITE_SDR_GAMMA == GAMMA_22    \
+  || OVERWRITE_SDR_GAMMA == GAMMA_24)
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___0_25_ARRAY_SIZE,
+#else
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___0_40_ARRAY_SIZE,
+#endif
+      CHAR_LIST_100_00_ARRAY_SIZE - CHAR_LIST___0_00_ARRAY_SIZE
+    };
+
+
+    float2 char_dims;
+
+    char_dims.y = waveDat.charDimensions.y;
+
 
     [loop]
-    for (uint i = 0; i < (charListsCount + Unrolling_Be_Gone_Uint); i++)
+    for (uint i = 0u; i < (uint(WAVEFORM_STRINGS_COUNT) + Unrolling_Be_Gone_Uint); i++)
     {
-      uint2 currentNumber;
+      const int2 text_offset_current = text_offsets[i];
 
-      int2 currentTextOffset;
-
-      int currentCharOffset;
+      const int char_offset_current = char_offsets[i];
 
       [loop]
-      for (int j = 0; j < (7 + Unrolling_Be_Gone_Int); j++)
+      for (int j = 0; j < (int(char_list_array_sizes[i]) + Unrolling_Be_Gone_Int); j++)
       {
-        const int minj5 = min(j, 5);
-        const int minj4 = min(j, 4);
+        uint2 char_current;
 
         [forcecase]
         switch(i)
         {
           case 0:
           {
-            currentNumber = charList100_00[j];
-
-            currentTextOffset = text100_00Offset;
-
-            currentCharOffset = 0;
+            char_current = char_list_100_00[j];
           }
           break;
           case 1:
           {
-            currentNumber = charList_87_50[minj5];
-
-            currentTextOffset = text_87_50Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__87_50[j];
           }
           break;
           case 2:
           {
-            currentNumber = charList_75_00[minj5];
-
-            currentTextOffset = text_75_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__75_00[j];
           }
           break;
           case 3:
           {
-            currentNumber = charList_60_00[minj5];
-
-            currentTextOffset = text_60_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__60_00[j];
           }
           break;
           case 4:
           {
-            currentNumber = charList_50_00[minj5];
-
-            currentTextOffset = text_50_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__50_00[j];
           }
           break;
           case 5:
           {
-            currentNumber = charList_35_00[minj5];
-
-            currentTextOffset = text_35_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__35_00[j];
           }
           break;
           case 6:
           {
-            currentNumber = charList_25_00[minj5];
-
-            currentTextOffset = text_25_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__25_00[j];
           }
           break;
           case 7:
           {
-            currentNumber = charList_18_00[minj5];
-
-            currentTextOffset = text_18_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__18_00[j];
           }
           break;
           case 8:
           {
-            currentNumber = charList_10_00[minj5];
-
-            currentTextOffset = text_10_00Offset;
-
-            currentCharOffset = 1;
+            char_current = char_list__10_00[j];
           }
           break;
           case 9:
           {
-            currentNumber = charList__5_00[minj4];
-
-            currentTextOffset = text__5_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___5_00[j];
           }
           break;
           case 10:
           {
-            currentNumber = charList__2_50[minj4];
-
-            currentTextOffset = text__2_50Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___2_50[j];
           }
           break;
           case 11:
           {
-            currentNumber = charList__1_00[minj4];
-
-            currentTextOffset = text__1_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___1_00[j];
           }
           break;
           case 12:
@@ -1532,40 +1563,27 @@ void RenderWaveformScale
 #if (OVERWRITE_SDR_GAMMA == GAMMA_UNSET \
   || OVERWRITE_SDR_GAMMA == GAMMA_22    \
   || OVERWRITE_SDR_GAMMA == GAMMA_24)
-            currentNumber = charList__0_25[minj4];
-
-            currentTextOffset = text__0_25Offset;
+            char_current = char_list___0_25[j];
 #else
-            currentNumber = charList__0_40[minj4];
-
-            currentTextOffset = text__0_40Offset;
+            char_current = char_list___0_40[j];
 #endif
-            currentCharOffset = 2;
           }
           break;
           default: //case 13:
           {
-            currentNumber = charList__0_00[minj4];
-
-            currentTextOffset = text__0_00Offset;
-
-            currentCharOffset = 2;
+            char_current = char_list___0_00[j];
           }
           break;
         }
 
-        charDims.x = currentNumber != __percent ? waveDat.charDimensions.x
+        char_dims.x = char_current != __percent ? waveDat.charDimensions.x
                                                 : waveDat.charDimensionXForPercent;
 
-        [branch]
-        if (-(j - 7) > currentCharOffset)
-        {
-          Waveform::DrawCharToScale(Unrolling_Be_Gone_Int,
-                                    currentNumber,
-                                    charDims,
-                                    currentTextOffset,
-                                    charOffsets[j + currentCharOffset]);
-        }
+        Waveform::DrawCharToScale(Unrolling_Be_Gone_Int,
+                                  char_current,
+                                  char_dims,
+                                  text_offset_current,
+                                  j + char_offset_current);
       }
     }
 
