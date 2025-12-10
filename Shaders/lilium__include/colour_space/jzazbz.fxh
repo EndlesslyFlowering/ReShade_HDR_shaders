@@ -7,35 +7,103 @@ namespace Csp
 
     // https://doi.org/10.1364/OE.25.015131
 
-    static const float Jzazbz_b  =   1.15f;
-    static const float Jzazbz_g  =   0.66f;
     static const float Jzazbz_p  = 134.034375f; // 1.7 * 2523 / 2^5 (2523 / 2^5 = 2523 / 4096 * 128, which is the PQ constant m2)
     static const float Jzazbz_d  =  -0.56f;
     static const float Jzazbz_d0 =   0.0000000000162954996f; // 1.6295499532821566 * 10^-11
-
-    static const float Jzazbz_b_minus_1 =  0.15f;
-    static const float Jzazbz_g_minus_1 = -0.34f;
 
     static const float Jzazbz_d_plus_1 = 0.44f;
 
     static const float Jzazbz_rcp_p = 0.00746077252f;
 
-    //X'Y'Z -> Jzazbz LMS
-    static const float3x3 XY_Prime_Z_To_Jzazbz_LMS =
+
+    //XYZ -> LMS (Jzazbz variant)
+    static const float3x3 XYZ_To_Jzazbz_LMS =
       float3x3
       (
-         0.41478972f, 0.579999f, 0.014648f,
-        -0.20151f,    1.120649f, 0.0531008f,
-        -0.0166008f,  0.2648f,   0.6684799f
+        0.674207866f,  0.382799327f, -0.0475704595f,
+        0.149284154f,  0.739628314f,  0.0833273008f,
+        0.0709410831f, 0.174768000f,  0.670970022f
       );
 
-    //Jzazbz LMS -> X'Y'Z
-    static const float3x3 Jzazbz_LMS_To_XY_Prime_Z =
+    //LMS (Jzazbz variant) -> XYZ
+    static const float3x3 Jzazbz_LMS_To_XYZ =
       float3x3
       (
-         1.92422640f,   -1.00479233f,   0.0376514047f,
-         0.350316762f,   0.726481199f, -0.0653844252f,
+         1.66137301f,   -0.914523065f,  0.231362074f,
+        -0.325075864f,   1.57184708f,  -0.218253836f,
         -0.0909828096f, -0.312728285f,  1.52276659f
+      );
+
+    //BT.709 -> LMS (Jzazbz variant)
+    static const float3x3 BT709_To_Jzazbz_LMS =
+      float3x3
+      (
+        0.358515590f,  0.509182095f, 0.104099482f,
+        0.220448032f,  0.592272877f, 0.159543678f,
+        0.0793883427f, 0.230332136f, 0.663199007f
+      );
+
+    //LMS (Jzazbz variant) -> BT.709
+    static const float3x3 Jzazbz_LMS_To_BT709 =
+      float3x3
+      (
+         5.92959117f,   -5.22454357f,   0.326109498f,
+        -2.22388792f,    3.82213425f,  -0.570404648f,
+         0.0625640675f, -0.702040493f,  1.66691029f
+      );
+
+    //scRGB -> LMS (Jzazbz variant)
+    static const float3x3 scRGB_To_Jzazbz_LMS =
+      float3x3
+      (
+        0.00286812474f,  0.00407345686f, 0.000832795863f,
+        0.00176358432f,  0.00473818322f, 0.00127634941f,
+        0.000635106756f, 0.00184265710f, 0.00530559197f
+      );
+
+    //LMS (Jzazbz variant) -> scRGB
+    static const float3x3 Jzazbz_LMS_To_scRGB =
+      float3x3
+      (
+         741.198913f, -653.067932f,  40.7636909f,
+        -277.985992f,  477.766784f, -71.3005828f,
+         7.82050800f, -87.7550582f,  208.363784f
+      );
+
+    //DCI-P3 -> LMS (Jzazbz variant)
+    static const float3x3 DCIP3_To_Jzazbz_LMS =
+      float3x3
+      (
+        0.415701270f,  0.441766232f, 0.114329710f,
+        0.241993412f,  0.555048584f, 0.175222620f,
+        0.0745352953f, 0.170010238f, 0.728373944f
+      );
+
+    //LMS (Jzazbz variant) -> DCI-P3
+    static const float3x3 Jzazbz_LMS_To_DCIP3 =
+      float3x3
+      (
+         4.48203849f,    -3.61841392f,   0.166944146f,
+        -1.95323967f,     3.52183699f,  -0.540645599f,
+        -0.00274494127f, -0.451758056f,  1.48203003f
+      );
+
+    //BT.2020 -> LMS (Jzazbz variant)
+    static const float3x3 BT2020_To_Jzazbz_LMS =
+      float3x3
+      (
+        0.530003547f,  0.355703622f, 0.0860899910f,
+        0.289388269f,  0.525394797f, 0.157481506f,
+        0.0910980850f, 0.147587582f, 0.734233796f
+      );
+
+    //LMS (Jzazbz variant) -> BT.2020
+    static const float3x3 Jzazbz_LMS_To_BT2020 =
+      float3x3
+      (
+         2.99066996f,   -2.04974246f,   0.0889767929f,
+        -1.63452517f,    3.14562821f,  -0.483036875f,
+        -0.0425051115f, -0.377983212f,  1.44801914f
       );
 
     //Jzazbz L'M'S' -> Izazbz
@@ -56,50 +124,59 @@ namespace Csp
         1.f, -0.0960192456f, -0.811891913f
       );
 
+
     namespace XYZ_To
     {
-      //XYZ -> X'Y'Z
-      float3 XY_Prime_Z(const float3 XYZ)
+      //XYZ -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XYZ)
       {
-        float2 val_0 = float2(Jzazbz_b * XYZ.x,
-                              Jzazbz_g * XYZ.y);
-
-        float2 val_1 = float2(Jzazbz_b_minus_1 * XYZ.z,
-                              Jzazbz_g_minus_1 * XYZ.x);
-
-        return float3(val_0 - val_1, XYZ.z);
+        return mul(XYZ_To_Jzazbz_LMS, XYZ);
       }
     } //XYZ_To
 
-    namespace XY_Prime_Z_To
+
+    namespace BT709_To
     {
-      //X'Y'Z -> XYZ
-      float3 XYZ(const float3 XY_Prime_Z)
+      //BT.709 -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XYZ)
       {
-        float X = (XY_Prime_Z.x + (Jzazbz_b_minus_1 * XY_Prime_Z.z))
-                / Jzazbz_b;
-
-        float Y = (XY_Prime_Z.y + (Jzazbz_g_minus_1 * X))
-                / Jzazbz_g;
-
-        return float3(X, Y, XY_Prime_Z.z);
+        return mul(BT709_To_Jzazbz_LMS, XYZ);
       }
+    } //BT709_To
 
-      //X'Y'Z -> LMS (Jzazbz variant)
-      float3 Jzazbz_LMS(const float3 XY_Prime_Z)
+
+    namespace scRGB_To
+    {
+      //scRGB -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XYZ)
       {
-        return mul(XY_Prime_Z_To_Jzazbz_LMS, XY_Prime_Z);
+        return mul(scRGB_To_Jzazbz_LMS, XYZ);
       }
-    } //XY_Prime_Z_To
+    } //scRGB_To
+
+
+    namespace DCIP3_To
+    {
+      //DCI-P3 -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XYZ)
+      {
+        return mul(DCIP3_To_Jzazbz_LMS, XYZ);
+      }
+    } //BT709_To
+
+
+    namespace BT2020_To
+    {
+      //BT.2020 -> LMS (Jzazbz variant)
+      float3 Jzazbz_LMS(const float3 XYZ)
+      {
+        return mul(BT2020_To_Jzazbz_LMS, XYZ);
+      }
+    } //BT2020_To
+
 
     namespace Jzazbz_LMS_To
     {
-      //LMS (Jzazbz variant) -> X'Y'Z
-      float3 XY_Prime_Z(const float3 Jzazbz_LMS)
-      {
-        return mul(Jzazbz_LMS_To_XY_Prime_Z, Jzazbz_LMS);
-      }
-
       //LMS (Jzazbz variant) -> L'M'S' (Jzazbz variant)
       float3 PQ_Jzazbz_LMS(const float3 Jzazbz_LMS)
       {
@@ -111,7 +188,32 @@ namespace Csp
 
         return pow(num / den, Jzazbz_p);
       }
+
+      //LMS (Jzazbz variant) -> XYZ
+      float3 XYZ(const float3 Jzazbz_LMS)
+      {
+        return mul(Jzazbz_LMS_To_XYZ, Jzazbz_LMS);
+      }
+
+      //LMS (Jzazbz variant) -> BT.709
+      float3 BT709(const float3 Jzazbz_LMS)
+      {
+        return mul(Jzazbz_LMS_To_BT709, Jzazbz_LMS);
+      }
+
+      //LMS (Jzazbz variant) -> scRGB
+      float3 scRGB(const float3 Jzazbz_LMS)
+      {
+        return mul(Jzazbz_LMS_To_scRGB, Jzazbz_LMS);
+      }
+
+      //LMS (Jzazbz variant) -> BT.2020
+      float3 BT2020(const float3 Jzazbz_LMS)
+      {
+        return mul(Jzazbz_LMS_To_BT2020, Jzazbz_LMS);
+      }
     } //Jzazbz_LMS_To
+
 
     namespace PQ_Jzazbz_LMS_To
     {
@@ -132,7 +234,40 @@ namespace Csp
 
         return pow(num / den, PQ_rcp_m1);
       }
+
+      //L'M'S' (Jzazbz variant) -> XYZ
+      float3 XYZ(const float3 PQ_Jzazbz_LMS)
+      {
+        float3 lms = PQ_Jzazbz_LMS_To::Jzazbz_LMS(PQ_Jzazbz_LMS);
+
+        return Jzazbz_LMS_To::XYZ(lms);
+      }
+
+      //L'M'S' (Jzazbz variant) -> BT.709
+      float3 BT709(const float3 PQ_Jzazbz_LMS)
+      {
+        float3 lms = PQ_Jzazbz_LMS_To::Jzazbz_LMS(PQ_Jzazbz_LMS);
+
+        return Jzazbz_LMS_To::BT709(lms);
+      }
+
+      //L'M'S' (Jzazbz variant) -> scRGB
+      float3 scRGB(const float3 PQ_Jzazbz_LMS)
+      {
+        float3 lms = PQ_Jzazbz_LMS_To::Jzazbz_LMS(PQ_Jzazbz_LMS);
+
+        return Jzazbz_LMS_To::scRGB(lms);
+      }
+
+      //L'M'S' (Jzazbz variant) -> BT.2020
+      float3 BT2020(const float3 PQ_Jzazbz_LMS)
+      {
+        float3 lms = PQ_Jzazbz_LMS_To::Jzazbz_LMS(PQ_Jzazbz_LMS);
+
+        return Jzazbz_LMS_To::BT2020(lms);
+      }
     } //PQ_Jzazbz_LMS_To
+
 
     namespace Izazbz_To
     {
@@ -154,7 +289,40 @@ namespace Csp
       {
         return mul(Izazbz_To_PQ_Jzazbz_LMS, Izazbz);
       }
+
+      //Izazbz -> XYZ
+      float3 XYZ(const float3 Izazbz)
+      {
+        float3 pq_lms = Izazbz_To::PQ_Jzazbz_LMS(Izazbz);
+
+        return PQ_Jzazbz_LMS_To::XYZ(pq_lms);
+      }
+
+      //Izazbz -> BT.709
+      float3 BT709(const float3 Izazbz)
+      {
+        float3 pq_lms = Izazbz_To::PQ_Jzazbz_LMS(Izazbz);
+
+        return PQ_Jzazbz_LMS_To::BT709(pq_lms);
+      }
+
+      //Izazbz -> scRGB
+      float3 scRGB(const float3 Izazbz)
+      {
+        float3 pq_lms = Izazbz_To::PQ_Jzazbz_LMS(Izazbz);
+
+        return PQ_Jzazbz_LMS_To::scRGB(pq_lms);
+      }
+
+      //Izazbz -> BT.2020
+      float3 BT2020(const float3 Izazbz)
+      {
+        float3 pq_lms = Izazbz_To::PQ_Jzazbz_LMS(Izazbz);
+
+        return PQ_Jzazbz_LMS_To::BT2020(pq_lms);
+      }
     } //Izazbz_To
+
 
     namespace Jzazbz_To
     {
@@ -170,103 +338,119 @@ namespace Csp
 
         return float3(iz, Jzazbz.yz);
       }
+
+      //Jzazbz -> XYZ
+      float3 XYZ(const float3 Jzazbz)
+      {
+        float3 izazbz = Jzazbz_To::Izazbz(Jzazbz);
+
+        return Izazbz_To::XYZ(izazbz);
+      }
+
+      //Jzazbz -> BT.709
+      float3 BT709(const float3 Jzazbz)
+      {
+        float3 izazbz = Jzazbz_To::Izazbz(Jzazbz);
+
+        return Izazbz_To::BT709(izazbz);
+      }
+
+      //Jzazbz -> scRGB
+      float3 scRGB(const float3 Jzazbz)
+      {
+        float3 izazbz = Jzazbz_To::Izazbz(Jzazbz);
+
+        return Izazbz_To::scRGB(izazbz);
+      }
+
+      //Jzazbz -> BT.2020
+      float3 BT2020(const float3 Jzazbz)
+      {
+        float3 izazbz = Jzazbz_To::Izazbz(Jzazbz);
+
+        return Izazbz_To::BT2020(izazbz);
+      }
     } //Jzazbz_To
+
+
+    namespace Jzazbz_LMS_To
+    {
+      //LMS (Jzazbz variant) -> Izazbz
+      float3 Izazbz(const float3 Jzazbz_LMS)
+      {
+        float3 pq_lms = Jzazbz_LMS_To::PQ_Jzazbz_LMS(Jzazbz_LMS);
+
+        return PQ_Jzazbz_LMS_To::Izazbz(pq_lms);
+      }
+
+      //LMS (Jzazbz variant) -> Jzazbz
+      float3 Jzazbz(const float3 Jzazbz_LMS)
+      {
+        float3 izazbz = Jzazbz_LMS_To::Izazbz(Jzazbz_LMS);
+
+        return Izazbz_To::Jzazbz(izazbz);
+      }
+    } //Jzazbz_LMS_To
+
 
     namespace XYZ_To
     {
       //XYZ -> Jzazbz
       float3 Jzazbz(const float3 XYZ)
       {
-        //X'Y'Z
-        float3 xy_prime_z = XYZ_To::XY_Prime_Z(XYZ);
+        float3 lms = XYZ_To::Jzazbz_LMS(XYZ);
 
-        float3 lms        = XY_Prime_Z_To::Jzazbz_LMS(xy_prime_z);
-
-        float3 pq_lms     = Jzazbz_LMS_To::PQ_Jzazbz_LMS(lms);
-
-        float3 izazbz     = PQ_Jzazbz_LMS_To::Izazbz(pq_lms);
-
-        return Izazbz_To::Jzazbz(izazbz);
+        return Jzazbz_LMS_To::Jzazbz(lms);
       }
     } //XYZ_To
 
-    namespace Jzazbz_To
-    {
-      //Jzazbz -> XYZ
-      float3 XYZ(const float3 Jzazbz)
-      {
-        float3 izazbz     = Jzazbz_To::Izazbz(Jzazbz);
-
-        float3 pq_lms     = Izazbz_To::PQ_Jzazbz_LMS(izazbz);
-
-        float3 lms        = PQ_Jzazbz_LMS_To::Jzazbz_LMS(pq_lms);
-
-        //X'Y'Z
-        float3 xy_prime_z = Jzazbz_LMS_To::XY_Prime_Z(lms);
-
-        return XY_Prime_Z_To::XYZ(xy_prime_z);
-      }
-    } //Jzazbz_To
 
     namespace BT709_To
     {
       //RGB BT.709 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::BT709_To::XYZ(RGB);
+        float3 lms = BT709_To::Jzazbz_LMS(RGB);
 
-        return XYZ_To::Jzazbz(XYZ);
+        return Jzazbz_LMS_To::Jzazbz(lms);
       }
     } //BT709_To
+
+
+    namespace scRGB_To
+    {
+      //RGB scRGB -> Jzazbz
+      float3 Jzazbz(const float3 RGB)
+      {
+        float3 lms = scRGB_To::Jzazbz_LMS(RGB);
+
+        return Jzazbz_LMS_To::Jzazbz(lms);
+      }
+    } //BT709_To
+
 
     namespace DCIP3_To
     {
       //RGB DCI-P3 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::DCIP3_To::XYZ(RGB);
+        float3 lms = DCIP3_To::Jzazbz_LMS(RGB);
 
-        return XYZ_To::Jzazbz(XYZ);
+        return Jzazbz_LMS_To::Jzazbz(lms);
       }
     } //DCIP3_To
+
 
     namespace BT2020_To
     {
       //RGB BT.2020 -> Jzazbz
       float3 Jzazbz(const float3 RGB)
       {
-        float3 XYZ = Csp::Mat::BT2020_To::XYZ(RGB);
+        float3 lms = BT2020_To::Jzazbz_LMS(RGB);
 
-        return XYZ_To::Jzazbz(XYZ);
+        return Jzazbz_LMS_To::Jzazbz(lms);
       }
     } //BT2020_To
-
-    namespace Jzazbz_To
-    {
-      //Jzazbz -> RGB BT.709
-      float3 BT709(const float3 Jzazbz)
-      {
-        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
-
-        return Csp::Mat::XYZ_To::BT709(xyz);
-      }
-
-      //Jzazbz -> RGB DCI-P3
-      float3 DCIP3(const float3 Jzazbz)
-      {
-        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
-
-        return Csp::Mat::XYZ_To::DCIP3(xyz);
-      }
-
-      //Jzazbz -> RGB BT.2020
-      float3 BT2020(const float3 Jzazbz)
-      {
-        float3 xyz = Jzazbz_To::XYZ(Jzazbz);
-
-        return Csp::Mat::XYZ_To::BT2020(xyz);
-      }
-    } //Jzazbz_To
 
   } //Jzazbz
 
