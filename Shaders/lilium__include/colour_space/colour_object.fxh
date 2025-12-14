@@ -31,6 +31,8 @@
         Colour_Object CO
       )
       {
+        float ret;
+
         [forcecase]
         switch(CO.trc)
         {
@@ -41,18 +43,22 @@
             {
               case CO_PRIM_BT709:
               {
-                return dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
+                ret = dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
               }
+              break;
               case CO_PRIM_DCIP3:
               {
-                return dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
+                ret = dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
               }
+              break;
               case CO_PRIM_BT2020:
               {
-                return dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
+                ret = dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
               }
+              break;
               default:
-                return 0.f;
+                ret = 0.f;
+                break;
             }
           }
           break;
@@ -63,18 +69,22 @@
             {
               case CO_PRIM_BT709:
               {
-                return dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
               }
+              break;
               case CO_PRIM_DCIP3:
               {
-                return dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
               }
+              break;
               case CO_PRIM_BT2020:
               {
-                return dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
               }
+              break;
               default:
-                return 0.f;
+                ret = 0.f;
+                break;
             }
           }
           break;
@@ -98,16 +108,21 @@
                   linearColour = Csp::Trc::PQ_To::Linear(CO.RGB);
                 }
 
-                return dot(linearColour, Csp::Mat::BT2020_To_XYZ[1]);
+                ret = dot(linearColour, Csp::Mat::BT2020_To_XYZ[1]);
               }
+              break;
               default:
-                return 0.f;
+                ret = 0.f;
+                break;
             }
           }
           break;
           default:
-            return 0.f;
+            ret = 0.f;
+            break;
         }
+
+        return ret;
       }
 
 //      float Linear_80
@@ -115,6 +130,8 @@
 //        Colour_Object CO
 //      )
 //      {
+//        float ret;
+//
 //        [forcecase]
 //        switch(CO.trc)
 //        {
@@ -125,20 +142,25 @@
 //            {
 //              case CO_PRIM_BT709:
 //              {
-//                return dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
+//                ret = dot(CO.RGB, Csp::Mat::BT709_To_XYZ[1]);
 //              }
+//              break;
 //              case CO_PRIM_DCIP3:
 //              {
-//                return dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
+//                ret = dot(CO.RGB, Csp::Mat::DCIP3_To_XYZ[1]);
 //              }
+//              break;
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
+//                ret = dot(CO.RGB, Csp::Mat::BT2020_To_XYZ[1]);
 //              }
+//              break;
 //              default:
-//                return 0.f;
+//                ret = 0.f;
+//                break;
 //            }
 //          }
+//          break;
 //          case CO_TRC_LINEAR_80:
 //          {
 //            [forcecase]
@@ -146,20 +168,25 @@
 //            {
 //              case CO_PRIM_BT709:
 //              {
-//                return dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
 //              }
+//              break;
 //              case CO_PRIM_DCIP3:
 //              {
-//                return dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
 //              }
+//              break;
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
 //              }
+//              break;
 //              default:
-//                return 0.f;
+//                ret = 0.f;
+//                break;
 //            }
 //          }
+//          break;
 //          case CO_TRC_PQ:
 //          {
 //            [forcecase]
@@ -167,13 +194,21 @@
 //            {
 //              case CO_PRIM_BT2020:
 //              {
-//                return dot(Csp::Trc::PQ_To::Linear(CO.RGB), Csp::Mat::BT2020_To_XYZ[1]);
+//                ret = dot(Csp::Trc::PQ_To::Linear(CO.RGB), Csp::Mat::BT2020_To_XYZ[1]);
 //              }
+//              break;
 //              default:
-//                return 0.f;
+//                ret = 0.f;
+//                break;
 //            }
 //          }
+//          break;
+//          default:
+//            ret = 0.f;
+//            break;
 //        }
+//
+//        return ret;
 //      }
     }
 
