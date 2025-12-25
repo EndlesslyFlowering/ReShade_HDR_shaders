@@ -131,6 +131,7 @@ uniform float2 NIT_PINGPONG2
   #define _WAVEFORM_SIZE                          SDR_WAVEFORM_SIZE
   #define _WAVEFORM_SHOW_MIN_NITS_LINE            SDR_WAVEFORM_SHOW_MIN_NITS_LINE
   #define _WAVEFORM_SHOW_MAX_NITS_LINE            SDR_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN       SDR_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
   #define _HIGHLIGHT_NIT_RANGE                    SDR_HIGHLIGHT_NIT_RANGE
   #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   #define _HIGHLIGHT_NIT_RANGE_START_POINT        SDR_HIGHLIGHT_NIT_RANGE_START_POINT
@@ -171,6 +172,7 @@ uniform float2 NIT_PINGPONG2
   #define _WAVEFORM_SIZE                          WAVEFORM_SIZE
   #define _WAVEFORM_SHOW_MIN_NITS_LINE            WAVEFORM_SHOW_MIN_NITS_LINE
   #define _WAVEFORM_SHOW_MAX_NITS_LINE            WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN       WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
   #define _HIGHLIGHT_NIT_RANGE                    HIGHLIGHT_NIT_RANGE
   #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         HIGHLIGHT_NIT_RANGE_BRIGHTNESS
   #define _HIGHLIGHT_NIT_RANGE_START_POINT        HIGHLIGHT_NIT_RANGE_START_POINT
@@ -959,6 +961,14 @@ uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
   ui_label    = "show the maximum nits line";
   ui_tooltip  = "Show a horizontal line where the maximum nits is on the waveform."
            "\n" "The line is invisible when the maximum nits hits above 10000 nits.";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
+> = true;
+
+uniform bool _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+<
+  ui_category = "Waveform";
+  ui_label    = "show min/max outline per column";
+  ui_tooltip  = "Draw a solid outline connecting the per-column minimum and maximum values on the waveform.";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
