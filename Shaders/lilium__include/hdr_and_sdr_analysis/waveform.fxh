@@ -563,25 +563,29 @@ void RenderWaveform
     const int coord_y = waveform_height_int
                       - int(pixel_nits_encoded * waveform_height_float + 0.5f);
 
-    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
-
-    const uint index = coord_x - group_base_pos_x;
-
-    atomicMax(Group_Max_Store_X, index);
-
-    atomicMin(Group_Column_Max0[index], coord_y);
-    atomicMax(Group_Column_Min0[index], coord_y);
-
-    barrier();
-
-    [branch]
-    if (GTID.x <= Group_Max_Store_X
-     && GTID.y == 0u)
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
     {
-      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+      const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
 
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      const uint index = coord_x - group_base_pos_x;
+
+      atomicMax(Group_Max_Store_X, index);
+
+      atomicMin(Group_Column_Max0[index], coord_y);
+      atomicMax(Group_Column_Min0[index], coord_y);
+
+      barrier();
+
+      [branch]
+      if (GTID.x <= Group_Max_Store_X
+       && GTID.y == 0u)
+      {
+        const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      }
     }
 
     [branch]
@@ -636,25 +640,29 @@ void RenderWaveform
     const int coord_y = waveform_height_int
                       - int(pixel_max_cll_encoded * waveform_height_float + 0.5f);
 
-    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
-
-    const uint index = coord_x - group_base_pos_x;
-
-    atomicMax(Group_Max_Store_X, index);
-
-    atomicMin(Group_Column_Max0[index], coord_y);
-    atomicMax(Group_Column_Min0[index], coord_y);
-
-    barrier();
-
-    [branch]
-    if (GTID.x <= Group_Max_Store_X
-     && GTID.y == 0u)
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
     {
-      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+      const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
 
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      const uint index = coord_x - group_base_pos_x;
+
+      atomicMax(Group_Max_Store_X, index);
+
+      atomicMin(Group_Column_Max0[index], coord_y);
+      atomicMax(Group_Column_Min0[index], coord_y);
+
+      barrier();
+
+      [branch]
+      if (GTID.x <= Group_Max_Store_X
+       && GTID.y == 0u)
+      {
+        const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      }
     }
 
     [branch]
@@ -705,28 +713,32 @@ void RenderWaveform
     const uint3 coords_y = waveform_height_int
                          - uint3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
-    const int pixel_max_cll_encoded_for_max = MINRGB(coords_y);
-    const int pixel_min_cll_encoded_for_min = MAXRGB(coords_y);
-
-    const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
-
-    const uint index = coord_x - group_base_pos_x;
-
-    atomicMax(Group_Max_Store_X, index);
-
-    atomicMin(Group_Column_Max0[index], pixel_max_cll_encoded_for_max);
-    atomicMax(Group_Column_Min0[index], pixel_min_cll_encoded_for_min);
-
-    barrier();
-
-    [branch]
-    if (GTID.x <= Group_Max_Store_X
-     && GTID.y == 0u)
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
     {
-      const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+      const int pixel_max_cll_encoded_for_max = MINRGB(coords_y);
+      const int pixel_min_cll_encoded_for_min = MAXRGB(coords_y);
 
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
+
+      const uint index = coord_x - group_base_pos_x;
+
+      atomicMax(Group_Max_Store_X, index);
+
+      atomicMin(Group_Column_Max0[index], pixel_max_cll_encoded_for_max);
+      atomicMax(Group_Column_Min0[index], pixel_min_cll_encoded_for_min);
+
+      barrier();
+
+      [branch]
+      if (GTID.x <= Group_Max_Store_X
+       && GTID.y == 0u)
+      {
+        const int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      }
     }
 
 #ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
@@ -812,41 +824,45 @@ void RenderWaveform
     const int3 coords_y = waveform_height_int
                         - int3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
-    const float group_base_x_normalised = float((uint(Fetch_Pos.x) / 8u) * 8u)
-                                        / BUFFER_WIDTH_MINUS_1_FLOAT;
-
-    const uint group_base_pos_x = uint(group_base_x_normalised * waveform_width_div3_float);
-
-    const uint index = coords_x.r - group_base_pos_x;
-
-    atomicMax(Group_Max_Store_X, index);
-
-    atomicMin(Group_Column_Max0[index], coords_y.r);
-    atomicMin(Group_Column_Max1[index], coords_y.g);
-    atomicMin(Group_Column_Max2[index], coords_y.b);
-
-    atomicMax(Group_Column_Min0[index], coords_y.r);
-    atomicMax(Group_Column_Min1[index], coords_y.g);
-    atomicMax(Group_Column_Min2[index], coords_y.b);
-
-    barrier();
-
-    [branch]
-    if (GTID.x <= Group_Max_Store_X
-     && GTID.y == 0u)
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
     {
-      int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+      const float group_base_x_normalised = float((uint(Fetch_Pos.x) / 8u) * 8u)
+                                          / BUFFER_WIDTH_MINUS_1_FLOAT;
 
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+      const uint group_base_pos_x = uint(group_base_x_normalised * waveform_width_div3_float);
 
-      column_max_min_coord_x += waveform_width_div3;
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max1[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min1[GTID.x]);
+      const uint index = coords_x.r - group_base_pos_x;
 
-      column_max_min_coord_x += waveform_width_div3;
-      atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max2[GTID.x]);
-      atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min2[GTID.x]);
+      atomicMax(Group_Max_Store_X, index);
+
+      atomicMin(Group_Column_Max0[index], coords_y.r);
+      atomicMin(Group_Column_Max1[index], coords_y.g);
+      atomicMin(Group_Column_Max2[index], coords_y.b);
+
+      atomicMax(Group_Column_Min0[index], coords_y.r);
+      atomicMax(Group_Column_Min1[index], coords_y.g);
+      atomicMax(Group_Column_Min2[index], coords_y.b);
+
+      barrier();
+
+      [branch]
+      if (GTID.x <= Group_Max_Store_X
+       && GTID.y == 0u)
+      {
+        int column_max_min_coord_x = int(group_base_pos_x + GTID.x);
+
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max0[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min0[GTID.x]);
+
+        column_max_min_coord_x += waveform_width_div3;
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max1[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min1[GTID.x]);
+
+        column_max_min_coord_x += waveform_width_div3;
+        atomicMin(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 0), Group_Column_Max2[GTID.x]);
+        atomicMax(Storage_Waveform_Column_Max_Min, int2(column_max_min_coord_x, 1), Group_Column_Min2[GTID.x]);
+      }
     }
 
 #ifndef TEXTURE_WAVEFORM_DEPTH_STACKING_NEEDED
@@ -1833,41 +1849,71 @@ void PS_Waveform_Render_Colour
                             : _WAVEFORM_SIZE.x < 100.f  ? int(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3 - 1)
                             :                             int(TEXTURE_WAVEFORM_TOTAL_WIDTH - 1);
 
-    const int column_max = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 0));
-          int column_min = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 1));
 
-    column_min = max(column_min, column_max);
+    int column_max = 0;
+    int column_min = 0;
 
-    const int pos_x_left = clamp(position_as_int.x - 1, 0, clamp_fetch_x);
+    int pos_x_left = 0;
 
-    const int column_max_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 0));
-          int column_min_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 1));
+    int column_max_left = 0;
+    int column_min_left = 0;
 
-    column_min_left = max(column_min_left, column_max_left);
+    int pos_x_right = 0;
 
-    const int pos_x_right = clamp(position_as_int.x + 1, 0, clamp_fetch_x);
+    int column_max_right = 0;
+    int column_min_right = 0;
 
-    const int column_max_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 0));
-          int column_min_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 1));
+    int column_extra = 0;
+    int column_left_right_extra = 0;
 
-    column_min_right = max(column_min_right, column_max_right);
+    int column_max_extra = 0;
+    int column_min_extra = 0;
+
+    int column_max_extra_left = 0;
+    int column_min_extra_left = 0;
+
+    int column_max_extra_right = 0;
+    int column_min_extra_right = 0;
+
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    {
+      column_max = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 0));
+      column_min = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 1));
+
+      column_min = max(column_min, column_max);
+
+      pos_x_left = clamp(position_as_int.x - 1, 0, clamp_fetch_x);
+
+      column_max_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 0));
+      column_min_left = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_left, 1));
+
+      column_min_left = max(column_min_left, column_max_left);
+
+      pos_x_right = clamp(position_as_int.x + 1, 0, clamp_fetch_x);
+
+      column_max_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 0));
+      column_min_right = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(pos_x_right, 1));
+
+      column_min_right = max(column_min_right, column_max_right);
 
 #ifdef IS_HDR_CSP
-    const int column_extra            = _WAVEFORM_SIZE.y < 100.f ? 2 : 4;
-    const int column_left_right_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
+      column_extra            = _WAVEFORM_SIZE.y < 100.f ? 2 : 4;
+      column_left_right_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
 #else
-    const int column_extra            = 2;
-    const int column_left_right_extra = 1;
+      column_extra            = 2;
+      column_left_right_extra = 1;
 #endif
 
-    const int column_max_extra = column_max - column_extra;
-    const int column_min_extra = column_min + column_extra;
+      column_max_extra = column_max - column_extra;
+      column_min_extra = column_min + column_extra;
 
-    const int column_max_extra_left = column_max_left - column_left_right_extra;
-    const int column_min_extra_left = column_min_left + column_left_right_extra;
+      column_max_extra_left = column_max_left - column_left_right_extra;
+      column_min_extra_left = column_min_left + column_left_right_extra;
 
-    const int column_max_extra_right = column_max_right - column_left_right_extra;
-    const int column_min_extra_right = column_min_right + column_left_right_extra;
+      column_max_extra_right = column_max_right - column_left_right_extra;
+      column_min_extra_right = column_min_right + column_left_right_extra;
+    }
 
 
     int  waveform_div_3 = -100;
@@ -1936,7 +1982,7 @@ void PS_Waveform_Render_Colour
     const int max_value_extra = max_value_coord_y - max_min_extra;
     const int min_value_extra = min_value_coord_y + max_min_extra;
 
-    [branch]
+    BRANCH()
     if ((_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y < max_value_coord_y && position_as_int.y >= max_value_extra)
      || (_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y > min_value_coord_y && position_as_int.y <= min_value_extra))
     {
@@ -1960,18 +2006,19 @@ void PS_Waveform_Render_Colour
 #endif //IS_HDR_CSP
     }
     else
-    [branch]
-    if (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
-      && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
-       || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
-      && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
-                                         || position_as_int.y >= column_max_extra_left
-                                         || position_as_int.y >= column_max_extra_right))
-     || ((( _WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y)
-       || (!_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= (min_value_coord_y + column_extra)))
-      && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
-                                         || position_as_int.y <= column_min_extra_left
-                                         || position_as_int.y <= column_min_extra_right)))
+    BRANCH()
+    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+     && (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
+       && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
+        || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
+       && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
+                                          || position_as_int.y >= column_max_extra_left
+                                          || position_as_int.y >= column_max_extra_right))
+      || ((( _WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y)
+        || (!_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= (min_value_coord_y + column_extra)))
+       && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
+                                          || position_as_int.y <= column_min_extra_left
+                                          || position_as_int.y <= column_min_extra_right))))
     {
       float grey_out = WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE / DIV_100;
 
