@@ -957,6 +957,14 @@ uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
+uniform bool _WAVEFORM_SHOW_MAX_MIN_OUTLINE
+<
+  ui_category = "Waveform";
+  ui_label    = "show min/max outline per column";
+  ui_tooltip  = "Draw a solid outline connecting the per-column minimum and maximum values on the waveform.";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
+> = true;
+
 #endif //defined(IS_COMPUTE_CAPABLE_API) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
 
