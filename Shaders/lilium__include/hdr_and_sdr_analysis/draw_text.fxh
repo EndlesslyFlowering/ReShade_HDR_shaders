@@ -94,7 +94,10 @@ uint d3rd
   {
     return uint((Float % 1.f) *     1000.f) % 10u;
   }
-  return 11u;
+  else
+  {
+    return 11u;
+  }
 }
 
 uint _d3rd
@@ -114,7 +117,10 @@ uint d4th
   {
     return uint((Float % 1.f) *    10000.f) % 10u;
   }
-  return 11u;
+  else
+  {
+    return 11u;
+  }
 }
 
 uint d5th
@@ -126,7 +132,10 @@ uint d5th
   {
     return uint((Float % 1.f) *   100000.f) % 10u;
   }
-  return 11u;
+  else
+  {
+    return 11u;
+  }
 }
 
 uint d6th
@@ -138,7 +147,10 @@ uint d6th
   {
     return uint((Float % 1.f) *  1000000.f) % 10u;
   }
-  return 11u;
+  else
+  {
+    return 11u;
+  }
 }
 
 uint d7th
@@ -150,7 +162,10 @@ uint d7th
   {
     return uint((Float % 1.f) * 10000000.f) % 10u;
   }
-  return 11u;
+  else
+  {
+    return 11u;
+  }
 }
 
 
