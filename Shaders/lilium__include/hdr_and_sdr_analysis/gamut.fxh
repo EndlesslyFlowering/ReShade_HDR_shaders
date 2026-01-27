@@ -77,7 +77,10 @@ bool IsGamut
   {
     return true;
   }
-  return false;
+  else
+  {
+    return false;
+  }
 }
 
 #define IS_GAMUT_BT709   0
