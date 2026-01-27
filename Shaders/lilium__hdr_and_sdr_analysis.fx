@@ -1091,17 +1091,15 @@ void VS_PrepareHdrAnalysis
 (
   in                  uint   VertexID          : SV_VertexID,
   out                 float4 Position          : SV_Position,
-  out nointerpolation bool2  PingPongChecks    : PingPongChecks,
-  out nointerpolation float4 HighlightNitRange : HighlightNitRange
+  out nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
-                                                                  ,
   out nointerpolation int4   DisplaySizes      : DisplaySizes,
-  out nointerpolation int4   Waveform_Data0    : Waveform_Data0
+  out nointerpolation int4   Waveform_Data0    : Waveform_Data0,
 #ifdef IS_HDR_CSP
-                                                               ,
-  out nointerpolation int    Waveform_Data1    : Waveform_Data1
+  out nointerpolation int    Waveform_Data1    : Waveform_Data1,
 #endif
 #endif
+  out nointerpolation bool2  PingPongChecks    : PingPongChecks
 )
 {
   float2 texCoord;
@@ -1229,7 +1227,6 @@ void VS_PrepareHdrAnalysis
 void PS_HdrAnalysis
 (
   in                  float4 Position          : SV_Position,
-  in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
   in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
   in  nointerpolation int4   DisplaySizes      : DisplaySizes,
@@ -1238,6 +1235,7 @@ void PS_HdrAnalysis
   in  nointerpolation int    Waveform_Data1    : Waveform_Data1,
 #endif
 #endif
+  in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
   out                 float4 Output            : SV_Target0
 )
 {
