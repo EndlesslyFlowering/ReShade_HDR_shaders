@@ -1216,9 +1216,9 @@ void VS_PrepareHdrAnalysis
   BRANCH()
   if (_SHOW_CIE)
   {
-    float2 cieDiagramRenderSize = GetCieDiagramRenderSize();
+    int2 cieDiagramRenderSize = GetCieDiagramRenderSize();
 
-    cieDiagramRenderSize.y = BUFFER_HEIGHT_FLOAT - cieDiagramRenderSize.y;
+    cieDiagramRenderSize.y = BUFFER_HEIGHT_INT - cieDiagramRenderSize.y;
 
     CieDiagramSize = cieDiagramRenderSize;
   }
