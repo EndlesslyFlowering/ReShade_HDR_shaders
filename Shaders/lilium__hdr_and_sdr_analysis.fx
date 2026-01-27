@@ -1,6 +1,11 @@
 #include "lilium__include/include_main.fxh"
 
 
+#ifndef LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND
+  #define LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND NO
+#endif
+
+
 #if (defined(IS_ANALYSIS_CAPABLE_API)   \
   && ((ACTUAL_COLOUR_SPACE == CSP_SCRGB \
     || ACTUAL_COLOUR_SPACE == CSP_HDR10 \
@@ -1093,10 +1098,19 @@ void VS_PrepareHdrAnalysis
   out                 float4 Position          : SV_Position,
   out nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
+#if (LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND == NO)
   out nointerpolation int4   DisplaySizes      : DisplaySizes,
   out nointerpolation int4   Waveform_Data0    : Waveform_Data0,
+#else
+  out nointerpolation float4 DisplaySizes      : DisplaySizes,
+  out nointerpolation float4 Waveform_Data0    : Waveform_Data0,
+#endif
 #ifdef IS_HDR_CSP
+#if (LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND == NO)
   out nointerpolation int    Waveform_Data1    : Waveform_Data1,
+#else
+  out nointerpolation float  Waveform_Data1    : Waveform_Data1,
+#endif
 #endif
 #endif
   out nointerpolation bool2  PingPongChecks    : PingPongChecks
@@ -1229,10 +1243,19 @@ void PS_HdrAnalysis
   in                  float4 Position          : SV_Position,
   in  nointerpolation float4 HighlightNitRange : HighlightNitRange,
 #ifdef IS_COMPUTE_CAPABLE_API
+#if (LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND == NO)
   in  nointerpolation int4   DisplaySizes      : DisplaySizes,
   in  nointerpolation int4   Waveform_Data0    : Waveform_Data0,
+#else
+  in  nointerpolation float4 DisplaySizes      : DisplaySizes,
+  in  nointerpolation float4 Waveform_Data0    : Waveform_Data0,
+#endif
 #ifdef IS_HDR_CSP
+#if (LINUX_AMD_SHADER_INPUTS_OUTPUTS_WORKAROUND == NO)
   in  nointerpolation int    Waveform_Data1    : Waveform_Data1,
+#else
+  in  nointerpolation float  Waveform_Data1    : Waveform_Data1,
+#endif
 #endif
 #endif
   in  nointerpolation bool2  PingPongChecks    : PingPongChecks,
