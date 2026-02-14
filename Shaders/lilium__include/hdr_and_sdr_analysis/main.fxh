@@ -683,9 +683,6 @@ texture1D
 texture2D
 #endif
           TextureConsolidated
-<
-  pooled = true;
->
 {
   Width  = CONSOLIDATED_TEXTURE_WIDTH;
 #ifndef IS_COMPUTE_CAPABLE_API

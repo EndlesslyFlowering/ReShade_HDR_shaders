@@ -51,9 +51,6 @@ static const float TEXTURE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_WAVEFORM_SCALE_HEI
 
 
 texture2D TextureWaveformScale
-<
-  pooled = true;
->
 {
   Width  = TEXTURE_WAVEFORM_SCALE_WIDTH;
   Height = TEXTURE_WAVEFORM_SCALE_HEIGHT;

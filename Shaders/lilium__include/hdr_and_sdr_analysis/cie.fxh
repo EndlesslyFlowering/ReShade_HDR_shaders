@@ -35,9 +35,6 @@ storage3D<uint> StorageCieCounter
 };
 
 texture2D TextureCieOverlay
-<
-  pooled = true;
->
 {
   Width  = CIE_TEXTURE_WIDTH_UINT;
   Height = CIE_TEXTURE_HEIGHT;
