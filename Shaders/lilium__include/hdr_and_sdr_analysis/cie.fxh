@@ -433,15 +433,16 @@ float2 Bicubic
   return float2(c, alpha);
 }
 
-void DrawCieOutlines()
+void DrawCieOutlines
+(
+  const float Unrolling_Be_Gone_Float,
+  const uint  Unrolling_Be_Gone_Uint,
+  const int   Unrolling_Be_Gone_Int
+)
 {
   BRANCH()
   if (_SHOW_CIE)
   {
-    const float unrolling_be_gone_float = tex1Dfetch(StorageConsolidated, COORDS_UNROLLING_BE_GONE);
-    const uint  unrolling_be_gone_uint  = uint(unrolling_be_gone_float);
-    const int   unrolling_be_gone_int   = int(unrolling_be_gone_float);
-
     const uint cieSettingsOld = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
 
                                 //safety so it's a big enough float number that does not get flushed
@@ -460,10 +461,10 @@ void DrawCieOutlines()
      || tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE) != _CIE_DIAGRAM_SIZE)
     {
       [loop]
-      for (int x = 0; x < (CIE_TEXTURE_WIDTH_INT + unrolling_be_gone_int); x++)
+      for (int x = 0; x < (CIE_TEXTURE_WIDTH_INT + Unrolling_Be_Gone_Int); x++)
       {
         [loop]
-        for (int y = 0; y < (CIE_TEXTURE_HEIGHT_INT + unrolling_be_gone_int); y++)
+        for (int y = 0; y < (CIE_TEXTURE_HEIGHT_INT + Unrolling_Be_Gone_Int); y++)
         {
           tex2Dstore(StorageCieOverlay, int2(x, y), (float4)0.f);
         }
@@ -547,12 +548,12 @@ void DrawCieOutlines()
 
 #define DRAW_COORDS_FROM_ARRAY(ARRAY_NAME, ARRAY_LENGTH)                      \
           [loop]                                                              \
-          for (uint i = 0u; i < (ARRAY_LENGTH + unrolling_be_gone_uint); i++) \
+          for (uint i = 0u; i < (ARRAY_LENGTH + Unrolling_Be_Gone_Uint); i++) \
           {                                                                   \
             float2 coords0 = ARRAY_NAME[i];                                   \
             float2 coords1 = ARRAY_NAME[(i + 1u) % ARRAY_LENGTH];             \
                                                                               \
-            Draw_Cie_Lines(unrolling_be_gone_float,                           \
+            Draw_Cie_Lines(Unrolling_Be_Gone_Float,                           \
                            cieMinExtra,                                       \
                            cieNormalise,                                      \
                            renderSizeMinus1,                                  \
@@ -569,7 +570,7 @@ void DrawCieOutlines()
 
 #ifdef IS_HDR_CSP
       [loop]
-      for (uint i = 0u; i < (drawCount + unrolling_be_gone_uint); i++)
+      for (uint i = 0u; i < (drawCount + Unrolling_Be_Gone_Uint); i++)
       {
         float2 coordsArray[3];
 
@@ -672,7 +673,7 @@ void DrawCieOutlines()
       static const int2 render_size_minus_1_as_int = int2(renderSizeMinus1);
 
       [loop]
-      for (int y = 0; y <= (render_size_minus_1_as_int.y + unrolling_be_gone_int); y++)
+      for (int y = 0; y <= (render_size_minus_1_as_int.y + Unrolling_Be_Gone_Int); y++)
       {
         int coord_x_left;
         int coord_x_right;
@@ -683,7 +684,7 @@ void DrawCieOutlines()
 
         //search from the left for the first pixel that is not 0 and the highest one
         [loop]
-        while (x_left <= (render_size_minus_1_as_int.x + unrolling_be_gone_int))
+        while (x_left <= (render_size_minus_1_as_int.x + Unrolling_Be_Gone_Int))
         {
           int2 xy_left = int2(x_left, y);
 
@@ -708,7 +709,7 @@ void DrawCieOutlines()
 
         //search from the right for the first pixel that is not 0 and the highest one
         [loop]
-        while (x_right >= (0 + unrolling_be_gone_int))
+        while (x_right >= (0 + Unrolling_Be_Gone_Int))
         {
           int2 xy_right = int2(x_right, y);
 
@@ -736,7 +737,7 @@ void DrawCieOutlines()
         bool row_has_been_smaller_once  = false;
         bool row_has_been_greater_twice = false;
         [loop]
-        for (int x_local = coord_x_left + 1; x_local <= (coord_x_right + unrolling_be_gone_int); x_local++)
+        for (int x_local = coord_x_left + 1; x_local <= (coord_x_right + Unrolling_Be_Gone_Int); x_local++)
         {
           int2 xy_local = int2(x_local, y);
 
@@ -773,7 +774,7 @@ void DrawCieOutlines()
         {
           //set alpha to 1 so that the background also gets drawn
           [loop]
-          for (int x_alpha = coord_x_left; x_alpha <= (coord_x_right + unrolling_be_gone_int); x_alpha++)
+          for (int x_alpha = coord_x_left; x_alpha <= (coord_x_right + Unrolling_Be_Gone_Int); x_alpha++)
           {
             int2 xy_local = int2(x_alpha, y);
 

@@ -1102,7 +1102,9 @@ void CS_Finalise()
                       unrolling_be_gone_uint,
                       unrolling_be_gone_int);
 
-  DrawCieOutlines();
+  DrawCieOutlines(unrolling_be_gone_float,
+                  unrolling_be_gone_uint,
+                  unrolling_be_gone_int);
 
   groupMemoryBarrier();
 
