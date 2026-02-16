@@ -1958,17 +1958,18 @@ void PS_Waveform_Render_Colour
     }
     else
     [branch]
-    if (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
-      && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
-       || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
-      && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
-                                         || position_as_int.y >= column_max_extra_left
-                                         || position_as_int.y >= column_max_extra_right))
-     || ((( _WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y)
-       || (!_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= (min_value_coord_y + column_extra)))
-      && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
-                                         || position_as_int.y <= column_min_extra_left
-                                         || position_as_int.y <= column_min_extra_right)))
+    if (_WAVEFORM_SHOW_MAX_MIN_OUTLINE
+     && (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
+       && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
+        || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
+       && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
+                                          || position_as_int.y >= column_max_extra_left
+                                          || position_as_int.y >= column_max_extra_right))
+      || ((( _WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y)
+        || (!_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= (min_value_coord_y + column_extra)))
+       && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
+                                          || position_as_int.y <= column_min_extra_left
+                                          || position_as_int.y <= column_min_extra_right))))
     {
       float grey_out = WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE / DIV_100;
 
