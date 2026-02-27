@@ -211,7 +211,7 @@ namespace Waveform
       max(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f) * 2.f / 32.f * FONT_SIZE_MULTIPLIER, minFontSize);
 
     const float fontSize =
-      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER * _WAVEFORM_TEXT_SIZE_ADJUST,
+      clamp(((TEXTURE_WAVEFORM_BUFFER_FACTOR * 27.f + 5.f) / 2.f * fontSizeFactor) * 2.f / 32.f * FONT_SIZE_MULTIPLIER * (_WAVEFORM_TEXT_SIZE_ADJUST / DIV_100),
             minFontSize,
             maxFontSize);
 

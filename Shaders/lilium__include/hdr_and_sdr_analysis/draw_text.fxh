@@ -1844,7 +1844,9 @@ void VS_RenderText
   out nointerpolation float  ScreenPixelRange : ScreenPixelRange
 )
 {
-  static const float2 charSize = CHAR_DIM_FLOAT * _TEXT_SIZE;
+  const float text_size = _TEXT_SIZE / DIV_100;
+
+  static const float2 charSize = CHAR_DIM_FLOAT * text_size;
 
   const VertexCoordsAndTexCoords vertexCoordsAndTexCoords = GetVertexCoordsAndTexCoordsForTextBlocks(VertexID, charSize);
 
@@ -1852,7 +1854,7 @@ void VS_RenderText
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = Msdf::GetScreenPixelRange(_TEXT_SIZE);
+  ScreenPixelRange = Msdf::GetScreenPixelRange(text_size);
 
   return;
 }
@@ -2154,7 +2156,9 @@ void VS_RenderNumbers
   out nointerpolation float  ScreenPixelRange : ScreenPixelRange
 )
 {
-  static const float2 charSize = CHAR_DIM_FLOAT * _TEXT_SIZE;
+  const float text_size = _TEXT_SIZE / DIV_100;
+
+  static const float2 charSize = CHAR_DIM_FLOAT * text_size;
 
   VertexCoordsAndTexCoords vertexCoordsAndTexCoords;
 
@@ -2252,7 +2256,7 @@ void VS_RenderNumbers
 
   TexCoord = vertexCoordsAndTexCoords.texCoords;
 
-  ScreenPixelRange = Msdf::GetScreenPixelRange(_TEXT_SIZE);
+  ScreenPixelRange = Msdf::GetScreenPixelRange(text_size);
 
   return;
 }

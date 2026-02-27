@@ -190,10 +190,10 @@ uniform float _TEXT_SIZE
   ui_label    = "text size";
   ui_type     = "slider";
   ui_units    = "%%";
-  ui_min      = 0.35f;
-  ui_max      = 2.f;
-  ui_step     = 0.00001f;
-> = 1.f;
+  ui_min      =  35.f;
+  ui_max      = 200.f;
+  ui_step     =   0.1f;
+> = 100.f;
 
 uniform float _TEXT_BRIGHTNESS
 <
@@ -714,11 +714,11 @@ uniform float _WAVEFORM_TEXT_SIZE_ADJUST
   ui_label    = "waveform text size adjust";
   ui_type     = "slider";
   ui_units    = "%%";
-  ui_min      = 0.f;
-  ui_max      = 2.f;
-  ui_step     = 0.05f;
+  ui_min      =   1.f;
+  ui_max      = 200.f;
+  ui_step     =   1.f;
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
-> = 1.f;
+> = 100.f;
 
 
 #if (defined(IS_HDR_CSP) \
