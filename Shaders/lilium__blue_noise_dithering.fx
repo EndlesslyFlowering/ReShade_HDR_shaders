@@ -432,7 +432,7 @@ uniform float _DITHER_TEMPORAL_PERIOD_TIME
   ui_tooltip  = "change dither pattern every x milliseconds";
   ui_type     = "drag";
   ui_units    = " ms";
-  ui_min      =  10.f;
+  ui_min      =   1.f;
   ui_max      = 100.f;
   ui_step     =   0.01f;
 > = 16.66f;
