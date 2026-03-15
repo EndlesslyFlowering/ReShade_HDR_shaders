@@ -142,11 +142,11 @@ void Preprocess_RGB
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  B = Csp::Mat::scRGB_To::BT2020_normalised(B);
-  D = Csp::Mat::scRGB_To::BT2020_normalised(D);
-  E = Csp::Mat::scRGB_To::BT2020_normalised(E);
-  F = Csp::Mat::scRGB_To::BT2020_normalised(F);
-  H = Csp::Mat::scRGB_To::BT2020_normalised(H);
+  B = Csp::Mat::scRGB_To::BT2020_10000(B);
+  D = Csp::Mat::scRGB_To::BT2020_10000(D);
+  E = Csp::Mat::scRGB_To::BT2020_10000(E);
+  F = Csp::Mat::scRGB_To::BT2020_10000(F);
+  H = Csp::Mat::scRGB_To::BT2020_10000(H);
 
   BRANCH()
   if (RCAS_MODE == RCAS_MODE_RGB_SHAPED)
@@ -176,7 +176,7 @@ float3 Process_RGB_For_Output
     RGB = Csp::Trc::PQ_To::Linear(RGB);
   }
 
-  RGB = Csp::Mat::BT2020_normalised_To::scRGB(RGB);
+  RGB = Csp::Mat::BT2020_10000_To::scRGB(RGB);
 
 #endif // ACTUAL_COLOUR_SPACE == CSP_SCRGB
 
@@ -225,11 +225,11 @@ void Get_Luminance
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  B_lum = dot(B, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  D_lum = dot(D, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  E_lum = dot(E, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  F_lum = dot(F, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  H_lum = dot(H, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  B_lum = dot(B, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  D_lum = dot(D, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  E_lum = dot(E, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  F_lum = dot(F, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  H_lum = dot(H, Csp::Mat::scRGB_To_XYZ_10000[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 

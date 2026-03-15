@@ -120,7 +120,7 @@ float3 ConditionallyNormaliseScRgb(float3 Colour)
 float3 ConditionallyConvertScRgbToNormalisedBt2020(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::scRGB_To::BT2020_normalised(Colour);
+  Colour = Csp::Mat::scRGB_To::BT2020_10000(Colour);
 #endif
   return Colour;
 }
@@ -169,7 +169,7 @@ float3 ConditionallyConvertNormalisedBt709ToScRgb(float3 Colour)
 float3 ConditionallyConvertNormalisedBt2020ToScRgb(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-  Colour = Csp::Mat::BT2020_normalised_To::scRGB(Colour);
+  Colour = Csp::Mat::BT2020_10000_To::scRGB(Colour);
 #endif
   return Colour;
 }

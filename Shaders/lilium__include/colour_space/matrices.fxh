@@ -71,8 +71,8 @@ namespace Csp
 
 
     //scRGB To
-    //scRGB -> XYZ normalised
-    static const float3x3 scRGB_To_XYZ_normalised =
+    //scRGB -> XYZ normalised to 10000
+    static const float3x3 scRGB_To_XYZ_10000 =
       float3x3
       (
         0.00329912640f,  0.00286067463f,  0.00144384626f,
@@ -89,8 +89,8 @@ namespace Csp
          1.54646551f,  9.53558254f, 76.0425720f
       );
 
-    //scRGB -> DCI-P3 normalised
-    static const float3x3 scRGB_To_DCIP3_normalised =
+    //scRGB -> DCI-P3 normalised to 10000
+    static const float3x3 scRGB_To_DCIP3_10000 =
       float3x3
       (
         0.00657969573f,  0.00142030429f,  0.f,
@@ -98,8 +98,8 @@ namespace Csp
         0.000136661052f, 0.000579179497f, 0.00728415930f
       );
 
-    //scRGB -> BT.2020 normalised
-    static const float3x3 scRGB_To_BT2020_normalised =
+    //scRGB -> BT.2020 normalised to 10000
+    static const float3x3 scRGB_To_BT2020_10000 =
       float3x3
       (
         0.00501923123f,  0.00263426429f,  0.000346504530f,
@@ -127,8 +127,8 @@ namespace Csp
         0.f,          0.0451133809f, 1.04394435f
       );
 
-    //DCI-P3 normalised -> scRGB
-    static const float3x3 DCIP3_normalised_To_scRGB =
+    //DCI-P3 normalised to 10000 -> scRGB
+    static const float3x3 DCIP3_10000_To_scRGB =
       float3x3
       (
         153.117523f,   -28.1175212f,    0.f,
@@ -155,9 +155,9 @@ namespace Csp
       );
 
 
-    //DCI-P3 80 To
-    //DCI-P3 80 -> XYZ normalised
-    static const float3x3 DCIP3_80_To_XYZ_normalised =
+    //DCI-P3 normalised to 80 To
+    //DCI-P3 normalised to 80 -> XYZ normalised to 10000
+    static const float3x3 DCIP3_80_To_XYZ_10000 =
       float3x3
       (
         0.00389256747f, 0.00212534144f,  0.00158573826f,
@@ -165,8 +165,8 @@ namespace Csp
         0.f,            0.000360907055f, 0.00835155509f
       );
 
-    //DCI-P3 80 -> BT.2020 normalised
-    static const float3x3 DCIP3_80_To_BT2020_normalised =
+    //DCI-P3 normalised to 80 -> BT.2020 normalised to 10000
+    static const float3x3 DCIP3_80_To_BT2020_10000 =
       float3x3
       (
          0.00603066431f,    0.00158877891f,  0.000380556768f,
@@ -240,9 +240,9 @@ namespace Csp
       );
 
 
-    //BT.2020 normalised To
-    //BT.2020 normalised -> XYZ nits
-    static const float3x3 BT2020_normalised_To_XYZ_Nits =
+    //BT.2020 normalised to 10000 To
+    //BT.2020 normalised to 10000 -> XYZ nits
+    static const float3x3 BT2020_10000_To_XYZ_Nits =
       float3x3
       (
         6369.58056f, 1446.16906f,   1688.80969f,
@@ -250,8 +250,8 @@ namespace Csp
            0.f,       280.726928f, 10609.8505f
       );
 
-    //BT.2020 normalised -> scRGB
-    static const float3x3 BT2020_normalised_To_scRGB =
+    //BT.2020 normalised to 10000 -> scRGB
+    static const float3x3 BT2020_10000_To_scRGB =
       float3x3
       (
         207.561370f,   -73.4551391f,  -9.10623264f,
@@ -268,9 +268,9 @@ namespace Csp
         -0.000226884541f, -0.00125723623f,  0.0139841204f
       );
 
-    //BT.2020 80 To
-    //BT.2020 80 -> XYZ normalised
-    static const float3x3 BT2020_80_To_XYZ_normalised =
+    //BT.2020 normalised to 80 To
+    //BT.2020 normalised to 80 -> XYZ normalised to 10000
+    static const float3x3 BT2020_80_To_XYZ_10000 =
       float3x3
       (
         0.00509566441f, 0.00115693523f,  0.00135104777f,
@@ -405,8 +405,8 @@ namespace Csp
          0.0556300804f, -0.203976958f,  1.05697154f
       );
 
-    //XYZ normalised -> scRGB
-    static const float3x3 XYZ_normalised_To_scRGB =
+    //XYZ normalised to 10000 -> scRGB
+    static const float3x3 XYZ_10000_To_scRGB =
       float3x3
       (
          405.121246f,   -192.172897f,  -62.3263435f,
@@ -491,19 +491,19 @@ namespace Csp
 
     namespace scRGB_To
     {
-      float3 XYZ_normalised(const float3 RGB)
+      float3 XYZ_10000(const float3 RGB)
       {
-        return mul(scRGB_To_XYZ_normalised, RGB);
+        return mul(scRGB_To_XYZ_10000, RGB);
       }
 
-      float3 DCIP3_normalised(const float3 RGB)
+      float3 DCIP3_10000(const float3 RGB)
       {
-        return mul(scRGB_To_DCIP3_normalised, RGB);
+        return mul(scRGB_To_DCIP3_10000, RGB);
       }
 
-      float3 BT2020_normalised(const float3 RGB)
+      float3 BT2020_10000(const float3 RGB)
       {
-        return mul(scRGB_To_BT2020_normalised, RGB);
+        return mul(scRGB_To_BT2020_10000, RGB);
       }
 
       float3 BT2020_Nits(const float3 RGB)
@@ -530,24 +530,24 @@ namespace Csp
       }
     } //DCIP3_To
 
-    namespace DCIP3_normalised_To
+    namespace DCIP3_10000_To
     {
       float3 scRGB(const float3 RGB)
       {
-        return mul(DCIP3_normalised_To_scRGB, RGB);
+        return mul(DCIP3_10000_To_scRGB, RGB);
       }
-    } //DCIP3_normalised_To
+    } //DCIP3_10000_To
 
     namespace DCIP3_80_To
     {
-      float3 XYZ_normalised(const float3 RGB)
+      float3 XYZ_10000(const float3 RGB)
       {
-        return mul(DCIP3_80_To_XYZ_normalised, RGB);
+        return mul(DCIP3_80_To_XYZ_10000, RGB);
       }
 
-      float3 BT2020_normalised(const float3 RGB)
+      float3 BT2020_10000(const float3 RGB)
       {
-        return mul(DCIP3_80_To_BT2020_normalised, RGB);
+        return mul(DCIP3_80_To_BT2020_10000, RGB);
       }
     } //DCIP3_80_To
 
@@ -589,18 +589,18 @@ namespace Csp
       }
     } //BT2020_To
 
-    namespace BT2020_normalised_To
+    namespace BT2020_10000_To
     {
       float3 scRGB(const float3 RGB)
       {
-        return mul(BT2020_normalised_To_scRGB, RGB);
+        return mul(BT2020_10000_To_scRGB, RGB);
       }
 
       float3 XYZ_Nits(const float3 RGB)
       {
-        return mul(BT2020_normalised_To_XYZ_Nits, RGB);
+        return mul(BT2020_10000_To_XYZ_Nits, RGB);
       }
-    } //BT2020_normalised_To
+    } //BT2020_10000_To
 
     namespace BT2020_Nits_To
     {
@@ -612,11 +612,11 @@ namespace Csp
 
     namespace BT2020_80_To
     {
-      float3 XYZ_normalised(const float3 RGB)
+      float3 XYZ_10000(const float3 RGB)
       {
-        return mul(BT2020_80_To_XYZ_normalised, RGB);
+        return mul(BT2020_80_To_XYZ_10000, RGB);
       }
-    } //BT2020_normalised_To
+    } //BT2020_10000_To
 
     namespace AP1D65_To
     {
@@ -708,13 +708,13 @@ namespace Csp
       }
     } //XYZ_To
 
-    namespace XYZ_normalised_To
+    namespace XYZ_10000_To
     {
       float3 scRGB(const float3 RGB)
       {
-        return mul(XYZ_normalised_To_scRGB, RGB);
+        return mul(XYZ_10000_To_scRGB, RGB);
       }
-    } //XYZ_normalised_To
+    } //XYZ_10000_To
 
   } //Mat
 

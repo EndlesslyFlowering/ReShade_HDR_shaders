@@ -327,7 +327,7 @@ float Calc_Nits_Normalised
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  nits = dot(Csp::Mat::scRGB_To_XYZ_normalised[1], Pixel);
+  nits = dot(Csp::Mat::scRGB_To_XYZ_10000[1], Pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -369,7 +369,7 @@ float3 Calc_Cll_Normalised
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  cll = Csp::Mat::scRGB_To::BT2020_normalised(Pixel);
+  cll = Csp::Mat::scRGB_To::BT2020_10000(Pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -406,9 +406,9 @@ float4 Calc_Nits_And_Cll_Normalised
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  nits = dot(Csp::Mat::scRGB_To_XYZ_normalised[1], Pixel);
+  nits = dot(Csp::Mat::scRGB_To_XYZ_10000[1], Pixel);
 
-  cll = Csp::Mat::scRGB_To::BT2020_normalised(Pixel);
+  cll = Csp::Mat::scRGB_To::BT2020_10000(Pixel);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 

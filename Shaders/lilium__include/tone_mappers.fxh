@@ -383,7 +383,7 @@ namespace Tmos
         float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+        float y1 = dot(Rgb, Csp::Mat::scRGB_To_XYZ_10000[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::BT2020_To_XYZ[1]);
 #else // fallback for shader permutations
@@ -632,7 +632,7 @@ namespace Tmos
         float3 Rgb = ConditionallyLineariseHdr10Temp(Colour);
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
-        float y1 = dot(Rgb, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+        float y1 = dot(Rgb, Csp::Mat::scRGB_To_XYZ_10000[1]);
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
         float y1 = dot(Rgb, Csp::Mat::BT2020_To_XYZ[1]);
 #else // fallback for shader permutations

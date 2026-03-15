@@ -21,7 +21,7 @@ float3 RgbModePrepareForProcessing
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Mat::scRGB_To::BT2020_normalised(Colour);
+  return Csp::Mat::scRGB_To::BT2020_10000(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -45,7 +45,7 @@ float3 RgbModePrepareForOutput
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  return Csp::Mat::BT2020_normalised_To::scRGB(Colour);
+  return Csp::Mat::BT2020_10000_To::scRGB(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
@@ -114,15 +114,15 @@ void GetLuminance
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-  Lop.aLum = dot(Ptp.a, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.bLum = dot(Ptp.b, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.cLum = dot(Ptp.c, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.dLum = dot(Ptp.d, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.eLum = dot(Ptp.e, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.fLum = dot(Ptp.f, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.gLum = dot(Ptp.g, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.hLum = dot(Ptp.h, Csp::Mat::scRGB_To_XYZ_normalised[1]);
-  Lop.iLum = dot(Ptp.i, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+  Lop.aLum = dot(Ptp.a, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.bLum = dot(Ptp.b, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.cLum = dot(Ptp.c, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.dLum = dot(Ptp.d, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.eLum = dot(Ptp.e, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.fLum = dot(Ptp.f, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.gLum = dot(Ptp.g, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.hLum = dot(Ptp.h, Csp::Mat::scRGB_To_XYZ_10000[1]);
+  Lop.iLum = dot(Ptp.i, Csp::Mat::scRGB_To_XYZ_10000[1]);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 

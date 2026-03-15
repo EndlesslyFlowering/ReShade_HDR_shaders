@@ -69,17 +69,17 @@
             {
               case CO_PRIM_BT709:
               {
-                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_10000[1]);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_10000[1]);
               }
               break;
               case CO_PRIM_BT2020:
               {
-                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
+                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_10000[1]);
               }
               break;
               default:
@@ -168,17 +168,17 @@
 //            {
 //              case CO_PRIM_BT709:
 //              {
-//                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::scRGB_To_XYZ_10000[1]);
 //              }
 //              break;
 //              case CO_PRIM_DCIP3:
 //              {
-//                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::DCIP3_80_To_XYZ_10000[1]);
 //              }
 //              break;
 //              case CO_PRIM_BT2020:
 //              {
-//                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_normalised[1]);
+//                ret = dot(CO.RGB, Csp::Mat::BT2020_80_To_XYZ_10000[1]);
 //              }
 //              break;
 //              default:
@@ -294,7 +294,7 @@
                   CO.RGB = Csp::Trc::PQ_To::Linear(CO.RGB);
                 }
 
-                CO.RGB = Csp::Mat::BT2020_normalised_To::scRGB(CO.RGB);
+                CO.RGB = Csp::Mat::BT2020_10000_To::scRGB(CO.RGB);
               }
               break;
               default:
@@ -363,14 +363,14 @@
             {
               case CO_PRIM_BT709:
               {
-                CO.RGB = Csp::Mat::scRGB_To::BT2020_normalised(CO.RGB);
+                CO.RGB = Csp::Mat::scRGB_To::BT2020_10000(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
               break;
               case CO_PRIM_DCIP3:
               {
-                CO.RGB = Csp::Mat::DCIP3_80_To::BT2020_normalised(CO.RGB);
+                CO.RGB = Csp::Mat::DCIP3_80_To::BT2020_10000(CO.RGB);
 
                 CO.RGB = Csp::Trc::Linear_To::PQ(CO.RGB);
               }
