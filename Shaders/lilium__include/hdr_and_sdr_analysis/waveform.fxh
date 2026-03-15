@@ -2071,102 +2071,17 @@ void PS_Waveform_Render_Colour
                                           * 100.f;
 #endif
 
-          float3 waveform_colour = WaveformRgbValues(waveform_colour_luminance);
+          float3 waveform_colour;
 
-          waveform_colour *= waveform_luminance
-                           / dot(waveform_colour, Csp::Mat::BT709_To_XYZ[1]);
-
-          // clean up RGB values that are above 1
-          [branch]
-          if (waveform_colour.r > 1.f)
+          BRANCH()
+          if (_WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE)
           {
-            float red_extra_luminance = waveform_colour.r * Csp::Mat::BT709_To_XYZ[1].r - Csp::Mat::BT709_To_XYZ[1].r;
+            waveform_colour = WaveformRgbValues(waveform_colour_luminance);
 
-            waveform_colour.r = 1.f;
+            waveform_colour *= waveform_luminance
+                             / dot(waveform_colour, Csp::Mat::BT709_To_XYZ[1]);
 
-            float g_plus = red_extra_luminance
-                         / Csp::Mat::BT709_To_XYZ[1].g;
-
-            waveform_colour.g += g_plus;
-
-            [branch]
-            if (waveform_colour.b > 1.f)
-            {
-              float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
-
-              waveform_colour.b = 1.f;
-
-              float g_plus = blue_extra_luminance
-                           / Csp::Mat::BT709_To_XYZ[1].g;
-
-              waveform_colour.g += g_plus;
-            }
-            else
-            [branch]
-            if (waveform_colour.g > 1.f)
-            {
-              float green_extra_luminance = waveform_colour.g * Csp::Mat::BT709_To_XYZ[1].g - Csp::Mat::BT709_To_XYZ[1].g;
-
-              waveform_colour.g = 1.f;
-
-              float b_plus = green_extra_luminance
-                           / Csp::Mat::BT709_To_XYZ[1].b;
-
-              waveform_colour.b += b_plus;
-            }
-          }
-          else
-          [branch]
-          if (waveform_colour.g > 1.f)
-          {
-            float green_extra_luminance = waveform_colour.g * Csp::Mat::BT709_To_XYZ[1].g - Csp::Mat::BT709_To_XYZ[1].g;
-
-            waveform_colour.g = 1.f;
-
-            float r_plus = green_extra_luminance
-                         / Csp::Mat::BT709_To_XYZ[1].r;
-
-            waveform_colour.r += r_plus;
-
-            [branch]
-            if (waveform_colour.b > 1.f)
-            {
-              float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
-
-              waveform_colour.b = 1.f;
-
-              float r_plus = blue_extra_luminance
-                           / Csp::Mat::BT709_To_XYZ[1].r;
-
-              waveform_colour.r += r_plus;
-            }
-            else
-            [branch]
-            if (waveform_colour.r > 1.f)
-            {
-              float red_extra_luminance = waveform_colour.r * Csp::Mat::BT709_To_XYZ[1].r - Csp::Mat::BT709_To_XYZ[1].r;
-
-              waveform_colour.r = 1.f;
-
-              float b_plus = red_extra_luminance
-                           / Csp::Mat::BT709_To_XYZ[1].b;
-
-              waveform_colour.b += b_plus;
-            }
-          }
-          else
-          [branch]
-          if (waveform_colour.b > 1.f)
-          {
-            float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
-
-            waveform_colour.b = 1.f;
-
-            float g_plus = blue_extra_luminance
-                         / Csp::Mat::BT709_To_XYZ[1].g;
-
-            waveform_colour.g += g_plus;
-
+            // clean up RGB values that are above 1
             [branch]
             if (waveform_colour.r > 1.f)
             {
@@ -2178,6 +2093,32 @@ void PS_Waveform_Render_Colour
                            / Csp::Mat::BT709_To_XYZ[1].g;
 
               waveform_colour.g += g_plus;
+
+              [branch]
+              if (waveform_colour.b > 1.f)
+              {
+                float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
+
+                waveform_colour.b = 1.f;
+
+                float g_plus = blue_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].g;
+
+                waveform_colour.g += g_plus;
+              }
+              else
+              [branch]
+              if (waveform_colour.g > 1.f)
+              {
+                float green_extra_luminance = waveform_colour.g * Csp::Mat::BT709_To_XYZ[1].g - Csp::Mat::BT709_To_XYZ[1].g;
+
+                waveform_colour.g = 1.f;
+
+                float b_plus = green_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].b;
+
+                waveform_colour.b += b_plus;
+              }
             }
             else
             [branch]
@@ -2191,7 +2132,76 @@ void PS_Waveform_Render_Colour
                            / Csp::Mat::BT709_To_XYZ[1].r;
 
               waveform_colour.r += r_plus;
+
+              [branch]
+              if (waveform_colour.b > 1.f)
+              {
+                float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
+
+                waveform_colour.b = 1.f;
+
+                float r_plus = blue_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].r;
+
+                waveform_colour.r += r_plus;
+              }
+              else
+              [branch]
+              if (waveform_colour.r > 1.f)
+              {
+                float red_extra_luminance = waveform_colour.r * Csp::Mat::BT709_To_XYZ[1].r - Csp::Mat::BT709_To_XYZ[1].r;
+
+                waveform_colour.r = 1.f;
+
+                float b_plus = red_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].b;
+
+                waveform_colour.b += b_plus;
+              }
             }
+            else
+            [branch]
+            if (waveform_colour.b > 1.f)
+            {
+              float blue_extra_luminance = waveform_colour.b * Csp::Mat::BT709_To_XYZ[1].b - Csp::Mat::BT709_To_XYZ[1].b;
+
+              waveform_colour.b = 1.f;
+
+              float g_plus = blue_extra_luminance
+                           / Csp::Mat::BT709_To_XYZ[1].g;
+
+              waveform_colour.g += g_plus;
+
+              [branch]
+              if (waveform_colour.r > 1.f)
+              {
+                float red_extra_luminance = waveform_colour.r * Csp::Mat::BT709_To_XYZ[1].r - Csp::Mat::BT709_To_XYZ[1].r;
+
+                waveform_colour.r = 1.f;
+
+                float g_plus = red_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].g;
+
+                waveform_colour.g += g_plus;
+              }
+              else
+              [branch]
+              if (waveform_colour.g > 1.f)
+              {
+                float green_extra_luminance = waveform_colour.g * Csp::Mat::BT709_To_XYZ[1].g - Csp::Mat::BT709_To_XYZ[1].g;
+
+                waveform_colour.g = 1.f;
+
+                float r_plus = green_extra_luminance
+                             / Csp::Mat::BT709_To_XYZ[1].r;
+
+                waveform_colour.r += r_plus;
+              }
+            }
+          }
+          else
+          {
+            waveform_colour = waveform_luminance;
           }
 
           static const float plus_value = (1.f / float(255u * 255u)) * 1.05f;

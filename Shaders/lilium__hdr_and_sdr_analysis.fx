@@ -101,86 +101,88 @@ uniform float2 NIT_PINGPONG2
 
 #if (!defined(IS_HDR_CSP) \
   && !defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
-  #define _TEXT_SIZE                              SDR_TEXT_SIZE
-  #define _TEXT_BRIGHTNESS                        SDR_TEXT_BRIGHTNESS
-  #define _TEXT_BG_ALPHA                          SDR_TEXT_BG_ALPHA
-  #define _TEXT_POSITION                          SDR_TEXT_POSITION
-  #define _VALUES_UPDATE_RATE                     SDR_VALUES_UPDATE_RATE
-  #define _ACTIVE_AREA_ENABLE                     SDR_ACTIVE_AREA_ENABLE
-  #define _ACTIVE_AREA_CROP_LEFT                  SDR_ACTIVE_AREA_CROP_LEFT
-  #define _ACTIVE_AREA_CROP_TOP                   SDR_ACTIVE_AREA_CROP_TOP
-  #define _ACTIVE_AREA_CROP_RIGHT                 SDR_ACTIVE_AREA_CROP_RIGHT
-  #define _ACTIVE_AREA_CROP_BOTTOM                SDR_ACTIVE_AREA_CROP_BOTTOM
-  #define _SHOW_NITS_VALUES                       SDR_SHOW_NITS_VALUES
-  #define _SHOW_RGB_OR_CLL                        SDR_SHOW_RGB_OR_CLL
-  #define _SHOW_NITS_FROM_CURSOR                  SDR_SHOW_NITS_FROM_CURSOR
-  #define _SHOW_CIE                               SDR_SHOW_CIE
-  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
-  #define _CIE_DIAGRAM_TYPE                       SDR_CIE_DIAGRAM_TYPE
-  #define _CIE_DIAGRAM_BRIGHTNESS                 SDR_CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_SIZE                       SDR_CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_OUTLINE_BT709           SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
-  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        SDR_CIE_SHOW_GAMUT_POINTERS_OUTLINE
-  #define _SHOW_HEATMAP                           SDR_SHOW_HEATMAP
-  #define _HEATMAP_BRIGHTNESS                     SDR_HEATMAP_BRIGHTNESS
-  #define _SHOW_WAVEFORM                          SDR_SHOW_WAVEFORM
-  #define _WAVEFORM_MODE                          SDR_WAVEFORM_MODE
-  #define _WAVEFORM_TEXT_SIZE_ADJUST              SDR_WAVEFORM_TEXT_SIZE_ADJUST
-  #define _WAVEFORM_SCALE_BRIGHTNESS              SDR_WAVEFORM_SCALE_BRIGHTNESS
-  #define _WAVEFORM_ALPHA                         SDR_WAVEFORM_ALPHA
-  #define _WAVEFORM_SIZE                          SDR_WAVEFORM_SIZE
-  #define _WAVEFORM_SHOW_MIN_NITS_LINE            SDR_WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_NITS_LINE            SDR_WAVEFORM_SHOW_MAX_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN       SDR_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
-  #define _HIGHLIGHT_NIT_RANGE                    SDR_HIGHLIGHT_NIT_RANGE
-  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
-  #define _HIGHLIGHT_NIT_RANGE_START_POINT        SDR_HIGHLIGHT_NIT_RANGE_START_POINT
-  #define _HIGHLIGHT_NIT_RANGE_END_POINT          SDR_HIGHLIGHT_NIT_RANGE_END_POINT
-  #define _DRAW_ABOVE_NITS_AS_BLACK               SDR_DRAW_ABOVE_NITS_AS_BLACK
-  #define _ABOVE_NITS_AS_BLACK                    SDR_ABOVE_NITS_AS_BLACK
-  #define _DRAW_BELOW_NITS_AS_BLACK               SDR_DRAW_BELOW_NITS_AS_BLACK
-  #define _BELOW_NITS_AS_BLACK                    SDR_BELOW_NITS_AS_BLACK
+  #define _TEXT_SIZE                                   SDR_TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                             SDR_TEXT_BRIGHTNESS
+  #define _TEXT_BG_ALPHA                               SDR_TEXT_BG_ALPHA
+  #define _TEXT_POSITION                               SDR_TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                          SDR_VALUES_UPDATE_RATE
+  #define _ACTIVE_AREA_ENABLE                          SDR_ACTIVE_AREA_ENABLE
+  #define _ACTIVE_AREA_CROP_LEFT                       SDR_ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                        SDR_ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                      SDR_ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                     SDR_ACTIVE_AREA_CROP_BOTTOM
+  #define _SHOW_NITS_VALUES                            SDR_SHOW_NITS_VALUES
+  #define _SHOW_RGB_OR_CLL                             SDR_SHOW_RGB_OR_CLL
+  #define _SHOW_NITS_FROM_CURSOR                       SDR_SHOW_NITS_FROM_CURSOR
+  #define _SHOW_CIE                                    SDR_SHOW_CIE
+  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM               SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
+  #define _CIE_DIAGRAM_TYPE                            SDR_CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                      SDR_CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_SIZE                            SDR_CIE_DIAGRAM_SIZE
+  #define _CIE_SHOW_GAMUT_OUTLINE_BT709                SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS             SDR_CIE_SHOW_GAMUT_POINTERS_OUTLINE
+  #define _SHOW_HEATMAP                                SDR_SHOW_HEATMAP
+  #define _HEATMAP_BRIGHTNESS                          SDR_HEATMAP_BRIGHTNESS
+  #define _SHOW_WAVEFORM                               SDR_SHOW_WAVEFORM
+  #define _WAVEFORM_MODE                               SDR_WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST                   SDR_WAVEFORM_TEXT_SIZE_ADJUST
+  #define _WAVEFORM_SCALE_BRIGHTNESS                   SDR_WAVEFORM_SCALE_BRIGHTNESS
+  #define _WAVEFORM_ALPHA                              SDR_WAVEFORM_ALPHA
+  #define _WAVEFORM_SIZE                               SDR_WAVEFORM_SIZE
+  #define _WAVEFORM_SHOW_MIN_NITS_LINE                 SDR_WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_NITS_LINE                 SDR_WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN            SDR_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+  #define _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE     SDR_WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
+  #define _HIGHLIGHT_NIT_RANGE                         SDR_HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS              SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT             SDR_HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT               SDR_HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK                    SDR_DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                         SDR_ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK                    SDR_DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                         SDR_BELOW_NITS_AS_BLACK
 #else
-  #define _TEXT_SIZE                              TEXT_SIZE
-  #define _TEXT_BRIGHTNESS                        TEXT_BRIGHTNESS
-  #define _TEXT_BG_ALPHA                          TEXT_BG_ALPHA
-  #define _TEXT_POSITION                          TEXT_POSITION
-  #define _VALUES_UPDATE_RATE                     VALUES_UPDATE_RATE
-  #define _ACTIVE_AREA_ENABLE                     ACTIVE_AREA_ENABLE
-  #define _ACTIVE_AREA_CROP_LEFT                  ACTIVE_AREA_CROP_LEFT
-  #define _ACTIVE_AREA_CROP_TOP                   ACTIVE_AREA_CROP_TOP
-  #define _ACTIVE_AREA_CROP_RIGHT                 ACTIVE_AREA_CROP_RIGHT
-  #define _ACTIVE_AREA_CROP_BOTTOM                ACTIVE_AREA_CROP_BOTTOM
-  #define _SHOW_NITS_VALUES                       SHOW_NITS_VALUES
-  #define _SHOW_RGB_OR_CLL                        SHOW_RGB_OR_CLL
-  #define _SHOW_NITS_FROM_CURSOR                  SHOW_NITS_FROM_CURSOR
-  #define _SHOW_CIE                               SHOW_CIE
-  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM          SHOW_CROSSHAIR_ON_CIE_DIAGRAM
-  #define _CIE_DIAGRAM_TYPE                       CIE_DIAGRAM_TYPE
-  #define _CIE_DIAGRAM_BRIGHTNESS                 CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_SIZE                       CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_OUTLINE_BT709           CIE_SHOW_GAMUT_BT709_OUTLINE
-  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS        CIE_SHOW_GAMUT_POINTERS_OUTLINE
-  #define _SHOW_HEATMAP                           SHOW_HEATMAP
-  #define _HEATMAP_BRIGHTNESS                     HEATMAP_BRIGHTNESS
-  #define _SHOW_WAVEFORM                          SHOW_WAVEFORM
-  #define _WAVEFORM_MODE                          WAVEFORM_MODE
-  #define _WAVEFORM_TEXT_SIZE_ADJUST              WAVEFORM_TEXT_SIZE_ADJUST
-  #define _WAVEFORM_BRIGHTNESS                    WAVEFORM_BRIGHTNESS
-  #define _WAVEFORM_SCALE_BRIGHTNESS              WAVEFORM_SCALE_BRIGHTNESS
-  #define _WAVEFORM_ALPHA                         WAVEFORM_ALPHA
-  #define _WAVEFORM_SIZE                          WAVEFORM_SIZE
-  #define _WAVEFORM_SHOW_MIN_NITS_LINE            WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_NITS_LINE            WAVEFORM_SHOW_MAX_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN       WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
-  #define _HIGHLIGHT_NIT_RANGE                    HIGHLIGHT_NIT_RANGE
-  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS         HIGHLIGHT_NIT_RANGE_BRIGHTNESS
-  #define _HIGHLIGHT_NIT_RANGE_START_POINT        HIGHLIGHT_NIT_RANGE_START_POINT
-  #define _HIGHLIGHT_NIT_RANGE_END_POINT          HIGHLIGHT_NIT_RANGE_END_POINT
-  #define _DRAW_ABOVE_NITS_AS_BLACK               DRAW_ABOVE_NITS_AS_BLACK
-  #define _ABOVE_NITS_AS_BLACK                    ABOVE_NITS_AS_BLACK
-  #define _DRAW_BELOW_NITS_AS_BLACK               DRAW_BELOW_NITS_AS_BLACK
-  #define _BELOW_NITS_AS_BLACK                    BELOW_NITS_AS_BLACK
+  #define _TEXT_SIZE                                   TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                             TEXT_BRIGHTNESS
+  #define _TEXT_BG_ALPHA                               TEXT_BG_ALPHA
+  #define _TEXT_POSITION                               TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                          VALUES_UPDATE_RATE
+  #define _ACTIVE_AREA_ENABLE                          ACTIVE_AREA_ENABLE
+  #define _ACTIVE_AREA_CROP_LEFT                       ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                        ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                      ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                     ACTIVE_AREA_CROP_BOTTOM
+  #define _SHOW_NITS_VALUES                            SHOW_NITS_VALUES
+  #define _SHOW_RGB_OR_CLL                             SHOW_RGB_OR_CLL
+  #define _SHOW_NITS_FROM_CURSOR                       SHOW_NITS_FROM_CURSOR
+  #define _SHOW_CIE                                    SHOW_CIE
+  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM               SHOW_CROSSHAIR_ON_CIE_DIAGRAM
+  #define _CIE_DIAGRAM_TYPE                            CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                      CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_SIZE                            CIE_DIAGRAM_SIZE
+  #define _CIE_SHOW_GAMUT_OUTLINE_BT709                CIE_SHOW_GAMUT_BT709_OUTLINE
+  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS             CIE_SHOW_GAMUT_POINTERS_OUTLINE
+  #define _SHOW_HEATMAP                                SHOW_HEATMAP
+  #define _HEATMAP_BRIGHTNESS                          HEATMAP_BRIGHTNESS
+  #define _SHOW_WAVEFORM                               SHOW_WAVEFORM
+  #define _WAVEFORM_MODE                               WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST                   WAVEFORM_TEXT_SIZE_ADJUST
+  #define _WAVEFORM_BRIGHTNESS                         WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_SCALE_BRIGHTNESS                   WAVEFORM_SCALE_BRIGHTNESS
+  #define _WAVEFORM_ALPHA                              WAVEFORM_ALPHA
+  #define _WAVEFORM_SIZE                               WAVEFORM_SIZE
+  #define _WAVEFORM_SHOW_MIN_NITS_LINE                 WAVEFORM_SHOW_MIN_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_NITS_LINE                 WAVEFORM_SHOW_MAX_NITS_LINE
+  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN            WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+  #define _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE     WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
+  #define _HIGHLIGHT_NIT_RANGE                         HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS              HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT             HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT               HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK                    DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                         ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK                    DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                         BELOW_NITS_AS_BLACK
 #endif
 
 
@@ -971,6 +973,13 @@ uniform bool _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
   ui_tooltip  = "Draw a solid outline connecting the per-column minimum and maximum values on the waveform.";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
+
+uniform bool _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
+<
+  ui_category = "Waveform";
+  ui_label    = "use heatmap colours for luminance and max CLL mode";
+  hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
+> = false;
 
 #endif //defined(IS_COMPUTE_CAPABLE_API) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
