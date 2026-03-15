@@ -420,10 +420,6 @@ float4 Calc_Nits_And_Cll_Normalised
 
   nits = dot(Csp::Mat::BT2020_To_XYZ[1], cll);
 
-
-
-  nits = dot(Csp::Mat::BT2020_To_XYZ[1], cll);
-
 #elif (ACTUAL_COLOUR_SPACE == CSP_BT2020_EXTENDED)
 
   cll = Pixel / 100.f;
