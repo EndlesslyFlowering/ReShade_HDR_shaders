@@ -241,6 +241,15 @@ namespace Csp
 
 
     //BT.2020 normalised To
+    //BT.2020 normalised -> XYZ nits
+    static const float3x3 BT2020_normalised_To_XYZ_Nits =
+      float3x3
+      (
+        6369.58056f, 1446.16906f,   1688.80969f,
+        2627.00219f, 6779.98095f,    593.017150f,
+           0.f,       280.726928f, 10609.8505f
+      );
+
     //BT.2020 normalised -> scRGB
     static const float3x3 BT2020_normalised_To_scRGB =
       float3x3
@@ -585,6 +594,11 @@ namespace Csp
       float3 scRGB(const float3 RGB)
       {
         return mul(BT2020_normalised_To_scRGB, RGB);
+      }
+
+      float3 XYZ_Nits(const float3 RGB)
+      {
+        return mul(BT2020_normalised_To_XYZ_Nits, RGB);
       }
     } //BT2020_normalised_To
 
