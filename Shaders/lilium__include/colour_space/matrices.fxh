@@ -80,6 +80,24 @@ namespace Csp
         0.000154646550f, 0.000953558250f, 0.00760425720f
       );
 
+    //scRGB -> XYZ nits
+    static const float3x3 scRGB_To_XYZ_Nits =
+      float3x3
+      (
+        32.9912643f,  28.6067466f,  14.4384632f,
+        17.0111198f,  57.2134933f,   5.77538537f,
+         1.54646551f,  9.53558254f, 76.0425720f
+      );
+
+    //scRGB -> DCI-P3 normalised
+    static const float3x3 scRGB_To_DCIP3_normalised =
+      float3x3
+      (
+        0.00657969573f,  0.00142030429f,  0.f,
+        0.000265553593f, 0.00773444632f,  0.f,
+        0.000136661052f, 0.000579179497f, 0.00728415930f
+      );
+
     //scRGB -> BT.2020 normalised
     static const float3x3 scRGB_To_BT2020_normalised =
       float3x3
@@ -87,6 +105,15 @@ namespace Csp
         0.00501923123f,  0.00263426429f,  0.000346504530f,
         0.000552778306f, 0.00735632330f,  0.0000908985239f,
         0.000131131513f, 0.000704106467f, 0.00716476188f
+      );
+
+    //scRGB -> BT.2020 nits
+    static const float3x3 scRGB_To_BT2020_Nits =
+      float3x3
+      (
+        50.1923103f,  26.3426437f,   3.46504521f,
+         5.52778291f, 73.5632324f,   0.908985257f,
+         1.31131505f,  7.04106473f, 71.6476211f
       );
 
 
@@ -98,6 +125,15 @@ namespace Csp
         0.486570954f, 0.265667706f,  0.198217287f,
         0.228974565f, 0.691738545f,  0.0792869105f,
         0.f,          0.0451133809f, 1.04394435f
+      );
+
+    //DCI-P3 normalised -> scRGB
+    static const float3x3 DCIP3_normalised_To_scRGB =
+      float3x3
+      (
+        153.117523f,   -28.1175212f,    0.f,
+         -5.25711917f, 130.257125f,     0.f,
+         -2.45469427f,  -9.82950592f, 137.284194f
       );
 
     //DCI-P3 -> BT.709
@@ -214,6 +250,14 @@ namespace Csp
          -2.26884531f, -12.5723619f, 139.841201f
       );
 
+    //BT.2020 nits -> scRGB
+    static const float3x3 BT2020_Nits_To_scRGB =
+      float3x3
+      (
+         0.0207561366f,   -0.00734551437f, -0.000910623290f,
+        -0.00155688088f,   0.0141612486f,  -0.000104367783f,
+        -0.000226884541f, -0.00125723623f,  0.0139841204f
+      );
 
     //BT.2020 80 To
     //BT.2020 80 -> XYZ normalised
@@ -438,9 +482,24 @@ namespace Csp
 
     namespace scRGB_To
     {
+      float3 XYZ_normalised(const float3 RGB)
+      {
+        return mul(scRGB_To_XYZ_normalised, RGB);
+      }
+
+      float3 DCIP3_normalised(const float3 RGB)
+      {
+        return mul(scRGB_To_DCIP3_normalised, RGB);
+      }
+
       float3 BT2020_normalised(const float3 RGB)
       {
         return mul(scRGB_To_BT2020_normalised, RGB);
+      }
+
+      float3 BT2020_Nits(const float3 RGB)
+      {
+        return mul(scRGB_To_BT2020_Nits, RGB);
       }
     } //scRGB_To
 
@@ -461,6 +520,14 @@ namespace Csp
         return mul(DCIP3_To_BT2020, RGB);
       }
     } //DCIP3_To
+
+    namespace DCIP3_normalised_To
+    {
+      float3 scRGB(const float3 RGB)
+      {
+        return mul(DCIP3_normalised_To_scRGB, RGB);
+      }
+    } //DCIP3_normalised_To
 
     namespace DCIP3_80_To
     {
@@ -520,6 +587,14 @@ namespace Csp
         return mul(BT2020_normalised_To_scRGB, RGB);
       }
     } //BT2020_normalised_To
+
+    namespace BT2020_Nits_To
+    {
+      float3 scRGB(const float3 RGB)
+      {
+        return mul(BT2020_Nits_To_scRGB, RGB);
+      }
+    } //BT2020_Nits_To
 
     namespace BT2020_80_To
     {
@@ -618,6 +693,14 @@ namespace Csp
         return mul(XYZ_To_AP0D65, XYZ);
       }
     } //XYZ_To
+
+    namespace XYZ_normalised_To
+    {
+      float3 scRGB(const float3 RGB)
+      {
+        return mul(XYZ_normalised_To_scRGB, RGB);
+      }
+    } //XYZ_normalised_To
 
   } //Mat
 
