@@ -1285,8 +1285,8 @@ void PS_HdrAnalysis
    || _DRAW_ABOVE_NITS_AS_BLACK
    || _DRAW_BELOW_NITS_AS_BLACK)
   {
-    //static const float4 pixelRgbNits = CalcNitsAndCll(Output.rgb);
-    static const float pixelNits = max(CalcNits(Output.rgb), 0.f);
+    //static const float4 pixelRgbNits = Calc_Nits_And_CLL(Output.rgb);
+    static const float pixelNits = max(Calc_Nits(Output.rgb), 0.f);
 
     BRANCH()
     if (_SHOW_HEATMAP)

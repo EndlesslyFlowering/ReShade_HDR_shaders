@@ -177,7 +177,7 @@ float3 WaveformRgbValues
 #endif
 
 
-float CalcNits
+float Calc_Nits
 (
   const float3 Pixel
 )
@@ -218,7 +218,7 @@ float CalcNits
   return nits;
 }
 
-float3 CalcCll
+float3 Calc_CLL
 (
   const float3 Pixel
 )
@@ -254,7 +254,7 @@ float3 CalcCll
   return cll;
 }
 
-float4 CalcNitsAndCll
+float4 Calc_Nits_And_CLL
 (
   const float3 Pixel
 )
@@ -345,7 +345,7 @@ float Calc_Nits_Normalised
   return nits_normalised;
 }
 
-float3 Calc_Cll_Normalised
+float3 Calc_CLL_Normalised
 (
   const float3 Pixel
 )
@@ -381,7 +381,7 @@ float3 Calc_Cll_Normalised
   return cll;
 }
 
-float4 Calc_Nits_And_Cll_Normalised
+float4 Calc_Nits_Normalised_And_CLL_Normalised
 (
   const float3 Pixel
 )
@@ -534,7 +534,7 @@ void CS_GetMaxAvgMinNits
       {
         int2 curFetchPos = curThreadPos + int2(x, y);
 
-        float4 curNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, curFetchPos).rgb);
+        float4 curNits = Calc_Nits_And_CLL(tex2Dfetch(SamplerBackBuffer, curFetchPos).rgb);
 
 #if (defined(GET_MAX_AVG_MIN_NITS_FETCH_X_NEEDS_CLAMPING)  \
   && defined(GET_MAX_AVG_MIN_NITS_FETCH_Y_NEEDS_CLAMPING))
@@ -809,7 +809,7 @@ void PS_GetMaxAvgMinNits
       int2 xy = int2(x + INTERMEDIATE_X_0 * id.x,
                      y + INTERMEDIATE_Y_0 * id.y);
 
-      const float curNits = CalcNits(tex2Dfetch(SamplerBackBuffer, xy).rgb);
+      const float curNits = Calc_Nits(tex2Dfetch(SamplerBackBuffer, xy).rgb);
 
       maxNits  = max(curNits, maxNits);
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)

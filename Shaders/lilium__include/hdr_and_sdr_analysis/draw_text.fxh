@@ -891,7 +891,7 @@ void CS_GetNitNumbers
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
     //loading into groupshared memory is not worth it
-    const float4 RgbNits = CalcNitsAndCll(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
+    const float4 RgbNits = Calc_Nits_And_CLL(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
     const float  Cll     = MAXRGB(RgbNits.rgb);
 
     nits = showCllValues ? GID.x == 0u ? RgbNits.w : Cll
@@ -1171,7 +1171,7 @@ void PS_GetNumbersNits
   else
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
-    nitsValue = CalcNits(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
+    nitsValue = Calc_Nits(tex2Dfetch(SamplerBackBuffer, mousePosition).rgb);
   }
 
   precise uint number;

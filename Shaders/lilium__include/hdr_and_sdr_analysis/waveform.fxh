@@ -619,7 +619,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
+    float3 pixel_cll = Calc_CLL_Normalised(Pixel);
 
     pixel_max_cll_encoded = Csp::Trc::Linear_To::PQ(MAXRGB(pixel_cll));
 
@@ -692,7 +692,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
+    float3 pixel_cll = Calc_CLL_Normalised(Pixel);
 
     pixel_cll_encoded = Csp::Trc::Linear_To::PQ(pixel_cll);
 
@@ -790,7 +790,7 @@ void RenderWaveform
 
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 
-    float3 pixel_cll = Calc_Cll_Normalised(Pixel);
+    float3 pixel_cll = Calc_CLL_Normalised(Pixel);
 
     pixel_cll_encoded = Csp::Trc::Linear_To::PQ(pixel_cll);
 
