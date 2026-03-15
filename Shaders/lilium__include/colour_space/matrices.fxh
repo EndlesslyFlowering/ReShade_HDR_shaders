@@ -453,267 +453,257 @@ namespace Csp
 
     namespace BT709_To
     {
-      float3 XYZ(const float3 RGB)
-      {
-        return mul(BT709_To_XYZ, RGB);
-      }
 
-      float3 DCIP3(const float3 RGB)
-      {
-        return mul(BT709_To_DCIP3, RGB);
-      }
+      #define FUNC_BT709_TO(TO)             \
+        float3 TO(const float3 RGB)         \
+        {                                   \
+          return mul(BT709_To_ ## TO, RGB); \
+        }
 
-      float3 BT2020(const float3 RGB)
-      {
-        return mul(BT709_To_BT2020, RGB);
-      }
+      FUNC_BT709_TO(XYZ)
+      FUNC_BT709_TO(DCIP3)
+      FUNC_BT709_TO(BT2020)
+      FUNC_BT709_TO(AP1D65)
+      FUNC_BT709_TO(AP0D65)
+      FUNC_BT709_TO(AP1D60)
+      FUNC_BT709_TO(AP0D60)
 
-      float3 AP1D65(const float3 RGB)
-      {
-        return mul(BT709_To_AP1D65, RGB);
-      }
+      #undef FUNC_BT709_TO
 
-      float3 AP0D65(const float3 RGB)
-      {
-        return mul(BT709_To_AP0D65, RGB);
-      }
-
-      float3 AP1D60(const float3 RGB)
-      {
-        return mul(BT709_To_AP1D60, RGB);
-      }
-
-      float3 AP0D60(const float3 RGB)
-      {
-        return mul(BT709_To_AP0D60, RGB);
-      }
     } //BT709_To
 
     namespace scRGB_To
     {
-      float3 XYZ_10000(const float3 RGB)
-      {
-        return mul(scRGB_To_XYZ_10000, RGB);
-      }
 
-      float3 DCIP3_10000(const float3 RGB)
-      {
-        return mul(scRGB_To_DCIP3_10000, RGB);
-      }
+      #define FUNC_SCRGB_TO(TO)             \
+        float3 TO(const float3 RGB)         \
+        {                                   \
+          return mul(scRGB_To_ ## TO, RGB); \
+        }
 
-      float3 BT2020_10000(const float3 RGB)
-      {
-        return mul(scRGB_To_BT2020_10000, RGB);
-      }
+      FUNC_SCRGB_TO(XYZ_10000)
+      FUNC_SCRGB_TO(DCIP3_10000)
+      FUNC_SCRGB_TO(BT2020_10000)
+      FUNC_SCRGB_TO(BT2020_Nits)
 
-      float3 BT2020_Nits(const float3 RGB)
-      {
-        return mul(scRGB_To_BT2020_Nits, RGB);
-      }
+      #undef FUNC_SCRGB_TO
+
     } //scRGB_To
 
     namespace DCIP3_To
     {
-      float3 XYZ(const float3 RGB)
-      {
-        return mul(DCIP3_To_XYZ, RGB);
-      }
 
-      float3 BT709(const float3 RGB)
-      {
-        return mul(DCIP3_To_BT709, RGB);
-      }
+      #define FUNC_DCIP3_TO(TO)             \
+        float3 TO(const float3 RGB)         \
+        {                                   \
+          return mul(DCIP3_To_ ## TO, RGB); \
+        }
 
-      float3 BT2020(const float3 RGB)
-      {
-        return mul(DCIP3_To_BT2020, RGB);
-      }
+      FUNC_DCIP3_TO(XYZ)
+      FUNC_DCIP3_TO(BT709)
+      FUNC_DCIP3_TO(BT2020)
+
+      #undef FUNC_DCIP3_TO
+
     } //DCIP3_To
 
     namespace DCIP3_10000_To
     {
-      float3 scRGB(const float3 RGB)
-      {
-        return mul(DCIP3_10000_To_scRGB, RGB);
-      }
+
+      #define FUNC_DCIP3_10000_TO(TO)             \
+        float3 TO(const float3 RGB)               \
+        {                                         \
+          return mul(DCIP3_10000_To_ ## TO, RGB); \
+        }
+
+      FUNC_DCIP3_10000_TO(scRGB)
+
+      #undef FUNC_DCIP3_10000_TO
+
     } //DCIP3_10000_To
 
     namespace DCIP3_80_To
     {
-      float3 XYZ_10000(const float3 RGB)
-      {
-        return mul(DCIP3_80_To_XYZ_10000, RGB);
-      }
 
-      float3 BT2020_10000(const float3 RGB)
-      {
-        return mul(DCIP3_80_To_BT2020_10000, RGB);
-      }
+      #define FUNC_DCIP3_80_TO(TO)             \
+        float3 TO(const float3 RGB)            \
+        {                                      \
+          return mul(DCIP3_80_To_ ## TO, RGB); \
+        }
+
+      FUNC_DCIP3_80_TO(XYZ_10000)
+      FUNC_DCIP3_80_TO(BT2020_10000)
+
+      #undef FUNC_DCIP3_80_TO
+
     } //DCIP3_80_To
 
     namespace BT2020_To
     {
-      float3 XYZ(const float3 RGB)
-      {
-        return mul(BT2020_To_XYZ, RGB);
-      }
 
-      float3 BT709(const float3 RGB)
-      {
-        return mul(BT2020_To_BT709, RGB);
-      }
+      #define FUNC_BT2020_TO(TO)             \
+        float3 TO(const float3 RGB)          \
+        {                                    \
+          return mul(BT2020_To_ ## TO, RGB); \
+        }
 
-      float3 DCIP3(const float3 RGB)
-      {
-        return mul(BT2020_To_DCIP3, RGB);
-      }
+      FUNC_BT2020_TO(XYZ)
+      FUNC_BT2020_TO(BT709)
+      FUNC_BT2020_TO(DCIP3)
+      FUNC_BT2020_TO(AP1D65)
+      FUNC_BT2020_TO(AP0D65)
+      FUNC_BT2020_TO(AP1D60)
+      FUNC_BT2020_TO(AP0D60)
 
-      float3 AP1D65(const float3 RGB)
-      {
-        return mul(BT2020_To_AP1D65, RGB);
-      }
+      #undef FUNC_BT2020_TO
 
-      float3 AP0D65(const float3 RGB)
-      {
-        return mul(BT2020_To_AP0D65, RGB);
-      }
-
-      float3 AP1D60(const float3 RGB)
-      {
-        return mul(BT2020_To_AP1D60, RGB);
-      }
-
-      float3 AP0D60(const float3 RGB)
-      {
-        return mul(BT2020_To_AP0D60, RGB);
-      }
     } //BT2020_To
 
     namespace BT2020_10000_To
     {
-      float3 scRGB(const float3 RGB)
-      {
-        return mul(BT2020_10000_To_scRGB, RGB);
-      }
 
-      float3 XYZ_Nits(const float3 RGB)
-      {
-        return mul(BT2020_10000_To_XYZ_Nits, RGB);
-      }
+      #define FUNC_BT2020_10000_TO(TO)             \
+        float3 TO(const float3 RGB)                \
+        {                                          \
+          return mul(BT2020_10000_To_ ## TO, RGB); \
+        }
+
+      FUNC_BT2020_10000_TO(scRGB)
+      FUNC_BT2020_10000_TO(XYZ_Nits)
+
+      #undef FUNC_BT2020_10000_TO
+
     } //BT2020_10000_To
 
     namespace BT2020_Nits_To
     {
-      float3 scRGB(const float3 RGB)
-      {
-        return mul(BT2020_Nits_To_scRGB, RGB);
-      }
+
+      #define FUNC_BT2020_NITS_TO(TO)             \
+        float3 TO(const float3 RGB)               \
+        {                                         \
+          return mul(BT2020_Nits_To_ ## TO, RGB); \
+        }
+
+      FUNC_BT2020_NITS_TO(scRGB)
+
+      #undef FUNC_BT2020_NITS_TO
+
     } //BT2020_Nits_To
 
     namespace BT2020_80_To
     {
-      float3 XYZ_10000(const float3 RGB)
-      {
-        return mul(BT2020_80_To_XYZ_10000, RGB);
-      }
+
+      #define FUNC_BT2020_80_TO(TO)             \
+        float3 TO(const float3 RGB)             \
+        {                                       \
+          return mul(BT2020_80_To_ ## TO, RGB); \
+        }
+
+      FUNC_BT2020_80_TO(XYZ_10000)
+
+      #undef FUNC_BT2020_80_TO
+
     } //BT2020_10000_To
 
     namespace AP1D65_To
     {
-      float3 XYZ(const float3 RGB)
-      {
-        return mul(AP1D65_To_XYZ, RGB);
-      }
+
+      #define FUNC_AP1D65_TO(TO)             \
+        float3 TO(const float3 RGB)          \
+        {                                    \
+          return mul(AP1D65_To_ ## TO, RGB); \
+        }
+
+      FUNC_AP1D65_TO(XYZ)
+
+      #undef FUNC_AP1D65_TO
+
     } //AP1D65_To
 
     namespace AP0D65_To
     {
-      float3 XYZ(const float3 RGB)
-      {
-        return mul(AP0D65_To_XYZ, RGB);
-      }
 
-      float3 BT709(const float3 RGB)
-      {
-        return mul(AP0D65_To_BT709, RGB);
-      }
+      #define FUNC_AP0D65_TO(TO)             \
+        float3 TO(const float3 RGB)          \
+        {                                    \
+          return mul(AP0D65_To_ ## TO, RGB); \
+        }
 
-      float3 BT2020(const float3 RGB)
-      {
-        return mul(AP0D65_To_BT2020, RGB);
-      }
+      FUNC_AP0D65_TO(XYZ)
+      FUNC_AP0D65_TO(BT709)
+      FUNC_AP0D65_TO(BT2020)
+
+      #undef FUNC_AP0D65_TO
+
     } //AP0D65_To
 
     namespace AP1D60_To
     {
-      float3 BT709(const float3 RGB)
-      {
-        return mul(AP1D60_To_BT709, RGB);
-      }
 
-      float3 BT2020(const float3 RGB)
-      {
-        return mul(AP1D60_To_BT2020, RGB);
-      }
+      #define FUNC_AP1D60_TO(TO)             \
+        float3 TO(const float3 RGB)          \
+        {                                    \
+          return mul(AP1D60_To_ ## TO, RGB); \
+        }
 
-      float3 AP0D60(const float3 RGB)
-      {
-        return mul(AP1D60_To_AP0D60, RGB);
-      }
+      FUNC_AP1D60_TO(BT709)
+      FUNC_AP1D60_TO(BT2020)
+      FUNC_AP1D60_TO(AP0D60)
+
+      #undef FUNC_AP1D60_TO
+
     } //AP1D60_To
 
     namespace AP0D60_To
     {
-      float3 BT709(const float3 RGB)
-      {
-        return mul(AP0D60_To_BT709, RGB);
-      }
 
-      float3 BT2020(const float3 RGB)
-      {
-        return mul(AP0D60_To_BT2020, RGB);
-      }
+      #define FUNC_AP0D60_TO(TO)             \
+        float3 TO(const float3 RGB)          \
+        {                                    \
+          return mul(AP0D60_To_ ## TO, RGB); \
+        }
 
-      float3 AP1D60(const float3 RGB)
-      {
-        return mul(AP0D60_To_AP1D60, RGB);
-      }
+      FUNC_AP0D60_TO(BT709)
+      FUNC_AP0D60_TO(BT2020)
+      FUNC_AP0D60_TO(AP1D60)
+
+      #undef FUNC_AP0D60_TO
+
     } //AP0D60_To
 
     namespace XYZ_To
     {
-      float3 BT709(const float3 XYZ)
-      {
-        return mul(XYZ_To_BT709, XYZ);
-      }
 
-      float3 DCIP3(const float3 XYZ)
-      {
-        return mul(XYZ_To_DCIP3, XYZ);
-      }
+      #define FUNC_XYZ_TO(TO)             \
+        float3 TO(const float3 XYZ)       \
+        {                                 \
+          return mul(XYZ_To_ ## TO, XYZ); \
+        }
 
-      float3 BT2020(const float3 XYZ)
-      {
-        return mul(XYZ_To_BT2020, XYZ);
-      }
+      FUNC_XYZ_TO(BT709)
+      FUNC_XYZ_TO(DCIP3)
+      FUNC_XYZ_TO(BT2020)
+      FUNC_XYZ_TO(AP1D65)
+      FUNC_XYZ_TO(AP0D65)
 
-      float3 AP1D65(const float3 XYZ)
-      {
-        return mul(XYZ_To_AP1D65, XYZ);
-      }
+      #undef FUNC_XYZ_TO
 
-      float3 AP0D65(const float3 XYZ)
-      {
-        return mul(XYZ_To_AP0D65, XYZ);
-      }
     } //XYZ_To
 
     namespace XYZ_10000_To
     {
-      float3 scRGB(const float3 RGB)
-      {
-        return mul(XYZ_10000_To_scRGB, RGB);
-      }
+
+      #define FUNC_XYZ_10000_TO(TO)             \
+        float3 TO(const float3 XYZ)             \
+        {                                       \
+          return mul(XYZ_10000_To_ ## TO, XYZ); \
+        }
+
+
+      FUNC_XYZ_10000_TO(scRGB)
+
+      #undef FUNC_XYZ_10000_TO
+
     } //XYZ_10000_To
 
   } //Mat
