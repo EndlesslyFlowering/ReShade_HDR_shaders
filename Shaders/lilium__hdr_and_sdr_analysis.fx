@@ -352,16 +352,16 @@ uniform bool _SHOW_NITS_FROM_CURSOR
   ui_tooltip  = "See tooltip from \"show max/avg/min luminance and RGB values\" for more Information.";
 > = true;
 
-#define SHOW_RGB_VALUES 0
-#define SHOW_CLL_VALUES 1
+#define SHOW_CLL_VALUES 0
+#define SHOW_RGB_VALUES 1
 
 uniform uint _SHOW_RGB_OR_CLL
 <
   ui_category = "Luminance and Content Light Level analysis";
-  ui_label    = "show RGB or CLL values";
+  ui_label    = "show CLL or RGB values";
   ui_type     = "combo";
-  ui_items    = "RGB values\0"
-                "CLL values\0";
+  ui_items    = "CLL values\0"
+                "RGB values\0";
 > = 0;
 
 
