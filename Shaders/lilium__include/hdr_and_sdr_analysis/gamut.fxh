@@ -166,9 +166,9 @@ void PS_CalcGamuts
   CurGamut = 0.f;
 
   BRANCH()
-  if (SHOW_GAMUTS
-   || SHOW_GAMUT_FROM_CURSOR
-   || SHOW_GAMUT_MAP)
+  if (GAMUTS_SHOW
+   || GAMUT_FROM_CURSOR_SHOW
+   || GAMUT_MAP_SHOW)
   {
     const float3 pixel = tex2Dfetch(SamplerBackBuffer, int2(Position.xy)).rgb;
 
@@ -299,7 +299,7 @@ void CS_CountGamuts
 )
 {
   BRANCH()
-  if (SHOW_GAMUTS)
+  if (GAMUTS_SHOW)
   {
 
     if (all(GTID.xy == 0))
@@ -491,7 +491,7 @@ float3 CreateGamutMap
 )
 //  float WhitePoint)
 {
-  if (SHOW_GAMUT_MAP)
+  if (GAMUT_MAP_SHOW)
   {
     float3 output;
 

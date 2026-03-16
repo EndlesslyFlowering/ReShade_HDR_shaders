@@ -876,7 +876,7 @@ void CS_GetNitNumbers
 
   [branch]
   if (GID.y < 3
-   && _SHOW_NITS_VALUES)
+   && _NIT_VALUES_SHOW)
   {
     int fetchPos = COORDS_SHOW_MAX_NITS + GID.y;
 
@@ -887,7 +887,7 @@ void CS_GetNitNumbers
   }
   else
   BRANCH()
-  if (_SHOW_NITS_FROM_CURSOR)
+  if (_NIT_VALUES_FROM_CURSOR_SHOW)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
     //loading into groupshared memory is not worth it
@@ -1333,9 +1333,9 @@ float3 MergeText
 
   // tone map pixels below the overlay area
   [branch]
-  if (_TEXT_BG_ALPHA > 0.f
-   || innerOpacity   > 0.f
-   || outerOpacity   > 0.f)
+  if (_TEXT_BG_OPACITY > 0.f
+   || innerOpacity     > 0.f
+   || outerOpacity     > 0.f)
   {
     // first set 1.0 to be equal to _TEXT_BRIGHTNESS
     float adjustFactor;
@@ -1380,7 +1380,7 @@ float3 MergeText
 #endif
 
     // apply the background
-    Output = lerp(Output, 0.f, _TEXT_BG_ALPHA / 100.f);
+    Output = lerp(Output, 0.f, _TEXT_BG_OPACITY / 100.f);
 
     // apply the text
     Output = lerp(Output, 0.f, outerOpacity);
@@ -1451,8 +1451,8 @@ float GetMaxCharsForNitsRgbCll()
   float maxChars = MAX_CHARS_NITS_RGB_CLL;
 
   FLATTEN()
-  if (_SHOW_NITS_VALUES
-   || _SHOW_NITS_FROM_CURSOR)
+  if (_NIT_VALUES_SHOW
+   || _NIT_VALUES_FROM_CURSOR_SHOW)
   {
 #ifdef IS_COMPUTE_CAPABLE_API
 
@@ -1469,7 +1469,7 @@ float GetMaxCharsForNitsRgbCll()
 #endif //IS_COMPUTE_CAPABLE_API
 
     FLATTEN()
-    if (!_SHOW_NITS_FROM_CURSOR)
+    if (!_NIT_VALUES_FROM_CURSOR_SHOW)
     {
       maxChars -= 3.f;
     }
@@ -1484,8 +1484,8 @@ float GetMaxCharsForGamut()
   float maxChars = 0.f;
 
   FLATTEN()
-  if (SHOW_GAMUTS
-   || SHOW_GAMUT_FROM_CURSOR)
+  if (GAMUTS_SHOW
+   || GAMUT_FROM_CURSOR_SHOW)
   {
     maxChars = max(maxChars, TEXT_BLOCK_SIZE_GAMUT_PERCENTAGES.x + TEXT_BLOCK_DRAW_X_OFFSET[3]);
   }
@@ -1502,8 +1502,8 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
   ret.maxLines = MAX_LINES_NITS_RGB_CLL;
 
   FLATTEN()
-  if (_SHOW_NITS_VALUES
-   || _SHOW_NITS_FROM_CURSOR)
+  if (_NIT_VALUES_SHOW
+   || _NIT_VALUES_FROM_CURSOR_SHOW)
   {
 #ifdef IS_COMPUTE_CAPABLE_API
 
@@ -1520,27 +1520,27 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
 #endif //IS_COMPUTE_CAPABLE_API
 
     FLATTEN()
-    if (!_SHOW_NITS_FROM_CURSOR)
+    if (!_NIT_VALUES_FROM_CURSOR_SHOW)
     {
       ret.maxChars -= 3u;
     }
   }
 
   FLATTEN()
-  if (!_SHOW_NITS_VALUES)
+  if (!_NIT_VALUES_SHOW)
   {
     ret.maxLines -= 3;
   }
 
   FLATTEN()
-  if (!_SHOW_NITS_FROM_CURSOR)
+  if (!_NIT_VALUES_FROM_CURSOR_SHOW)
   {
     ret.maxLines -= 1;
   }
 
   FLATTEN()
-  if (!_SHOW_NITS_VALUES
-   && !_SHOW_NITS_FROM_CURSOR)
+  if (!_NIT_VALUES_SHOW
+   && !_NIT_VALUES_FROM_CURSOR_SHOW)
   {
     ret.maxLines -= 1;
   }
@@ -1558,13 +1558,13 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForGamut()
   ret.maxLines = MAX_LINES_GAMUT;
 
   FLATTEN()
-  if (!SHOW_GAMUTS)
+  if (!GAMUTS_SHOW)
   {
     ret.maxLines -= GAMUT_PERCENTAGES_LINES;
   }
 
   FLATTEN()
-  if (!SHOW_GAMUT_FROM_CURSOR)
+  if (!GAMUT_FROM_CURSOR_SHOW)
   {
     ret.maxLines -= 1;
   }
@@ -1668,7 +1668,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
       }
       //nits|CLL red|CLL green|CLL blue
       else if (currentTextBlockID == 1
-            && (_SHOW_NITS_VALUES || _SHOW_NITS_FROM_CURSOR))
+            && (_NIT_VALUES_SHOW || _NIT_VALUES_FROM_CURSOR_SHOW))
       {
         calcOffsets = true;
 
@@ -1678,7 +1678,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
       //avg:
       //min:
       else if (currentTextBlockID == 2
-            && _SHOW_NITS_VALUES)
+            && _NIT_VALUES_SHOW)
       {
         calcOffsets = true;
 
@@ -1686,38 +1686,38 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
       }
       //cursor:
       else if (currentTextBlockID == 3
-            && _SHOW_NITS_FROM_CURSOR)
+            && _NIT_VALUES_FROM_CURSOR_SHOW)
       {
         calcOffsets = true;
 
-        vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
-                                           : 2.f;
+        vertexOffset.y = _NIT_VALUES_SHOW ? 5.f
+                                          : 2.f;
       }
 #ifdef IS_HDR_CSP
       //gamut percentages
       else if (currentTextBlockID == 4
-            && SHOW_GAMUTS)
+            && GAMUTS_SHOW)
       {
         calcOffsets = true;
 
-        vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
-                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
-                       : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                         : 1.f;
+        vertexOffset.y = ( _NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 6.f
+                       : (!_NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 3.f
+                       : ( _NIT_VALUES_SHOW && !_NIT_VALUES_FROM_CURSOR_SHOW) ? 5.f
+                                                                              : 1.f;
       }
       //cursor gamut
       else if (currentTextBlockID == 5
-            && SHOW_GAMUT_FROM_CURSOR)
+            && GAMUT_FROM_CURSOR_SHOW)
       {
         calcOffsets = true;
 
-        vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
-                       : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
-                       : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                         : 1.f;
+        vertexOffset.y = ( _NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 6.f
+                       : (!_NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 3.f
+                       : ( _NIT_VALUES_SHOW && !_NIT_VALUES_FROM_CURSOR_SHOW) ? 5.f
+                                                                              : 1.f;
 
         FLATTEN()
-        if (SHOW_GAMUTS)
+        if (GAMUTS_SHOW)
         {
           vertexOffset.y += GAMUT_PERCENTAGES_LINES;
         }
@@ -1763,7 +1763,7 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForTextBlocks
 #endif //IS_COMPUTE_CAPABLE_API
 
           [flatten]
-          if (!_SHOW_NITS_FROM_CURSOR)
+          if (!_NIT_VALUES_FROM_CURSOR_SHOW)
           {
             vertexOffset.x -= 3.f;
           }
@@ -1918,15 +1918,15 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 #endif
                                      ;
 
-#define SHOW_NITS_VALUES_NUMBER_ID_MAX      (NITS_NUMBERS_PER_ROW * 3)
-#define SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 4)
+#define NIT_VALUES_SHOW_NUMBER_ID_MAX             (NITS_NUMBERS_PER_ROW * 3)
+#define NIT_VALUES_FROM_CURSOR_SHOW_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 4)
 
 #ifdef IS_FLOAT_HDR_CSP
-  #define SHOW_GAMUTS_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
+  #define GAMUTS_SHOW_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
                                    + NITS_NUMBERS_PER_ROW * 1 \
                                    + 6 * 5)
 #else
-  #define SHOW_GAMUTS_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
+  #define GAMUTS_SHOW_NUMBER_ID_MAX (NITS_NUMBERS_PER_ROW * 3 \
                                    + NITS_NUMBERS_PER_ROW * 1 \
                                    + 6 * 3)
 #endif
@@ -1964,8 +1964,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
     //max/avg/min nits
     [branch]
-    if (_SHOW_NITS_VALUES
-     && currentNumberID < SHOW_NITS_VALUES_NUMBER_ID_MAX
+    if (_NIT_VALUES_SHOW
+     && currentNumberID < NIT_VALUES_SHOW_NUMBER_ID_MAX
      && drawMaxRbgOrMaxCll)
     {
       calcOffsets = true;
@@ -1989,8 +1989,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #endif
 
-      uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
-                                               : 4u;
+      uint drawOffset = _NIT_VALUES_FROM_CURSOR_SHOW ? 7u
+                                                     : 4u;
 
 #ifdef IS_COMPUTE_CAPABLE_API
       vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
@@ -2004,9 +2004,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
     //cursor nits
     else
     [branch]
-    if (_SHOW_NITS_FROM_CURSOR
-     && currentNumberID >= SHOW_NITS_VALUES_NUMBER_ID_MAX
-     && currentNumberID <  SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
+    if (_NIT_VALUES_FROM_CURSOR_SHOW
+     && currentNumberID >= NIT_VALUES_SHOW_NUMBER_ID_MAX
+     && currentNumberID <  NIT_VALUES_FROM_CURSOR_SHOW_NUMBER_ID_MAX
      && drawMaxRbgOrMaxCll)
     {
       calcOffsets = true;
@@ -2030,8 +2030,8 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
 #endif
 
-      uint drawOffset = _SHOW_NITS_FROM_CURSOR ? 7u
-                                               : 4u;
+      uint drawOffset = _NIT_VALUES_FROM_CURSOR_SHOW ? 7u
+                                                     : 4u;
 
 #ifdef IS_COMPUTE_CAPABLE_API
       vertexOffset.x = float(drawOffset + a + b + spacerOffset + dotOffset);
@@ -2039,16 +2039,16 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
       vertexOffset.x = float(drawOffset + a + b + dotOffset);
 #endif
 
-      vertexOffset.y = _SHOW_NITS_VALUES ? 5.f
-                                         : 2.f;
+      vertexOffset.y = _NIT_VALUES_SHOW ? 5.f
+                                        : 2.f;
     }
 
 #ifdef IS_HDR_CSP
     else
     [branch]
-    if (SHOW_GAMUTS
-     && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
-     && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
+    if (GAMUTS_SHOW
+     && currentNumberID >= NIT_VALUES_FROM_CURSOR_SHOW_NUMBER_ID_MAX
+     && currentNumberID <  GAMUTS_SHOW_NUMBER_ID_MAX)
     //gamut percentages
     {
       calcOffsets = true;
@@ -2065,10 +2065,10 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 
       vertexOffset.y = float(localNumberID / 6u);
 
-      vertexOffset.y += ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
-                      : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
-                      : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                        : 1.f;
+      vertexOffset.y += ( _NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 6.f
+                      : (!_NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 3.f
+                      : ( _NIT_VALUES_SHOW && !_NIT_VALUES_FROM_CURSOR_SHOW) ? 5.f
+                                                                             : 1.f;
     }
 #endif //IS_HDR_CSP
     else
@@ -2116,9 +2116,9 @@ VertexCoordsAndTexCoords GetVertexCoordsAndTexCoordsForNumbers
 #ifdef IS_HDR_CSP
 
         [flatten]
-        if (SHOW_GAMUTS
-         && currentNumberID >= SHOW_NITS_FROM_CURSOR_NUMBER_ID_MAX
-         && currentNumberID <  SHOW_GAMUTS_NUMBER_ID_MAX)
+        if (GAMUTS_SHOW
+         && currentNumberID >= NIT_VALUES_FROM_CURSOR_SHOW_NUMBER_ID_MAX
+         && currentNumberID <  GAMUTS_SHOW_NUMBER_ID_MAX)
         {
           maxChars = GetMaxCharsForGamut();
         }
@@ -2173,7 +2173,7 @@ void VS_RenderNumbers
   //cursor gamut
   else
   BRANCH()
-  if (SHOW_GAMUT_FROM_CURSOR)
+  if (GAMUT_FROM_CURSOR_SHOW)
   {
     const int2 mousePosition = clamp(MOUSE_POSITION, 0, BUFFER_SIZE_MINUS_1_INT);
     const float gamut = floor(tex2Dfetch(SamplerGamuts, mousePosition) * 256.f); // *256 for safety
@@ -2184,13 +2184,13 @@ void VS_RenderNumbers
 
     vertexOffset.x = 10.f;
 
-    vertexOffset.y = ( _SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 6.f
-                   : (!_SHOW_NITS_VALUES &&  _SHOW_NITS_FROM_CURSOR) ? 3.f
-                   : ( _SHOW_NITS_VALUES && !_SHOW_NITS_FROM_CURSOR) ? 5.f
-                                                                     : 1.f;
+    vertexOffset.y = ( _NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 6.f
+                   : (!_NIT_VALUES_SHOW &&  _NIT_VALUES_FROM_CURSOR_SHOW) ? 3.f
+                   : ( _NIT_VALUES_SHOW && !_NIT_VALUES_FROM_CURSOR_SHOW) ? 5.f
+                                                                          : 1.f;
 
     FLATTEN()
-    if (SHOW_GAMUTS)
+    if (GAMUTS_SHOW)
     {
       vertexOffset.y += GAMUT_PERCENTAGES_LINES;
     }
@@ -2283,9 +2283,9 @@ void PS_RenderNumbers
   const float outerOpacity = opacities[1];
 
   [branch]
-  if (_TEXT_BG_ALPHA > 0.f
-   || innerOpacity   > 0.f
-   || outerOpacity   > 0.f)
+  if (_TEXT_BG_OPACITY > 0.f
+   || innerOpacity     > 0.f
+   || outerOpacity     > 0.f)
   {
 #if (ACTUAL_COLOUR_SPACE == CSP_SCRGB)
 

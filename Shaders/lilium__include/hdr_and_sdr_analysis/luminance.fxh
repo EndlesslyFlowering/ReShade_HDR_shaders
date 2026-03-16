@@ -496,9 +496,9 @@ void CS_GetMaxAvgMinNits
 )
 {
   BRANCH()
-  if (_SHOW_NITS_VALUES
-   || (_SHOW_WAVEFORM
-    && (_WAVEFORM_SHOW_MIN_NITS_LINE || _WAVEFORM_SHOW_MAX_NITS_LINE)))
+  if (_NIT_VALUES_SHOW
+   || (_WAVEFORM_SHOW
+    && (_WAVEFORM_MIN_NITS_LINE_SHOW || _WAVEFORM_MAX_NITS_LINE_SHOW)))
   {
 
     if (all(GTID.xy == 0))

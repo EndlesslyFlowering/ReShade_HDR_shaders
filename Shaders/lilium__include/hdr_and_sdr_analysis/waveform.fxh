@@ -561,7 +561,7 @@ void RenderWaveform
                       - int(pixel_nits_encoded * waveform_height_float + 0.5f);
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW)
     {
       const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
 
@@ -638,7 +638,7 @@ void RenderWaveform
                       - int(pixel_max_cll_encoded * waveform_height_float + 0.5f);
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW)
     {
       const uint group_base_pos_x = uint(float(uint(Fetch_Pos.x) / 8u) * column_max_min_coord_x_mul);
 
@@ -711,7 +711,7 @@ void RenderWaveform
                          - uint3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW)
     {
       const int pixel_max_cll_encoded_for_max = MINRGB(coords_y);
       const int pixel_min_cll_encoded_for_min = MAXRGB(coords_y);
@@ -822,7 +822,7 @@ void RenderWaveform
                         - int3(pixel_cll_encoded * waveform_height_float + 0.5f);
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW)
     {
       const float group_base_x_normalised = float((uint(Fetch_Pos.x) / 8u) * 8u)
                                           / BUFFER_WIDTH_MINUS_1_FLOAT;
@@ -922,7 +922,7 @@ void CS_Get_Max_Waveform_Value
 )
 {
   BRANCH()
-  if (_SHOW_WAVEFORM)
+  if (_WAVEFORM_SHOW)
   {
     const bool is_dtid_00 = all(DTID.xy == 0u);
 
@@ -1829,7 +1829,7 @@ void PS_Waveform_Render_Colour
   Out = (float4)0.f;
 
   BRANCH()
-  if (_SHOW_WAVEFORM)
+  if (_WAVEFORM_SHOW)
   {
     const int2 position_as_int = int2(Position.xy);
 
@@ -1873,7 +1873,7 @@ void PS_Waveform_Render_Colour
     int column_min_extra_right = 0;
 
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN)
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW)
     {
       column_max = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 0));
       column_min = tex2Dfetch(Sampler_Waveform_Column_Max_Min, int2(position_as_int.x, 1));
@@ -1980,8 +1980,8 @@ void PS_Waveform_Render_Colour
     const int min_value_extra = min_value_coord_y + max_min_extra;
 
     BRANCH()
-    if ((_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y < max_value_coord_y && position_as_int.y >= max_value_extra)
-     || (_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y > min_value_coord_y && position_as_int.y <= min_value_extra))
+    if ((_WAVEFORM_MAX_NITS_LINE_SHOW && position_as_int.y < max_value_coord_y && position_as_int.y >= max_value_extra)
+     || (_WAVEFORM_MIN_NITS_LINE_SHOW && position_as_int.y > min_value_coord_y && position_as_int.y <= min_value_extra))
     {
       Out = (float4)1.f;
 
@@ -2004,20 +2004,20 @@ void PS_Waveform_Render_Colour
     }
     else
     BRANCH()
-    if (_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+    if (_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW
      && (((column_max_left < waveform_height_int || column_max_right < waveform_height_int)
-       && (( _WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= max_value_coord_y)
-        || (!_WAVEFORM_SHOW_MAX_NITS_LINE && position_as_int.y >= (max_value_coord_y - column_extra)))
+       && (( _WAVEFORM_MAX_NITS_LINE_SHOW && position_as_int.y >= max_value_coord_y)
+        || (!_WAVEFORM_MAX_NITS_LINE_SHOW && position_as_int.y >= (max_value_coord_y - column_extra)))
        && position_as_int.y < column_max && (position_as_int.y >= column_max_extra
                                           || position_as_int.y >= column_max_extra_left
                                           || position_as_int.y >= column_max_extra_right))
-      || ((( _WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= min_value_coord_y)
-        || (!_WAVEFORM_SHOW_MIN_NITS_LINE && position_as_int.y <= (min_value_coord_y + column_extra)))
+      || ((( _WAVEFORM_MIN_NITS_LINE_SHOW && position_as_int.y <= min_value_coord_y)
+        || (!_WAVEFORM_MIN_NITS_LINE_SHOW && position_as_int.y <= (min_value_coord_y + column_extra)))
        && position_as_int.y > column_min && (position_as_int.y <= column_min_extra
                                           || position_as_int.y <= column_min_extra_left
                                           || position_as_int.y <= column_min_extra_right))))
     {
-      float grey_out = WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE / DIV_100;
+      float grey_out = WAVEFORM_PER_COLUMN_MAX_MIN_BRIGHTNESS_PERCENTAGE / DIV_100;
 
       BRANCH()
       if (_WAVEFORM_MODE == WAVEFORM_MODE_RGB_COMBINED
@@ -2074,7 +2074,7 @@ void PS_Waveform_Render_Colour
           float3 waveform_colour;
 
           BRANCH()
-          if (_WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE)
+          if (_WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS)
           {
             waveform_colour = WaveformRgbValues(waveform_colour_luminance);
 
@@ -2360,7 +2360,7 @@ void CS_Clear_Texture_Waveform
 )
 {
   BRANCH()
-  if (_SHOW_WAVEFORM)
+  if (_WAVEFORM_SHOW)
   {
     tex3Dstore(StorageWaveform, DTID, 0u);
   }

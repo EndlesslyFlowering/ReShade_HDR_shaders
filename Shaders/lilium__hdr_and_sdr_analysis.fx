@@ -52,7 +52,7 @@ HDR10_TO_LINEAR_LUT()
 
 #define DEFAULT_BRIGHTNESS 80.f
 
-#define DEFAULT_ALPHA_LEVEL 75.f
+#define DEFAULT_OPACITY_LEVEL 75.f
 
 uniform int2 MOUSE_POSITION
 <
@@ -104,88 +104,88 @@ uniform float2 NIT_PINGPONG2
 
 #if (!defined(IS_HDR_CSP) \
   && !defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
-  #define _TEXT_SIZE                                   SDR_TEXT_SIZE
-  #define _TEXT_BRIGHTNESS                             SDR_TEXT_BRIGHTNESS
-  #define _TEXT_BG_ALPHA                               SDR_TEXT_BG_ALPHA
-  #define _TEXT_POSITION                               SDR_TEXT_POSITION
-  #define _VALUES_UPDATE_RATE                          SDR_VALUES_UPDATE_RATE
-  #define _ACTIVE_AREA_ENABLE                          SDR_ACTIVE_AREA_ENABLE
-  #define _ACTIVE_AREA_CROP_LEFT                       SDR_ACTIVE_AREA_CROP_LEFT
-  #define _ACTIVE_AREA_CROP_TOP                        SDR_ACTIVE_AREA_CROP_TOP
-  #define _ACTIVE_AREA_CROP_RIGHT                      SDR_ACTIVE_AREA_CROP_RIGHT
-  #define _ACTIVE_AREA_CROP_BOTTOM                     SDR_ACTIVE_AREA_CROP_BOTTOM
-  #define _SHOW_NITS_VALUES                            SDR_SHOW_NITS_VALUES
-  #define _SHOW_RGB_OR_CLL                             SDR_SHOW_RGB_OR_CLL
-  #define _SHOW_NITS_FROM_CURSOR                       SDR_SHOW_NITS_FROM_CURSOR
-  #define _SHOW_CIE                                    SDR_SHOW_CIE
-  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM               SDR_SHOW_CROSSHAIR_ON_CIE_DIAGRAM
-  #define _CIE_DIAGRAM_TYPE                            SDR_CIE_DIAGRAM_TYPE
-  #define _CIE_DIAGRAM_BRIGHTNESS                      SDR_CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_SIZE                            SDR_CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_OUTLINE_BT709                SDR_CIE_SHOW_GAMUT_BT709_OUTLINE
-  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS             SDR_CIE_SHOW_GAMUT_POINTERS_OUTLINE
-  #define _SHOW_HEATMAP                                SDR_SHOW_HEATMAP
-  #define _HEATMAP_BRIGHTNESS                          SDR_HEATMAP_BRIGHTNESS
-  #define _SHOW_WAVEFORM                               SDR_SHOW_WAVEFORM
-  #define _WAVEFORM_MODE                               SDR_WAVEFORM_MODE
-  #define _WAVEFORM_TEXT_SIZE_ADJUST                   SDR_WAVEFORM_TEXT_SIZE_ADJUST
-  #define _WAVEFORM_SCALE_BRIGHTNESS                   SDR_WAVEFORM_SCALE_BRIGHTNESS
-  #define _WAVEFORM_ALPHA                              SDR_WAVEFORM_ALPHA
-  #define _WAVEFORM_SIZE                               SDR_WAVEFORM_SIZE
-  #define _WAVEFORM_SHOW_MIN_NITS_LINE                 SDR_WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_NITS_LINE                 SDR_WAVEFORM_SHOW_MAX_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN            SDR_WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
-  #define _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE     SDR_WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
-  #define _HIGHLIGHT_NIT_RANGE                         SDR_HIGHLIGHT_NIT_RANGE
-  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS              SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
-  #define _HIGHLIGHT_NIT_RANGE_START_POINT             SDR_HIGHLIGHT_NIT_RANGE_START_POINT
-  #define _HIGHLIGHT_NIT_RANGE_END_POINT               SDR_HIGHLIGHT_NIT_RANGE_END_POINT
-  #define _DRAW_ABOVE_NITS_AS_BLACK                    SDR_DRAW_ABOVE_NITS_AS_BLACK
-  #define _ABOVE_NITS_AS_BLACK                         SDR_ABOVE_NITS_AS_BLACK
-  #define _DRAW_BELOW_NITS_AS_BLACK                    SDR_DRAW_BELOW_NITS_AS_BLACK
-  #define _BELOW_NITS_AS_BLACK                         SDR_BELOW_NITS_AS_BLACK
+  #define _TEXT_SIZE                                      SDR_TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                                SDR_TEXT_BRIGHTNESS
+  #define _TEXT_BG_OPACITY                                SDR_TEXT_BG_OPACITY
+  #define _TEXT_POSITION                                  SDR_TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                             SDR_VALUES_UPDATE_RATE
+  #define _ACTIVE_AREA_ENABLE                             SDR_ACTIVE_AREA_ENABLE
+  #define _ACTIVE_AREA_CROP_LEFT                          SDR_ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                           SDR_ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                         SDR_ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                        SDR_ACTIVE_AREA_CROP_BOTTOM
+  #define _NIT_VALUES_SHOW                                SDR_NIT_VALUES_SHOW
+  #define _SHOW_RGB_OR_CLL                                SDR_SHOW_RGB_OR_CLL
+  #define _NIT_VALUES_FROM_CURSOR_SHOW                    SDR_NIT_VALUES_FROM_CURSOR_SHOW
+  #define _CIE_DIAGRAM_SHOW                               SDR_CIE_DIAGRAM_SHOW
+  #define _CIE_DIAGRAM_CROSSHAIR_SHOW                     SDR_CIE_DIAGRAM_CROSSHAIR_SHOW
+  #define _CIE_DIAGRAM_TYPE                               SDR_CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                         SDR_CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_SIZE                               SDR_CIE_DIAGRAM_SIZE
+  #define _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW           SDR_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW
+  #define _CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW        SDR_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW
+  #define _HEATMAP_SHOW                                   SDR_HEATMAP_SHOW
+  #define _HEATMAP_BRIGHTNESS                             SDR_HEATMAP_BRIGHTNESS
+  #define _WAVEFORM_SHOW                                  SDR_WAVEFORM_SHOW
+  #define _WAVEFORM_MODE                                  SDR_WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST                      SDR_WAVEFORM_TEXT_SIZE_ADJUST
+  #define _WAVEFORM_SCALE_BRIGHTNESS                      SDR_WAVEFORM_SCALE_BRIGHTNESS
+  #define _WAVEFORM_OPACITY                               SDR_WAVEFORM_OPACITY
+  #define _WAVEFORM_SIZE                                  SDR_WAVEFORM_SIZE
+  #define _WAVEFORM_MIN_NITS_LINE_SHOW                    SDR_WAVEFORM_MIN_NITS_LINE_SHOW
+  #define _WAVEFORM_MAX_NITS_LINE_SHOW                    SDR_WAVEFORM_MAX_NITS_LINE_SHOW
+  #define _WAVEFORM_PER_COLUMN_MAX_MIN_SHOW               SDR_WAVEFORM_PER_COLUMN_MAX_MIN_SHOW
+  #define _WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS    SDR_WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS
+  #define _HIGHLIGHT_NIT_RANGE                            SDR_HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS                 SDR_HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT                SDR_HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT                  SDR_HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK                       SDR_DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                            SDR_ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK                       SDR_DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                            SDR_BELOW_NITS_AS_BLACK
 #else
-  #define _TEXT_SIZE                                   TEXT_SIZE
-  #define _TEXT_BRIGHTNESS                             TEXT_BRIGHTNESS
-  #define _TEXT_BG_ALPHA                               TEXT_BG_ALPHA
-  #define _TEXT_POSITION                               TEXT_POSITION
-  #define _VALUES_UPDATE_RATE                          VALUES_UPDATE_RATE
-  #define _ACTIVE_AREA_ENABLE                          ACTIVE_AREA_ENABLE
-  #define _ACTIVE_AREA_CROP_LEFT                       ACTIVE_AREA_CROP_LEFT
-  #define _ACTIVE_AREA_CROP_TOP                        ACTIVE_AREA_CROP_TOP
-  #define _ACTIVE_AREA_CROP_RIGHT                      ACTIVE_AREA_CROP_RIGHT
-  #define _ACTIVE_AREA_CROP_BOTTOM                     ACTIVE_AREA_CROP_BOTTOM
-  #define _SHOW_NITS_VALUES                            SHOW_NITS_VALUES
-  #define _SHOW_RGB_OR_CLL                             SHOW_RGB_OR_CLL
-  #define _SHOW_NITS_FROM_CURSOR                       SHOW_NITS_FROM_CURSOR
-  #define _SHOW_CIE                                    SHOW_CIE
-  #define _SHOW_CROSSHAIR_ON_CIE_DIAGRAM               SHOW_CROSSHAIR_ON_CIE_DIAGRAM
-  #define _CIE_DIAGRAM_TYPE                            CIE_DIAGRAM_TYPE
-  #define _CIE_DIAGRAM_BRIGHTNESS                      CIE_DIAGRAM_BRIGHTNESS
-  #define _CIE_DIAGRAM_SIZE                            CIE_DIAGRAM_SIZE
-  #define _CIE_SHOW_GAMUT_OUTLINE_BT709                CIE_SHOW_GAMUT_BT709_OUTLINE
-  #define _CIE_SHOW_GAMUT_OUTLINE_POINTERS             CIE_SHOW_GAMUT_POINTERS_OUTLINE
-  #define _SHOW_HEATMAP                                SHOW_HEATMAP
-  #define _HEATMAP_BRIGHTNESS                          HEATMAP_BRIGHTNESS
-  #define _SHOW_WAVEFORM                               SHOW_WAVEFORM
-  #define _WAVEFORM_MODE                               WAVEFORM_MODE
-  #define _WAVEFORM_TEXT_SIZE_ADJUST                   WAVEFORM_TEXT_SIZE_ADJUST
-  #define _WAVEFORM_BRIGHTNESS                         WAVEFORM_BRIGHTNESS
-  #define _WAVEFORM_SCALE_BRIGHTNESS                   WAVEFORM_SCALE_BRIGHTNESS
-  #define _WAVEFORM_ALPHA                              WAVEFORM_ALPHA
-  #define _WAVEFORM_SIZE                               WAVEFORM_SIZE
-  #define _WAVEFORM_SHOW_MIN_NITS_LINE                 WAVEFORM_SHOW_MIN_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_NITS_LINE                 WAVEFORM_SHOW_MAX_NITS_LINE
-  #define _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN            WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
-  #define _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE     WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
-  #define _HIGHLIGHT_NIT_RANGE                         HIGHLIGHT_NIT_RANGE
-  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS              HIGHLIGHT_NIT_RANGE_BRIGHTNESS
-  #define _HIGHLIGHT_NIT_RANGE_START_POINT             HIGHLIGHT_NIT_RANGE_START_POINT
-  #define _HIGHLIGHT_NIT_RANGE_END_POINT               HIGHLIGHT_NIT_RANGE_END_POINT
-  #define _DRAW_ABOVE_NITS_AS_BLACK                    DRAW_ABOVE_NITS_AS_BLACK
-  #define _ABOVE_NITS_AS_BLACK                         ABOVE_NITS_AS_BLACK
-  #define _DRAW_BELOW_NITS_AS_BLACK                    DRAW_BELOW_NITS_AS_BLACK
-  #define _BELOW_NITS_AS_BLACK                         BELOW_NITS_AS_BLACK
+  #define _TEXT_SIZE                                      TEXT_SIZE
+  #define _TEXT_BRIGHTNESS                                TEXT_BRIGHTNESS
+  #define _TEXT_BG_OPACITY                                TEXT_BG_OPACITY
+  #define _TEXT_POSITION                                  TEXT_POSITION
+  #define _VALUES_UPDATE_RATE                             VALUES_UPDATE_RATE
+  #define _ACTIVE_AREA_ENABLE                             ACTIVE_AREA_ENABLE
+  #define _ACTIVE_AREA_CROP_LEFT                          ACTIVE_AREA_CROP_LEFT
+  #define _ACTIVE_AREA_CROP_TOP                           ACTIVE_AREA_CROP_TOP
+  #define _ACTIVE_AREA_CROP_RIGHT                         ACTIVE_AREA_CROP_RIGHT
+  #define _ACTIVE_AREA_CROP_BOTTOM                        ACTIVE_AREA_CROP_BOTTOM
+  #define _NIT_VALUES_SHOW                                NIT_VALUES_SHOW
+  #define _SHOW_RGB_OR_CLL                                SHOW_RGB_OR_CLL
+  #define _NIT_VALUES_FROM_CURSOR_SHOW                    NIT_VALUES_FROM_CURSOR_SHOW
+  #define _CIE_DIAGRAM_SHOW                               CIE_DIAGRAM_SHOW
+  #define _CIE_DIAGRAM_CROSSHAIR_SHOW                     CIE_DIAGRAM_CROSSHAIR_SHOW
+  #define _CIE_DIAGRAM_TYPE                               CIE_DIAGRAM_TYPE
+  #define _CIE_DIAGRAM_BRIGHTNESS                         CIE_DIAGRAM_BRIGHTNESS
+  #define _CIE_DIAGRAM_SIZE                               CIE_DIAGRAM_SIZE
+  #define _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW           CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW
+  #define _CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW        CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW
+  #define _HEATMAP_SHOW                                   HEATMAP_SHOW
+  #define _HEATMAP_BRIGHTNESS                             HEATMAP_BRIGHTNESS
+  #define _WAVEFORM_SHOW                                  WAVEFORM_SHOW
+  #define _WAVEFORM_MODE                                  WAVEFORM_MODE
+  #define _WAVEFORM_TEXT_SIZE_ADJUST                      WAVEFORM_TEXT_SIZE_ADJUST
+  #define _WAVEFORM_BRIGHTNESS                            WAVEFORM_BRIGHTNESS
+  #define _WAVEFORM_SCALE_BRIGHTNESS                      WAVEFORM_SCALE_BRIGHTNESS
+  #define _WAVEFORM_OPACITY                               WAVEFORM_OPACITY
+  #define _WAVEFORM_SIZE                                  WAVEFORM_SIZE
+  #define _WAVEFORM_MIN_NITS_LINE_SHOW                    WAVEFORM_MIN_NITS_LINE_SHOW
+  #define _WAVEFORM_MAX_NITS_LINE_SHOW                    WAVEFORM_MAX_NITS_LINE_SHOW
+  #define _WAVEFORM_PER_COLUMN_MAX_MIN_SHOW               WAVEFORM_PER_COLUMN_MAX_MIN_SHOW
+  #define _WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS    WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS
+  #define _HIGHLIGHT_NIT_RANGE                            HIGHLIGHT_NIT_RANGE
+  #define _HIGHLIGHT_NIT_RANGE_BRIGHTNESS                 HIGHLIGHT_NIT_RANGE_BRIGHTNESS
+  #define _HIGHLIGHT_NIT_RANGE_START_POINT                HIGHLIGHT_NIT_RANGE_START_POINT
+  #define _HIGHLIGHT_NIT_RANGE_END_POINT                  HIGHLIGHT_NIT_RANGE_END_POINT
+  #define _DRAW_ABOVE_NITS_AS_BLACK                       DRAW_ABOVE_NITS_AS_BLACK
+  #define _ABOVE_NITS_AS_BLACK                            ABOVE_NITS_AS_BLACK
+  #define _DRAW_BELOW_NITS_AS_BLACK                       DRAW_BELOW_NITS_AS_BLACK
+  #define _BELOW_NITS_AS_BLACK                            BELOW_NITS_AS_BLACK
 #endif
 
 
@@ -224,7 +224,7 @@ uniform float _TEXT_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float _TEXT_BG_ALPHA
+uniform float _TEXT_BG_OPACITY
 <
   ui_category = "Global";
   ui_label    = "text background opacity";
@@ -233,7 +233,7 @@ uniform float _TEXT_BG_ALPHA
   ui_min      = 0.f;
   ui_max      = 100.f;
   ui_step     = 0.5f;
-> = DEFAULT_ALPHA_LEVEL;
+> = DEFAULT_OPACITY_LEVEL;
 
 #define TEXT_POSITION_TOP_LEFT  0
 #define TEXT_POSITION_TOP_RIGHT 1
@@ -311,7 +311,7 @@ uniform float _ACTIVE_AREA_CROP_BOTTOM
 
 
 // Nit and RGB Values
-uniform bool _SHOW_NITS_VALUES
+uniform bool _NIT_VALUES_SHOW
 <
   ui_category = "Luminance and Content Light Level analysis";
   ui_label    = "show max/avg/min luminance and RGB or CLL values";
@@ -348,7 +348,7 @@ uniform bool _SHOW_NITS_VALUES
            "\n" "This description is different depending on if you are in HDR or SDR!";
 > = true;
 
-uniform bool _SHOW_NITS_FROM_CURSOR
+uniform bool _NIT_VALUES_FROM_CURSOR_SHOW
 <
   ui_category = "Luminance and Content Light Level analysis";
   ui_label    = "show luminance value and RGB or CLL values from cursor position";
@@ -372,7 +372,7 @@ uniform uint _SHOW_RGB_OR_CLL
 #if (defined(IS_HDR_CSP) \
   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
-uniform bool SHOW_GAMUTS
+uniform bool GAMUTS_SHOW
 <
   ui_category = "Gamut analysis";
   ui_label    = "show gamuts used";
@@ -380,14 +380,14 @@ uniform bool SHOW_GAMUTS
   hidden      = HIDDEN_OPTION_HDR_CSP;
 > = true;
 
-uniform bool SHOW_GAMUT_FROM_CURSOR
+uniform bool GAMUT_FROM_CURSOR_SHOW
 <
   ui_category = "Gamut analysis";
   ui_label    = "show gamut from cursor position";
   hidden      = HIDDEN_OPTION_HDR_CSP;
 > = true;
 
-uniform bool SHOW_GAMUT_MAP
+uniform bool GAMUT_MAP_SHOW
 <
   ui_category = "Gamut analysis";
   ui_label    = "show gamut map";
@@ -407,14 +407,14 @@ uniform bool SHOW_GAMUT_MAP
   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
 // CIE
-uniform bool _SHOW_CIE
+uniform bool _CIE_DIAGRAM_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show CIE diagram";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
-uniform bool _SHOW_CROSSHAIR_ON_CIE_DIAGRAM
+uniform bool _CIE_DIAGRAM_CROSSHAIR_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show crosshair of cursor gamut on CIE diagram";
@@ -560,7 +560,7 @@ uniform float _CIE_DIAGRAM_SIZE
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = CIE_DIAGRAM_DEFAULT_SIZE;
 
-uniform bool _CIE_SHOW_GAMUT_OUTLINE_BT709
+uniform bool _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.709 gamut outline";
@@ -570,14 +570,14 @@ uniform bool _CIE_SHOW_GAMUT_OUTLINE_BT709
 #if (defined(IS_HDR_CSP) \
   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
-uniform bool CIE_SHOW_GAMUT_OUTLINE_DCI_P3
+uniform bool CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show DCI-P3 gamut outline";
   hidden      = (HIDDEN_OPTION_COMPUTE_CAPABLE_API || HIDDEN_OPTION_HDR_CSP);
 > = true;
 
-uniform bool CIE_SHOW_GAMUT_OUTLINE_BT2020
+uniform bool CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show BT.2020 gamut outline";
@@ -586,7 +586,7 @@ uniform bool CIE_SHOW_GAMUT_OUTLINE_BT2020
 
 #endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL)
 
-uniform bool _CIE_SHOW_GAMUT_OUTLINE_POINTERS
+uniform bool _CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW
 <
   ui_category = "CIE diagram visualisation";
   ui_label    = "show Pointer's gamut outline";
@@ -597,7 +597,7 @@ uniform bool _CIE_SHOW_GAMUT_OUTLINE_POINTERS
 
 
 // heatmap
-uniform bool _SHOW_HEATMAP
+uniform bool _HEATMAP_SHOW
 <
   ui_category = "Heatmap visualisation";
   ui_label    = "show heatmap";
@@ -669,7 +669,7 @@ uniform uint HEATMAP_CUTOFF_POINT
 #if (defined(IS_COMPUTE_CAPABLE_API) \
   || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
-uniform bool _SHOW_WAVEFORM
+uniform bool _WAVEFORM_SHOW
 <
   ui_category = "Waveform";
   ui_label    = "show waveform";
@@ -747,7 +747,7 @@ uniform float _WAVEFORM_BRIGHTNESS
 
 #endif //defined(IS_HDR_CSP) || defined(MANUAL_OVERRIDE_MODE_ENABLE_INTERNAL))
 
-uniform float WAVEFORM_MAX_MIN_PER_ROW_BRIGHTNESS_PERCENTAGE
+uniform float WAVEFORM_PER_COLUMN_MAX_MIN_BRIGHTNESS_PERCENTAGE
 <
   ui_category = "Waveform";
   ui_label    = "waveform per column max/min brightness percentage";
@@ -783,7 +783,7 @@ uniform float _WAVEFORM_SCALE_BRIGHTNESS
 > = DEFAULT_BRIGHTNESS;
 #endif
 
-uniform float _WAVEFORM_ALPHA
+uniform float _WAVEFORM_OPACITY
 <
   ui_category = "Waveform";
   ui_label    = "waveform opacity";
@@ -793,7 +793,7 @@ uniform float _WAVEFORM_ALPHA
   ui_max      = 100.f;
   ui_step     = 0.5f;
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
-> = DEFAULT_ALPHA_LEVEL;
+> = DEFAULT_OPACITY_LEVEL;
 
 
 #if (BUFFER_WIDTH <= 4096)
@@ -951,7 +951,7 @@ uniform float2 _WAVEFORM_SIZE
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = float2(70.f, LUMINANCE_WAVEFORM_DEFAULT_HEIGHT);
 
-uniform bool _WAVEFORM_SHOW_MIN_NITS_LINE
+uniform bool _WAVEFORM_MIN_NITS_LINE_SHOW
 <
   ui_category = "Waveform";
   ui_label    = "show the minimum nits line";
@@ -960,7 +960,7 @@ uniform bool _WAVEFORM_SHOW_MIN_NITS_LINE
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
-uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
+uniform bool _WAVEFORM_MAX_NITS_LINE_SHOW
 <
   ui_category = "Waveform";
   ui_label    = "show the maximum nits line";
@@ -969,7 +969,7 @@ uniform bool _WAVEFORM_SHOW_MAX_NITS_LINE
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
-uniform bool _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
+uniform bool _WAVEFORM_PER_COLUMN_MAX_MIN_SHOW
 <
   ui_category = "Waveform";
   ui_label    = "show min/max outline per column";
@@ -977,7 +977,7 @@ uniform bool _WAVEFORM_SHOW_MAX_MIN_PER_COLUMN
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
-uniform bool _WAVEFORM_USE_COLOURS_FOR_LUMINANCE_MODE
+uniform bool _WAVEFORM_LUMINANCE_MODE_USE_HEATMAP_COLOURS
 <
   ui_category = "Waveform";
   ui_label    = "use heatmap colours for luminance and max CLL mode";
@@ -1231,7 +1231,7 @@ void VS_PrepareHdrAnalysis
 
 #ifdef IS_COMPUTE_CAPABLE_API
   BRANCH()
-  if (_SHOW_WAVEFORM)
+  if (_WAVEFORM_SHOW)
   {
     WaveformTextureDisplayAreaBegin = BUFFER_SIZE_INT - Waveform::GetActiveArea();
 
@@ -1248,7 +1248,7 @@ void VS_PrepareHdrAnalysis
   }
 
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     int2 cieDiagramRenderSize = GetCieDiagramRenderSize();
 
@@ -1289,9 +1289,9 @@ void PS_HdrAnalysis
   Output = tex2Dfetch(SamplerBackBuffer, pureCoordAsInt);
 
   BRANCH()
-  if (_SHOW_HEATMAP
+  if (_HEATMAP_SHOW
 #ifdef IS_HDR_CSP
-   || SHOW_GAMUT_MAP
+   || GAMUT_MAP_SHOW
 #endif
    || _HIGHLIGHT_NIT_RANGE
    || _DRAW_ABOVE_NITS_AS_BLACK
@@ -1301,7 +1301,7 @@ void PS_HdrAnalysis
     static const float pixelNits = max(Calc_Nits(Output.rgb), 0.f);
 
     BRANCH()
-    if (_SHOW_HEATMAP)
+    if (_HEATMAP_SHOW)
     {
       Output.rgb = HeatmapRgbValues(pixelNits,
 #ifdef IS_HDR_CSP
@@ -1313,7 +1313,7 @@ void PS_HdrAnalysis
     }
 
 #ifdef IS_HDR_CSP
-    if (SHOW_GAMUT_MAP)
+    if (GAMUT_MAP_SHOW)
     {
       Output.rgb = CreateGamutMap(tex2Dfetch(SamplerGamuts, pureCoordAsInt) * 256.f, pixelNits); // *256 for safety
     }
@@ -1353,7 +1353,7 @@ void PS_HdrAnalysis
 
 #ifdef IS_COMPUTE_CAPABLE_API
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     // draw the diagram in the bottom left corner
     if (pureCoordAsInt.x <  CieDiagramSize.x
@@ -1419,7 +1419,7 @@ void PS_HdrAnalysis
   }
 
   BRANCH()
-  if (_SHOW_WAVEFORM)
+  if (_WAVEFORM_SHOW)
   {
     // draw the waveform in the bottom right corner
     [branch]
@@ -1518,7 +1518,7 @@ void PS_HdrAnalysis
         waveform_final_colour.a    = saturate(waveform_final_colour.a + waveform_yrba.a);
       }
 
-      float alpha = max(waveform_final_colour.a, _WAVEFORM_ALPHA / DIV_100);
+      float alpha = max(waveform_final_colour.a, _WAVEFORM_OPACITY / DIV_100);
 
       Output.rgb = MergeOverlay(Output.rgb,
                                 waveform_final_colour.rgb,

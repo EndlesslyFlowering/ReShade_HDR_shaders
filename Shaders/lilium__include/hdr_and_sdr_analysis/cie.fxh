@@ -441,18 +441,18 @@ void DrawCieOutlines
 )
 {
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     const uint cieSettingsOld = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
 
                                 //safety so it's a big enough float number that does not get flushed
     const uint cieSettingsNew = uint(0x40000000)
-                              |      (_CIE_DIAGRAM_TYPE                 << CIE_DIAGRAM_TYPE_ENCODE_OFFSET)
-                              | (uint(_CIE_SHOW_GAMUT_OUTLINE_POINTERS) << CIE_SHOW_GAMUT_OUTLINE_POINTERS_ENCODE_OFFSET)
-                              | (uint(_CIE_SHOW_GAMUT_OUTLINE_BT709)    << CIE_SHOW_GAMUT_OUTLINE_BT709_ENCODE_OFFSET)
+                              |      (_CIE_DIAGRAM_TYPE                         << CIE_DIAGRAM_TYPE_ENCODE_OFFSET)
+                              | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW) << CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW_ENCODE_OFFSET)
+                              | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW_ENCODE_OFFSET)
 #ifdef IS_HDR_CSP
-                              | (uint( CIE_SHOW_GAMUT_OUTLINE_DCI_P3)   << CIE_SHOW_GAMUT_OUTLINE_DCI_P3_ENCODE_OFFSET)
-                              | (uint( CIE_SHOW_GAMUT_OUTLINE_BT2020)   << CIE_SHOW_GAMUT_OUTLINE_BT2020_ENCODE_OFFSET)
+                              | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW_ENCODE_OFFSET)
+                              | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW)   << CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW_ENCODE_OFFSET)
 #endif
                               ;
 
@@ -562,7 +562,7 @@ void DrawCieOutlines
           }
 
       BRANCH()
-      if (_CIE_SHOW_GAMUT_OUTLINE_POINTERS)
+      if (_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW)
       {
         DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, uint(POINTERS_GAMUT_ARRAY_LENGTH))
       }
@@ -585,7 +585,7 @@ void DrawCieOutlines
             coordsArray[1] = primBt709G;
             coordsArray[2] = primBt709B;
 
-            needsDrawing = _CIE_SHOW_GAMUT_OUTLINE_BT709;
+            needsDrawing = _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW;
           }
           break;
           case 1u:
@@ -594,7 +594,7 @@ void DrawCieOutlines
             coordsArray[1] = primDciP3G;
             coordsArray[2] = primDciP3B;
 
-            needsDrawing = CIE_SHOW_GAMUT_OUTLINE_DCI_P3;
+            needsDrawing = CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW;
           }
           break;
           default: //case 2u:
@@ -603,7 +603,7 @@ void DrawCieOutlines
             coordsArray[1] = primBt2020G;
             coordsArray[2] = primBt2020B;
 
-            needsDrawing = CIE_SHOW_GAMUT_OUTLINE_BT2020;
+            needsDrawing = CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW;
           }
           break;
         }
@@ -623,7 +623,7 @@ void DrawCieOutlines
       };
 
       BRANCH()
-      if (_CIE_SHOW_GAMUT_OUTLINE_BT709)
+      if (_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)
       {
         DRAW_COORDS_FROM_ARRAY(coordsArray, 3u)
       }
@@ -857,7 +857,7 @@ void PS_ComposeCieDiagram
   Out = 0.f;
 
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     const int2 positionAsInt2 = int2(Position.xy);
 
@@ -992,7 +992,7 @@ void CS_ClearTextureCieCounter
 )
 {
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     tex3Dstore(StorageCieCounter, DTID, 0u);
   }
@@ -1084,7 +1084,7 @@ void CS_GetMaxCieCounter
 )
 {
   BRANCH()
-  if (_SHOW_CIE)
+  if (_CIE_DIAGRAM_SHOW)
   {
     [branch]
     if (all(DTID.xy == 0))
@@ -1159,8 +1159,8 @@ void CS_RenderCrosshairToCieDiagram
   static const float4 storeColourWhite = float4(ycbcrWhite, 1.f);
 
   BRANCH()
-  if (_SHOW_CIE
-   && _SHOW_CROSSHAIR_ON_CIE_DIAGRAM)
+  if (_CIE_DIAGRAM_SHOW
+   && _CIE_DIAGRAM_CROSSHAIR_SHOW)
   {
 
     if (all(DTID.xy == 0))
