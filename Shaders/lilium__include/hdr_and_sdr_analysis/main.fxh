@@ -313,8 +313,8 @@
 #elif (BUFFER_WIDTH % 10 == 0 \
     && ((BUFFER_WIDTH / 10) == ((BUFFER_HEIGHT * 100000) / 1896296)))
 
-  #define AVG_NITS_WIDTH  19
-  #define AVG_NITS_HEIGHT 10
+  #define AVG_NITS_WIDTH  10
+  #define AVG_NITS_HEIGHT 19
 
 //4:3
 #elif (BUFFER_WIDTH  % 4 == 0 \
