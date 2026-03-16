@@ -111,7 +111,7 @@ float3 HeatmapRgbValues
   {
     //shades of grey
     float clamped = !WaveformOutput ? Y / HEATMAP_STEP_0 * 0.25f
-                                    : 0.666f;
+                                    : 1.f;
     output.rgb = clamped;
   }
   else if (Y <= HEATMAP_STEP_1) // <= 203nits

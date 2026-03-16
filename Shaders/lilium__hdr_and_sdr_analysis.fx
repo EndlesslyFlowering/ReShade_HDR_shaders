@@ -673,7 +673,7 @@ uniform bool _WAVEFORM_SHOW
 <
   ui_category = "Waveform";
   ui_label    = "show waveform";
-  ui_tooltip  = "Luminance waveform paid for by Aemony.";
+  ui_tooltip  = "waveform paid for by Aemony.";
   hidden      = HIDDEN_OPTION_COMPUTE_CAPABLE_API;
 > = true;
 
@@ -1461,16 +1461,16 @@ void PS_HdrAnalysis
 #if (!defined(IS_HDR_CSP) \
   && BUFFER_COLOR_BIT_DEPTH != 10)
 
-          waveform_sample_coords = (float2(waveform_coords) + 0.5f)
-                                 / float2(div_x, waveform_size.y);
+        waveform_sample_coords = (float2(waveform_coords) + 0.5f)
+                               / float2(div_x, waveform_size.y);
 
 #else
 
-          int div_y = _WAVEFORM_SIZE.y < 100.f ? waveform_size.y * 2
-                                               : waveform_size.y;
+        int div_y = _WAVEFORM_SIZE.y < 100.f ? waveform_size.y * 2
+                                             : waveform_size.y;
 
-          waveform_sample_coords = (float2(waveform_coords) + 0.5f)
-                                 / float2(div_x, div_y);
+        waveform_sample_coords = (float2(waveform_coords) + 0.5f)
+                               / float2(div_x, div_y);
 
 #endif
 

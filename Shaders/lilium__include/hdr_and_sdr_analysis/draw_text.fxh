@@ -188,8 +188,8 @@ uint GetNumberAboveZero
 
 void DrawText
 (
-  const uint  Unrolling_Be_Gone_Uint,
-  const int   Unrolling_Be_Gone_Int
+  const uint Unrolling_Be_Gone_Uint,
+  const int  Unrolling_Be_Gone_Int
 )
 {
 #ifdef IS_HDR_CSP
@@ -824,7 +824,7 @@ void DrawText
       [branch]
       if (any(currentChar != __space))
       {
-        const uint2 storeOffset = (offsets[i] + uint2(j, 0))
+        const uint2 storeOffset = (offsets[i] + uint2(j, 0u))
                                 * CHAR_DIM_UINT;
 
         const uint2 currentCharOffset = currentChar
@@ -1529,20 +1529,20 @@ MaxCharsAndMaxLines GetMaxCharsAndMaxLinesForNitsRgbCll()
   FLATTEN()
   if (!_NIT_VALUES_SHOW)
   {
-    ret.maxLines -= 3;
+    ret.maxLines -= 3u;
   }
 
   FLATTEN()
   if (!_NIT_VALUES_FROM_CURSOR_SHOW)
   {
-    ret.maxLines -= 1;
+    ret.maxLines -= 1u;
   }
 
   FLATTEN()
   if (!_NIT_VALUES_SHOW
    && !_NIT_VALUES_FROM_CURSOR_SHOW)
   {
-    ret.maxLines -= 1;
+    ret.maxLines -= 1u;
   }
 
   return ret;

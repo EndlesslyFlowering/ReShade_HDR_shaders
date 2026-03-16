@@ -1,9 +1,6 @@
 #pragma once
 
 
-static const float TEXTURE_WAVEFORM_BUFFER_WIDTH_FACTOR = float(TEXTURE_WAVEFORM_WIDTH - 1)
-                                                        / BUFFER_WIDTH_MINUS_1_FLOAT;
-
 static const float TEXTURE_WAVEFORM_BUFFER_FACTOR = (BUFFER_WIDTH_FLOAT  / 3840.f
                                                    + BUFFER_HEIGHT_FLOAT / 2160.f)
                                                   / 2.f;
@@ -32,11 +29,6 @@ static const uint TEXTURE_WAVEFORM_SCALE_HEIGHT = TEXTURE_WAVEFORM_HEIGHT * MAX_
                                                 + (TEXTURE_WAVEFORM_SCALE_BORDER * 2)
                                                 + (TEXTURE_WAVEFORM_SCALE_FRAME  * 2);
 
-static const float TEXTURE_WAVEFORM_SCALE_FACTOR_X = (TEXTURE_WAVEFORM_SCALE_WIDTH - 1.f)
-                                                   / float(TEXTURE_WAVEFORM_WIDTH  - 1);
-
-static const float TEXTURE_WAVEFORM_SCALE_FACTOR_Y = (TEXTURE_WAVEFORM_SCALE_HEIGHT - 1.f)
-                                                   / float(TEXTURE_WAVEFORM_HEIGHT  - 1);
 
 #if (TEXTURE_WAVEFORM_TOTAL_WIDTH % WAVE64_THREAD_SIZE_X == 0)
   #define TEXTURE_WAVEFORM_COUNTER_DISPATCH_X (TEXTURE_WAVEFORM_TOTAL_WIDTH / WAVE64_THREAD_SIZE_X)
@@ -2312,8 +2304,8 @@ void PS_Waveform_Render_Colour
           if (is_red_part)
           {
             waveform_colour.r  = waveform_colour_channel;
-            waveform_colour.r *= Csp::Mat::BT709_To_XYZ[1][1] / Csp::Mat::BT709_To_XYZ[1][0];
-            waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::BT709_To_XYZ[1][0] / Csp::Mat::BT709_To_XYZ[1][1]);
+            waveform_colour.r *= Csp::Mat::BT709_To_XYZ[1].g / Csp::Mat::BT709_To_XYZ[1].r;
+            waveform_colour.g  = (waveform_colour.r - 1.f) * (Csp::Mat::BT709_To_XYZ[1].r / Csp::Mat::BT709_To_XYZ[1].g);
             waveform_colour    = saturate(waveform_colour);
           }
           else
@@ -2325,8 +2317,8 @@ void PS_Waveform_Render_Colour
           else
           {
             waveform_colour.b  = waveform_colour_channel;
-            waveform_colour.b *= Csp::Mat::BT709_To_XYZ[1][1] / Csp::Mat::BT709_To_XYZ[1][2];
-            waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::BT709_To_XYZ[1][2] / Csp::Mat::BT709_To_XYZ[1][1]);
+            waveform_colour.b *= Csp::Mat::BT709_To_XYZ[1].g / Csp::Mat::BT709_To_XYZ[1].b;
+            waveform_colour.g  = (waveform_colour.b - 1.f) * (Csp::Mat::BT709_To_XYZ[1].b / Csp::Mat::BT709_To_XYZ[1].g);
             waveform_colour    = saturate(waveform_colour);
           }
 

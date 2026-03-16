@@ -174,53 +174,11 @@ void PS_CalcGamuts
 
 #if defined(IS_FLOAT_HDR_CSP)
 
-#if (IGNORE_NEAR_BLACK_VALUES_FOR_GAMUT_DETECTION == YES)
-
-    const float3 absPixel = abs(pixel);
-    if (absPixel.r > SMALLEST_FP16
-     && absPixel.g > SMALLEST_FP16
-     && absPixel.b > SMALLEST_FP16)
-    {
-      CurGamut = GetGamut(pixel);
-    }
-    else
-    {
-      CurGamut = IS_GAMUT_BT709;
-    }
-    return;
-
-#else
-
     CurGamut = GetGamut(pixel);
 
     return;
 
-#endif
-
 #elif defined(IS_HDR10_LIKE_CSP)
-
-#if (IGNORE_NEAR_BLACK_VALUES_FOR_GAMUT_DETECTION == YES)
-
-    if (pixel.r > SMALLEST_UINT10
-     && pixel.g > SMALLEST_UINT10
-     && pixel.b > SMALLEST_UINT10)
-    {
-#if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-    #ifdef IS_COMPUTE_CAPABLE_API
-      const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
-    #else
-      const float3 curPixel = Csp::Trc::PQ_To::Linear(pixel);
-    #endif
-#endif
-      CurGamut = GetGamut(curPixel);
-    }
-    else
-    {
-      CurGamut = IS_GAMUT_BT709;
-    }
-    return;
-
-#else
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
   #ifdef IS_COMPUTE_CAPABLE_API
@@ -229,11 +187,10 @@ void PS_CalcGamuts
     const float3 curPixel = Csp::Trc::PQ_To::Linear(pixel);
   #endif
 #endif
+
     CurGamut = GetGamut(curPixel);
 
     return;
-
-#endif
 
 #else
 

@@ -1036,7 +1036,7 @@ float2 GetuvFromXYZForDiagram
 void GenerateCieDiagram
 (
   const float3 XYZ,
-  const uint   GID
+  const uint   GID_x
 )
 {
   float2 coords;
@@ -1069,7 +1069,7 @@ void GenerateCieDiagram
   // faster, probably due to atomic add being group local
   // instead of group thread id "local" which is not local
   // so better cache hits?
-  const uint u2 = (GID % 15u) + 1u;
+  const uint u2 = (GID_x % 15u) + 1u;
 
   atomicAdd(StorageCieCounter, int3(encodedCoords, u2), 1u);
 

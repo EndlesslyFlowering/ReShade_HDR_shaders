@@ -45,6 +45,7 @@
 
 //16:9
 //examples:
+// - 1280x720
 // - 1920x1080
 // - 2560x1440
 // - 3200x1800
@@ -68,6 +69,7 @@
 
 //16:10
 //examples:
+// - 1280x800
 // - 1920x1200
 // - 2560x1600
 // - 3840x2400
@@ -93,6 +95,7 @@
 //examples:
 // - 3840x1080
 // - 5120x1440
+// - 7680x2160
 #elif (BUFFER_WIDTH  % 32 == 0 \
     && BUFFER_HEIGHT %  9 == 0 \
     && ((BUFFER_WIDTH / 32) == (BUFFER_HEIGHT / 9)))
@@ -105,6 +108,7 @@
 //examples:
 // - 3840x1200
 // - 5120x1600
+// - 7680x2400
 #elif (BUFFER_WIDTH  % 32 == 0 \
     && BUFFER_HEIGHT % 10 == 0 \
     && ((BUFFER_WIDTH / 32) == (BUFFER_HEIGHT / 10)))
