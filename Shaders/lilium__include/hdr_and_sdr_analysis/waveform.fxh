@@ -521,7 +521,8 @@ void RenderWaveform
                                  : waveform_size_x_is_one_third  ? 0.333333333f
                                  :                                 0.5f;
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
   const int waveform_height_int = _WAVEFORM_SIZE.y < 100.f ? int((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
                                                            : int(TEXTURE_WAVEFORM_HEIGHT);
 #else
@@ -941,7 +942,8 @@ void CS_Get_Max_Waveform_Value
                           : _WAVEFORM_SIZE.x < 100.f  ? uint(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3)
                           :                             uint(TEXTURE_WAVEFORM_TOTAL_WIDTH);
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
     active_texture_size.y = _WAVEFORM_SIZE.y < 100.f ? uint((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
                                                      : uint(TEXTURE_WAVEFORM_HEIGHT);
 #else
@@ -1782,7 +1784,8 @@ void VS_Prepare_Waveform_Render_Colour
                            : _WAVEFORM_SIZE.x < 100.f  ? float(TEXTURE_WAVEFORM_TOTAL_WIDTH * 2 / 3)
                            :                             float(TEXTURE_WAVEFORM_TOTAL_WIDTH);
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
   const float target_height = _WAVEFORM_SIZE.y < 100.f ? float((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
                                                        : float(TEXTURE_WAVEFORM_HEIGHT);
 #else
@@ -1825,7 +1828,8 @@ void PS_Waveform_Render_Colour
   {
     const int2 position_as_int = int2(Position.xy);
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
     const int waveform_height_int = _WAVEFORM_SIZE.y < 100.f ? int((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1)
                                                              : int(TEXTURE_WAVEFORM_HEIGHT);
 #else
@@ -1886,7 +1890,8 @@ void PS_Waveform_Render_Colour
 
       column_min_right = max(column_min_right, column_max_right);
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
       column_extra            = _WAVEFORM_SIZE.y < 100.f ? 2 : 4;
       column_left_right_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
 #else
@@ -1956,7 +1961,8 @@ void PS_Waveform_Render_Colour
     const float min_value_encoded = ENCODE_SDR(min_value / DIV_100);
 #endif
 
-#ifdef IS_HDR_CSP
+#if (defined(IS_HDR_CSP) \
+  || BUFFER_COLOR_BIT_DEPTH == 10)
     const int max_min_extra = _WAVEFORM_SIZE.y < 100.f ? 1 : 2;
 #else
     const int max_min_extra = 1;

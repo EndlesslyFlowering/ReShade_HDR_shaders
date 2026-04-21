@@ -1472,15 +1472,13 @@ void PS_HdrAnalysis
         waveform_sample_coords = (float2(waveform_coords) + 0.5f)
                                / float2(div_x, div_y);
 
-#endif
-
-#ifdef IS_HDR_CSP
         [branch]
         if (_WAVEFORM_SIZE.y < 100.f)
         {
           waveform_sample_coords.y = min(waveform_sample_coords.y,
                                          (float((TEXTURE_WAVEFORM_HEIGHT + 1) / 2 - 1) - 0.5f) / float(TEXTURE_WAVEFORM_HEIGHT));
         }
+
 #endif
 
         float4 waveform_yrba = tex2D(Sampler_Waveform_Colour, waveform_sample_coords);
