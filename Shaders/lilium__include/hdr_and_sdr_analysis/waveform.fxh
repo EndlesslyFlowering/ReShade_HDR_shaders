@@ -1020,12 +1020,22 @@ void RenderWaveformScale
   const int   Unrolling_Be_Gone_Int
 )
 {
-  [branch]
-  if (tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X)           != _WAVEFORM_SIZE.x
-   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y)           != _WAVEFORM_SIZE.y
-   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST) != _WAVEFORM_TEXT_SIZE_ADJUST
+  const float waveform_last_size_x           = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X);
+  const float waveform_last_size_y           = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y);
+  const float waveform_last_text_size_adjust = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST);
+  const float waveform_last_mode             = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_MODE);
 #ifdef IS_HDR_CSP
-   || tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT)     != WAVEFORM_CUTOFF_POINT
+  const float waveform_last_cutoff_point     = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT);
+#endif
+
+  [branch]
+  if (waveform_last_size_x           != _WAVEFORM_SIZE.x
+   || waveform_last_size_y           != _WAVEFORM_SIZE.y
+   || waveform_last_text_size_adjust != _WAVEFORM_TEXT_SIZE_ADJUST
+   || (waveform_last_mode != _WAVEFORM_MODE && (waveform_last_mode == WAVEFORM_MODE_RGB_INDIVIDUALLY
+                                             || _WAVEFORM_MODE     == WAVEFORM_MODE_RGB_INDIVIDUALLY))
+#ifdef IS_HDR_CSP
+   || waveform_last_cutoff_point     != WAVEFORM_CUTOFF_POINT
 #endif
   )
   {
@@ -1762,6 +1772,7 @@ void RenderWaveformScale
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X,           _WAVEFORM_SIZE.x);
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_Y,           _WAVEFORM_SIZE.y);
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST, _WAVEFORM_TEXT_SIZE_ADJUST);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_MODE,             _WAVEFORM_MODE);
 #ifdef IS_HDR_CSP
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_CUTOFF_POINT,     WAVEFORM_CUTOFF_POINT);
 #endif
