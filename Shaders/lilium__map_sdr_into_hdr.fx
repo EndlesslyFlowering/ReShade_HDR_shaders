@@ -230,7 +230,7 @@ void PS_MapSdrIntoHdr
                                   : sign_colour * Csp::Trc::Extended_Gamma22_Roll_Off_To_Linear_To::Linear(Csp::Trc::Linear_To::sRGB(colour));
       }
       else
-    BRANCH()
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
       {
         float3 abs_colour  = abs(colour);
