@@ -221,8 +221,37 @@ void PS_MapSdrIntoHdr
     case TRC_LINEAR:
     {
       BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_ROLL_OFF_TO_LINEAR)
+      {
+        float3 abs_colour  = abs(colour);
+        float3 sign_colour = sign(colour);
+
+        colour = abs_colour < 1.f ? colour
+                                  : sign_colour * Csp::Trc::Extended_Gamma22_Roll_Off_To_Linear_To::Linear(Csp::Trc::Linear_To::sRGB(colour));
+      }
+      else
+    BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_S_CURVE)
+      {
+        float3 abs_colour  = abs(colour);
+        float3 sign_colour = sign(colour);
+
+        colour = abs_colour < 1.f ? colour
+                                  : sign_colour * Csp::Trc::Extended_Gamma22_S_Curve_To::Linear(Csp::Trc::Linear_To::sRGB(abs_colour));
+      }
+      else
+      BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_LINEAR)
       { }
+      else
+      BRANCH()
+      if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_APPLY_GAMMA)
+      {
+        float3 abs_colour  = abs(colour);
+        float3 sign_colour = sign(colour);
+        colour = abs_colour < 1.f ? colour 
+                                  : sign_colour * pow(Csp::Trc::Linear_To::sRGB(abs_colour), 2.2f);
+      }
       else
       BRANCH()
       if (OVERBRIGHT_HANDLING == OVERBRIGHT_HANDLING_CLAMP)
