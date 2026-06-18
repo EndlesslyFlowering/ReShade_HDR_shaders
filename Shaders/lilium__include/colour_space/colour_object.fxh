@@ -100,7 +100,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
                 if (CO.is_untouched)
                 {
-                  linearColour = FetchFromHdr10ToLinearLUT(CO.RGB);
+                  linearColour = SampleFromHdr10ToLinearLUT(CO.RGB);
                 }
                 else
 #endif
@@ -286,7 +286,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
                 if (CO.is_untouched)
                 {
-                  CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
+                  CO.RGB = SampleFromHdr10ToLinearLUT(CO.RGB);
                 }
                 else
 #endif
@@ -487,7 +487,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
                 if (CO.is_untouched)
                 {
-                  CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
+                  CO.RGB = SampleFromHdr10ToLinearLUT(CO.RGB);
                 }
                 else
 #endif
@@ -592,7 +592,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
                 if (CO.is_untouched)
                 {
-                  CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
+                  CO.RGB = SampleFromHdr10ToLinearLUT(CO.RGB);
                 }
                 else
 #endif
@@ -792,7 +792,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
               if (CO.is_untouched)
               {
-                CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
+                CO.RGB = SampleFromHdr10ToLinearLUT(CO.RGB);
               }
               else
 #endif
@@ -843,7 +843,7 @@
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
               if (CO.is_untouched)
               {
-                CO.RGB = FetchFromHdr10ToLinearLUT(CO.RGB);
+                CO.RGB = SampleFromHdr10ToLinearLUT(CO.RGB);
               }
               else
 #endif

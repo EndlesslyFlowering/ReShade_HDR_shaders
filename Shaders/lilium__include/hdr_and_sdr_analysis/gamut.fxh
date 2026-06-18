@@ -182,7 +182,7 @@ void PS_CalcGamuts
 
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
   #ifdef IS_COMPUTE_CAPABLE_API
-    const float3 curPixel = FetchFromHdr10ToLinearLUT(pixel);
+    const float3 curPixel = SampleFromHdr10ToLinearLUT(pixel);
   #else
     const float3 curPixel = Csp::Trc::PQ_To::Linear(pixel);
   #endif

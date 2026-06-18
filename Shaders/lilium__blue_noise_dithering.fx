@@ -693,7 +693,7 @@ void PS_Dither
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-    colour.rgb = FetchFromHdr10ToLinearLUT(colour.rgb);
+    colour.rgb = SampleFromHdr10ToLinearLUT(colour.rgb);
 
     brightness_factor = 10000.f / DITHER_DISPLAY_MAX_BRIGHTNESS;
 

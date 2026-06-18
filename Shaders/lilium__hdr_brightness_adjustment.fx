@@ -161,7 +161,7 @@ void PS_HDR_Brightness_Adjustment
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  rgb_linear = FetchFromHdr10ToLinearLUT(rgb_in);
+  rgb_linear = SampleFromHdr10ToLinearLUT(rgb_in);
 
 #else
 

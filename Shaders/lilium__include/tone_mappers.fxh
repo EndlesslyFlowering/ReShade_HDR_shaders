@@ -113,7 +113,7 @@ HDR10_TO_LINEAR_LUT()
 float3 ConditionallyLineariseHdr10Temp(float3 Colour)
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
-  Colour = FetchFromHdr10ToLinearLUT(Colour);
+  Colour = SampleFromHdr10ToLinearLUT(Colour);
 #endif
   return Colour;
 }

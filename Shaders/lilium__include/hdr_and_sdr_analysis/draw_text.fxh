@@ -1354,7 +1354,7 @@ float3 MergeText
     adjustFactor = _TEXT_BRIGHTNESS / 10000.f;
 
   #ifdef IS_COMPUTE_CAPABLE_API
-    Output = FetchFromHdr10ToLinearLUT(Output);
+    Output = SampleFromHdr10ToLinearLUT(Output);
   #else
     Output = Csp::Trc::PQ_To::Linear(Output);
   #endif
@@ -2294,7 +2294,7 @@ void PS_RenderNumbers
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
   #ifdef IS_COMPUTE_CAPABLE_API
-    Output.rgb = FetchFromHdr10ToLinearLUT(inputColour.rgb);
+    Output.rgb = SampleFromHdr10ToLinearLUT(inputColour.rgb);
   #else
     Output.rgb = Csp::Trc::PQ_To::Linear(inputColour.rgb);
   #endif

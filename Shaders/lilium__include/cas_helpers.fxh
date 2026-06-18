@@ -25,7 +25,7 @@ float3 RgbModePrepareForProcessing
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  return FetchFromHdr10ToLinearLUT(Colour);
+  return SampleFromHdr10ToLinearLUT(Colour);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 
@@ -126,15 +126,15 @@ void GetLuminance
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  float3 aRgb  = FetchFromHdr10ToLinearLUT(Ptp.a);
-  float3 bRgb  = FetchFromHdr10ToLinearLUT(Ptp.b);
-  float3 cRgb  = FetchFromHdr10ToLinearLUT(Ptp.c);
-  float3 dRgb  = FetchFromHdr10ToLinearLUT(Ptp.d);
-         Ptp.e = FetchFromHdr10ToLinearLUT(Ptp.e);
-  float3 fRgb  = FetchFromHdr10ToLinearLUT(Ptp.f);
-  float3 gRgb  = FetchFromHdr10ToLinearLUT(Ptp.g);
-  float3 hRgb  = FetchFromHdr10ToLinearLUT(Ptp.h);
-  float3 iRgb  = FetchFromHdr10ToLinearLUT(Ptp.i);
+  float3 aRgb  = SampleFromHdr10ToLinearLUT(Ptp.a);
+  float3 bRgb  = SampleFromHdr10ToLinearLUT(Ptp.b);
+  float3 cRgb  = SampleFromHdr10ToLinearLUT(Ptp.c);
+  float3 dRgb  = SampleFromHdr10ToLinearLUT(Ptp.d);
+         Ptp.e = SampleFromHdr10ToLinearLUT(Ptp.e);
+  float3 fRgb  = SampleFromHdr10ToLinearLUT(Ptp.f);
+  float3 gRgb  = SampleFromHdr10ToLinearLUT(Ptp.g);
+  float3 hRgb  = SampleFromHdr10ToLinearLUT(Ptp.h);
+  float3 iRgb  = SampleFromHdr10ToLinearLUT(Ptp.i);
 
   Lop.aLum = dot(aRgb,  Csp::Mat::BT2020_To_XYZ[1]);
   Lop.bLum = dot(bRgb,  Csp::Mat::BT2020_To_XYZ[1]);

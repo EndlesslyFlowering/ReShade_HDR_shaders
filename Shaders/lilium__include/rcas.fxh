@@ -199,11 +199,11 @@ void Get_Luminance
 {
 #if (ACTUAL_COLOUR_SPACE == CSP_HDR10)
 
-  B = FetchFromHdr10ToLinearLUT(B);
-  D = FetchFromHdr10ToLinearLUT(D);
-  E = FetchFromHdr10ToLinearLUT(E);
-  F = FetchFromHdr10ToLinearLUT(F);
-  H = FetchFromHdr10ToLinearLUT(H);
+  B = SampleFromHdr10ToLinearLUT(B);
+  D = SampleFromHdr10ToLinearLUT(D);
+  E = SampleFromHdr10ToLinearLUT(E);
+  F = SampleFromHdr10ToLinearLUT(F);
+  H = SampleFromHdr10ToLinearLUT(H);
 
 #elif (ACTUAL_COLOUR_SPACE == CSP_SRGB)
 

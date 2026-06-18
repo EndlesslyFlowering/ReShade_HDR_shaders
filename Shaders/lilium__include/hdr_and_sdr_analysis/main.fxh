@@ -856,7 +856,7 @@ float3 MergeOverlay
     adjustFactor = OverlayBrightness / 10000.f;
 
   #ifdef IS_COMPUTE_CAPABLE_API
-    Output = FetchFromHdr10ToLinearLUT(Output);
+    Output = SampleFromHdr10ToLinearLUT(Output);
   #else
     Output = Csp::Trc::PQ_To::Linear(Output);
   #endif
