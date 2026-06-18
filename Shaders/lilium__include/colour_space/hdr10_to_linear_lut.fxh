@@ -13,6 +13,10 @@
     sampler1D<float> SamplerHdr10ToLinearLUT                        \
     {                                                               \
       Texture = TextureHdr10ToLinearLUT;                            \
+                                                                    \
+      MagFilter = POINT;                                            \
+      MinFilter = POINT;                                            \
+      MipFilter = POINT;                                            \
     };                                                              \
                                                                     \
     storage1D<float> StorageHdr10ToLinearLUT                        \
@@ -30,6 +34,39 @@
       tex1Dstore(StorageHdr10ToLinearLUT, DTID.x, curr);            \
                                                                     \
       return;                                                       \
+    }                                                               \
+                                                                    \
+    float SampleFromHdr10ToLinearLUT                                \
+    (                                                               \
+      float Channel                                                 \
+    )                                                               \
+    {                                                               \
+      Channel = tex1D(SamplerHdr10ToLinearLUT, Channel);            \
+                                                                    \
+      return Channel;                                               \
+    }                                                               \
+                                                                    \
+    float2 SampleFromHdr10ToLinearLUT                               \
+    (                                                               \
+      float2 Channels                                               \
+    )                                                               \
+    {                                                               \
+      Channels.x = tex1D(SamplerHdr10ToLinearLUT, Channels.x);      \
+      Channels.y = tex1D(SamplerHdr10ToLinearLUT, Channels.y);      \
+                                                                    \
+      return Channels;                                              \
+    }                                                               \
+                                                                    \
+    float3 SampleFromHdr10ToLinearLUT                               \
+    (                                                               \
+      float3 Colour                                                 \
+    )                                                               \
+    {                                                               \
+      Colour.r = tex1D(SamplerHdr10ToLinearLUT, Colour.r);          \
+      Colour.g = tex1D(SamplerHdr10ToLinearLUT, Colour.g);          \
+      Colour.b = tex1D(SamplerHdr10ToLinearLUT, Colour.b);          \
+                                                                    \
+      return Colour;                                                \
     }                                                               \
                                                                     \
     float FetchFromHdr10ToLinearLUT                                 \
