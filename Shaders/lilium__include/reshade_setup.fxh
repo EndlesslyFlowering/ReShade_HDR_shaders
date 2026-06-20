@@ -1159,9 +1159,11 @@ uniform int GLOBAL_INFO
 
 
 #if (__RESHADE_PERFORMANCE_MODE__ == 0)
-  #define BRANCH()  [branch]
-  #define FLATTEN() [flatten]
+  #define BRANCH()    [branch]
+  #define FLATTEN()   [flatten]
+  #define FORCECASE() [forcecase]
 #else
   #define BRANCH()
   #define FLATTEN()
+  #define FORCECASE()
 #endif
