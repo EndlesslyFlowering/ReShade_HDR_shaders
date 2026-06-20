@@ -33,12 +33,12 @@
       {
         float ret;
 
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -64,7 +64,7 @@
           break;
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -90,7 +90,7 @@
           break;
           case CO_TRC_PQ:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT2020:
@@ -132,12 +132,12 @@
 //      {
 //        float ret;
 //
-//        [forcecase]
+//        FORCECASE()
 //        switch(CO.trc)
 //        {
 //          case CO_TRC_LINEAR_NORMALISED:
 //          {
-//            [forcecase]
+//            FORCECASE()
 //            switch(CO.prim)
 //            {
 //              case CO_PRIM_BT709:
@@ -163,7 +163,7 @@
 //          break;
 //          case CO_TRC_LINEAR_80:
 //          {
-//            [forcecase]
+//            FORCECASE()
 //            switch(CO.prim)
 //            {
 //              case CO_PRIM_BT709:
@@ -189,7 +189,7 @@
 //          break;
 //          case CO_TRC_PQ:
 //          {
-//            [forcecase]
+//            FORCECASE()
 //            switch(CO.prim)
 //            {
 //              case CO_PRIM_BT2020:
@@ -220,12 +220,12 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -255,7 +255,7 @@
           break;
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -278,7 +278,7 @@
           break;
           case CO_TRC_PQ:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT2020:
@@ -323,12 +323,12 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -358,7 +358,7 @@
           break;
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -390,7 +390,7 @@
           break;
           case CO_TRC_PQ:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT2020:
@@ -421,12 +421,12 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -456,7 +456,7 @@
           break;
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -479,7 +479,7 @@
           break;
           case CO_TRC_PQ:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT2020:
@@ -526,12 +526,12 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -561,7 +561,7 @@
           break;
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -584,7 +584,7 @@
           break;
           case CO_TRC_PQ:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT2020:
@@ -632,13 +632,13 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -678,13 +678,13 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -724,13 +724,13 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
           case CO_TRC_LINEAR_80:
           {
-            [forcecase]
+            FORCECASE()
             switch(CO.prim)
             {
               case CO_PRIM_BT709:
@@ -774,7 +774,7 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
@@ -825,7 +825,7 @@
         Colour_Object CO
       )
       {
-        [forcecase]
+        FORCECASE()
         switch(CO.trc)
         {
           case CO_TRC_LINEAR_NORMALISED:
@@ -881,7 +881,7 @@
         [branch]
         if (CO.prim == CO_PRIM_BT2020)
         {
-          [forcecase]
+          FORCECASE()
           switch(CO.trc)
           {
             case CO_TRC_LINEAR_NORMALISED:
