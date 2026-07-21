@@ -1067,6 +1067,7 @@ void RenderWaveformScale
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_MODE,             waveform_mode_current);
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_TEXT_SIZE_ADJUST, waveform_text_size_adjust_current);
     tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_TIMER,                 FRAMETIME);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_SCALE_WAS_DRAWN_TO,    1.f);
   }
 
   const float waveform_timer = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_TIMER);
@@ -1791,7 +1792,8 @@ void RenderWaveformScale
       }
     }
 
-    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_TIMER, -1.f);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_TIMER,              -1.f);
+    tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_SCALE_WAS_DRAWN_TO,  1.f);
   }
   else
   [branch]

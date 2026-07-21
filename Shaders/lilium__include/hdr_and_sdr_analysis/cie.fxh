@@ -443,6 +443,8 @@ void DrawCieOutlines
   BRANCH()
   if (_CIE_DIAGRAM_SHOW)
   {
+    const bool waveform_scale_was_not_drawn_to = tex1Dfetch(StorageConsolidated, COORDS_WAVEFORM_SCALE_WAS_DRAWN_TO) == 0.f;
+
     const uint cie_settings_old = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
 
                                 //safety so it's a big enough float number that does not get flushed
@@ -459,8 +461,9 @@ void DrawCieOutlines
     const float cie_diagram_size_last = tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE);
 
     [branch]
-    if (cie_settings_old      != cie_settings_new
-     || cie_diagram_size_last != _CIE_DIAGRAM_SIZE)
+    if (waveform_scale_was_not_drawn_to
+     && (cie_settings_old      != cie_settings_new
+      || cie_diagram_size_last != _CIE_DIAGRAM_SIZE))
     {
       float2 cie_min_extra;
       float2 cie_normalise;
@@ -614,7 +617,8 @@ void DrawCieOutlines
     const float cie_timer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
 
     [branch]
-    if (cie_timer >= 1000.f)
+    if (waveform_scale_was_not_drawn_to
+     && cie_timer >= 1000.f)
     {
       const float cie_render_progress = tex1Dfetch(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS);
 
