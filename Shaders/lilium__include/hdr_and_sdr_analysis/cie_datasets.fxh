@@ -13,6 +13,10 @@ static const float2 CIE_xy1931_Primary_BT2020_Red   = float2(0.708f, 0.292f);
 static const float2 CIE_xy1931_Primary_BT2020_Green = float2(0.170f, 0.797f);
 static const float2 CIE_xy1931_Primary_BT2020_Blue  = float2(0.131f, 0.046f);
 
+static const float2 CIE_xy1931_Primaries_BT709[3]  = { CIE_xy1931_Primary_BT709_Red,  CIE_xy1931_Primary_BT709_Green,  CIE_xy1931_Primary_BT709_Blue };
+static const float2 CIE_xy1931_Primaries_DCIP3[3]  = { CIE_xy1931_Primary_DCIP3_Red,  CIE_xy1931_Primary_DCIP3_Green,  CIE_xy1931_Primary_DCIP3_Blue };
+static const float2 CIE_xy1931_Primaries_BT2020[3] = { CIE_xy1931_Primary_BT2020_Red, CIE_xy1931_Primary_BT2020_Green, CIE_xy1931_Primary_BT2020_Blue };
+
 
 static const float2 CIE_uv1976_Primary_BT709_Red    = float2(0.450704216f,  0.522887349f);
 static const float2 CIE_uv1976_Primary_BT709_Green  = float2(0.125f,        0.5625f);
@@ -26,6 +30,9 @@ static const float2 CIE_uv1976_Primary_BT2020_Red   = float2(0.556603789f,  0.51
 static const float2 CIE_uv1976_Primary_BT2020_Green = float2(0.0556282736f, 0.586796462f);
 static const float2 CIE_uv1976_Primary_BT2020_Blue  = float2(0.159270510f,  0.125835865f);
 
+static const float2 CIE_uv1976_Primaries_BT709[3]  = { CIE_uv1976_Primary_BT709_Red,  CIE_uv1976_Primary_BT709_Green,  CIE_uv1976_Primary_BT709_Blue };
+static const float2 CIE_uv1976_Primaries_DCIP3[3]  = { CIE_uv1976_Primary_DCIP3_Red,  CIE_uv1976_Primary_DCIP3_Green,  CIE_uv1976_Primary_DCIP3_Blue };
+static const float2 CIE_uv1976_Primaries_BT2020[3] = { CIE_uv1976_Primary_BT2020_Red, CIE_uv1976_Primary_BT2020_Green, CIE_uv1976_Primary_BT2020_Blue };
 
 //only 360-699 + 830 nm as for 700-829 nm the values are too close
 
