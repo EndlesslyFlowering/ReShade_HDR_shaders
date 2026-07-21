@@ -34,7 +34,9 @@ static const float2 CIE_uv1976_Primaries_BT709[3]  = { CIE_uv1976_Primary_BT709_
 static const float2 CIE_uv1976_Primaries_DCIP3[3]  = { CIE_uv1976_Primary_DCIP3_Red,  CIE_uv1976_Primary_DCIP3_Green,  CIE_uv1976_Primary_DCIP3_Blue };
 static const float2 CIE_uv1976_Primaries_BT2020[3] = { CIE_uv1976_Primary_BT2020_Red, CIE_uv1976_Primary_BT2020_Green, CIE_uv1976_Primary_BT2020_Blue };
 
-//only 360-699 + 830 nm as for 700-829 nm the values are too close
+
+// only 360-698 nm + the 2 coordinates that create the widest area
+// as for 699-830 nm the values are too close to each other
 
 #define CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH 341
 
@@ -379,8 +381,8 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_xy1931[CIE_1931_2_DEGREE
   float2(0.734621107f,   0.265378892f),
   float2(0.734648883f,   0.265351116f),
   float2(0.734673380f,   0.265326619f),
-  float2(0.734690070f,   0.265309959f),
-  float2(0.734689950f,   0.265310049f)
+  float2(0.734690070f,   0.265310078f),
+  float2(0.734690070f,   0.265309900f)
 };
 
 
@@ -725,8 +727,8 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[CIE_1931_2_DEGREE
   float2(0.623180150f,   0.506522953f),
   float2(0.623255193f,   0.506511747f),
   float2(0.623321294f,   0.506501793f),
-  float2(0.623366296f,   0.506495058f),
-  float2(0.623366057f,   0.506495118f)
+  float2(0.623366415f,   0.506495118f),
+  float2(0.623366415f,   0.506495058f)
 };
 
 
