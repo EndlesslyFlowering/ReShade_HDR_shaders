@@ -629,185 +629,208 @@ void DrawCieOutlines
       }
 #endif
 
-      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS, asfloat(cieSettingsNew));
-      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,     _CIE_DIAGRAM_SIZE);
-      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,         FRAMETIME);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,   asfloat(cieSettingsNew));
+      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,       _CIE_DIAGRAM_SIZE);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,           FRAMETIME);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS, 0.f);
     }
 
 
-    static const float cieTimer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
+    const float cie_timer = tex1Dfetch(StorageConsolidated, COORDS_CIE_TIMER);
 
     [branch]
-    if (cieTimer >= 1000.f)
+    if (cie_timer >= 1000.f)
     {
-      float2 cieMinExtra;
-      float2 cieNormalise;
-      float2 cieSize;
+      const float cie_render_progress = tex1Dfetch(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS);
 
-      float2 coordsSpectralLocus[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH];
+      const float2 render_size_minus_1 = GetCieDiagramRenderSizeMinus1();
 
-      FLATTEN()
-      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      [branch]
+      if (cie_render_progress < 7.f)
       {
-        cieMinExtra  = CIE_XY_MIN_EXTRA;
-        cieNormalise = CIE_XY_NORMALISE;
-        cieSize      = CIE_XY_SIZE_FLOAT;
+        // test CIE 1976 u'v' diagram at 2560x1440 with a size of 66.8%
+        // as it causes a driver time out when using the full 360-830 nm spectral locus
 
-        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_xy1931;
+        float2 cie_min_extra;
+        float2 cie_normalise;
+
+        const bool cie_diagram_type_is_cie_1931 = _CIE_DIAGRAM_TYPE == CIE_1931;
+
+        FLATTEN()
+        if (cie_diagram_type_is_cie_1931)
+        {
+          cie_min_extra = CIE_XY_MIN_EXTRA;
+          cie_normalise = CIE_XY_NORMALISE;
+        }
+        else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+        {
+          cie_min_extra = CIE_UV_MIN_EXTRA;
+          cie_normalise = CIE_UV_NORMALISE;
+        }
+
+        uint iterator_max = cie_render_progress < 6.f
+                          ? 50u
+                          : 41u;
+
+        uint iterator_start = uint(cie_render_progress) * 50u;
+
+        [loop]
+        for (uint i = iterator_start; i < (iterator_start + iterator_max + Unrolling_Be_Gone_Uint); i++)
+        {
+          float2 coords_0;
+          float2 coords_1;
+
+          BRANCH()
+          if (cie_diagram_type_is_cie_1931)
+          {
+            coords_0 = CIE_1931_2_Degree_Standard_Observer_xy1931[i];
+            coords_1 = CIE_1931_2_Degree_Standard_Observer_xy1931[(i + 1u) % CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH];
+          }
+          else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+          {
+            coords_0 = CIE_1931_2_Degree_Standard_Observer_uv1976[i];
+            coords_1 = CIE_1931_2_Degree_Standard_Observer_uv1976[(i + 1u) % CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH];
+          }
+
+          Draw_Cie_Lines(Unrolling_Be_Gone_Float,
+                         cie_min_extra,
+                         cie_normalise,
+                         render_size_minus_1,
+                         coords_0,
+                         coords_1);
+        }
       }
-      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      else
+      [branch]
+      if (cie_render_progress == 7.f)
       {
-        cieMinExtra  = CIE_UV_MIN_EXTRA;
-        cieNormalise = CIE_UV_NORMALISE;
-        cieSize      = CIE_UV_SIZE_FLOAT;
+        const int2 render_size_minus_1_as_int = int2(render_size_minus_1);
 
-        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_uv1976;
-      }
-
-      const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
-
-      DRAW_COORDS_FROM_ARRAY(coordsSpectralLocus, uint(CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH))
-
-      memoryBarrier();
-
-      static const int2 render_size_minus_1_as_int = int2(renderSizeMinus1);
-
-      [loop]
-      for (int y = 0; y <= (render_size_minus_1_as_int.y + Unrolling_Be_Gone_Int); y++)
-      {
-        int coord_x_left;
-        int coord_x_right;
-
-        int x_left = 0;
-
-        float value_last = -1.f;
-
-        //search from the left for the first pixel that is not 0 and the highest one
         [loop]
-        while (x_left <= (render_size_minus_1_as_int.x + Unrolling_Be_Gone_Int))
+        for (int y = 0; y <= (render_size_minus_1_as_int.y + Unrolling_Be_Gone_Int); y++)
         {
-          int2 xy_left = int2(x_left, y);
+          int coord_x_left;
+          int coord_x_right;
 
-          float value_current = tex2Dfetch(StorageCieOverlay, xy_left).x;
+          int x_left = 0;
 
-          //if the pixel is found end loop
-          if (value_last    >  0.f
-           && value_current <= value_last)
-          {
-            coord_x_left = x_left - 1;
+          float value_last = -1.f;
 
-            break;
-          }
-
-          x_left++;
-
-          value_last = value_current;
-        }
-
-
-        value_last = -1.f;
-
-        int x_right = render_size_minus_1_as_int.x;
-
-        //search from the right for the first pixel that is not 0 and the highest one
-        [loop]
-        while (x_right >= (0 + Unrolling_Be_Gone_Int))
-        {
-          int2 xy_right = int2(x_right, y);
-
-          float value_current = tex2Dfetch(StorageCieOverlay, xy_right).x;
-
-          //if the pixel is found end loop
-          if (value_last    >  0.f
-           && value_current <= value_last)
-          {
-            coord_x_right = x_right + 1;
-
-            break;
-          }
-
-          x_right--;
-
-          value_last = value_current;
-        }
-
-        value_last = tex2Dfetch(StorageCieOverlay, int2(coord_x_left, y)).x;
-
-        float local_max = value_last;
-
-        bool row_has_value_at_zero      = false;
-        bool row_has_been_smaller_once  = false;
-        bool row_has_been_greater_twice = false;
-        [loop]
-        for (int x_local = coord_x_left + 1; x_local <= (coord_x_right + Unrolling_Be_Gone_Int); x_local++)
-        {
-          int2 xy_local = int2(x_local, y);
-
-          float value_current = tex2Dfetch(StorageCieOverlay, xy_local).x;
-
-          local_max = max(value_current, local_max);
-
-          if (!row_has_value_at_zero)
-          {
-            row_has_value_at_zero = value_current == 0.f;
-          }
-
-          // up + down
-          if (!row_has_been_smaller_once)
-          {
-            // make sure the difference is high enough to matter
-            row_has_been_smaller_once = (local_max - value_current) > 0.1f
-                                     && value_current < value_last;
-          }
-
-          // up + down + up
-          if (!row_has_been_greater_twice)
-          {
-            row_has_been_greater_twice = row_has_been_smaller_once
-                                      && value_current > value_last;
-          }
-
-          value_last = value_current;
-        }
-
-        [branch]
-        if (row_has_been_greater_twice
-         || row_has_value_at_zero)
-        {
-          //set alpha to 1 so that the background also gets drawn
+          //search from the left for the first pixel that is not 0 and the highest one
           [loop]
-          for (int x_alpha = coord_x_left; x_alpha <= (coord_x_right + Unrolling_Be_Gone_Int); x_alpha++)
+          while (x_left <= (render_size_minus_1_as_int.x + Unrolling_Be_Gone_Int))
           {
-            int2 xy_local = int2(x_alpha, y);
+            int2 xy_left = int2(x_left, y);
+
+            float value_current = tex2Dfetch(StorageCieOverlay, xy_left).x;
+
+            //if the pixel is found end loop
+            if (value_last    >  0.f
+             && value_current <= value_last)
+            {
+              coord_x_left = x_left - 1;
+
+              break;
+            }
+
+            x_left++;
+
+            value_last = value_current;
+          }
+
+
+          value_last = -1.f;
+
+          int x_right = render_size_minus_1_as_int.x;
+
+          //search from the right for the first pixel that is not 0 and the highest one
+          [loop]
+          while (x_right >= (0 + Unrolling_Be_Gone_Int))
+          {
+            int2 xy_right = int2(x_right, y);
+
+            float value_current = tex2Dfetch(StorageCieOverlay, xy_right).x;
+
+            //if the pixel is found end loop
+            if (value_last    >  0.f
+             && value_current <= value_last)
+            {
+              coord_x_right = x_right + 1;
+
+              break;
+            }
+
+            x_right--;
+
+            value_last = value_current;
+          }
+
+          value_last = tex2Dfetch(StorageCieOverlay, int2(coord_x_left, y)).x;
+
+          float local_max = value_last;
+
+          bool row_has_value_at_zero      = false;
+          bool row_has_been_smaller_once  = false;
+          bool row_has_been_greater_twice = false;
+          [loop]
+          for (int x_local = coord_x_left + 1; x_local <= (coord_x_right + Unrolling_Be_Gone_Int); x_local++)
+          {
+            int2 xy_local = int2(x_local, y);
 
             float value_current = tex2Dfetch(StorageCieOverlay, xy_local).x;
 
-            tex2Dstore(StorageCieOverlay, xy_local, float4(value_current, 1.f, 0.f, 0.f));
+            local_max = max(value_current, local_max);
+
+            if (!row_has_value_at_zero)
+            {
+              row_has_value_at_zero = value_current == 0.f;
+            }
+
+            // up + down
+            if (!row_has_been_smaller_once)
+            {
+              // make sure the difference is high enough to matter
+              row_has_been_smaller_once = (local_max - value_current) > 0.1f
+                                       && value_current < value_last;
+            }
+
+            // up + down + up
+            if (!row_has_been_greater_twice)
+            {
+              row_has_been_greater_twice = row_has_been_smaller_once
+                                        && value_current > value_last;
+            }
+
+            value_last = value_current;
+          }
+
+          [branch]
+          if (row_has_been_greater_twice
+           || row_has_value_at_zero)
+          {
+            //set alpha to 1 so that the background also gets drawn
+            [loop]
+            for (int x_alpha = coord_x_left; x_alpha <= (coord_x_right + Unrolling_Be_Gone_Int); x_alpha++)
+            {
+              int2 xy_local = int2(x_alpha, y);
+
+              float value_current = tex2Dfetch(StorageCieOverlay, xy_local).x;
+
+              tex2Dstore(StorageCieOverlay, xy_local, float4(value_current, 1.f, 0.f, 0.f));
+            }
           }
         }
 
-//        memoryBarrier();
-//
-//        //bicubic interpolation with Mitchell-Netravali
-//        [loop]
-//        for (int x = 0; x <= render_size_minus_1_as_int.x; x++)
-//        {
-//          int2 xy = int2(x, y);
-//
-//          float2 interpolated = Bicubic(xy, 1.f, 0.f);
-//
-//          tex2Dstore(StorageCieOverlay, xy, float4(interpolated, 0.f, 0.f));
-//        }
+        tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, -1.f);
       }
 
-
-      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, -1.f);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS, cie_render_progress + 1.f);
     }
     else
     [branch]
-    if (cieTimer >= 0.f)
+    if (cie_timer >= 0.f)
     {
-      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, cieTimer + FRAMETIME);
+      tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER, cie_timer + FRAMETIME);
     }
 
   }

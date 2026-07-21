@@ -1534,6 +1534,8 @@ void CS_MakeOverlayBgAndWaveformScaleRedraw()
   tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_LAST_SIZE_X,  0.f);
   tex1Dstore(StorageConsolidated, COORDS_WAVEFORM_TIMER,       -1.f);
   tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,     0.f);
+  tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,            -1.f);
+  tex1Dstore(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS,  99.f);
   tex1Dstore(StorageConsolidated, COORDS_UNROLLING_BE_GONE,     0.f);
 
   memoryBarrier();
