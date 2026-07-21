@@ -691,7 +691,7 @@ void DrawCieOutlines
           float value_current = tex2Dfetch(StorageCieOverlay, xy_left).x;
 
           //if the pixel is found end loop
-          if (value_current >  0.f
+          if (value_last    >  0.f
            && value_current <= value_last)
           {
             coord_x_left = x_left - 1;
@@ -705,6 +705,8 @@ void DrawCieOutlines
         }
 
 
+        value_last = -1.f;
+
         int x_right = render_size_minus_1_as_int.x;
 
         //search from the right for the first pixel that is not 0 and the highest one
@@ -716,7 +718,7 @@ void DrawCieOutlines
           float value_current = tex2Dfetch(StorageCieOverlay, xy_right).x;
 
           //if the pixel is found end loop
-          if (value_current >  0.f
+          if (value_last    >  0.f
            && value_current <= value_last)
           {
             coord_x_right = x_right + 1;
