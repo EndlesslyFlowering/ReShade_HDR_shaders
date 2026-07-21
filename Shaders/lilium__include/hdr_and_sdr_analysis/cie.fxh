@@ -443,193 +443,168 @@ void DrawCieOutlines
   BRANCH()
   if (_CIE_DIAGRAM_SHOW)
   {
-    const uint cieSettingsOld = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
+    const uint cie_settings_old = asuint(tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SETTINGS));
 
                                 //safety so it's a big enough float number that does not get flushed
-    const uint cieSettingsNew = uint(0x40000000)
-                              |      (_CIE_DIAGRAM_TYPE                         << CIE_DIAGRAM_TYPE_ENCODE_OFFSET)
-                              | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW) << CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW_ENCODE_OFFSET)
-                              | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW_ENCODE_OFFSET)
+    const uint cie_settings_new = uint(0x40000000)
+                                |      (_CIE_DIAGRAM_TYPE                         << CIE_DIAGRAM_TYPE_ENCODE_OFFSET)
+                                | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW) << CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW_ENCODE_OFFSET)
+                                | (uint(_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW_ENCODE_OFFSET)
 #ifdef IS_HDR_CSP
-                              | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW_ENCODE_OFFSET)
-                              | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW)   << CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW_ENCODE_OFFSET)
+                                | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW)    << CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW_ENCODE_OFFSET)
+                                | (uint( CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW)   << CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW_ENCODE_OFFSET)
 #endif
-                              ;
+                                ;
+
+    const float cie_diagram_size_last = tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE);
 
     [branch]
-    if (cieSettingsOld                                        != cieSettingsNew
-     || tex1Dfetch(StorageConsolidated, COORDS_CIE_LAST_SIZE) != _CIE_DIAGRAM_SIZE)
+    if (cie_settings_old      != cie_settings_new
+     || cie_diagram_size_last != _CIE_DIAGRAM_SIZE)
     {
+      float2 cie_min_extra;
+      float2 cie_normalise;
+      float2 cie_size;
+
+      FLATTEN()
+      if (_CIE_DIAGRAM_TYPE == CIE_1931)
+      {
+        cie_min_extra = CIE_XY_MIN_EXTRA;
+        cie_normalise = CIE_XY_NORMALISE;
+        cie_size      = CIE_XY_SIZE_FLOAT;
+      }
+      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+      {
+        cie_min_extra = CIE_UV_MIN_EXTRA;
+        cie_normalise = CIE_UV_NORMALISE;
+        cie_size      = CIE_UV_SIZE_FLOAT;
+      }
+
+      const float2 render_size_minus_1 = GetCieDiagramRenderSizeMinus1(cie_size);
+
       [loop]
-      for (int x = 0; x < (CIE_TEXTURE_WIDTH_INT + Unrolling_Be_Gone_Int); x++)
+      for (int x = 0; x <= (render_size_minus_1.x + Unrolling_Be_Gone_Int); x++)
       {
         [loop]
-        for (int y = 0; y < (CIE_TEXTURE_HEIGHT_INT + Unrolling_Be_Gone_Int); y++)
+        for (int y = 0; y <= (render_size_minus_1.y + Unrolling_Be_Gone_Int); y++)
         {
           tex2Dstore(StorageCieOverlay, int2(x, y), (float4)0.f);
         }
       }
 
-      float2 cieMinExtra;
-      float2 cieNormalise;
-      float2 cieSize;
-
-      float2 primBt709R;
-      float2 primBt709G;
-      float2 primBt709B;
-
-      float2 coordsPointersGamut[POINTERS_GAMUT_ARRAY_LENGTH];
-
 #ifdef IS_HDR_CSP
-      float2 primDciP3R;
-      float2 primDciP3G;
-      float2 primDciP3B;
-
-      float2 primBt2020R;
-      float2 primBt2020G;
-      float2 primBt2020B;
-#endif
-
-      FLATTEN()
-      if (_CIE_DIAGRAM_TYPE == CIE_1931)
-      {
-        cieMinExtra  = CIE_XY_MIN_EXTRA;
-        cieNormalise = CIE_XY_NORMALISE;
-        cieSize      = CIE_XY_SIZE_FLOAT;
-
-        coordsPointersGamut = Pointers_Gamut_xy1931;
-
-        primBt709R = CIE_xy1931_Primary_BT709_Red;
-        primBt709G = CIE_xy1931_Primary_BT709_Green;
-        primBt709B = CIE_xy1931_Primary_BT709_Blue;
-
-#ifdef IS_HDR_CSP
-        primDciP3R = CIE_xy1931_Primary_DCIP3_Red;
-        primDciP3G = CIE_xy1931_Primary_DCIP3_Green;
-        primDciP3B = CIE_xy1931_Primary_DCIP3_Blue;
-
-        primBt2020R = CIE_xy1931_Primary_BT2020_Red;
-        primBt2020G = CIE_xy1931_Primary_BT2020_Green;
-        primBt2020B = CIE_xy1931_Primary_BT2020_Blue;
-#endif
-      }
-      else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
-      {
-        cieMinExtra  = CIE_UV_MIN_EXTRA;
-        cieNormalise = CIE_UV_NORMALISE;
-        cieSize      = CIE_UV_SIZE_FLOAT;
-
-        coordsPointersGamut = Pointers_Gamut_uv1976;
-
-        primBt709R = CIE_uv1976_Primary_BT709_Red;
-        primBt709G = CIE_uv1976_Primary_BT709_Green;
-        primBt709B = CIE_uv1976_Primary_BT709_Blue;
-
-#ifdef IS_HDR_CSP
-        primDciP3R = CIE_uv1976_Primary_DCIP3_Red;
-        primDciP3G = CIE_uv1976_Primary_DCIP3_Green;
-        primDciP3B = CIE_uv1976_Primary_DCIP3_Blue;
-
-        primBt2020R = CIE_uv1976_Primary_BT2020_Red;
-        primBt2020G = CIE_uv1976_Primary_BT2020_Green;
-        primBt2020B = CIE_uv1976_Primary_BT2020_Blue;
-#endif
-      }
-
-      const float2 renderSizeMinus1 = GetCieDiagramRenderSizeMinus1(cieSize);
-
-
-#ifdef IS_HDR_CSP
-                                  //BT.709 + DCI-P3 + BT.2020
-      static const uint drawCount = 1 + 1 + 1;
-//      static const uint drawCount = 3 + 3 + 3;
-#endif
-
-
-#define DRAW_COORDS_FROM_ARRAY(ARRAY_NAME, ARRAY_LENGTH)                      \
-          [loop]                                                              \
-          for (uint i = 0u; i < (ARRAY_LENGTH + Unrolling_Be_Gone_Uint); i++) \
-          {                                                                   \
-            float2 coords0 = ARRAY_NAME[i];                                   \
-            float2 coords1 = ARRAY_NAME[(i + 1u) % ARRAY_LENGTH];             \
-                                                                              \
-            Draw_Cie_Lines(Unrolling_Be_Gone_Float,                           \
-                           cieMinExtra,                                       \
-                           cieNormalise,                                      \
-                           renderSizeMinus1,                                  \
-                           coords0,                                           \
-                           coords1);                                          \
-          }
-
-      BRANCH()
-      if (_CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW)
-      {
-        DRAW_COORDS_FROM_ARRAY(coordsPointersGamut, uint(POINTERS_GAMUT_ARRAY_LENGTH))
-      }
-
-
-#ifdef IS_HDR_CSP
-      [loop]
-      for (uint i = 0u; i < (drawCount + Unrolling_Be_Gone_Uint); i++)
-      {
-        float2 coordsArray[3];
-
-        bool needsDrawing;
-
-        [forcecase]
-        switch(i)
-        {
-          case 0u:
-          {
-            coordsArray[0] = primBt709R;
-            coordsArray[1] = primBt709G;
-            coordsArray[2] = primBt709B;
-
-            needsDrawing = _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW;
-          }
-          break;
-          case 1u:
-          {
-            coordsArray[0] = primDciP3R;
-            coordsArray[1] = primDciP3G;
-            coordsArray[2] = primDciP3B;
-
-            needsDrawing = CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW;
-          }
-          break;
-          default: //case 2u:
-          {
-            coordsArray[0] = primBt2020R;
-            coordsArray[1] = primBt2020G;
-            coordsArray[2] = primBt2020B;
-
-            needsDrawing = CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW;
-          }
-          break;
-        }
-
-        [branch]
-        if (needsDrawing)
-        {
-          DRAW_COORDS_FROM_ARRAY(coordsArray, 3u)
-        }
-      }
+      const uint loop_length = 4u;
 #else
-      static const float2 coordsArray[3] =
-      {
-        primBt709R,
-        primBt709G,
-        primBt709B
-      };
-
-      BRANCH()
-      if (_CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)
-      {
-        DRAW_COORDS_FROM_ARRAY(coordsArray, 3u)
-      }
+      const uint loop_length = 2u;
 #endif
 
-      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,   asfloat(cieSettingsNew));
+      [loop]
+      for (uint gamut = 0u; gamut < (loop_length + Unrolling_Be_Gone_Uint); gamut++)
+      {
+        if
+        (
+          (gamut == 0u && _CIE_DIAGRAM_GAMUT_OUTLINE_BT709_SHOW)
+#ifdef IS_HDR_CSP
+       || (gamut == 1u && CIE_DIAGRAM_GAMUT_OUTLINE_DCIP3_SHOW)
+       || (gamut == 2u && CIE_DIAGRAM_GAMUT_OUTLINE_BT2020_SHOW)
+       || (gamut == 3u && _CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW)
+#else
+       || (gamut == 1u && _CIE_DIAGRAM_GAMUT_OUTLINE_POINTERS_SHOW)
+#endif
+        )
+        {
+#ifdef IS_HDR_CSP
+          const uint array_length = gamut < 3u
+                                  ? 3u
+                                  : POINTERS_GAMUT_ARRAY_LENGTH;
+#else
+          const uint array_length = gamut == 0u
+                                  ? 3u
+                                  : POINTERS_GAMUT_ARRAY_LENGTH;
+#endif
+
+          [loop]
+          for (uint i = 0u; i < (array_length + Unrolling_Be_Gone_Uint); i++)
+          {
+            float2 coords_0;
+            float2 coords_1;
+
+            [forcecase]
+            switch (gamut)
+            {
+              case 0u:
+              {
+                BRANCH()
+                if (_CIE_DIAGRAM_TYPE == CIE_1931)
+                {
+                  coords_0 = CIE_xy1931_Primaries_BT709[i];
+                  coords_1 = CIE_xy1931_Primaries_BT709[(i + 1u) % 3u];
+                }
+                else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+                {
+                  coords_0 = CIE_uv1976_Primaries_BT709[i];
+                  coords_1 = CIE_uv1976_Primaries_BT709[(i + 1u) % 3u];
+                }
+              }
+              break;
+#ifdef IS_HDR_CSP
+              case 1u:
+              {
+                BRANCH()
+                if (_CIE_DIAGRAM_TYPE == CIE_1931)
+                {
+                  coords_0 = CIE_xy1931_Primaries_DCIP3[i];
+                  coords_1 = CIE_xy1931_Primaries_DCIP3[(i + 1u) % 3u];
+                }
+                else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+                {
+                  coords_0 = CIE_uv1976_Primaries_DCIP3[i];
+                  coords_1 = CIE_uv1976_Primaries_DCIP3[(i + 1u) % 3u];
+                }
+              }
+              break;
+              case 2u:
+              {
+                BRANCH()
+                if (_CIE_DIAGRAM_TYPE == CIE_1931)
+                {
+                  coords_0 = CIE_xy1931_Primaries_BT2020[i];
+                  coords_1 = CIE_xy1931_Primaries_BT2020[(i + 1u) % 3u];
+                }
+                else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+                {
+                  coords_0 = CIE_uv1976_Primaries_BT2020[i];
+                  coords_1 = CIE_uv1976_Primaries_BT2020[(i + 1u) % 3u];
+                }
+              } break;
+#endif
+              default:
+              {
+                BRANCH()
+                if (_CIE_DIAGRAM_TYPE == CIE_1931)
+                {
+                  coords_0 = Pointers_Gamut_xy1931[i];
+                  coords_1 = Pointers_Gamut_xy1931[(i + 1u) % POINTERS_GAMUT_ARRAY_LENGTH];
+                }
+                else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
+                {
+                  coords_0 = Pointers_Gamut_uv1976[i];
+                  coords_1 = Pointers_Gamut_uv1976[(i + 1u) % POINTERS_GAMUT_ARRAY_LENGTH];
+                }
+              } break;
+            }
+
+            Draw_Cie_Lines(Unrolling_Be_Gone_Float,
+                           cie_min_extra,
+                           cie_normalise,
+                           render_size_minus_1,
+                           coords_0,
+                           coords_1);
+          }
+        }
+      }
+
+      tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SETTINGS,   asfloat(cie_settings_new));
       tex1Dstore(StorageConsolidated, COORDS_CIE_LAST_SIZE,       _CIE_DIAGRAM_SIZE);
       tex1Dstore(StorageConsolidated, COORDS_CIE_TIMER,           FRAMETIME);
       tex1Dstore(StorageConsolidated, COORDS_CIE_RENDER_PROGRESS, 0.f);
