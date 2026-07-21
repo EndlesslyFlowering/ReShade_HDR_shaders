@@ -1,17 +1,17 @@
 #pragma once
 
 
-static const float2 CIE_xy_Primary_BT709_Red    = float2(0.64f,  0.33f);
-static const float2 CIE_xy_Primary_BT709_Green  = float2(0.30f,  0.60f);
-static const float2 CIE_xy_Primary_BT709_Blue   = float2(0.15f,  0.06f);
+static const float2 CIE_xy1931_Primary_BT709_Red    = float2(0.64f,  0.33f);
+static const float2 CIE_xy1931_Primary_BT709_Green  = float2(0.30f,  0.60f);
+static const float2 CIE_xy1931_Primary_BT709_Blue   = float2(0.15f,  0.06f);
 
-static const float2 CIE_xy_Primary_DCIP3_Red    = float2(0.680f, 0.320f);
-static const float2 CIE_xy_Primary_DCIP3_Green  = float2(0.265f, 0.690f);
-static const float2 CIE_xy_Primary_DCIP3_Blue   = float2(0.150f, 0.060f);
+static const float2 CIE_xy1931_Primary_DCIP3_Red    = float2(0.680f, 0.320f);
+static const float2 CIE_xy1931_Primary_DCIP3_Green  = float2(0.265f, 0.690f);
+static const float2 CIE_xy1931_Primary_DCIP3_Blue   = float2(0.150f, 0.060f);
 
-static const float2 CIE_xy_Primary_BT2020_Red   = float2(0.708f, 0.292f);
-static const float2 CIE_xy_Primary_BT2020_Green = float2(0.170f, 0.797f);
-static const float2 CIE_xy_Primary_BT2020_Blue  = float2(0.131f, 0.046f);
+static const float2 CIE_xy1931_Primary_BT2020_Red   = float2(0.708f, 0.292f);
+static const float2 CIE_xy1931_Primary_BT2020_Green = float2(0.170f, 0.797f);
+static const float2 CIE_xy1931_Primary_BT2020_Blue  = float2(0.131f, 0.046f);
 
 
 static const float2 CIE_uv1976_Primary_BT709_Red    = float2(0.450704216f,  0.522887349f);
@@ -31,7 +31,7 @@ static const float2 CIE_uv1976_Primary_BT2020_Blue  = float2(0.159270510f,  0.12
 
 #define CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH 341
 
-static const float2 CIE_1931_2_Degree_Standard_Observer_xy[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH] =
+static const float2 CIE_1931_2_Degree_Standard_Observer_xy1931[CIE_1931_2_DEGREE_STANDARD_OBSERVER_ARRAY_LENGTH] =
 {
   float2(0.175560235f,   0.00529383681f),
   float2(0.175482526f,   0.00528633920f),
@@ -725,7 +725,7 @@ static const float2 CIE_1931_2_Degree_Standard_Observer_uv1976[CIE_1931_2_DEGREE
 
 #define POINTERS_GAMUT_ARRAY_LENGTH 32
 
-static const float2 Pointers_Gamut_xy[POINTERS_GAMUT_ARRAY_LENGTH] =
+static const float2 Pointers_Gamut_xy1931[POINTERS_GAMUT_ARRAY_LENGTH] =
 {
   float2(0.659f, 0.316f),
   float2(0.634f, 0.351f),

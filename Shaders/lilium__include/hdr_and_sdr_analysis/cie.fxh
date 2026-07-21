@@ -497,20 +497,20 @@ void DrawCieOutlines
         cieNormalise = CIE_XY_NORMALISE;
         cieSize      = CIE_XY_SIZE_FLOAT;
 
-        coordsPointersGamut = Pointers_Gamut_xy;
+        coordsPointersGamut = Pointers_Gamut_xy1931;
 
-        primBt709R = CIE_xy_Primary_BT709_Red;
-        primBt709G = CIE_xy_Primary_BT709_Green;
-        primBt709B = CIE_xy_Primary_BT709_Blue;
+        primBt709R = CIE_xy1931_Primary_BT709_Red;
+        primBt709G = CIE_xy1931_Primary_BT709_Green;
+        primBt709B = CIE_xy1931_Primary_BT709_Blue;
 
 #ifdef IS_HDR_CSP
-        primDciP3R = CIE_xy_Primary_DCIP3_Red;
-        primDciP3G = CIE_xy_Primary_DCIP3_Green;
-        primDciP3B = CIE_xy_Primary_DCIP3_Blue;
+        primDciP3R = CIE_xy1931_Primary_DCIP3_Red;
+        primDciP3G = CIE_xy1931_Primary_DCIP3_Green;
+        primDciP3B = CIE_xy1931_Primary_DCIP3_Blue;
 
-        primBt2020R = CIE_xy_Primary_BT2020_Red;
-        primBt2020G = CIE_xy_Primary_BT2020_Green;
-        primBt2020B = CIE_xy_Primary_BT2020_Blue;
+        primBt2020R = CIE_xy1931_Primary_BT2020_Red;
+        primBt2020G = CIE_xy1931_Primary_BT2020_Green;
+        primBt2020B = CIE_xy1931_Primary_BT2020_Blue;
 #endif
       }
       else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
@@ -653,7 +653,7 @@ void DrawCieOutlines
         cieNormalise = CIE_XY_NORMALISE;
         cieSize      = CIE_XY_SIZE_FLOAT;
 
-        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_xy;
+        coordsSpectralLocus = CIE_1931_2_Degree_Standard_Observer_xy1931;
       }
       else //if (_CIE_DIAGRAM_TYPE == CIE_1976)
       {
